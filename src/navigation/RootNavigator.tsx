@@ -2,9 +2,17 @@ import React from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { AuthStack } from './AuthStack';
-import { HomeScreen } from '../screens/home/HomeScreen';
+import { AppTabs } from './AppTabs';
 import { useAuthStore } from '../stores/authStore';
+import { useShiftSync } from '../hooks/useShiftSync';
+import { useLocationPollingEffect } from '../hooks/useLocationPollingEffect';
 import { colors } from '../theme/tokens';
+
+function AuthenticatedApp() {
+  useShiftSync();
+  useLocationPollingEffect();
+  return <AppTabs />;
+}
 
 export function RootNavigator() {
   const token = useAuthStore((s) => s.token);
@@ -20,7 +28,7 @@ export function RootNavigator() {
 
   return (
     <NavigationContainer>
-      {token ? <HomeScreen /> : <AuthStack />}
+      {token ? <AuthenticatedApp /> : <AuthStack />}
     </NavigationContainer>
   );
 }
