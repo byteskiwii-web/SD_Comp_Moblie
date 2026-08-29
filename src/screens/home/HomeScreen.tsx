@@ -1,5 +1,6 @@
 import React from 'react';
-import { ActivityIndicator, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigation } from '@react-navigation/native';
 import { Button, Card } from '../../components/ui';
@@ -31,14 +32,29 @@ export function HomeScreen() {
   const timelineMarks = [...marks].reverse(); // chronological (oldest first) for display
 
   return (
-    <SafeAreaView style={styles.flex}>
-      <ScrollView contentContainerStyle={styles.content}>
+    <SafeAreaView style={styles.flex} edges={['top']}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={styles.headerRow}>
+          <View>
+            <Text style={styles.welcome}>Welcome back</Text>
+            <Text style={styles.name}>{employee?.first_name ?? 'there'}</Text>
+          </View>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarInitial}>{employee?.first_name?.[0] ?? '?'}</Text>
+          </View>
+        </View>
+
         <View style={[styles.hero, isOnShift ? styles.heroActive : styles.heroInactive]}>
-          <Text style={styles.heroLabel}>
-            {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
-          </Text>
+          <View style={styles.heroDecoration} pointerEvents="none" />
+          <View style={styles.heroTopRow}>
+            <View style={[styles.statusDot, isOnShift ? styles.statusDotActive : styles.statusDotInactive]} />
+            <Text style={styles.heroLabel}>
+              {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
+            </Text>
+          </View>
           <Text style={styles.heroTitle}>{isOnShift ? 'On shift' : 'Not clocked in'}</Text>
           <Text style={styles.heroSubtitle}>{store?.name ?? '—'}</Text>
+          <View style={styles.heroDivider} />
           <View style={styles.heroStatsRow}>
             <View style={styles.heroStat}>
               <Text style={styles.heroStatLabel}>Last clock-in</Text>
@@ -46,6 +62,7 @@ export function HomeScreen() {
                 {lastClockIn ? new Date(lastClockIn.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
               </Text>
             </View>
+            <View style={styles.heroStatSeparator} />
             <View style={styles.heroStat}>
               <Text style={styles.heroStatLabel}>Last clock-out</Text>
               <Text style={styles.heroStatValue}>
@@ -63,12 +80,12 @@ export function HomeScreen() {
         <Card>
           <Text style={styles.cardTitle}>Today's timeline</Text>
           {isLoading ? (
-            <ActivityIndicator color={colors.brand[700]} />
+            <ActivityIndicator color={colors.brand[700]} style={styles.loadingSpacer} />
           ) : marks.length === 0 ? (
             <Text style={styles.emptyText}>No activity yet — clock in to start.</Text>
           ) : (
-            timelineMarks.map((m) => (
-              <View key={m.id} style={styles.timelineRow}>
+            timelineMarks.map((m, i) => (
+              <View key={m.id} style={[styles.timelineRow, i === timelineMarks.length - 1 && styles.timelineRowLast]}>
                 <View style={[styles.dot, m.inside_geofence === false ? styles.dotOutside : styles.dotInside]} />
                 <Text style={styles.timelineType}>{m.mark_type.replace('-', ' ')}</Text>
                 <Text style={styles.timelineTime}>
@@ -85,23 +102,49 @@ export function HomeScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.bgLight },
-  content: { padding: 16, gap: 14 },
-  hero: { borderRadius: radii.xl, padding: 18 },
+  content: { padding: 20, paddingTop: 8, gap: 16 },
+
+  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  welcome: { fontSize: 12, color: colors.slate500, fontWeight: '600' },
+  name: { fontSize: 20, fontWeight: '800', color: colors.textLight, marginTop: 2, letterSpacing: -0.3 },
+  avatar: {
+    width: 44, height: 44, borderRadius: 22, backgroundColor: colors.brand[700],
+    alignItems: 'center', justifyContent: 'center',
+  },
+  avatarInitial: { color: colors.white, fontSize: 17, fontWeight: '800' },
+
+  hero: { borderRadius: radii.xl, padding: 20, overflow: 'hidden' },
   heroActive: { backgroundColor: colors.brand[700] },
-  heroInactive: { backgroundColor: colors.brand[600] },
-  heroLabel: { color: colors.white, opacity: 0.8, fontSize: 11, fontWeight: '700', textTransform: 'uppercase' },
-  heroTitle: { color: colors.white, fontSize: 22, fontWeight: '800', marginTop: 4 },
-  heroSubtitle: { color: colors.white, opacity: 0.85, fontSize: 12, marginTop: 2 },
-  heroStatsRow: { flexDirection: 'row', gap: 24, marginTop: 16 },
+  heroInactive: { backgroundColor: colors.slate800 },
+  heroDecoration: {
+    position: 'absolute', top: -40, right: -40, width: 140, height: 140, borderRadius: 70,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+  },
+  heroTopRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  statusDot: { width: 7, height: 7, borderRadius: 4 },
+  statusDotActive: { backgroundColor: colors.success },
+  statusDotInactive: { backgroundColor: colors.slate400 },
+  heroLabel: { color: colors.white, opacity: 0.75, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.4 },
+  heroTitle: { color: colors.white, fontSize: 26, fontWeight: '800', marginTop: 8, letterSpacing: -0.4 },
+  heroSubtitle: { color: colors.white, opacity: 0.85, fontSize: 13, marginTop: 3, fontWeight: '600' },
+  heroDivider: { height: 1, backgroundColor: 'rgba(255,255,255,0.15)', marginTop: 18, marginBottom: 14 },
+  heroStatsRow: { flexDirection: 'row', alignItems: 'center' },
   heroStat: { flex: 1 },
-  heroStatLabel: { color: colors.white, opacity: 0.7, fontSize: 10 },
-  heroStatValue: { color: colors.white, fontSize: 15, fontWeight: '700', marginTop: 2 },
-  cardTitle: { fontSize: 11, fontWeight: '800', textTransform: 'uppercase', color: colors.slate500, marginBottom: 8 },
-  emptyText: { fontSize: 12, color: colors.slate400 },
-  timelineRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 6 },
-  dot: { width: 8, height: 8, borderRadius: 4 },
+  heroStatSeparator: { width: 1, height: 28, backgroundColor: 'rgba(255,255,255,0.15)', marginHorizontal: 16 },
+  heroStatLabel: { color: colors.white, opacity: 0.65, fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.3 },
+  heroStatValue: { color: colors.white, fontSize: 16, fontWeight: '800', marginTop: 4 },
+
+  cardTitle: { fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4, color: colors.slate500, marginBottom: 4 },
+  loadingSpacer: { marginVertical: 12 },
+  emptyText: { fontSize: 13, color: colors.slate400, paddingVertical: 8 },
+  timelineRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10,
+    borderBottomWidth: 1, borderBottomColor: colors.slate100,
+  },
+  timelineRowLast: { borderBottomWidth: 0 },
+  dot: { width: 9, height: 9, borderRadius: 5 },
   dotInside: { backgroundColor: colors.success },
   dotOutside: { backgroundColor: colors.danger },
-  timelineType: { flex: 1, fontSize: 12, color: colors.textLight, textTransform: 'capitalize' },
-  timelineTime: { fontSize: 12, color: colors.slate500 },
+  timelineType: { flex: 1, fontSize: 13, fontWeight: '600', color: colors.textLight, textTransform: 'capitalize' },
+  timelineTime: { fontSize: 12, color: colors.slate500, fontWeight: '600' },
 });

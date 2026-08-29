@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useMutation } from '@tanstack/react-query';
 import { AuthStackParamList } from '../../navigation/types';
@@ -40,6 +41,7 @@ export function ResetPasswordScreen({ navigation, route }: Props) {
   };
 
   return (
+    <SafeAreaView style={styles.flex}>
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <Text style={styles.title}>Set a new password</Text>
@@ -65,6 +67,7 @@ export function ResetPasswordScreen({ navigation, route }: Props) {
         <Button title="Update password" onPress={submit} loading={mutation.isPending} />
       </ScrollView>
     </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 

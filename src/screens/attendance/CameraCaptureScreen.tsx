@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Camera, useCameraDevice, useCameraPermission, usePhotoOutput } from 'react-native-vision-camera';
 import { useFaceDetectorOutput } from 'react-native-vision-camera-face-detector';
 import { Button } from '../../components/ui';
-import { colors } from '../../theme/tokens';
+import { colors, radii } from '../../theme/tokens';
 import { useLiveness } from '../../hooks/useLiveness';
 
 type Props = {
@@ -19,6 +20,7 @@ const CHALLENGE_LABEL: Record<string, string> = {
 };
 
 export function CameraCaptureScreen({ onCaptured, onCancel }: Props) {
+  const insets = useSafeAreaInsets();
   const device = useCameraDevice('front');
   const { hasPermission, requestPermission } = useCameraPermission();
   const photoOutput = usePhotoOutput({ quality: 0.8 });
@@ -89,18 +91,21 @@ export function CameraCaptureScreen({ onCaptured, onCancel }: Props) {
       />
 
       {/* Corner-bracket viewfinder, ported from the prototype's CameraCapture UI */}
-      <View pointerEvents="none" style={styles.viewfinder}>
+      <View
+        pointerEvents="none"
+        style={[styles.viewfinder, { top: insets.top + 70, bottom: 140 + insets.bottom }]}
+      >
         <View style={[styles.corner, styles.cornerTL]} />
         <View style={[styles.corner, styles.cornerTR]} />
         <View style={[styles.corner, styles.cornerBL]} />
         <View style={[styles.corner, styles.cornerBR]} />
       </View>
 
-      <View style={styles.topBar}>
+      <View style={[styles.topBar, { top: insets.top + 12 }]}>
         <Text style={styles.topBarText}>Live selfie · liveness check</Text>
       </View>
 
-      <View style={styles.bottomBar}>
+      <View style={[styles.bottomBar, { paddingBottom: 20 + insets.bottom }]}>
         {captured ? (
           <ActivityIndicator color={colors.white} size="large" />
         ) : (
@@ -125,17 +130,22 @@ const styles = StyleSheet.create({
     flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, padding: 24, backgroundColor: colors.textLight,
   },
   permissionText: { color: colors.white, fontSize: 14, textAlign: 'center', marginBottom: 8 },
-  viewfinder: { position: 'absolute', top: 80, left: 32, right: 32, bottom: 180 },
+  viewfinder: { position: 'absolute', left: 32, right: 32 },
   corner: { position: 'absolute', width: 32, height: 32, borderColor: colors.white },
-  cornerTL: { top: 0, left: 0, borderTopWidth: 3, borderLeftWidth: 3 },
-  cornerTR: { top: 0, right: 0, borderTopWidth: 3, borderRightWidth: 3 },
-  cornerBL: { bottom: 0, left: 0, borderBottomWidth: 3, borderLeftWidth: 3 },
-  cornerBR: { bottom: 0, right: 0, borderBottomWidth: 3, borderRightWidth: 3 },
-  topBar: { position: 'absolute', top: 48, left: 0, right: 0, alignItems: 'center' },
-  topBarText: { color: colors.white, fontSize: 12, fontWeight: '600', opacity: 0.85 },
+  cornerTL: { top: 0, left: 0, borderTopWidth: 3, borderLeftWidth: 3, borderTopLeftRadius: 8 },
+  cornerTR: { top: 0, right: 0, borderTopWidth: 3, borderRightWidth: 3, borderTopRightRadius: 8 },
+  cornerBL: { bottom: 0, left: 0, borderBottomWidth: 3, borderLeftWidth: 3, borderBottomLeftRadius: 8 },
+  cornerBR: { bottom: 0, right: 0, borderBottomWidth: 3, borderRightWidth: 3, borderBottomRightRadius: 8 },
+  topBar: {
+    position: 'absolute', left: 0, right: 0, alignItems: 'center',
+  },
+  topBarText: {
+    color: colors.white, fontSize: 12, fontWeight: '700', backgroundColor: 'rgba(0,0,0,0.4)',
+    paddingHorizontal: 12, paddingVertical: 6, borderRadius: radii.pill, overflow: 'hidden',
+  },
   bottomBar: {
-    position: 'absolute', bottom: 0, left: 0, right: 0, padding: 20, paddingBottom: 40,
-    backgroundColor: 'rgba(0,0,0,0.55)', alignItems: 'center', gap: 12,
+    position: 'absolute', bottom: 0, left: 0, right: 0, paddingHorizontal: 20, paddingTop: 24,
+    backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', gap: 12,
   },
   challengeText: { color: colors.white, fontSize: 15, fontWeight: '700', textAlign: 'center' },
   cancelWrap: { width: '100%', marginTop: 4 },

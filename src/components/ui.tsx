@@ -63,19 +63,26 @@ export function Card({ children, style }: { children: React.ReactNode; style?: o
 
 const styles = StyleSheet.create({
   button: {
-    height: 48,
+    height: 50,
     borderRadius: radii.md,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
   },
-  buttonPrimary: { backgroundColor: colors.brand[700] },
-  buttonOutline: { backgroundColor: 'transparent', borderWidth: 2, borderColor: colors.brand[600] },
-  buttonDisabled: { opacity: 0.5 },
+  buttonPrimary: {
+    backgroundColor: colors.brand[700],
+    shadowColor: colors.brand[900],
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  buttonOutline: { backgroundColor: colors.white, borderWidth: 1.5, borderColor: colors.slate200 },
+  buttonDisabled: { opacity: 0.45, shadowOpacity: 0 },
   buttonPressed: { opacity: 0.85 },
-  buttonText: { fontSize: 15, fontWeight: '700' },
+  buttonText: { fontSize: 15, fontWeight: '700', letterSpacing: 0.1 },
   buttonTextPrimary: { color: colors.white },
-  buttonTextOutline: { color: colors.brand[700] },
+  buttonTextOutline: { color: colors.slate700 },
 
   fieldWrap: { marginBottom: 14 },
   fieldLabel: {
@@ -87,9 +94,9 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   input: {
-    height: 48,
+    height: 50,
     borderRadius: radii.md,
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: colors.slate200,
     paddingHorizontal: 14,
     fontSize: 15,
@@ -103,8 +110,11 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.white,
     borderRadius: radii.lg,
-    borderWidth: 1,
-    borderColor: colors.slate200,
     padding: 16,
+    shadowColor: colors.slate900,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
   },
 });

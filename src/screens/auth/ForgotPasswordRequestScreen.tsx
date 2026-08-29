@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useMutation } from '@tanstack/react-query';
 import { AuthStackParamList } from '../../navigation/types';
@@ -38,6 +39,7 @@ export function ForgotPasswordRequestScreen({ navigation, route }: Props) {
   };
 
   return (
+    <SafeAreaView style={styles.flex}>
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <Text style={styles.title}>{fromFirstLogin ? "Let's set your password" : 'Forgot password'}</Text>
@@ -64,6 +66,7 @@ export function ForgotPasswordRequestScreen({ navigation, route }: Props) {
         <Button title="Back to sign in" variant="outline" onPress={() => navigation.navigate('Login')} />
       </ScrollView>
     </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 

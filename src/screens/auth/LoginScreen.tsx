@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useMutation } from '@tanstack/react-query';
 import { AuthStackParamList } from '../../navigation/types';
@@ -44,13 +45,16 @@ export function LoginScreen({ navigation }: Props) {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+    <SafeAreaView style={styles.flex}>
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
-          <View style={styles.logoDot} />
+          <View style={styles.logoDot}>
+            <Text style={styles.logoDotText}>Z</Text>
+          </View>
           <Text style={styles.brandLabel}>ZIP HRMS · FIELD APP</Text>
           <Text style={styles.title}>Sign in</Text>
           <Text style={styles.subtitle}>Use the employee ID and password given by your HR team.</Text>
@@ -84,7 +88,8 @@ export function LoginScreen({ navigation }: Props) {
           onPress={() => navigation.navigate('ForgotPasswordRequest')}
         />
       </ScrollView>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
@@ -93,8 +98,11 @@ const styles = StyleSheet.create({
   scroll: { flexGrow: 1, justifyContent: 'center', padding: 24 },
   header: { alignItems: 'center', marginBottom: 32 },
   logoDot: {
-    width: 44, height: 44, borderRadius: 22, backgroundColor: colors.brand[700], marginBottom: 12,
+    width: 52, height: 52, borderRadius: 16, backgroundColor: colors.brand[700], marginBottom: 14,
+    alignItems: 'center', justifyContent: 'center',
+    shadowColor: colors.brand[900], shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.25, shadowRadius: 8, elevation: 4,
   },
+  logoDotText: { color: colors.white, fontSize: 22, fontWeight: '800' },
   brandLabel: {
     fontSize: 11, fontWeight: '800', letterSpacing: 1.5, color: colors.brand[700], marginBottom: 16,
   },
