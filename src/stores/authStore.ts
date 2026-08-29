@@ -22,16 +22,18 @@ export type StoreSnapshot = {
 
 type AuthState = {
   token: string | null;
+  refreshToken: string | null;
   employee: Employee | null;
   store: StoreSnapshot;
   hydrated: boolean;
   hydrate: () => Promise<void>;
-  setAuth: (auth: { token: string; employee: Employee; store: StoreSnapshot }) => Promise<void>;
+  setAuth: (auth: { token: string; refreshToken: string; employee: Employee; store: StoreSnapshot }) => Promise<void>;
   signOut: () => Promise<void>;
 };
 
 export const useAuthStore = create<AuthState>()((set) => ({
   token: null,
+  refreshToken: null,
   employee: null,
   store: null,
   hydrated: false,
@@ -41,6 +43,7 @@ export const useAuthStore = create<AuthState>()((set) => ({
     if (saved) {
       set({
         token: saved.token,
+        refreshToken: saved.refreshToken,
         employee: saved.employee as unknown as Employee,
         store: saved.store as StoreSnapshot,
         hydrated: true,
@@ -52,11 +55,11 @@ export const useAuthStore = create<AuthState>()((set) => ({
 
   setAuth: async (auth) => {
     await saveAuth(auth);
-    set({ token: auth.token, employee: auth.employee, store: auth.store });
+    set({ token: auth.token, refreshToken: auth.refreshToken, employee: auth.employee, store: auth.store });
   },
 
   signOut: async () => {
     await clearAuth();
-    set({ token: null, employee: null, store: null });
+    set({ token: null, refreshToken: null, employee: null, store: null });
   },
 }));

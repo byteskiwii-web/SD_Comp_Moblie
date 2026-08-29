@@ -4,6 +4,7 @@ const AUTH_KEY = 'zip_hrms_auth';
 
 export type StoredAuth = {
   token: string;
+  refreshToken: string;
   employee: Record<string, unknown>;
   store: Record<string, unknown> | null;
 };

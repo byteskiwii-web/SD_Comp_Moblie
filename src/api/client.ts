@@ -7,9 +7,11 @@ export const apiClient = axios.create({
   timeout: 15000,
 });
 
-// Attaches the JWT to every request once one exists. Harmless today since
-// no backend route requires it yet — no mobile-side change needed when the
-// backend starts enforcing auth on attendance/approval routes.
+// Attaches the JWT to every request once one exists. Every attendance route
+// now requires it (backend enforces via authenticate() + attendance.authz.js,
+// which also overwrites employee_id/approved_by from the session regardless
+// of what's in the request body -- so no other mobile-side change was needed
+// when that enforcement landed).
 apiClient.interceptors.request.use((config) => {
   const token = useAuthStore.getState().token;
   if (token) {

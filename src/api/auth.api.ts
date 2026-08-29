@@ -1,19 +1,27 @@
 import { apiClient } from './client';
 import type { Employee, StoreSnapshot } from '../stores/authStore';
 
-export type LoginResponse = {
+// Backend's raw session shape (src/modules/auth/auth.service.js#issueSession).
+type SessionResponse = {
   success: true;
-  message: string;
   data: {
-    token: string;
+    sessionId: string;
+    accessToken: string;
+    refreshToken: string;
+    expiresIn: number;
+    tokenType: string;
     employee: Employee;
     store: StoreSnapshot;
   };
+  meta: { requestId: string; timestamp: string };
 };
 
 export async function login(employee_id: string, password: string) {
-  const res = await apiClient.post<LoginResponse>('/auth/login', { employee_id, password });
-  return res.data.data;
+  const res = await apiClient.post<SessionResponse>('/auth/login', { employee_id, password });
+  const { accessToken, refreshToken, employee, store } = res.data.data;
+  // Normalized to {token, ...} here so the rest of the app (authStore, the
+  // axios interceptor) doesn't need to know the backend calls it accessToken.
+  return { token: accessToken, refreshToken, employee, store };
 }
 
 export async function requestPasswordResetOtp(employee_id: string) {
@@ -33,9 +41,9 @@ export async function verifyPasswordResetOtp(employee_id: string, otp: string) {
 }
 
 export async function resetPassword(resetToken: string, new_password: string) {
-  const res = await apiClient.post<{ success: true; message: string }>(
+  const res = await apiClient.post<{ success: true; data: { employeeId: string } }>(
     '/auth/forgot-password/reset-password',
-    { resetToken, new_password }
+    { reset_token: resetToken, new_password }
   );
   return res.data;
 }
