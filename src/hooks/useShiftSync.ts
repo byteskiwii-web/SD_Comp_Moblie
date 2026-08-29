@@ -19,11 +19,15 @@ export function useShiftSync() {
     if (!employee) return;
     const today = new Date().toISOString().slice(0, 10);
     try {
+      // Marks come back most-recent-first -- with multiple clock-in/out
+      // cycles per day (e.g. lunch breaks), only the LATEST mark tells you
+      // whether the employee is currently on shift. Checking "does a
+      // clock-in exist today" would stay stuck on `true` forever after the
+      // first cycle, even after clocking back out.
       const marks = await getAttendanceHistory(employee.id, today, today);
-      const clockIn = marks.find((m) => m.mark_type === 'clock-in');
-      const clockOut = marks.find((m) => m.mark_type === 'clock-out');
-      if (clockIn && !clockOut) {
-        setClockedIn(clockIn.store_code, clockIn.timestamp);
+      const latest = marks[0];
+      if (latest?.mark_type === 'clock-in') {
+        setClockedIn(latest.store_code, latest.timestamp);
       } else {
         setClockedOut();
       }

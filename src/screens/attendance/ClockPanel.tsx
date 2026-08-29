@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, StyleSheet, Text, View } from 'react-native';
+import { Alert, Linking, Modal, StyleSheet, Text, View } from 'react-native';
 import * as Location from 'expo-location';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button, Card } from '../../components/ui';
@@ -31,9 +31,14 @@ export function ClockPanel() {
     enabled: !!employee,
   });
 
+  // Marks come back most-recent-first. Employees can clock in/out multiple
+  // times per day (e.g. lunch breaks), so only the LATEST mark today
+  // determines current status -- not "does a clock-in exist today".
   const marks = historyQuery.data ?? [];
-  const clockInMark = marks.find((m) => m.mark_type === 'clock-in');
-  const clockOutMark = marks.find((m) => m.mark_type === 'clock-out');
+  const latestMark = marks[0];
+  const isCurrentlyClockedIn = latestMark?.mark_type === 'clock-in';
+  const lastClockIn = marks.find((m) => m.mark_type === 'clock-in');
+  const lastClockOut = marks.find((m) => m.mark_type === 'clock-out');
 
   useEffect(() => {
     let cancelled = false;
@@ -98,6 +103,29 @@ export function ClockPanel() {
     },
   });
 
+  // "Allow all the time" location access is mandatory before a punch is
+  // accepted -- without it, the periodic mid-shift geofence check
+  // (useLocationPollingEffect) can't run once the employee is clocked in.
+  // Checked here (after the selfie is already captured) rather than
+  // earlier, since Android only lets an app prompt for background access
+  // after foreground access is already granted.
+  const handleCaptured = async (filePath: string) => {
+    const bg = await Location.requestBackgroundPermissionsAsync();
+    if (bg.status !== 'granted') {
+      setPendingAction(null);
+      Alert.alert(
+        'Background location required',
+        'To clock in or out, you must allow location access "All the time" (not just "While using the app"), so we can periodically confirm you\'re still at the store during your shift.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Open Settings', onPress: () => Linking.openSettings() },
+        ]
+      );
+      return;
+    }
+    punchMutation.mutate(filePath);
+  };
+
   if (!employee || !store) return null;
 
   return (
@@ -132,24 +160,39 @@ export function ClockPanel() {
 
       <View style={styles.actionsRow}>
         <Button
-          title={clockInMark ? `In: ${new Date(clockInMark.timestamp).toLocaleTimeString()}` : 'Clock In'}
+          title="Clock In"
           onPress={() => setPendingAction('clock-in')}
-          disabled={!!clockInMark || !coords}
+          disabled={isCurrentlyClockedIn || !coords}
         />
       </View>
       <View style={styles.actionsRow}>
         <Button
-          title={clockOutMark ? `Out: ${new Date(clockOutMark.timestamp).toLocaleTimeString()}` : 'Clock Out'}
+          title="Clock Out"
           variant="outline"
           onPress={() => setPendingAction('clock-out')}
-          disabled={!clockInMark || !!clockOutMark || !coords}
+          disabled={!isCurrentlyClockedIn || !coords}
         />
       </View>
+
+      {(lastClockIn || lastClockOut) && (
+        <Card>
+          {lastClockIn && (
+            <Text style={styles.lastPunchText}>
+              Last clock-in: {new Date(lastClockIn.timestamp).toLocaleTimeString()}
+            </Text>
+          )}
+          {lastClockOut && (
+            <Text style={styles.lastPunchText}>
+              Last clock-out: {new Date(lastClockOut.timestamp).toLocaleTimeString()}
+            </Text>
+          )}
+        </Card>
+      )}
 
       <Modal visible={!!pendingAction} animationType="slide" onRequestClose={() => setPendingAction(null)}>
         <CameraCaptureScreen
           onCancel={() => setPendingAction(null)}
-          onCaptured={(filePath) => punchMutation.mutate(filePath)}
+          onCaptured={handleCaptured}
         />
       </Modal>
     </View>
@@ -171,4 +214,5 @@ const styles = StyleSheet.create({
   geoDetail: { fontSize: 12, color: colors.slate500, marginTop: 4 },
   geoWarning: { fontSize: 11, color: colors.warning, marginTop: 8, textAlign: 'center', fontWeight: '600' },
   actionsRow: { width: '100%' },
+  lastPunchText: { fontSize: 12, color: colors.slate500, fontWeight: '600' },
 });

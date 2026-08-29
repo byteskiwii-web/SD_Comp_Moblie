@@ -20,10 +20,15 @@ export function HomeScreen() {
     enabled: !!employee,
   });
 
+  // Marks come back most-recent-first. Employees can clock in/out multiple
+  // times per day (e.g. lunch breaks), so only the LATEST mark determines
+  // whether they're currently on shift.
   const marks = data ?? [];
-  const clockInMark = marks.find((m) => m.mark_type === 'clock-in');
-  const clockOutMark = marks.find((m) => m.mark_type === 'clock-out');
-  const isOnShift = !!clockInMark && !clockOutMark;
+  const latestMark = marks[0];
+  const isOnShift = latestMark?.mark_type === 'clock-in';
+  const lastClockIn = marks.find((m) => m.mark_type === 'clock-in');
+  const lastClockOut = marks.find((m) => m.mark_type === 'clock-out');
+  const timelineMarks = [...marks].reverse(); // chronological (oldest first) for display
 
   return (
     <SafeAreaView style={styles.flex}>
@@ -32,28 +37,26 @@ export function HomeScreen() {
           <Text style={styles.heroLabel}>
             {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
           </Text>
-          <Text style={styles.heroTitle}>
-            {clockOutMark ? 'Shift complete' : isOnShift ? 'On shift' : 'Not clocked in'}
-          </Text>
+          <Text style={styles.heroTitle}>{isOnShift ? 'On shift' : 'Not clocked in'}</Text>
           <Text style={styles.heroSubtitle}>{store?.name ?? '—'}</Text>
           <View style={styles.heroStatsRow}>
             <View style={styles.heroStat}>
-              <Text style={styles.heroStatLabel}>Clock-in</Text>
+              <Text style={styles.heroStatLabel}>Last clock-in</Text>
               <Text style={styles.heroStatValue}>
-                {clockInMark ? new Date(clockInMark.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
+                {lastClockIn ? new Date(lastClockIn.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
               </Text>
             </View>
             <View style={styles.heroStat}>
-              <Text style={styles.heroStatLabel}>Clock-out</Text>
+              <Text style={styles.heroStatLabel}>Last clock-out</Text>
               <Text style={styles.heroStatValue}>
-                {clockOutMark ? new Date(clockOutMark.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
+                {lastClockOut ? new Date(lastClockOut.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
               </Text>
             </View>
           </View>
         </View>
 
         <Button
-          title={clockOutMark ? 'View attendance' : isOnShift ? 'Clock out' : 'Clock in with live photo'}
+          title={isOnShift ? 'Clock out' : 'Clock in with live photo'}
           onPress={() => navigation.navigate('Attendance')}
         />
 
@@ -64,7 +67,7 @@ export function HomeScreen() {
           ) : marks.length === 0 ? (
             <Text style={styles.emptyText}>No activity yet — clock in to start.</Text>
           ) : (
-            marks.map((m) => (
+            timelineMarks.map((m) => (
               <View key={m.id} style={styles.timelineRow}>
                 <View style={[styles.dot, m.inside_geofence === false ? styles.dotOutside : styles.dotInside]} />
                 <Text style={styles.timelineType}>{m.mark_type.replace('-', ' ')}</Text>
