@@ -3,12 +3,7 @@ import type { Face } from 'react-native-vision-camera-face-detector';
 
 // Anti-spoof-photo gating (deters holding up a printed/static photo), NOT
 // biometric identity verification against a stored reference photo.
-export type LivenessState =
-  | 'looking-for-face'
-  | 'challenge-blink'
-  | 'challenge-turn'
-  | 'passed'
-  | 'timeout';
+export type LivenessState = 'looking-for-face' | 'challenge-blink' | 'challenge-turn' | 'timeout';
 
 const CHALLENGE_TIMEOUT_MS = 10000;
 const EYES_CLOSED_THRESHOLD = 0.3;
@@ -20,6 +15,15 @@ export function useLiveness(onPassed: () => void) {
   const [challenge] = useState<'blink' | 'turn'>(() => (Math.random() < 0.5 ? 'blink' : 'turn'));
   const baselineYaw = useRef<number | null>(null);
   const hasBlinked = useRef(false);
+  // Deliberately NOT reflected via useState -- setting state here would
+  // re-render this screen in the same tick as capturePhotoToFile() starts,
+  // which recreates the face-detector's CameraOutput (its own memoization
+  // is keyed on an object that's rebuilt every render) and forces VisionCamera
+  // to reconfigure/unbind the whole session mid-capture, aborting it. Instead
+  // this ref just gates against re-triggering onPassed from a later frame;
+  // the caller shows its own local "captured" UI state only *after* the
+  // photo has actually been captured, when a re-render is harmless.
+  const hasPassed = useRef(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const clearTimer = useCallback(() => {
@@ -33,6 +37,7 @@ export function useLiveness(onPassed: () => void) {
     clearTimer();
     baselineYaw.current = null;
     hasBlinked.current = false;
+    hasPassed.current = false;
     setState('looking-for-face');
   }, [clearTimer]);
 
@@ -45,7 +50,7 @@ export function useLiveness(onPassed: () => void) {
 
   const onFacesDetected = useCallback(
     (faces: Face[]) => {
-      if (state === 'passed' || state === 'timeout') return;
+      if (hasPassed.current || state === 'timeout') return;
       const face = faces[0];
 
       if (!face) {
@@ -72,7 +77,7 @@ export function useLiveness(onPassed: () => void) {
 
         if (hasBlinked.current && eyesOpenAgain) {
           clearTimer();
-          setState('passed');
+          hasPassed.current = true;
           onPassed();
         }
         return;
@@ -82,7 +87,7 @@ export function useLiveness(onPassed: () => void) {
         const base = baselineYaw.current ?? face.yawAngle;
         if (Math.abs(face.yawAngle - base) > YAW_TURN_THRESHOLD_DEG) {
           clearTimer();
-          setState('passed');
+          hasPassed.current = true;
           onPassed();
         }
       }

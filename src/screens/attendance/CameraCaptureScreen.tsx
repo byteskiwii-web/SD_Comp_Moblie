@@ -15,7 +15,6 @@ const CHALLENGE_LABEL: Record<string, string> = {
   'looking-for-face': 'Center your face in the frame',
   'challenge-blink': 'Blink to continue',
   'challenge-turn': 'Slowly turn your head',
-  passed: 'Captured!',
   timeout: "Couldn't verify — try again",
 };
 
@@ -23,20 +22,25 @@ export function CameraCaptureScreen({ onCaptured, onCancel }: Props) {
   const device = useCameraDevice('front');
   const { hasPermission, requestPermission } = useCameraPermission();
   const photoOutput = usePhotoOutput({ quality: 0.8 });
-  const [capturing, setCapturing] = useState(false);
+  // Only ever set to true AFTER a successful capture -- a re-render at that
+  // point is harmless since the parent immediately tears this screen down.
+  // Setting it beforehand would race the in-flight capturePhotoToFile() call
+  // (see useLiveness.ts for the full explanation).
+  const [captured, setCaptured] = useState(false);
   const capturedRef = useRef(false);
 
   const takePhoto = useCallback(async () => {
     if (capturedRef.current) return;
     capturedRef.current = true;
-    setCapturing(true);
     try {
       const file = await photoOutput.capturePhotoToFile({}, {});
+      setCaptured(true);
       onCaptured(file.filePath);
     } catch (err) {
       console.warn('[CameraCaptureScreen] capture failed', err);
       capturedRef.current = false;
-      setCapturing(false);
+      // eslint-disable-next-line @typescript-eslint/no-use-before-define -- `reset` is stable across renders; referencing it here (not in the deps array) avoids a circular hook dependency with useLiveness below.
+      reset();
     }
   }, [photoOutput, onCaptured]);
 
@@ -97,13 +101,13 @@ export function CameraCaptureScreen({ onCaptured, onCancel }: Props) {
       </View>
 
       <View style={styles.bottomBar}>
-        {capturing ? (
+        {captured ? (
           <ActivityIndicator color={colors.white} size="large" />
         ) : (
           <Text style={styles.challengeText}>{CHALLENGE_LABEL[state]}</Text>
         )}
 
-        {state === 'timeout' && !capturing && (
+        {state === 'timeout' && !captured && (
           <Button title="Try again" onPress={reset} />
         )}
 
