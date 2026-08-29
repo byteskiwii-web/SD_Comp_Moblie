@@ -44,6 +44,10 @@ export function CameraCaptureScreen({ onCaptured, onCancel }: Props) {
 
   const faceDetectorOutput = useFaceDetectorOutput({
     performanceMode: 'fast',
+    // Required for leftEyeOpenProbability/rightEyeOpenProbability (blink
+    // detection) -- ML Kit doesn't compute these unless classification is
+    // explicitly enabled; they're `undefined` otherwise.
+    runClassifications: true,
     onFacesDetected,
     onError: (err) => console.warn('[CameraCaptureScreen] face detector error', err),
   });
@@ -76,7 +80,7 @@ export function CameraCaptureScreen({ onCaptured, onCancel }: Props) {
       <Camera
         style={StyleSheet.absoluteFill}
         device={device}
-        isActive={!capturing}
+        isActive={true}
         outputs={[photoOutput, faceDetectorOutput]}
       />
 
