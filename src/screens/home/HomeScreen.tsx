@@ -7,6 +7,7 @@ import { Button, Card } from '../../components/ui';
 import { colors, radii } from '../../theme/tokens';
 import { useAuthStore } from '../../stores/authStore';
 import { getAttendanceHistory } from '../../api/attendance.api';
+import { getLatestMarkOfTypes, SHIFT_TYPES } from '../../utils/attendanceStatus';
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -23,10 +24,11 @@ export function HomeScreen() {
 
   // Marks come back most-recent-first. Employees can clock in/out multiple
   // times per day (e.g. lunch breaks), so only the LATEST mark determines
-  // whether they're currently on shift.
+  // whether they're currently on shift -- and since break-start/break-end
+  // share this table, that latest mark must be filtered to shift types
+  // specifically (the most recent mark overall could be a break event).
   const marks = data ?? [];
-  const latestMark = marks[0];
-  const isOnShift = latestMark?.mark_type === 'clock-in';
+  const isOnShift = getLatestMarkOfTypes(marks, SHIFT_TYPES)?.mark_type === 'clock-in';
   const lastClockIn = marks.find((m) => m.mark_type === 'clock-in');
   const lastClockOut = marks.find((m) => m.mark_type === 'clock-out');
   const timelineMarks = [...marks].reverse(); // chronological (oldest first) for display
@@ -57,14 +59,14 @@ export function HomeScreen() {
           <View style={styles.heroDivider} />
           <View style={styles.heroStatsRow}>
             <View style={styles.heroStat}>
-              <Text style={styles.heroStatLabel}>Last clock-in</Text>
+              <Text style={styles.heroStatLabel}>Shift start</Text>
               <Text style={styles.heroStatValue}>
                 {lastClockIn ? new Date(lastClockIn.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
               </Text>
             </View>
             <View style={styles.heroStatSeparator} />
             <View style={styles.heroStat}>
-              <Text style={styles.heroStatLabel}>Last clock-out</Text>
+              <Text style={styles.heroStatLabel}>Shift end</Text>
               <Text style={styles.heroStatValue}>
                 {lastClockOut ? new Date(lastClockOut.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
               </Text>
@@ -73,7 +75,7 @@ export function HomeScreen() {
         </View>
 
         <Button
-          title={isOnShift ? 'Clock out' : 'Clock in with live photo'}
+          title={isOnShift ? 'End shift' : 'Start shift with live photo'}
           onPress={() => navigation.navigate('Attendance')}
         />
 
@@ -82,7 +84,7 @@ export function HomeScreen() {
           {isLoading ? (
             <ActivityIndicator color={colors.brand[700]} style={styles.loadingSpacer} />
           ) : marks.length === 0 ? (
-            <Text style={styles.emptyText}>No activity yet — clock in to start.</Text>
+            <Text style={styles.emptyText}>No activity yet — start your shift to begin.</Text>
           ) : (
             timelineMarks.map((m, i) => (
               <View key={m.id} style={[styles.timelineRow, i === timelineMarks.length - 1 && styles.timelineRowLast]}>

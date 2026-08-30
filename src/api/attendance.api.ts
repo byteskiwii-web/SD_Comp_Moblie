@@ -51,6 +51,32 @@ export async function clockOut(input: PunchInput) {
   return res.data.data;
 }
 
+type BreakInput = {
+  employee_id: string;
+  store_code: string;
+  latitude: number;
+  longitude: number;
+  device_id?: string;
+};
+
+// Breaks are geofence-only -- no selfie, so no multipart/FormData, unlike
+// clock-in/clock-out above.
+export async function startBreak(input: BreakInput) {
+  const res = await apiClient.post<{ success: true; message: string; data: PunchResult }>(
+    '/attendance/break-start',
+    { ...input, client_timestamp: new Date().toISOString() }
+  );
+  return res.data.data;
+}
+
+export async function endBreak(input: BreakInput) {
+  const res = await apiClient.post<{ success: true; message: string; data: PunchResult }>(
+    '/attendance/break-end',
+    { ...input, client_timestamp: new Date().toISOString() }
+  );
+  return res.data.data;
+}
+
 export async function getAttendanceHistory(employeeId: string, fromDate?: string, toDate?: string) {
   const res = await apiClient.get<{ success: true; data: AttendanceMark[] }>(
     `/attendance/${employeeId}`,

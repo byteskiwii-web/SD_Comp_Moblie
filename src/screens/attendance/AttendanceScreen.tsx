@@ -24,7 +24,7 @@ export function AttendanceScreen() {
               style={[styles.segmentItem, tab === t && styles.segmentItemActive]}
             >
               <Text style={[styles.segmentText, tab === t && styles.segmentTextActive]}>
-                {t === 'clock' ? 'Clock in/out' : 'History'}
+                {t === 'clock' ? 'Shift & Breaks' : 'History'}
               </Text>
             </Pressable>
           ))}

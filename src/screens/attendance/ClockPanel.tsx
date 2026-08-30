@@ -7,9 +7,10 @@ import { colors, radii } from '../../theme/tokens';
 import { useAuthStore } from '../../stores/authStore';
 import { useShiftStore } from '../../stores/shiftStore';
 import { haversineDistance } from '../../utils/haversine';
-import { clockIn, clockOut, getAttendanceHistory } from '../../api/attendance.api';
+import { clockIn, clockOut, endBreak, getAttendanceHistory, startBreak } from '../../api/attendance.api';
 import { CameraCaptureScreen } from './CameraCaptureScreen';
 import { getApiErrorMessage } from '../../api/client';
+import { getLatestMarkOfTypes, SHIFT_TYPES, BREAK_TYPES } from '../../utils/attendanceStatus';
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -33,19 +34,26 @@ export function ClockPanel() {
 
   // Marks come back most-recent-first. Employees can clock in/out multiple
   // times per day (e.g. lunch breaks), so only the LATEST mark today
-  // determines current status -- not "does a clock-in exist today".
+  // determines current status -- not "does a clock-in exist today". Shift
+  // and break are independent timelines sharing this table, so each status
+  // is derived from its OWN type-filtered latest mark, not the overall
+  // most-recent mark (which could be a break event either way).
   const marks = historyQuery.data ?? [];
-  const latestMark = marks[0];
-  const isCurrentlyClockedIn = latestMark?.mark_type === 'clock-in';
+  const latestShiftMark = getLatestMarkOfTypes(marks, SHIFT_TYPES);
+  const latestBreakMark = getLatestMarkOfTypes(marks, BREAK_TYPES);
+  const isCurrentlyClockedIn = latestShiftMark?.mark_type === 'clock-in';
+  const isCurrentlyOnBreak = latestBreakMark?.mark_type === 'break-start';
   const lastClockIn = marks.find((m) => m.mark_type === 'clock-in');
   const lastClockOut = marks.find((m) => m.mark_type === 'clock-out');
+  const lastBreakStart = marks.find((m) => m.mark_type === 'break-start');
+  const lastBreakEnd = marks.find((m) => m.mark_type === 'break-end');
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       const perm = await Location.requestForegroundPermissionsAsync();
       if (perm.status !== 'granted') {
-        if (!cancelled) setLocationError('Location permission is needed to clock in/out.');
+        if (!cancelled) setLocationError('Location permission is needed to start or end your shift.');
         return;
       }
       try {
@@ -92,14 +100,46 @@ export function ClockPanel() {
         text: isPending
           ? 'Recorded — you were outside the store radius, so this is pending HR approval.'
           : pendingAction === 'clock-in'
-            ? 'Clocked in successfully.'
-            : 'Clocked out successfully.',
+            ? 'Shift started successfully.'
+            : 'Shift ended successfully.',
       });
       setPendingAction(null);
     },
     onError: (err) => {
       setBanner({ tone: 'warning', text: getApiErrorMessage(err) });
       setPendingAction(null);
+    },
+  });
+
+  // Breaks are geofence-only -- no selfie, so no camera step and no
+  // background-permission gate (that gate exists to support the mid-shift
+  // location poll, which is already running once the employee is clocked in).
+  const breakMutation = useMutation({
+    mutationFn: async (action: 'break-start' | 'break-end') => {
+      if (!employee || !store || !coords) throw new Error('Missing required data');
+      const input = {
+        employee_id: employee.id,
+        store_code: store.store_code,
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+        device_id: 'mobile-app',
+      };
+      return action === 'break-start' ? startBreak(input) : endBreak(input);
+    },
+    onSuccess: (result, action) => {
+      queryClient.invalidateQueries({ queryKey: ['attendance-today', employee?.id] });
+      const isPending = result.attendance.approval_status === 'pending-approval';
+      setBanner({
+        tone: isPending ? 'warning' : 'success',
+        text: isPending
+          ? 'Recorded — you were outside the store radius, so this is pending HR approval.'
+          : action === 'break-start'
+            ? 'Break started.'
+            : 'Break ended.',
+      });
+    },
+    onError: (err) => {
+      setBanner({ tone: 'warning', text: getApiErrorMessage(err) });
     },
   });
 
@@ -115,7 +155,7 @@ export function ClockPanel() {
       setPendingAction(null);
       Alert.alert(
         'Background location required',
-        'To clock in or out, you must allow location access "All the time" (not just "While using the app"), so we can periodically confirm you\'re still at the store during your shift.',
+        'To start or end your shift, you must allow location access "All the time" (not just "While using the app"), so we can periodically confirm you\'re still at the store during your shift.',
         [
           { text: 'Cancel', style: 'cancel' },
           { text: 'Open Settings', onPress: () => Linking.openSettings() },
@@ -160,30 +200,62 @@ export function ClockPanel() {
 
       <View style={styles.actionsRow}>
         <Button
-          title="Clock In"
+          title="Start Shift"
           onPress={() => setPendingAction('clock-in')}
           disabled={isCurrentlyClockedIn || !coords}
         />
       </View>
       <View style={styles.actionsRow}>
         <Button
-          title="Clock Out"
+          title="End Shift"
           variant="outline"
           onPress={() => setPendingAction('clock-out')}
-          disabled={!isCurrentlyClockedIn || !coords}
+          disabled={!isCurrentlyClockedIn || !coords || isCurrentlyOnBreak}
         />
       </View>
+      {isCurrentlyOnBreak && (
+        <Text style={styles.geoWarning}>End your break before ending your shift.</Text>
+      )}
 
-      {(lastClockIn || lastClockOut) && (
+      <View style={styles.breakRow}>
+        <View style={styles.breakButton}>
+          <Button
+            title="Start Break"
+            variant="outline"
+            onPress={() => breakMutation.mutate('break-start')}
+            disabled={!isCurrentlyClockedIn || isCurrentlyOnBreak || !coords || breakMutation.isPending}
+          />
+        </View>
+        <View style={styles.breakButton}>
+          <Button
+            title="End Break"
+            variant="outline"
+            onPress={() => breakMutation.mutate('break-end')}
+            disabled={!isCurrentlyOnBreak || !coords || breakMutation.isPending}
+          />
+        </View>
+      </View>
+
+      {(lastClockIn || lastClockOut || lastBreakStart || lastBreakEnd) && (
         <Card>
           {lastClockIn && (
             <Text style={styles.lastPunchText}>
-              Last clock-in: {new Date(lastClockIn.timestamp).toLocaleTimeString()}
+              Last shift start: {new Date(lastClockIn.timestamp).toLocaleTimeString()}
             </Text>
           )}
           {lastClockOut && (
             <Text style={styles.lastPunchText}>
-              Last clock-out: {new Date(lastClockOut.timestamp).toLocaleTimeString()}
+              Last shift end: {new Date(lastClockOut.timestamp).toLocaleTimeString()}
+            </Text>
+          )}
+          {lastBreakStart && (
+            <Text style={styles.lastPunchText}>
+              Last break start: {new Date(lastBreakStart.timestamp).toLocaleTimeString()}
+            </Text>
+          )}
+          {lastBreakEnd && (
+            <Text style={styles.lastPunchText}>
+              Last break end: {new Date(lastBreakEnd.timestamp).toLocaleTimeString()}
             </Text>
           )}
         </Card>
@@ -214,5 +286,7 @@ const styles = StyleSheet.create({
   geoDetail: { fontSize: 12, color: colors.slate500, marginTop: 4 },
   geoWarning: { fontSize: 11, color: colors.warning, marginTop: 8, textAlign: 'center', fontWeight: '600' },
   actionsRow: { width: '100%' },
+  breakRow: { flexDirection: 'row', gap: 12 },
+  breakButton: { flex: 1 },
   lastPunchText: { fontSize: 12, color: colors.slate500, fontWeight: '600' },
 });

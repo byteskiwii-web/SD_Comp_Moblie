@@ -1,4 +1,4 @@
-export type MarkType = 'clock-in' | 'clock-out' | '2hr-check';
+export type MarkType = 'clock-in' | 'clock-out' | '2hr-check' | 'break-start' | 'break-end';
 export type ApprovalStatus = 'auto-approved' | 'pending-approval' | 'approved' | 'rejected';
 
 export type AttendanceMark = {
