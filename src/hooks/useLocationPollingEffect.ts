@@ -3,19 +3,23 @@ import * as Location from 'expo-location';
 import { useShiftStore } from '../stores/shiftStore';
 import { startBackgroundLocationPolling, stopBackgroundLocationPolling } from '../utils/backgroundLocationTask';
 
-// Reacts to shiftStore.isClockedIn transitions (set by useShiftSync, and by
-// the clock-in/out mutations directly) to start/stop background polling.
-// Location permission is only ever requested here -- i.e. only once the
-// user is actually clocked in -- never at app launch or on Home mount.
+// Reacts to shiftStore.isClockedIn/isOnBreak transitions (set by
+// useShiftSync, and by the clock-in/out and break mutations directly) to
+// start/stop background polling. Tracking should only run while the
+// employee is expected to be inside the store: clocked in AND not on a
+// break. Location permission is only ever requested here -- i.e. only once
+// the user actually starts a shift -- never at app launch or on Home mount.
 export function useLocationPollingEffect() {
   const isClockedIn = useShiftStore((s) => s.isClockedIn);
+  const isOnBreak = useShiftStore((s) => s.isOnBreak);
+  const shouldTrack = isClockedIn && !isOnBreak;
 
   useEffect(() => {
     let cancelled = false;
 
     async function run() {
       try {
-        if (isClockedIn) {
+        if (shouldTrack) {
           const fg = await Location.requestForegroundPermissionsAsync();
           if (cancelled || fg.status !== 'granted') return;
           await Location.requestBackgroundPermissionsAsync();
@@ -33,5 +37,5 @@ export function useLocationPollingEffect() {
     return () => {
       cancelled = true;
     };
-  }, [isClockedIn]);
+  }, [shouldTrack]);
 }

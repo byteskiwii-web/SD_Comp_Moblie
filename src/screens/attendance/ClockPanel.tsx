@@ -18,6 +18,8 @@ export function ClockPanel() {
   const employee = useAuthStore((s) => s.employee);
   const store = useAuthStore((s) => s.store);
   const setClockedIn = useShiftStore((s) => s.setClockedIn);
+  const setOnBreak = useShiftStore((s) => s.setOnBreak);
+  const setOffBreak = useShiftStore((s) => s.setOffBreak);
   const setClockedOut = useShiftStore((s) => s.setClockedOut);
   const queryClient = useQueryClient();
 
@@ -128,6 +130,14 @@ export function ClockPanel() {
     },
     onSuccess: (result, action) => {
       queryClient.invalidateQueries({ queryKey: ['attendance-today', employee?.id] });
+      // Stops/resumes background location polling immediately -- tracking
+      // should only run while the employee is expected to be inside the
+      // store, not while on a break.
+      if (action === 'break-start') {
+        setOnBreak();
+      } else {
+        setOffBreak();
+      }
       const isPending = result.attendance.approval_status === 'pending-approval';
       setBanner({
         tone: isPending ? 'warning' : 'success',

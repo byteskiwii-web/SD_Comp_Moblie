@@ -34,10 +34,12 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
     return;
   }
 
-  // Safety net: if we're not actually clocked in anymore (e.g. clock-out
-  // raced with a scheduled tick), don't call the API.
+  // Safety net: if we're not actually clocked in anymore, or we're on a
+  // break (e.g. clock-out or break-start raced with a scheduled tick),
+  // don't call the API. useLocationPollingEffect stops this task on those
+  // same transitions, but a tick already in flight can still land here.
   const shift = useShiftStore.getState();
-  if (!shift.isClockedIn || !shift.storeCode) return;
+  if (!shift.isClockedIn || !shift.storeCode || shift.isOnBreak) return;
 
   const auth = useAuthStore.getState();
   const employeeId = auth.employee?.id;
