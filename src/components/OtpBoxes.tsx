@@ -36,6 +36,13 @@ export function OtpBoxes({ value, onChange, autoFocus }: Props) {
         maxLength={OTP_LENGTH}
         autoFocus={autoFocus}
         style={styles.hiddenInput}
+        // OS-level OTP autofill -- no native module or SMS permission needed.
+        // Android offers a one-tap "Allow" suggestion via the SMS User Consent
+        // API when it spots an OTP-shaped incoming message; iOS shows the
+        // code directly above the keyboard from Messages. Neither requires
+        // the SMS text to match any particular format on our side.
+        autoComplete="sms-otp"
+        textContentType="oneTimeCode"
       />
     </View>
   );
