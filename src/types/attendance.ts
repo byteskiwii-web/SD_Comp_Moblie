@@ -39,3 +39,35 @@ export type LocationCheckResult = {
   storeName: string;
   checkedAt: string;
 };
+
+export type MonthlySummary = {
+  month: string; // "YYYY-MM"
+  workingDays: number;
+  presentDays: number;
+  absentDays: number;
+  sundaysExcluded: number;
+};
+
+export type RegularisationStatus = 'pending' | 'approved' | 'rejected' | 'cancelled';
+export type RegularisationRequestType = 'adjust' | 'other';
+
+// This table alone uses a UUID primary key (pre-existing schema decision by
+// another contributor) -- every other id in this app's types is a number or
+// an employee/store code string.
+export type Regularisation = {
+  id: string;
+  org_id: string;
+  employee_id: string;
+  store_code: string;
+  mark_date: string;
+  request_type: RegularisationRequestType;
+  requested_clock_in: string | null;
+  requested_clock_out: string | null;
+  reason: string;
+  status: RegularisationStatus;
+  created_at: string;
+  created_by: string | null;
+  decided_at: string | null;
+  decided_by: string | null;
+  decision_note: string | null;
+};

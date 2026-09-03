@@ -1,5 +1,12 @@
 import { apiClient } from './client';
-import type { AttendanceMark, LocationCheckResult, PunchResult } from '../types/attendance';
+import type {
+  AttendanceMark,
+  LocationCheckResult,
+  MonthlySummary,
+  PunchResult,
+  Regularisation,
+  RegularisationRequestType,
+} from '../types/attendance';
 
 type PunchInput = {
   employee_id: string;
@@ -99,4 +106,41 @@ export async function locationCheck(input: {
     }
   );
   return res.data;
+}
+
+// Present/absent day counts for one calendar month. Sunday-exclusion and the
+// date_of_joining/today clipping all happen server-side (attendance.service.js
+// #getMonthlySummary) -- this call just displays whatever it's given.
+export async function getMonthlySummary(employeeId: string, month?: string) {
+  const res = await apiClient.get<{ success: true; data: MonthlySummary }>(
+    `/attendance/${employeeId}/summary`,
+    { params: { month } }
+  );
+  return res.data.data;
+}
+
+type RegularisationInput = {
+  store_code: string;
+  mark_date: string; // YYYY-MM-DD
+  request_type: RegularisationRequestType;
+  requested_clock_in?: string; // ISO datetime -- only meaningful for 'adjust'
+  requested_clock_out?: string;
+  reason: string;
+};
+
+// employee_id is NOT sent -- the backend's selfSubmit guard sources it from
+// the session and overwrites anything in the body, same rule as every punch.
+export async function submitRegularisation(input: RegularisationInput) {
+  const res = await apiClient.post<{ success: true; message: string; data: Regularisation }>(
+    '/regularisation',
+    input
+  );
+  return res.data.data;
+}
+
+export async function getMyRegularisations(employeeId: string) {
+  const res = await apiClient.get<{ success: true; data: Regularisation[] }>(
+    `/regularisation/${employeeId}`
+  );
+  return res.data.data;
 }

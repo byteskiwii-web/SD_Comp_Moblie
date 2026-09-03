@@ -1,25 +1,41 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigation } from '@react-navigation/native';
 import { Button, Card } from '../../components/ui';
+import { NotificationBell } from '../../components/NotificationBell';
+import { NotificationPanel } from '../../components/NotificationPanel';
 import { colors, radii } from '../../theme/tokens';
 import { useAuthStore } from '../../stores/authStore';
-import { getAttendanceHistory } from '../../api/attendance.api';
+import { getAttendanceHistory, getMonthlySummary } from '../../api/attendance.api';
 import { getLatestMarkOfTypes, SHIFT_TYPES } from '../../utils/attendanceStatus';
 
 const today = () => new Date().toISOString().slice(0, 10);
+const currentMonth = () => new Date().toISOString().slice(0, 7); // "YYYY-MM"
 
 export function HomeScreen() {
   const employee = useAuthStore((s) => s.employee);
   const store = useAuthStore((s) => s.store);
   const navigation = useNavigation<any>();
+  const [notifOpen, setNotifOpen] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ['attendance-today', employee?.id],
     queryFn: () => getAttendanceHistory(employee!.id, today(), today()),
     enabled: !!employee,
+  });
+
+  // Sunday-exclusion and the date_of_joining/today clipping are computed
+  // entirely server-side (attendance.service.js#getMonthlySummary) -- this
+  // screen just displays the numbers it gets back. staleTime matches
+  // ProfileScreen's getMe query: this doesn't need to be fresher than every
+  // 5 minutes.
+  const summaryQuery = useQuery({
+    queryKey: ['attendance-summary', employee?.id, currentMonth()],
+    queryFn: () => getMonthlySummary(employee!.id),
+    enabled: !!employee,
+    staleTime: 5 * 60 * 1000,
   });
 
   // Marks come back most-recent-first. Employees can clock in/out multiple
@@ -41,10 +57,15 @@ export function HomeScreen() {
             <Text style={styles.welcome}>Welcome back</Text>
             <Text style={styles.name}>{employee?.first_name ?? 'there'}</Text>
           </View>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarInitial}>{employee?.first_name?.[0] ?? '?'}</Text>
+          <View style={styles.headerActions}>
+            <NotificationBell onPress={() => setNotifOpen(true)} />
+            <View style={styles.avatar}>
+              <Text style={styles.avatarInitial}>{employee?.first_name?.[0] ?? '?'}</Text>
+            </View>
           </View>
         </View>
+
+        <NotificationPanel visible={notifOpen} onClose={() => setNotifOpen(false)} />
 
         <View style={[styles.hero, isOnShift ? styles.heroActive : styles.heroInactive]}>
           <View style={styles.heroDecoration} pointerEvents="none" />
@@ -80,6 +101,39 @@ export function HomeScreen() {
         />
 
         <Card>
+          <Text style={styles.cardTitle}>This month</Text>
+          {summaryQuery.isLoading ? (
+            <ActivityIndicator color={colors.brand[700]} style={styles.loadingSpacer} />
+          ) : summaryQuery.isError || !summaryQuery.data ? (
+            <Text style={styles.errorText}>Could not load this month's attendance.</Text>
+          ) : (
+            <View style={styles.summaryRow}>
+              <View style={styles.summaryTile}>
+                <Text style={[styles.summaryValue, { color: colors.success }]}>{summaryQuery.data.presentDays}</Text>
+                <Text style={styles.summaryLabel}>Present</Text>
+              </View>
+              <View style={styles.summarySeparator} />
+              <View style={styles.summaryTile}>
+                <Text
+                  style={[
+                    styles.summaryValue,
+                    summaryQuery.data.absentDays > 0 ? { color: colors.danger } : { color: colors.textLight },
+                  ]}
+                >
+                  {summaryQuery.data.absentDays}
+                </Text>
+                <Text style={styles.summaryLabel}>Absent</Text>
+              </View>
+              <View style={styles.summarySeparator} />
+              <View style={styles.summaryTile}>
+                <Text style={styles.summaryValue}>{summaryQuery.data.workingDays}</Text>
+                <Text style={styles.summaryLabel}>Working days</Text>
+              </View>
+            </View>
+          )}
+        </Card>
+
+        <Card>
           <Text style={styles.cardTitle}>Today's timeline</Text>
           {isLoading ? (
             <ActivityIndicator color={colors.brand[700]} style={styles.loadingSpacer} />
@@ -107,6 +161,7 @@ const styles = StyleSheet.create({
   content: { padding: 20, paddingTop: 8, gap: 16 },
 
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   welcome: { fontSize: 12, color: colors.slate500, fontWeight: '600' },
   name: { fontSize: 20, fontWeight: '800', color: colors.textLight, marginTop: 2, letterSpacing: -0.3 },
   avatar: {
@@ -138,7 +193,14 @@ const styles = StyleSheet.create({
 
   cardTitle: { fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4, color: colors.slate500, marginBottom: 4 },
   loadingSpacer: { marginVertical: 12 },
+  errorText: { fontSize: 12, color: colors.slate500, paddingVertical: 8 },
   emptyText: { fontSize: 13, color: colors.slate400, paddingVertical: 8 },
+
+  summaryRow: { flexDirection: 'row', alignItems: 'center', paddingTop: 8 },
+  summaryTile: { flex: 1, alignItems: 'center' },
+  summarySeparator: { width: 1, height: 32, backgroundColor: colors.slate100 },
+  summaryValue: { fontSize: 20, fontWeight: '800', color: colors.textLight },
+  summaryLabel: { fontSize: 10, fontWeight: '700', color: colors.slate500, textTransform: 'uppercase', letterSpacing: 0.3, marginTop: 4 },
   timelineRow: {
     flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10,
     borderBottomWidth: 1, borderBottomColor: colors.slate100,
