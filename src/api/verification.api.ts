@@ -1,5 +1,6 @@
 import { apiClient } from './client';
 import { API_BASE_URL } from '../constants/config';
+import { colors } from '../theme/tokens';
 
 export type KycCheckStatus = 'pending' | 'verified' | 'failed';
 
@@ -11,6 +12,21 @@ export type KycStatus = {
 
 export function isKycComplete(kyc: KycStatus): boolean {
   return kyc.pan.status === 'verified' && kyc.aadhaar.status === 'verified';
+}
+
+// Shared label/tone for a KYC check's status -- one source of truth, consumed
+// identically by the mandatory KYC gate screen and the Profile screen's KYC
+// section, so a "Verified" chip looks and reads the same everywhere.
+export const KYC_STATUS_LABEL: Record<KycCheckStatus, string> = {
+  verified: 'Verified',
+  pending: 'Pending',
+  failed: 'Failed',
+};
+
+export function kycStatusTone(status: KycCheckStatus): { bg: string; fg: string } {
+  if (status === 'verified') return { bg: colors.successBg, fg: colors.success };
+  if (status === 'failed') return { bg: colors.dangerBg, fg: colors.danger };
+  return { bg: colors.warningBg, fg: colors.warning };
 }
 
 export type HealthDepsResponse = {
@@ -105,4 +121,29 @@ export async function verifyAadhaarOtp(input: AadhaarOtpVerifyInput): Promise<Aa
     input
   );
   return res.data.data;
+}
+
+// Shared "is the KYC gate required" fetch, consumed by both useKycGate (the
+// mandatory Attendance-blocking gate) and the Profile screen's read-only KYC
+// section, so there's exactly one place that decides fail-open vs fail-closed.
+export type GateData = { verificationEnabled: false } | { verificationEnabled: true; kyc: KycStatus };
+
+export async function fetchKycGateStatus(): Promise<GateData> {
+  let deps;
+  try {
+    deps = await getHealthDeps();
+  } catch {
+    // Can't even confirm enforcement is meant to be active -- fail OPEN,
+    // matching the un-gated behaviour every employee has today.
+    return { verificationEnabled: false };
+  }
+  if (deps.dependencies.verification !== 'enabled') {
+    return { verificationEnabled: false };
+  }
+  // Verification is confirmed enabled from here on -- this call is
+  // deliberately NOT wrapped in try/catch. Letting it throw gives a
+  // consuming useQuery's `isError` one unambiguous meaning: "enforcement
+  // should apply, but we couldn't confirm completion" -- i.e. fail CLOSED.
+  const status = await getKycStatus();
+  return { verificationEnabled: true, kyc: status.kyc };
 }

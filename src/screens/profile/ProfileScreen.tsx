@@ -1,9 +1,16 @@
-import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button, Card } from '../../components/ui';
-import { colors, radii } from '../../theme/tokens';
+import { useFocusEffect } from '@react-navigation/native';
+import { useQuery } from '@tanstack/react-query';
+import Constants from 'expo-constants';
+import { Avatar, Badge, Button, Card, InfoRow } from '../../components/ui';
+import { NotificationBell } from '../../components/NotificationBell';
+import { NotificationPanel } from '../../components/NotificationPanel';
+import { colors, fonts } from '../../theme/tokens';
 import { useAuthStore } from '../../stores/authStore';
+import { getMe } from '../../api/auth.api';
+import { fetchKycGateStatus, KYC_STATUS_LABEL, KycCheckStatus, kycStatusTone } from '../../api/verification.api';
 
 const ROLE_LABEL: Record<string, string> = {
   'field-employee': 'Field Employee',
@@ -12,83 +19,206 @@ const ROLE_LABEL: Record<string, string> = {
   'super-admin': 'Super Admin',
 };
 
+function formatShift(start: string | null, end: string | null): string {
+  if (!start || !end) return '—';
+  const fmt = (t: string) => t.slice(0, 5); // "10:00:00" -> "10:00"
+  return `${fmt(start)} – ${fmt(end)}`;
+}
+
+function formatJoined(dateStr: string | null): string {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return '—';
+  return d.toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function KycRow({ label, status }: { label: string; status: KycCheckStatus }) {
+  const tone = kycStatusTone(status);
+  return (
+    <View style={styles.kycRow}>
+      <Text style={styles.kycLabel}>{label}</Text>
+      <Badge tone={status === 'verified' ? 'success' : status === 'failed' ? 'danger' : 'warning'}>
+        {KYC_STATUS_LABEL[status]}
+      </Badge>
+    </View>
+  );
+}
+
 export function ProfileScreen() {
   const employee = useAuthStore((s) => s.employee);
   const store = useAuthStore((s) => s.store);
   const signOut = useAuthStore((s) => s.signOut);
+  const [notifOpen, setNotifOpen] = useState(false);
+
+  const isFieldEmployee = employee?.role === 'field-employee';
+
+  // Shift/joining date aren't part of authStore's cached Employee (login
+  // never returns them -- see zip-hrms-backend's auth.service.js#issueSession)
+  // -- fetched on demand rather than folded into login, since they change
+  // essentially never and don't need to be carried through every session.
+  const meExtrasQuery = useQuery({
+    queryKey: ['auth-me-extras', employee?.id],
+    queryFn: getMe,
+    enabled: !!employee,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Same gate status the mandatory KYC screen computes, reused here purely
+  // for read-only display -- this screen never blocks anything on it.
+  const kycQuery = useQuery({
+    queryKey: ['profile-kyc-status', employee?.id],
+    queryFn: fetchKycGateStatus,
+    enabled: isFieldEmployee,
+    retry: false,
+  });
+
+  // Bottom-tab screens stay mounted, so without this the KYC section would
+  // only ever reflect whatever it saw once per app session -- refetch every
+  // time Profile regains focus, to catch KYC completed via the gate flow
+  // (or by HR) while this screen sat idle in the background.
+  useFocusEffect(
+    useCallback(() => {
+      if (isFieldEmployee) kycQuery.refetch();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isFieldEmployee])
+  );
+
+  const kyc = kycQuery.data?.verificationEnabled ? kycQuery.data.kyc : null;
+  const showKycCard = isFieldEmployee && kycQuery.data?.verificationEnabled === true;
+
+  const aadhaarValue = !isFieldEmployee
+    ? '—'
+    : kycQuery.isLoading
+      ? '…'
+      : kyc
+        ? KYC_STATUS_LABEL[kyc.aadhaar.status]
+        : '—';
+  const panValue = !isFieldEmployee
+    ? '—'
+    : kycQuery.isLoading
+      ? '…'
+      : kyc
+        ? (kyc.pan.masked ?? KYC_STATUS_LABEL[kyc.pan.status])
+        : '—';
+  const bankValue = !isFieldEmployee
+    ? '—'
+    : kycQuery.isLoading
+      ? '…'
+      : kyc
+        ? kyc.bank.status === 'verified' && kyc.bank.masked
+          ? `Verified · ${kyc.bank.masked}`
+          : KYC_STATUS_LABEL[kyc.bank.status]
+        : '—';
 
   return (
     <SafeAreaView style={styles.flex} edges={['top']}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Profile</Text>
+        <NotificationBell onPress={() => setNotifOpen(true)} />
       </View>
+      <NotificationPanel visible={notifOpen} onClose={() => setNotifOpen(false)} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.heroCard}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarInitial}>{employee?.first_name?.[0] ?? '?'}</Text>
-          </View>
-          <Text style={styles.name}>
-            {employee?.first_name} {employee?.last_name}
-          </Text>
-          <View style={styles.pillRow}>
-            <View style={styles.pill}>
-              <Text style={styles.pillText}>{employee?.id}</Text>
-            </View>
-            <View style={[styles.pill, styles.pillBrand]}>
-              <Text style={[styles.pillText, styles.pillTextBrand]}>
-                {employee?.role ? (ROLE_LABEL[employee.role] ?? employee.role) : '—'}
-              </Text>
+        <Card style={styles.heroCard}>
+          <Avatar name={`${employee?.first_name ?? ''} ${employee?.last_name ?? ''}`} employeeId={employee?.id} size={56} />
+          <View style={styles.heroText}>
+            <Text style={styles.name}>
+              {employee?.first_name} {employee?.last_name}
+            </Text>
+            <Text style={styles.subline}>
+              {employee?.id} · {employee?.role ? (ROLE_LABEL[employee.role] ?? employee.role) : '—'}
+            </Text>
+            <View style={styles.badgeRow}>
+              <Badge tone="success">Active</Badge>
+              <Badge tone="brand">{store?.name ?? '—'}</Badge>
             </View>
           </View>
-        </View>
+        </Card>
 
         <Card>
           <Text style={styles.cardTitle}>Contact & assignment</Text>
-          <Row label="Phone" value={employee?.phone ?? '—'} />
-          <Row label="Email" value={employee?.email ?? '—'} />
-          <Row label="Store" value={store?.name ?? '—'} last />
+          <InfoRow icon="phone" label="Phone" value={employee?.phone ?? '—'} />
+          <InfoRow icon="mail" label="Email" value={employee?.email ?? '—'} />
+          <InfoRow icon="building" label="Assigned site" value={store?.name ?? '—'} />
+          <InfoRow
+            icon="clock"
+            label="Shift"
+            value={
+              meExtrasQuery.isLoading ? '…' : formatShift(meExtrasQuery.data?.shiftStart ?? null, meExtrasQuery.data?.shiftEnd ?? null)
+            }
+          />
+          <InfoRow icon="shield" label="Aadhaar" value={aadhaarValue} />
+          <InfoRow icon="file" label="PAN" value={panValue} />
+          <InfoRow icon="wallet" label="Bank" value={bankValue} />
+          <InfoRow
+            icon="calendar"
+            label="Joined"
+            value={meExtrasQuery.isLoading ? '…' : formatJoined(meExtrasQuery.data?.dateOfJoining ?? null)}
+            last
+          />
         </Card>
 
-        <Button title="Sign out" variant="outline" onPress={() => signOut()} />
+        {showKycCard ? (
+          <Card>
+            <Text style={styles.cardTitle}>KYC verification</Text>
+            {kycQuery.isError ? (
+              <View style={styles.kycError}>
+                <Text style={styles.kycErrorText}>Couldn't load verification status</Text>
+                <Pressable onPress={() => kycQuery.refetch()}>
+                  <Text style={styles.kycRetryText}>Retry</Text>
+                </Pressable>
+              </View>
+            ) : kycQuery.isLoading || !kyc ? (
+              <View style={styles.kycLoading}>
+                <ActivityIndicator size="small" color={colors.brand[700]} />
+              </View>
+            ) : (
+              <>
+                <KycRow label="PAN Verification" status={kyc.pan.status} />
+                <KycRow label="Aadhaar Verification" status={kyc.aadhaar.status} />
+                <KycRow label="Bank Verification" status={kyc.bank.status} />
+              </>
+            )}
+          </Card>
+        ) : null}
+
+        <Button variant="danger" title="Sign out" onPress={() => signOut()} />
+
+        <Text style={styles.footer}>S.D. Computronix HRMS · v{Constants.expoConfig?.version ?? '1.0'}</Text>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-function Row({ label, value, last }: { label: string; value: string; last?: boolean }) {
-  return (
-    <View style={[styles.row, last && styles.rowLast]}>
-      <Text style={styles.rowLabel}>{label}</Text>
-      <Text style={styles.rowValue}>{value}</Text>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.bgLight },
-  header: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 4 },
+  header: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 20, paddingTop: 12, paddingBottom: 4,
+  },
   headerTitle: { fontSize: 24, fontWeight: '800', color: colors.textLight, letterSpacing: -0.3 },
   content: { padding: 20, paddingTop: 12, gap: 16 },
 
-  heroCard: { alignItems: 'center', paddingVertical: 8 },
-  avatar: {
-    width: 76, height: 76, borderRadius: 38, backgroundColor: colors.brand[700],
-    alignItems: 'center', justifyContent: 'center', marginBottom: 14,
-  },
-  avatarInitial: { color: colors.white, fontSize: 30, fontWeight: '800' },
-  name: { fontSize: 19, fontWeight: '800', color: colors.textLight },
-  pillRow: { flexDirection: 'row', gap: 8, marginTop: 10 },
-  pill: { backgroundColor: colors.slate100, paddingHorizontal: 12, paddingVertical: 5, borderRadius: radii.pill },
-  pillBrand: { backgroundColor: colors.brand[50] },
-  pillText: { fontSize: 11, fontWeight: '700', color: colors.slate600 },
-  pillTextBrand: { color: colors.brand[700] },
+  heroCard: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  heroText: { flex: 1, minWidth: 0 },
+  name: { fontSize: 16, fontWeight: '800', color: colors.textLight },
+  subline: { fontSize: 11, color: colors.slate500, marginTop: 2, fontFamily: fonts.mono },
+  badgeRow: { flexDirection: 'row', gap: 8, marginTop: 8 },
 
-  cardTitle: { fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4, color: colors.slate500, marginBottom: 4 },
-  row: {
-    flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10,
-    borderBottomWidth: 1, borderBottomColor: colors.slate100,
+  cardTitle: {
+    fontSize: 11,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+    color: colors.slate500,
+    marginBottom: 4,
   },
-  rowLast: { borderBottomWidth: 0 },
-  rowLabel: { fontSize: 12, fontWeight: '600', color: colors.slate500 },
-  rowValue: { fontSize: 13, fontWeight: '700', color: colors.textLight },
+
+  kycRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10 },
+  kycLabel: { fontSize: 13, fontWeight: '600', color: colors.textLight },
+  kycLoading: { paddingVertical: 16, alignItems: 'center' },
+  kycError: { paddingVertical: 10, gap: 8 },
+  kycErrorText: { fontSize: 12, color: colors.slate500 },
+  kycRetryText: { fontSize: 12, fontWeight: '700', color: colors.brand[700] },
+
+  footer: { fontSize: 10, color: colors.slate400, textAlign: 'center', paddingVertical: 4 },
 });

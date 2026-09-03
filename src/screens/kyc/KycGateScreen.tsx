@@ -7,22 +7,10 @@ import { Button, Card } from '../../components/ui';
 import { colors, radii } from '../../theme/tokens';
 import { useAuthStore } from '../../stores/authStore';
 import { useKycGate } from '../../hooks/useKycGate';
-import { KycCheckStatus } from '../../api/verification.api';
+import { KycCheckStatus, KYC_STATUS_LABEL as STATUS_LABEL, kycStatusTone as statusTone } from '../../api/verification.api';
 import { KycStackParamList } from '../../navigation/types';
 
 type Nav = NativeStackNavigationProp<KycStackParamList>;
-
-const STATUS_LABEL: Record<KycCheckStatus, string> = {
-  verified: 'Verified',
-  pending: 'Pending',
-  failed: 'Failed',
-};
-
-function statusTone(status: KycCheckStatus) {
-  if (status === 'verified') return { bg: colors.successBg, fg: colors.success };
-  if (status === 'failed') return { bg: colors.dangerBg, fg: colors.danger };
-  return { bg: colors.warningBg, fg: colors.warning };
-}
 
 function StatusRow({ label, status }: { label: string; status: KycCheckStatus }) {
   const tone = statusTone(status);

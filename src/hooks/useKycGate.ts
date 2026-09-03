@@ -2,32 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '../stores/authStore';
-import { getHealthDeps, getKycStatus, isKycComplete, KycStatus } from '../api/verification.api';
+import { fetchKycGateStatus, isKycComplete, KycStatus } from '../api/verification.api';
 
 export const kycGateQueryKey = (employeeId?: string) => ['kyc-gate', employeeId] as const;
-
-type GateData = { verificationEnabled: false } | { verificationEnabled: true; kyc: KycStatus };
-
-async function fetchKycGateStatus(): Promise<GateData> {
-  let deps;
-  try {
-    deps = await getHealthDeps();
-  } catch {
-    // Can't even confirm enforcement is meant to be active -- fail OPEN,
-    // matching the un-gated behaviour every employee has today.
-    return { verificationEnabled: false };
-  }
-  if (deps.dependencies.verification !== 'enabled') {
-    return { verificationEnabled: false };
-  }
-  // Verification is confirmed enabled from here on -- this call is
-  // deliberately NOT wrapped in try/catch. Letting it throw gives
-  // useQuery's `isError` one unambiguous meaning: "enforcement should
-  // apply, but we couldn't confirm completion" -- i.e. fail CLOSED,
-  // handled by the caller (the gate screen's error/retry state).
-  const status = await getKycStatus();
-  return { verificationEnabled: true, kyc: status.kyc };
-}
 
 /**
  * Mandatory KYC gate for field employees. Attendance stays hidden until

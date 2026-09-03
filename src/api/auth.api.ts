@@ -24,6 +24,23 @@ export async function login(employee_id: string, password: string) {
   return { token: accessToken, refreshToken, employee, store };
 }
 
+// Extra self-profile fields not returned by /auth/login -- see
+// zip-hrms-backend's auth.controller.js#me / auth.service.js#getProfileExtras.
+export type MeResponse = {
+  id: string;
+  name: string;
+  role: string;
+  storeCode: string | null;
+  dateOfJoining: string | null;
+  shiftStart: string | null;
+  shiftEnd: string | null;
+};
+
+export async function getMe() {
+  const res = await apiClient.get<{ success: true; data: MeResponse }>('/auth/me');
+  return res.data.data;
+}
+
 export async function requestPasswordResetOtp(employee_id: string) {
   const res = await apiClient.post<{ success: true; data: { maskedEmail: string } }>(
     '/auth/forgot-password/request-otp',
