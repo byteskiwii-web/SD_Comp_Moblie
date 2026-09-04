@@ -6,7 +6,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // table or push infrastructure (deliberately: see src/utils/notifications.ts).
 // Persisted the same way shiftStore.ts already persists shift state, so this
 // introduces no new pattern and no new native dependency.
-export type LocalNotificationType = 'clock-out-reminder' | 'geofence-alert' | 'general';
+export type LocalNotificationType =
+  | 'clock-out-reminder'
+  | 'geofence-alert'
+  | 'integrity-warning'
+  | 'integrity-escalated'
+  | 'general';
 
 export type LocalNotification = {
   id: string;

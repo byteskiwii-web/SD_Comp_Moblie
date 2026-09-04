@@ -56,6 +56,33 @@ export async function cancelClockOutReminder(): Promise<void> {
 }
 
 /**
+ * Fires an immediate local notification for a shift-integrity detection
+ * (location services off, or Developer Mode on -- see
+ * useShiftIntegrityWatcher.ts). Unlike the clock-out reminder, this has no
+ * fixed identifier: each one is a distinct, one-off alert, not something a
+ * later call should replace.
+ */
+export async function fireIntegrityAlertNotification(input: {
+  title: string;
+  body: string;
+  escalated: boolean;
+}): Promise<void> {
+  const perms = await Notifications.getPermissionsAsync();
+  if (perms.status !== 'granted') {
+    const req = await Notifications.requestPermissionsAsync();
+    if (req.status !== 'granted') return; // best-effort -- never blocks the shift
+  }
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title: input.title,
+      body: input.body,
+      data: { kind: input.escalated ? 'integrity-escalated' : 'integrity-warning' },
+    },
+    trigger: null,
+  });
+}
+
+/**
  * Captures locally-fired notifications into the on-device history list so
  * the bell panel has something to show. Fires while the app is foregrounded
  * or backgrounded-but-alive; if the OS killed the JS process before the
@@ -74,10 +101,12 @@ export function registerNotificationHistoryListener() {
   return Notifications.addNotificationReceivedListener((event) => {
     const { title, body, data } = event.request.content;
     const kind = (data as { kind?: string } | undefined)?.kind;
-    useNotificationsStore.getState().add({
-      type: kind === 'clock-out-reminder' ? 'clock-out-reminder' : kind === 'geofence-alert' ? 'geofence-alert' : 'general',
-      title: title ?? 'Notification',
-      body: body ?? '',
-    });
+    const type =
+      kind === 'clock-out-reminder' ? 'clock-out-reminder' :
+      kind === 'geofence-alert' ? 'geofence-alert' :
+      kind === 'integrity-warning' ? 'integrity-warning' :
+      kind === 'integrity-escalated' ? 'integrity-escalated' :
+      'general';
+    useNotificationsStore.getState().add({ type, title: title ?? 'Notification', body: body ?? '' });
   });
 }

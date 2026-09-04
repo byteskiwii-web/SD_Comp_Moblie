@@ -7,11 +7,15 @@ import { LocalNotification, LocalNotificationType, useNotificationsStore } from 
 const TYPE_ICON: Record<LocalNotificationType, IconName> = {
   'clock-out-reminder': 'clock',
   'geofence-alert': 'target',
+  'integrity-warning': 'target',
+  'integrity-escalated': 'shield',
   general: 'bell',
 };
 const TYPE_TINT: Record<LocalNotificationType, { bg: string; fg: string }> = {
   'clock-out-reminder': { bg: colors.warningBg, fg: colors.warning },
   'geofence-alert': { bg: colors.dangerBg, fg: colors.danger },
+  'integrity-warning': { bg: colors.warningBg, fg: colors.warning },
+  'integrity-escalated': { bg: colors.dangerBg, fg: colors.danger },
   general: { bg: colors.slate100, fg: colors.slate600 },
 };
 

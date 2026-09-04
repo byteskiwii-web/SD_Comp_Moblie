@@ -8,6 +8,7 @@ import { useAuthStore } from '../stores/authStore';
 import { useShiftSync } from '../hooks/useShiftSync';
 import { useLocationPollingEffect } from '../hooks/useLocationPollingEffect';
 import { useClockOutReminderEffect } from '../hooks/useClockOutReminderEffect';
+import { useShiftIntegrityWatcher } from '../hooks/useShiftIntegrityWatcher';
 import { useKycGate } from '../hooks/useKycGate';
 import { colors } from '../theme/tokens';
 
@@ -23,6 +24,7 @@ function AuthenticatedApp() {
   useShiftSync();
   useLocationPollingEffect();
   useClockOutReminderEffect();
+  useShiftIntegrityWatcher();
   const { isLoading, gateRequired } = useKycGate();
 
   if (isLoading) return <FullScreenSpinner />;
