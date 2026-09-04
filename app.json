@@ -53,7 +53,8 @@
         {
           "color": "#1E40AF"
         }
-      ]
+      ],
+      "@react-native-community/datetimepicker"
     ],
     "extra": {
       "eas": {

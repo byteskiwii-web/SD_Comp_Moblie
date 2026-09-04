@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Badge, Button, Card, TextField } from '../../components/ui';
+import { DatePickerField, TimePickerField } from '../../components/PickerField';
 import { colors, radii } from '../../theme/tokens';
 import { useAuthStore } from '../../stores/authStore';
 import { getMyRegularisations, submitRegularisation } from '../../api/attendance.api';
@@ -120,11 +121,11 @@ export function RegularisePanel() {
       )}
 
       <Card style={styles.formCard}>
-        <TextField
+        <DatePickerField
           label="Date"
           value={markDate}
-          onChangeText={setMarkDate}
-          placeholder="YYYY-MM-DD"
+          onChange={setMarkDate}
+          maximumDate={new Date()}
           error={errors.markDate}
         />
 
@@ -146,10 +147,10 @@ export function RegularisePanel() {
         {requestType === 'adjust' && (
           <View style={styles.timeRow}>
             <View style={styles.timeField}>
-              <TextField label="Corrected clock-in" value={clockIn} onChangeText={setClockIn} placeholder="HH:MM" />
+              <TimePickerField label="Corrected clock-in" value={clockIn} onChange={setClockIn} />
             </View>
             <View style={styles.timeField}>
-              <TextField label="Corrected clock-out" value={clockOut} onChangeText={setClockOut} placeholder="HH:MM" />
+              <TimePickerField label="Corrected clock-out" value={clockOut} onChange={setClockOut} />
             </View>
           </View>
         )}
