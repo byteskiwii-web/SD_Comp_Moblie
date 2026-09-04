@@ -10,7 +10,7 @@ import { NotificationPanel } from '../../components/NotificationPanel';
 import { colors, fonts } from '../../theme/tokens';
 import { useAuthStore } from '../../stores/authStore';
 import { getMe } from '../../api/auth.api';
-import { fetchKycGateStatus, KYC_STATUS_LABEL, KycCheckStatus, kycStatusTone } from '../../api/verification.api';
+import { getKycStatus, KYC_STATUS_LABEL, KycCheckStatus, kycStatusTone } from '../../api/verification.api';
 
 const ROLE_LABEL: Record<string, string> = {
   'field-employee': 'Field Employee',
@@ -63,11 +63,18 @@ export function ProfileScreen() {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Same gate status the mandatory KYC screen computes, reused here purely
-  // for read-only display -- this screen never blocks anything on it.
+  // Reads GET /verification/status directly -- NOT fetchKycGateStatus (the
+  // mandatory-gate check useKycGate.ts uses), because those answer different
+  // questions. The gate asks "should Attendance be blocked right now",
+  // which correctly stays fail-open while verification is toggled off. This
+  // screen asks "does this employee have KYC history worth showing", which
+  // doesn't stop being true just because new verifications are currently
+  // disabled -- an employee verified last month is still verified.
+  // GET /verification/status is mounted unconditionally on the backend for
+  // exactly this reason (see verification.status.routes.js).
   const kycQuery = useQuery({
     queryKey: ['profile-kyc-status', employee?.id],
-    queryFn: fetchKycGateStatus,
+    queryFn: getKycStatus,
     enabled: isFieldEmployee,
     retry: false,
   });
@@ -83,8 +90,8 @@ export function ProfileScreen() {
     }, [isFieldEmployee])
   );
 
-  const kyc = kycQuery.data?.verificationEnabled ? kycQuery.data.kyc : null;
-  const showKycCard = isFieldEmployee && kycQuery.data?.verificationEnabled === true;
+  const kyc = kycQuery.data?.kyc ?? null;
+  const showKycCard = isFieldEmployee;
 
   const aadhaarValue = !isFieldEmployee
     ? '—'
