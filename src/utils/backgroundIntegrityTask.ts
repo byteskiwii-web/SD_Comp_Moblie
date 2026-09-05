@@ -53,6 +53,12 @@ async function hydrateForBackgroundRun(): Promise<void> {
  * at module scope.
  */
 TaskManager.defineTask(BACKGROUND_INTEGRITY_TASK, async () => {
+  // Visible in the Metro log regardless of whether the app is foregrounded --
+  // the one way to tell from outside the device whether the OS is actually
+  // invoking this at all (vs. silently dropping/deferring it, which several
+  // Android OEMs -- OnePlus/OxygenOS included -- are known to do to
+  // registered WorkManager tasks despite an app requesting otherwise).
+  console.log(`[backgroundIntegrityTask] invoked at ${new Date().toISOString()}`);
   try {
     await hydrateForBackgroundRun();
     await checkShiftIntegrity();
@@ -65,12 +71,32 @@ TaskManager.defineTask(BACKGROUND_INTEGRITY_TASK, async () => {
 
 export async function startBackgroundIntegrityChecks(): Promise<void> {
   const status = await BackgroundTask.getStatusAsync();
+  console.log('[backgroundIntegrityTask] getStatusAsync ->', BackgroundTask.BackgroundTaskStatus[status]);
   if (status !== BackgroundTask.BackgroundTaskStatus.Available) return; // e.g. restricted by device battery settings
   await BackgroundTask.registerTaskAsync(BACKGROUND_INTEGRITY_TASK, {
     minimumInterval: INTEGRITY_BACKGROUND_MIN_INTERVAL_MINUTES,
   });
+  console.log('[backgroundIntegrityTask] registered, minimumInterval =', INTEGRITY_BACKGROUND_MIN_INTERVAL_MINUTES);
 }
 
 export async function stopBackgroundIntegrityChecks(): Promise<void> {
   await BackgroundTask.unregisterTaskAsync(BACKGROUND_INTEGRITY_TASK).catch(() => {});
+}
+
+/**
+ * Forces the OS to run the task right now instead of waiting for its own
+ * schedule -- expo-background-task ships this specifically for testing.
+ * Only works in a debug/dev-client build (this app has no production build
+ * yet, so that's not a practical restriction here) -- silently returns
+ * false in a release build rather than throwing.
+ *
+ * Exists to answer one question fast: does the task DO the right thing once
+ * invoked? If triggering this produces a report/notification immediately,
+ * the check logic is fine and the earlier absence of alerts was Android (or
+ * OnePlus specifically) not invoking the task on its own schedule -- a
+ * device/OS problem, not an app bug. If triggering this ALSO produces
+ * nothing, the bug is in the task itself.
+ */
+export async function triggerBackgroundIntegrityCheckForTesting(): Promise<boolean> {
+  return BackgroundTask.triggerTaskWorkerForTestingAsync();
 }

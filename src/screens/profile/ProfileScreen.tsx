@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
@@ -11,6 +11,7 @@ import { colors, fonts } from '../../theme/tokens';
 import { useAuthStore } from '../../stores/authStore';
 import { getMe } from '../../api/auth.api';
 import { getKycStatus, KYC_STATUS_LABEL, KycCheckStatus, kycStatusTone } from '../../api/verification.api';
+import { triggerBackgroundIntegrityCheckForTesting } from '../../utils/backgroundIntegrityTask';
 
 const ROLE_LABEL: Record<string, string> = {
   'field-employee': 'Field Employee',
@@ -187,6 +188,32 @@ export function ProfileScreen() {
             )}
           </Card>
         ) : null}
+
+        {/*
+          Dev-only diagnostic: forces the background integrity task to run
+          right now instead of waiting for Android's own (15-min-minimum,
+          not-guaranteed) schedule. Answers one question fast: does the task
+          DO the right thing once invoked, or is the OS just never invoking
+          it? __DEV__ is false in a release build, so this never ships.
+        */}
+        {__DEV__ && (
+          <Card>
+            <Text style={styles.cardTitle}>Dev tools</Text>
+            <Button
+              variant="outline"
+              title="Trigger background check now"
+              onPress={async () => {
+                const ran = await triggerBackgroundIntegrityCheckForTesting();
+                Alert.alert(
+                  ran ? 'Triggered' : 'Not triggered',
+                  ran
+                    ? 'The background task ran. Check the Metro log for [backgroundIntegrityTask] lines, and watch for a notification if something was flagged.'
+                    : 'expo-background-task reported it did not run this (only works in a debug/dev-client build).'
+                );
+              }}
+            />
+          </Card>
+        )}
 
         <Button variant="danger" title="Sign out" onPress={() => signOut()} />
 
