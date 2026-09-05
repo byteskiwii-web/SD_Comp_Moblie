@@ -9,6 +9,9 @@ import { registerNotificationHistoryListener } from './src/utils/notifications';
 // must be imported unconditionally so the OS can find it even after the app
 // process was killed while a background task was still scheduled.
 import './src/utils/backgroundLocationTask';
+// Same reasoning, for the shift-integrity (location-off / Developer Mode)
+// background task.
+import './src/utils/backgroundIntegrityTask';
 
 const queryClient = new QueryClient();
 
