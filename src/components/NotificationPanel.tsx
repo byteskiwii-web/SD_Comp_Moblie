@@ -1,8 +1,16 @@
 import React, { useEffect } from 'react';
-import { FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Dimensions, FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Icon, IconName } from './Icon';
 import { colors, radii } from '../theme/tokens';
 import { LocalNotification, LocalNotificationType, useNotificationsStore } from '../stores/notificationsStore';
+
+// An explicit pixel cap on the LIST itself, not a percentage on an ancestor.
+// A percentage maxHeight on `sheet` plus flexShrink on the FlatList was not
+// enough on-device: the list kept measuring itself to fit every row instead
+// of being capped, so it had nothing to scroll against. Giving the FlatList
+// a concrete number removes any ambiguity in how that percentage resolves
+// through the Modal -> Pressable -> Pressable chain above it.
+const LIST_MAX_HEIGHT = Dimensions.get('window').height * 0.6;
 
 const TYPE_ICON: Record<LocalNotificationType, IconName> = {
   'clock-out-reminder': 'clock',
@@ -78,7 +86,7 @@ export function NotificationPanel({ visible, onClose }: { visible: boolean; onCl
               data={items}
               keyExtractor={(i) => i.id}
               renderItem={({ item }) => <NotificationRow item={item} onRemove={remove} />}
-              style={styles.list}
+              style={[styles.list, { maxHeight: LIST_MAX_HEIGHT }]}
               showsVerticalScrollIndicator
             />
           )}
@@ -110,14 +118,11 @@ const styles = StyleSheet.create({
     width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center',
     backgroundColor: colors.slate100,
   },
-  // flexGrow: 0 alone left this unbounded: React Native's Yoga defaults
-  // flexShrink to 0 (unlike web CSS flexbox, where it defaults to 1), so the
-  // FlatList measured itself to fit ALL rows rather than shrinking to the
-  // sheet's maxHeight -- it never became height-constrained, so it had
-  // nothing to scroll against and the earliest notifications were simply
-  // rendered past the visible edge of the screen. flexShrink: 1 lets it be
-  // squeezed into the remaining space below the header, which is what
-  // actually makes its internal scrolling kick in.
+  // The real bound is LIST_MAX_HEIGHT, applied inline where this is used --
+  // a concrete pixel value, because a percentage maxHeight on `sheet` alone
+  // did not reliably constrain the FlatList through the Modal -> Pressable
+  // -> Pressable ancestor chain. flexShrink: 1 stays as a second line of
+  // defense (Yoga defaults it to 0, unlike web CSS flexbox's default of 1).
   list: { flexGrow: 0, flexShrink: 1 },
   emptyText: { fontSize: 13, color: colors.slate400, textAlign: 'center', padding: 24 },
 
