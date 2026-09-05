@@ -8,9 +8,20 @@ import { useAuthStore } from '../../stores/authStore';
 import { useShiftStore } from '../../stores/shiftStore';
 import { haversineDistance } from '../../utils/haversine';
 import { clockIn, clockOut, endBreak, getAttendanceHistory, startBreak } from '../../api/attendance.api';
-import { CameraCaptureScreen } from './CameraCaptureScreen';
 import { getApiErrorMessage } from '../../api/client';
 import { getLatestMarkOfTypes, SHIFT_TYPES, BREAK_TYPES } from '../../utils/attendanceStatus';
+import { isExpoGo } from '../../utils/runtimeEnv';
+import type { CameraCaptureProps } from './CameraCaptureScreen.expogo';
+
+// A static import of the real capture screen would pull VisionCamera into the
+// eager module graph, so Expo Go would throw at bundle evaluation -- before
+// login even renders. require() defers evaluation to whichever branch we
+// actually take, leaving the native module untouched inside Expo Go.
+const CameraCaptureScreen: React.ComponentType<CameraCaptureProps> = isExpoGo
+  ? // eslint-disable-next-line @typescript-eslint/no-var-requires
+    require('./CameraCaptureScreen.expogo').CameraCaptureScreen
+  : // eslint-disable-next-line @typescript-eslint/no-var-requires
+    require('./CameraCaptureScreen').CameraCaptureScreen;
 
 const today = () => new Date().toISOString().slice(0, 10);
 

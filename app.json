@@ -7,11 +7,18 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "updates": {
+      "url": "https://u.expo.dev/fb842050-3b20-40aa-ad5b-3400e2a05ae7"
+    },
+    "runtimeVersion": {
+      "policy": "fingerprint"
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.sdcomputronix.ziphrmsmobile",
       "infoPlist": {
-        "NSCameraUsageDescription": "Allow zip-hrms-mobile to access your camera to verify your identity when you clock in or out."
+        "NSCameraUsageDescription": "Allow zip-hrms-mobile to access your camera to verify your identity when you clock in or out.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {

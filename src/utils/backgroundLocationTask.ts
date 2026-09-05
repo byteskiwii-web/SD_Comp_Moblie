@@ -6,6 +6,7 @@ import { useShiftStore } from '../stores/shiftStore';
 import { useAuthStore } from '../stores/authStore';
 import { locationCheck } from '../api/attendance.api';
 import { Platform } from 'react-native';
+import { isExpoGo } from './runtimeEnv';
 
 // Required for scheduleNotificationAsync() below to actually surface a
 // notification while the app is foregrounded; harmless if we're backgrounded.
@@ -72,6 +73,11 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
 });
 
 export async function startBackgroundLocationPolling(): Promise<void> {
+  // Expo Go has no background location on iOS -- startLocationUpdatesAsync
+  // rejects there. No-op rather than surface an unhandled rejection to a
+  // reviewer who is only here to look at screens.
+  if (isExpoGo) return;
+
   const alreadyRunning = await Location.hasStartedLocationUpdatesAsync(BACKGROUND_LOCATION_TASK);
   if (alreadyRunning) return;
 
@@ -90,6 +96,8 @@ export async function startBackgroundLocationPolling(): Promise<void> {
 }
 
 export async function stopBackgroundLocationPolling(): Promise<void> {
+  if (isExpoGo) return;
+
   const isRunning = await Location.hasStartedLocationUpdatesAsync(BACKGROUND_LOCATION_TASK);
   if (!isRunning) return;
   await Location.stopLocationUpdatesAsync(BACKGROUND_LOCATION_TASK);
