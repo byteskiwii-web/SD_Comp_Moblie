@@ -71,8 +71,19 @@ export function NotificationPanel({ visible, onClose }: { visible: boolean; onCl
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <Pressable style={styles.backdrop} onPress={onClose}>
-        <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
+      {/*
+        The backdrop is an absolutely-positioned SIBLING behind the sheet, not
+        a Pressable wrapping it. Wrapping the sheet in a Pressable (to stop a
+        tap on it closing the modal) meant that ancestor claimed the touch
+        responder for drags starting anywhere on a row, and never handed it to
+        the list -- so the list only scrolled if the drag happened to start on
+        the dismiss button, whose own press cancels and releases the responder.
+        With the backdrop as a sibling, nothing above the list competes for the
+        gesture and the whole sheet scrolls.
+      */}
+      <View style={styles.root}>
+        <Pressable style={styles.backdrop} onPress={onClose} />
+        <View style={styles.sheet}>
           <View style={styles.sheetHeader}>
             <Text style={styles.sheetTitle}>Notifications</Text>
             <Pressable onPress={onClose} hitSlop={8} style={styles.closeButton}>
@@ -90,14 +101,15 @@ export function NotificationPanel({ visible, onClose }: { visible: boolean; onCl
               showsVerticalScrollIndicator
             />
           )}
-        </Pressable>
-      </Pressable>
+        </View>
+      </View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: 'rgba(15,23,42,0.4)', justifyContent: 'flex-end' },
+  root: { flex: 1, justifyContent: 'flex-end' },
+  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(15,23,42,0.4)' },
   sheet: {
     backgroundColor: colors.white,
     borderTopLeftRadius: radii.xl,

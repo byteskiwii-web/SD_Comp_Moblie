@@ -34,6 +34,14 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
     return;
   }
 
+  // If the OS revived the JS context after killing the app, none of the
+  // normal startup ran: the JWT is still unread in SecureStore (so the API
+  // call would 401) and the persisted shift store still holds its defaults
+  // (so the guard below would bail). Hydrating both first is what makes this
+  // task work from a cold start, not just while the foreground service has
+  // kept the process warm. Same fix as backgroundIntegrityTask.ts.
+  await Promise.all([useAuthStore.getState().hydrate(), useShiftStore.persist.rehydrate()]);
+
   // Safety net: if we're not actually clocked in anymore, or we're on a
   // break (e.g. clock-out or break-start raced with a scheduled tick),
   // don't call the API. useLocationPollingEffect stops this task on those
