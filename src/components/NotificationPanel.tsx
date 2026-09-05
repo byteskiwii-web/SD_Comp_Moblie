@@ -28,7 +28,7 @@ function fmtTimestamp(iso: string) {
   });
 }
 
-function NotificationRow({ item }: { item: LocalNotification }) {
+function NotificationRow({ item, onRemove }: { item: LocalNotification; onRemove: (id: string) => void }) {
   const tint = TYPE_TINT[item.type];
   return (
     <View style={[styles.row, !item.read && styles.rowUnread]}>
@@ -40,6 +40,9 @@ function NotificationRow({ item }: { item: LocalNotification }) {
         <Text style={styles.rowBody}>{item.body}</Text>
         <Text style={styles.rowTime}>{fmtTimestamp(item.timestamp)}</Text>
       </View>
+      <Pressable onPress={() => onRemove(item.id)} hitSlop={10} style={styles.dismissButton}>
+        <Icon name="x" size={12} color={colors.slate400} />
+      </Pressable>
     </View>
   );
 }
@@ -52,6 +55,7 @@ function NotificationRow({ item }: { item: LocalNotification }) {
 export function NotificationPanel({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const items = useNotificationsStore((s) => s.items);
   const markAllRead = useNotificationsStore((s) => s.markAllRead);
+  const remove = useNotificationsStore((s) => s.remove);
 
   useEffect(() => {
     if (visible) markAllRead();
@@ -73,8 +77,9 @@ export function NotificationPanel({ visible, onClose }: { visible: boolean; onCl
             <FlatList
               data={items}
               keyExtractor={(i) => i.id}
-              renderItem={({ item }) => <NotificationRow item={item} />}
+              renderItem={({ item }) => <NotificationRow item={item} onRemove={remove} />}
               style={styles.list}
+              showsVerticalScrollIndicator
             />
           )}
         </Pressable>
@@ -105,14 +110,26 @@ const styles = StyleSheet.create({
     width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center',
     backgroundColor: colors.slate100,
   },
-  list: { flexGrow: 0 },
+  // flexGrow: 0 alone left this unbounded: React Native's Yoga defaults
+  // flexShrink to 0 (unlike web CSS flexbox, where it defaults to 1), so the
+  // FlatList measured itself to fit ALL rows rather than shrinking to the
+  // sheet's maxHeight -- it never became height-constrained, so it had
+  // nothing to scroll against and the earliest notifications were simply
+  // rendered past the visible edge of the screen. flexShrink: 1 lets it be
+  // squeezed into the remaining space below the header, which is what
+  // actually makes its internal scrolling kick in.
+  list: { flexGrow: 0, flexShrink: 1 },
   emptyText: { fontSize: 13, color: colors.slate400, textAlign: 'center', padding: 24 },
 
-  row: { flexDirection: 'row', gap: 10, padding: 14, borderBottomWidth: 1, borderBottomColor: colors.slate100 },
+  row: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, padding: 14, borderBottomWidth: 1, borderBottomColor: colors.slate100 },
   rowUnread: { backgroundColor: colors.brand[50] },
   iconCircle: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
   rowText: { flex: 1, minWidth: 0 },
   rowTitle: { fontSize: 13, fontWeight: '700', color: colors.textLight },
   rowBody: { fontSize: 12, color: colors.slate600, marginTop: 2 },
   rowTime: { fontSize: 10, color: colors.slate400, marginTop: 4 },
+  dismissButton: {
+    width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: colors.slate100,
+  },
 });

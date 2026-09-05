@@ -28,6 +28,7 @@ type NotificationsState = {
   items: LocalNotification[];
   add: (n: { type: LocalNotificationType; title: string; body: string }) => void;
   markAllRead: () => void;
+  remove: (id: string) => void;
   clear: () => void;
 };
 
@@ -48,6 +49,7 @@ export const useNotificationsStore = create<NotificationsState>()(
           ].slice(0, MAX_ITEMS),
         })),
       markAllRead: () => set((state) => ({ items: state.items.map((i) => ({ ...i, read: true })) })),
+      remove: (id) => set((state) => ({ items: state.items.filter((i) => i.id !== id) })),
       clear: () => set({ items: [] }),
     }),
     {
