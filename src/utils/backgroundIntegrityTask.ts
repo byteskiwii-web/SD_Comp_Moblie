@@ -4,7 +4,6 @@ import { BACKGROUND_INTEGRITY_TASK, INTEGRITY_BACKGROUND_MIN_INTERVAL_MINUTES } 
 import { checkShiftIntegrity } from './shiftIntegrityCheck';
 import { useAuthStore } from '../stores/authStore';
 import { useShiftStore } from '../stores/shiftStore';
-import { useIntegrityAlertStore } from '../stores/integrityAlertStore';
 
 /**
  * Loads the state this check depends on BEFORE reading any of it.
@@ -13,11 +12,11 @@ import { useIntegrityAlertStore } from '../stores/integrityAlertStore';
  * app's normal startup has happened: App.tsx never rendered, so
  * authStore.hydrate() was never called and the JWT is still sitting in
  * SecureStore unread -- every API call would go out with no Authorization
- * header and come back 401. The two zustand stores have the same problem
- * from the other direction: their persist middleware hydrates from
- * AsyncStorage asynchronously, so reading them synchronously in a cold
- * context returns DEFAULTS (isClockedIn: false), and the check would bail
- * before doing anything.
+ * header and come back 401. The shift store has the same problem from the
+ * other direction: its persist middleware hydrates from AsyncStorage
+ * asynchronously, so reading it synchronously in a cold context returns
+ * DEFAULTS (isClockedIn: false), and the check would bail before doing
+ * anything.
  *
  * Both were silently swallowed -- a failed report just leaves the edge flag
  * unset -- which is exactly why closing the app and disabling location
@@ -29,11 +28,7 @@ import { useIntegrityAlertStore } from '../stores/integrityAlertStore';
  * clobber a just-written in-memory value with a slightly stale one).
  */
 async function hydrateForBackgroundRun(): Promise<void> {
-  await Promise.all([
-    useAuthStore.getState().hydrate(),
-    useShiftStore.persist.rehydrate(),
-    useIntegrityAlertStore.persist.rehydrate(),
-  ]);
+  await Promise.all([useAuthStore.getState().hydrate(), useShiftStore.persist.rehydrate()]);
 }
 
 /**

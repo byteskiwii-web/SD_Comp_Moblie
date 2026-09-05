@@ -1,83 +1,94 @@
 import * as Location from 'expo-location';
 import JailMonkey from 'jail-monkey';
 import { useShiftStore } from '../stores/shiftStore';
-import { useIntegrityAlertStore } from '../stores/integrityAlertStore';
-import { reportAttendanceAlert, AttendanceAlertType } from '../api/attendanceAlerts.api';
+import { reportIntegrityState, AttendanceAlertType } from '../api/attendanceAlerts.api';
 import { fireIntegrityAlertNotification } from './notifications';
 
 const today = () => new Date().toISOString().slice(0, 10);
 
-async function report(storeCode: string, alertType: AttendanceAlertType, label: string): Promise<boolean> {
+const WARNING_TITLE: Record<AttendanceAlertType, string> = {
+  location_off: 'Location is off',
+  developer_mode: 'Developer Mode is on',
+};
+const WARNING_ACTION: Record<AttendanceAlertType, string> = {
+  location_off: 'turn location back on',
+  developer_mode: 'disable Developer Mode',
+};
+
+/**
+ * Observes both integrity conditions and reports what it sees. Called from
+ * two places on different cadences -- the foreground hook
+ * (useShiftIntegrityWatcher, ~60s while the app is open) and the background
+ * task (backgroundIntegrityTask.ts, roughly every 15+ min while it isn't).
+ *
+ * This function holds NO state about what it has already reported. It sends
+ * the current state of both conditions every time, and the server decides
+ * whether that is a new detection (attendanceAlert.service.js
+ * #recordIntegrityState owns the open-period flags). The response's
+ * `counted` says which conditions actually incremented, and only those
+ * produce a notification -- so a continuing outage reports repeatedly but
+ * warns exactly once.
+ *
+ * The earlier design kept an "already reported" flag on the device. That put
+ * the de-duplication decision on one side and the counter on the other with
+ * nothing keeping them in step: clearing app data mid-shift re-counted one
+ * unbroken outage against the employee, and resetting the row server-side
+ * silenced the device until the condition was manually toggled off and on.
+ *
+ * No-ops entirely when not on shift -- the same isClockedIn && !isOnBreak
+ * gate useLocationPollingEffect uses for the geofence poll.
+ */
+export async function checkShiftIntegrity(): Promise<void> {
+  const shift = useShiftStore.getState();
+  if (!shift.isClockedIn || shift.isOnBreak || !shift.storeCode) return;
+
+  let locationOff = false;
+  let developerMode = false;
+
   try {
-    const result = await reportAttendanceAlert({ store_code: storeCode, mark_date: today(), alert_type: alertType });
+    locationOff = !(await Location.hasServicesEnabledAsync());
+  } catch {
+    // A check that can't run isn't a detection -- report it as "fine" rather
+    // than counting it against the employee.
+  }
+
+  try {
+    developerMode = await JailMonkey.isDevelopmentSettingsMode();
+  } catch {
+    // Android-only; treated the same way.
+  }
+
+  try {
+    const result = await reportIntegrityState({
+      store_code: shift.storeCode,
+      mark_date: today(),
+      conditions: { location_off: locationOff, developer_mode: developerMode },
+    });
+
+    const newlyCounted = (Object.keys(result.counted) as AttendanceAlertType[]).filter((t) => result.counted[t]);
+    if (newlyCounted.length === 0) return;
+
     if (result.status === 'pending') {
       await fireIntegrityAlertNotification({
         title: 'Attendance sent for review',
         body: "An integrity issue was detected 4 times today. Today's attendance has been sent to your manager and HR for review.",
         escalated: true,
       });
-    } else {
-      const action = alertType === 'location_off' ? 'turn location back on' : 'disable Developer Mode';
+      return;
+    }
+
+    // If both conditions happened to flip at once, warn about each -- they
+    // are separate things for the employee to fix.
+    for (const type of newlyCounted) {
       await fireIntegrityAlertNotification({
-        title: label,
-        body: `Warning ${result.alertCount} of 3 — ${action} to keep today's attendance valid.`,
+        title: WARNING_TITLE[type],
+        body: `Warning ${result.alertCount} of 3 — ${WARNING_ACTION[type]} to keep today's attendance valid.`,
         escalated: false,
       });
     }
-    return true;
   } catch {
-    return false; // leave the persisted flag unflipped so the next check retries
-  }
-}
-
-/**
- * The one place that decides "has anything actually changed since we last
- * looked" and reports it. Called from two independent contexts -- the
- * foreground hook (useShiftIntegrityWatcher, every ~60s while the app is
- * open) and the background task (backgroundIntegrityTask.ts, roughly every
- * 15+ min while it isn't) -- both reading and writing the SAME persisted
- * integrityAlertStore, so whichever one notices a transition first is the
- * only one that reports it.
- *
- * No-ops entirely when not actually on shift (mirrors the same
- * isClockedIn && !isOnBreak gate useLocationPollingEffect already uses for
- * the geofence poll) -- there is no day to flag if there is no shift.
- */
-export async function checkShiftIntegrity(): Promise<void> {
-  const shift = useShiftStore.getState();
-  if (!shift.isClockedIn || shift.isOnBreak || !shift.storeCode) return;
-  const storeCode = shift.storeCode;
-  const date = today();
-  const alerts = useIntegrityAlertStore.getState();
-
-  // A new day means neither condition has been reported yet today, even if
-  // the persisted flags say otherwise from yesterday -- resolved by
-  // withDayReset inside the store itself the moment either setter fires, so
-  // here we just treat a stale forDate as "assume true" for comparison.
-  const locationOk = alerts.forDate === date ? alerts.locationOk : true;
-  const devModeOff = alerts.forDate === date ? alerts.devModeOff : true;
-
-  try {
-    const locationEnabled = await Location.hasServicesEnabledAsync();
-    if (locationEnabled) {
-      if (!locationOk) useIntegrityAlertStore.getState().setLocationOk(true, date);
-    } else if (locationOk) {
-      const ok = await report(storeCode, 'location_off', 'Location is off');
-      if (ok) useIntegrityAlertStore.getState().setLocationOk(false, date);
-    }
-  } catch {
-    // Best-effort -- a transient check failure isn't itself a detection.
-  }
-
-  try {
-    const devModeOn = await JailMonkey.isDevelopmentSettingsMode();
-    if (!devModeOn) {
-      if (!devModeOff) useIntegrityAlertStore.getState().setDevModeOff(true, date);
-    } else if (devModeOff) {
-      const ok = await report(storeCode, 'developer_mode', 'Developer Mode is on');
-      if (ok) useIntegrityAlertStore.getState().setDevModeOff(false, date);
-    }
-  } catch {
-    // Android-only check; a failure here is treated as "nothing to report".
+    // Network hiccup: nothing was counted server-side, and this function
+    // keeps no state, so the next check simply reports the same picture
+    // again. Nothing to reconcile.
   }
 }
