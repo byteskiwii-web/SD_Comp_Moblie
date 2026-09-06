@@ -55,7 +55,7 @@ export function RegularisePanel() {
 
   const listQuery = useQuery({
     queryKey: ['regularisation-mine', employee?.id],
-    queryFn: () => getMyRegularisations(employee!.id),
+    queryFn: getMyRegularisations,
     enabled: !!employee,
   });
 
@@ -180,7 +180,7 @@ export function RegularisePanel() {
           (listQuery.data as Regularisation[]).map((r, i, arr) => (
             <View key={r.id} style={[styles.reqRow, i === arr.length - 1 && styles.reqRowLast]}>
               <View style={styles.reqHeader}>
-                <Text style={styles.reqDate}>{fmtDate(r.mark_date)}</Text>
+                <Text style={styles.reqDate}>{fmtDate(r.markDate)}</Text>
                 <Badge tone={STATUS_TONE[r.status]}>{STATUS_LABEL[r.status]}</Badge>
               </View>
               <Text style={styles.reqReason} numberOfLines={2}>

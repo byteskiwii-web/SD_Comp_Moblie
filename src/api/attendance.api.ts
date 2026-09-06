@@ -128,19 +128,21 @@ type RegularisationInput = {
   reason: string;
 };
 
-// employee_id is NOT sent -- the backend's selfSubmit guard sources it from
-// the session and overwrites anything in the body, same rule as every punch.
+// employee_id is NOT sent -- omitting it raises the request under the
+// caller's own id. Sending someone else's id here would need reviewer
+// authority the mobile app's own employee session never has, so there is
+// nothing this app could gain by sending one.
 export async function submitRegularisation(input: RegularisationInput) {
-  const res = await apiClient.post<{ success: true; message: string; data: Regularisation }>(
-    '/regularisation',
-    input
-  );
+  const res = await apiClient.post<{ success: true; data: Regularisation }>('/regularisation', input);
   return res.data.data;
 }
 
-export async function getMyRegularisations(employeeId: string) {
-  const res = await apiClient.get<{ success: true; data: Regularisation[] }>(
-    `/regularisation/${employeeId}`
-  );
+// No employeeId param, and no path segment for one: GET /regularisation is
+// self-scoped exactly like every other endpoint in this app -- a
+// field-employee calling it with no filters gets only their own requests,
+// newest-pending-first. `data` is the flat array; paging rides in `meta`
+// (this app doesn't page its own request list, so meta is ignored).
+export async function getMyRegularisations() {
+  const res = await apiClient.get<{ success: true; data: Regularisation[] }>('/regularisation');
   return res.data.data;
 }

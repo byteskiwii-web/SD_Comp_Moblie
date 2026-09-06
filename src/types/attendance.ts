@@ -54,20 +54,28 @@ export type RegularisationRequestType = 'adjust' | 'other';
 // This table alone uses a UUID primary key (pre-existing schema decision by
 // another contributor) -- every other id in this app's types is a number or
 // an employee/store code string.
+//
+// The API shapes every response to camelCase (regularisation.service.js's
+// `shape()`) even though the request body stays snake_case -- see
+// submitRegularisation/getMyRegularisations in attendance.api.ts.
+// employeeName/storeName are present on list/get (joined in for a reviewer's
+// queue) and absent (undefined) on submit/decide's response, which returns
+// the bare row.
 export type Regularisation = {
   id: string;
-  org_id: string;
-  employee_id: string;
-  store_code: string;
-  mark_date: string;
-  request_type: RegularisationRequestType;
-  requested_clock_in: string | null;
-  requested_clock_out: string | null;
+  employeeId: string;
+  employeeName?: string;
+  storeCode: string;
+  storeName?: string;
+  markDate: string;
+  requestType: RegularisationRequestType;
+  requestedClockIn: string | null;
+  requestedClockOut: string | null;
   reason: string;
   status: RegularisationStatus;
-  created_at: string;
-  created_by: string | null;
-  decided_at: string | null;
-  decided_by: string | null;
-  decision_note: string | null;
+  createdAt: string;
+  createdBy: string | null;
+  decidedAt: string | null;
+  decidedBy: string | null;
+  decisionNote: string | null;
 };
