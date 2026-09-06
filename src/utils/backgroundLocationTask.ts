@@ -5,6 +5,7 @@ import { BACKGROUND_LOCATION_TASK } from '../constants/config';
 import { useShiftStore } from '../stores/shiftStore';
 import { useAuthStore } from '../stores/authStore';
 import { locationCheck } from '../api/attendance.api';
+import { checkShiftIntegrity } from './shiftIntegrityCheck';
 import { Platform } from 'react-native';
 
 // Required for scheduleNotificationAsync() below to actually surface a
@@ -39,7 +40,7 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
   // call would 401) and the persisted shift store still holds its defaults
   // (so the guard below would bail). Hydrating both first is what makes this
   // task work from a cold start, not just while the foreground service has
-  // kept the process warm. Same fix as backgroundIntegrityTask.ts.
+  // kept the process warm.
   await Promise.all([useAuthStore.getState().hydrate(), useShiftStore.persist.rehydrate()]);
 
   // Safety net: if we're not actually clocked in anymore, or we're on a
@@ -74,6 +75,15 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
         trigger: null,
       });
     }
+
+    // Piggybacked here rather than scheduled separately: this task is the
+    // one reliable channel while the app is closed (a foreground service,
+    // exempt from the OEM battery management that silently drops
+    // WorkManager-scheduled tasks -- confirmed on a real OnePlus 11 5G). It
+    // also reports whatever location_off detection the server's gap
+    // inference found at the same moment, even though this device only sent
+    // Developer Mode -- see checkShiftIntegrity/attendanceAlerts.api.ts.
+    await checkShiftIntegrity();
   } catch (err) {
     console.warn('[locationTask] location-check failed', err);
   }

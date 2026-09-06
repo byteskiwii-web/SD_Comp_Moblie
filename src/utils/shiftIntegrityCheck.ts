@@ -1,4 +1,3 @@
-import * as Location from 'expo-location';
 import JailMonkey from 'jail-monkey';
 import { useShiftStore } from '../stores/shiftStore';
 import { reportIntegrityState, AttendanceAlertType } from '../api/attendanceAlerts.api';
@@ -16,24 +15,23 @@ const WARNING_ACTION: Record<AttendanceAlertType, string> = {
 };
 
 /**
- * Observes both integrity conditions and reports what it sees. Called from
- * two places on different cadences -- the foreground hook
+ * Checks Developer Mode and reports it. Location-off is no longer checked
+ * here -- the server infers it from ping gaps instead (see
+ * attendanceAlerts.api.ts) -- but this call's response can still carry a
+ * newly-counted location_off detection alongside (or instead of) a
+ * developer_mode one, so both are handled below.
+ *
+ * Called from two places on different cadences -- the foreground hook
  * (useShiftIntegrityWatcher, ~60s while the app is open) and the background
- * task (backgroundIntegrityTask.ts, roughly every 15+ min while it isn't).
+ * location task (backgroundLocationTask.ts, piggybacked on its own ~12-min
+ * reliable ping while the app is closed).
  *
- * This function holds NO state about what it has already reported. It sends
- * the current state of both conditions every time, and the server decides
- * whether that is a new detection (attendanceAlert.service.js
- * #recordIntegrityState owns the open-period flags). The response's
- * `counted` says which conditions actually incremented, and only those
- * produce a notification -- so a continuing outage reports repeatedly but
- * warns exactly once.
- *
- * The earlier design kept an "already reported" flag on the device. That put
- * the de-duplication decision on one side and the counter on the other with
- * nothing keeping them in step: clearing app data mid-shift re-counted one
- * unbroken outage against the employee, and resetting the row server-side
- * silenced the device until the condition was manually toggled off and on.
+ * Holds NO state about what it has already reported. It sends the current
+ * Developer Mode state every time, and the server decides whether that is a
+ * new detection (attendanceAlert.service.js#recordIntegrityState owns the
+ * open-period flags). The response's `counted` says which conditions
+ * actually incremented, and only those produce a notification -- so a
+ * continuing outage reports repeatedly but warns exactly once.
  *
  * No-ops entirely when not on shift -- the same isClockedIn && !isOnBreak
  * gate useLocationPollingEffect uses for the geofence poll.
@@ -42,27 +40,19 @@ export async function checkShiftIntegrity(): Promise<void> {
   const shift = useShiftStore.getState();
   if (!shift.isClockedIn || shift.isOnBreak || !shift.storeCode) return;
 
-  let locationOff = false;
   let developerMode = false;
-
-  try {
-    locationOff = !(await Location.hasServicesEnabledAsync());
-  } catch {
-    // A check that can't run isn't a detection -- report it as "fine" rather
-    // than counting it against the employee.
-  }
-
   try {
     developerMode = await JailMonkey.isDevelopmentSettingsMode();
   } catch {
-    // Android-only; treated the same way.
+    // Android-only. A check that can't run isn't a detection -- report it as
+    // "fine" rather than counting it against the employee.
   }
 
   try {
     const result = await reportIntegrityState({
       store_code: shift.storeCode,
       mark_date: today(),
-      conditions: { location_off: locationOff, developer_mode: developerMode },
+      conditions: { developer_mode: developerMode },
     });
 
     const newlyCounted = (Object.keys(result.counted) as AttendanceAlertType[]).filter((t) => result.counted[t]);

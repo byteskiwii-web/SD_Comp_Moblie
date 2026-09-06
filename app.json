@@ -54,8 +54,7 @@
           "color": "#1E40AF"
         }
       ],
-      "@react-native-community/datetimepicker",
-      "expo-background-task"
+      "@react-native-community/datetimepicker"
     ],
     "extra": {
       "eas": {
