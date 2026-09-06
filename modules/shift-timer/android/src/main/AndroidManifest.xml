@@ -1,0 +1,21 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <uses-permission android:name="android.permission.WAKE_LOCK" />
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+
+  <application>
+    <service
+      android:name=".ShiftTimerService"
+      android:exported="false"
+      android:stopWithTask="false"
+      android:foregroundServiceType="location" />
+
+    <service
+      android:name=".ShiftTimerTickService"
+      android:exported="false" />
+
+    <receiver
+      android:name=".ShiftTimerAlarmReceiver"
+      android:exported="false" />
+  </application>
+</manifest>

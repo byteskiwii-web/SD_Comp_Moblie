@@ -8,10 +8,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // attendance history) on every app-foreground event and after every
 // clock-in/out/break call. See useShiftSync.ts for that reconciliation.
 //
-// isOnBreak gates background location polling (useLocationPollingEffect,
-// backgroundLocationTask.ts): tracking should only run while the employee
-// is actually expected to be inside the store, i.e. clocked in AND not on
-// a break -- not after break-start, and not after clock-out.
+// isOnBreak gates the native shift-timer service (useLocationPollingEffect,
+// modules/shift-timer): tracking should only run while the employee is
+// actually expected to be inside the store, i.e. clocked in AND not on a
+// break -- not after break-start, and not after clock-out.
 type ShiftState = {
   isClockedIn: boolean;
   storeCode: string | null;

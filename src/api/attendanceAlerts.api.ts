@@ -3,14 +3,18 @@ import { apiClient } from './client';
 export type AttendanceAlertType = 'location_off' | 'developer_mode';
 export type AttendanceAlertStatus = 'tracking' | 'pending' | 'approved' | 'rejected';
 
-// What the CLIENT reports. location_off is deliberately absent: a device
-// with location off can't reliably report that while backgrounded (confirmed
-// on a real OnePlus 11 5G, where a WorkManager-scheduled background check
-// registered but was never invoked by the OS), so the server infers it
-// instead from gaps in the location-check pings it already receives via the
-// existing, reliably-scheduled foreground-service location task -- see
-// attendanceAlert.service.js#checkLocationGap.
-export type AttendanceAlertConditions = { developer_mode: boolean };
+// What the CLIENT reports. location_off is OPTIONAL: most reporters (the
+// foreground 60s tick) can't reliably know their own location state while
+// backgrounded (confirmed on a real OnePlus 11 5G, where a
+// WorkManager-scheduled background check registered but was never invoked by
+// the OS), so by default the server infers it instead from gaps in the
+// location-check pings it already receives via the reliably-scheduled
+// foreground-service location task -- see
+// attendanceAlert.service.js#checkLocationGap. The native shift-timer's tick
+// (src/tasks/shiftTimerTask.ts) DOES attempt a location fix itself on each
+// wake, so it can report location_off directly for instant detection instead
+// of waiting on the gap inference -- see shiftIntegrityCheck.ts.
+export type AttendanceAlertConditions = { developer_mode: boolean; location_off?: boolean };
 
 export type AttendanceAlertResult = {
   alertCount: number;

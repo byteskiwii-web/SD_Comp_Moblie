@@ -3,8 +3,8 @@ import { CLOCK_OUT_REMINDER_ID } from '../constants/config';
 import { useNotificationsStore } from '../stores/notificationsStore';
 
 // The notification handler and Android channel are already registered at
-// module scope in backgroundLocationTask.ts (imported once, unconditionally,
-// from App.tsx). Deliberately NOT repeated here -- two competing
+// module scope in notificationSetup.ts (imported once, unconditionally, from
+// index.ts). Deliberately NOT repeated here -- two competing
 // setNotificationHandler calls would be a bug, not extra safety.
 
 function parseHHMMSS(t: string): { h: number; m: number; s: number } {
@@ -92,10 +92,9 @@ export async function fireIntegrityAlertNotification(input: {
  * API. That is the accepted tradeoff of doing notifications locally with no
  * backend.
  *
- * Untagged notifications (no data.kind -- e.g. the existing geofence alert,
- * left completely unmodified in backgroundLocationTask.ts) fall into
- * 'general' rather than being dropped, so today's geofence alert shows up in
- * the panel for free.
+ * Untagged notifications (no data.kind) fall into 'general' rather than
+ * being dropped, so anything unanticipated still shows up in the panel
+ * instead of vanishing.
  */
 export function registerNotificationHistoryListener() {
   return Notifications.addNotificationReceivedListener((event) => {

@@ -1,6 +1,6 @@
 import JailMonkey from 'jail-monkey';
 import { useShiftStore } from '../stores/shiftStore';
-import { reportIntegrityState, AttendanceAlertType } from '../api/attendanceAlerts.api';
+import { reportIntegrityState, AttendanceAlertConditions, AttendanceAlertType } from '../api/attendanceAlerts.api';
 import { fireIntegrityAlertNotification } from './notifications';
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -15,28 +15,29 @@ const WARNING_ACTION: Record<AttendanceAlertType, string> = {
 };
 
 /**
- * Checks Developer Mode and reports it. Location-off is no longer checked
- * here -- the server infers it from ping gaps instead (see
- * attendanceAlerts.api.ts) -- but this call's response can still carry a
- * newly-counted location_off detection alongside (or instead of) a
- * developer_mode one, so both are handled below.
+ * Checks Developer Mode and reports it, optionally alongside a DIRECTLY
+ * known location-off state.
  *
  * Called from two places on different cadences -- the foreground hook
- * (useShiftIntegrityWatcher, ~60s while the app is open) and the background
- * location task (backgroundLocationTask.ts, piggybacked on its own ~12-min
- * reliable ping while the app is closed).
+ * (useShiftIntegrityWatcher, ~60s while the app is open, which never knows
+ * its own location state reliably and so omits knownLocationOff -- the
+ * server's gap inference is the fallback for that caller) and the native
+ * shift-timer's tick (shiftTimerTask.ts, roughly every 12 min including
+ * while the app is closed), which DOES attempt a location fix on every wake
+ * and so can pass a direct answer for instant detection instead of waiting
+ * on the server's gap threshold.
  *
  * Holds NO state about what it has already reported. It sends the current
- * Developer Mode state every time, and the server decides whether that is a
- * new detection (attendanceAlert.service.js#recordIntegrityState owns the
- * open-period flags). The response's `counted` says which conditions
+ * state every time, and the server decides whether that is a new detection
+ * (attendanceAlert.service.js#recordIntegrityState owns the open-period
+ * flags per condition). The response's `counted` says which conditions
  * actually incremented, and only those produce a notification -- so a
  * continuing outage reports repeatedly but warns exactly once.
  *
  * No-ops entirely when not on shift -- the same isClockedIn && !isOnBreak
  * gate useLocationPollingEffect uses for the geofence poll.
  */
-export async function checkShiftIntegrity(): Promise<void> {
+export async function checkShiftIntegrity(knownLocationOff?: boolean): Promise<void> {
   const shift = useShiftStore.getState();
   if (!shift.isClockedIn || shift.isOnBreak || !shift.storeCode) return;
 
@@ -49,10 +50,13 @@ export async function checkShiftIntegrity(): Promise<void> {
   }
 
   try {
+    const conditions: AttendanceAlertConditions = { developer_mode: developerMode };
+    if (typeof knownLocationOff === 'boolean') conditions.location_off = knownLocationOff;
+
     const result = await reportIntegrityState({
       store_code: shift.storeCode,
       mark_date: today(),
-      conditions: { developer_mode: developerMode },
+      conditions,
     });
 
     const newlyCounted = (Object.keys(result.counted) as AttendanceAlertType[]).filter((t) => result.counted[t]);
