@@ -9,6 +9,7 @@ import { useShiftStore } from '../../stores/shiftStore';
 import { haversineDistance } from '../../utils/haversine';
 import { clockIn, clockOut, endBreak, getAttendanceHistory, startBreak } from '../../api/attendance.api';
 import { CameraCaptureScreen } from './CameraCaptureScreen';
+import { runtimeLabel, supportsBackgroundLocation } from '../../native/runtime';
 import { getApiErrorMessage } from '../../api/client';
 import { getLatestMarkOfTypes, SHIFT_TYPES, BREAK_TYPES } from '../../utils/attendanceStatus';
 
@@ -160,16 +161,34 @@ export function ClockPanel() {
   // earlier, since Android only lets an app prompt for background access
   // after foreground access is already granted.
   const handleCaptured = async (filePath: string) => {
-    const bg = await Location.requestBackgroundPermissionsAsync();
-    if (bg.status !== 'granted') {
+    // requestBackgroundPermissionsAsync does not resolve to 'denied' when the
+    // runtime has no background location at all -- it *throws*
+    // (ERR_LOCATION_INFO_PLIST in Expo Go, whose Info.plist carries no
+    // NSLocationAlwaysAndWhenInUseUsageDescription). Unhandled, that rejection
+    // skipped the mutation and left this modal open with no feedback at all.
+    // A runtime that cannot grant the permission has not granted it, so treat
+    // the throw as a denial and fall into the same gate.
+    let granted = false;
+    try {
+      const bg = await Location.requestBackgroundPermissionsAsync();
+      granted = bg.status === 'granted';
+    } catch (err) {
+      console.warn('[ClockPanel] background location is unavailable in this runtime', err);
+    }
+
+    if (!granted) {
       setPendingAction(null);
       Alert.alert(
         'Background location required',
-        'To start or end your shift, you must allow location access "All the time" (not just "While using the app"), so we can periodically confirm you\'re still at the store during your shift.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Open Settings', onPress: () => Linking.openSettings() },
-        ]
+        supportsBackgroundLocation
+          ? 'To start or end your shift, you must allow location access "All the time" (not just "While using the app"), so we can periodically confirm you\'re still at the store during your shift.'
+          : `Starting or ending a shift needs "Allow all the time" location, which ${runtimeLabel} cannot grant at all. Use a development build to punch in or out.`,
+        supportsBackgroundLocation
+          ? [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Open Settings', onPress: () => Linking.openSettings() },
+            ]
+          : [{ text: 'OK' }]
       );
       return;
     }
