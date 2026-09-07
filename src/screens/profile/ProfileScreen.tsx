@@ -1,9 +1,10 @@
 import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { getPolicies } from '../../api/policies.api';
+import { formatDate } from '../../utils/datetime';
 import { Button, Card } from '../../components/ui';
 import { colors, radii } from '../../theme/tokens';
 import { useAuthStore } from '../../stores/authStore';
@@ -19,13 +20,29 @@ export function ProfileScreen() {
   const employee = useAuthStore((s) => s.employee);
   const store = useAuthStore((s) => s.store);
   const signOut = useAuthStore((s) => s.signOut);
+  const profile = useAuthStore((s) => s.profile);
+  const refreshProfile = useAuthStore((s) => s.refreshProfile);
+  const [refreshing, setRefreshing] = React.useState(false);
+
+  // Pull to refresh: the automatic read happens at boot, and somebody whose
+  // details were changed while the app was open needs a way to ask again
+  // without signing out.
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await refreshProfile();
+    setRefreshing(false);
+  }, [refreshProfile]);
 
   return (
     <SafeAreaView style={styles.flex} edges={['top']}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Profile</Text>
       </View>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.brand[700]} />}
+      >
         <View style={styles.heroCard}>
           <View style={styles.avatar}>
             <Text style={styles.avatarInitial}>{employee?.first_name?.[0] ?? '?'}</Text>
@@ -55,6 +72,16 @@ export function ProfileScreen() {
             icon="navigate-outline"
             label="Geo-fence"
             value={store?.geofence_radius_m ? store.geofence_radius_m + ' m radius' : '—'}
+          />
+          <Row
+            icon="time-outline"
+            label="Shift"
+            value={profile?.shiftStart && profile?.shiftEnd ? profile.shiftStart + ' – ' + profile.shiftEnd : '—'}
+          />
+          <Row
+            icon="calendar-outline"
+            label="Joined"
+            value={profile?.dateOfJoining ? formatDate(profile.dateOfJoining) : '—'}
             last
           />
         </Card>

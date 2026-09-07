@@ -24,6 +24,30 @@ export async function login(employee_id: string, password: string) {
   return { token: accessToken, refreshToken, employee, store };
 }
 
+/**
+ * The acting principal, straight from the session.
+ *
+ * Deliberately NOT the same shape as login's `employee`: this returns a single
+ * `name` and carries the shift window and joining date, but no phone or email.
+ * So it refreshes what it can answer for and leaves the rest of the cached
+ * record alone rather than blanking fields it was never asked about.
+ */
+export type Me = {
+  id: string;
+  name: string | null;
+  role: string;
+  storeCode: string | null;
+  dateOfJoining: string | null;
+  shiftStart: string | null;
+  shiftEnd: string | null;
+  zoneCode: string | null;
+};
+
+export async function getMe() {
+  const res = await apiClient.get<{ success: true; data: Me }>('/auth/me');
+  return res.data.data;
+}
+
 export async function requestPasswordResetOtp(employee_id: string) {
   const res = await apiClient.post<{ success: true; data: { maskedEmail: string } }>(
     '/auth/forgot-password/request-otp',
