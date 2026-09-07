@@ -4,8 +4,18 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, radii } from '../../theme/tokens';
 import { ClockPanel } from './ClockPanel';
 import { HistoryPanel } from './HistoryPanel';
+import { RegularisePanel } from './RegularisePanel';
 
-type Tab = 'clock' | 'history';
+type Tab = 'clock' | 'history' | 'regularise';
+
+// Labels mirror the reference build. The first tab still covers breaks as well
+// as the shift punches -- breaks are a real part of this product even though
+// the reference mock-up predates them.
+const TAB_LABEL: Record<Tab, string> = {
+  clock: 'Clock in/out',
+  history: 'History',
+  regularise: 'Regularise',
+};
 
 export function AttendanceScreen() {
   const [tab, setTab] = useState<Tab>('clock');
@@ -17,20 +27,20 @@ export function AttendanceScreen() {
       </View>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.segment}>
-          {(['clock', 'history'] as Tab[]).map((t) => (
+          {(['clock', 'history', 'regularise'] as Tab[]).map((t) => (
             <Pressable
               key={t}
               onPress={() => setTab(t)}
               style={[styles.segmentItem, tab === t && styles.segmentItemActive]}
             >
               <Text style={[styles.segmentText, tab === t && styles.segmentTextActive]}>
-                {t === 'clock' ? 'Shift & Breaks' : 'History'}
+                {TAB_LABEL[t]}
               </Text>
             </Pressable>
           ))}
         </View>
 
-        {tab === 'clock' ? <ClockPanel /> : <HistoryPanel />}
+        {tab === 'clock' ? <ClockPanel /> : tab === 'history' ? <HistoryPanel /> : <RegularisePanel />}
       </ScrollView>
     </SafeAreaView>
   );
@@ -55,6 +65,6 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 1,
   },
-  segmentText: { fontSize: 13, fontWeight: '700', color: colors.slate500 },
+  segmentText: { fontSize: 12, fontWeight: '700', color: colors.slate500 },
   segmentTextActive: { color: colors.brand[700] },
 });

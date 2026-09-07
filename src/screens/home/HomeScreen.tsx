@@ -1,15 +1,19 @@
 import React from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigation } from '@react-navigation/native';
-import { Button, Card } from '../../components/ui';
+import { Card } from '../../components/ui';
 import { colors, radii } from '../../theme/tokens';
 import { useAuthStore } from '../../stores/authStore';
 import { getAttendanceHistory } from '../../api/attendance.api';
 import { getLatestMarkOfTypes, SHIFT_TYPES } from '../../utils/attendanceStatus';
 
 const today = () => new Date().toISOString().slice(0, 10);
+
+const initialsOf = (first?: string, last?: string) =>
+  `${first?.[0] ?? ''}${last?.[0] ?? ''}`.toUpperCase() || '?';
 
 export function HomeScreen() {
   const employee = useAuthStore((s) => s.employee);
@@ -36,14 +40,29 @@ export function HomeScreen() {
   return (
     <SafeAreaView style={styles.flex} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Avatar leads the row, matching the reference build: identity first,
+            then the greeting, with actions pushed to the trailing edge. */}
         <View style={styles.headerRow}>
-          <View>
-            <Text style={styles.welcome}>Welcome back</Text>
-            <Text style={styles.name}>{employee?.first_name ?? 'there'}</Text>
-          </View>
           <View style={styles.avatar}>
-            <Text style={styles.avatarInitial}>{employee?.first_name?.[0] ?? '?'}</Text>
+            <Text style={styles.avatarInitial}>
+              {initialsOf(employee?.first_name, employee?.last_name)}
+            </Text>
           </View>
+          <View style={styles.headerText}>
+            <Text style={styles.welcome}>Welcome back</Text>
+            <Text style={styles.name} numberOfLines={1}>
+              {employee?.first_name ?? 'there'}
+            </Text>
+          </View>
+          <Pressable
+            style={styles.iconButton}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Notifications"
+            onPress={() => {}}
+          >
+            <Ionicons name="notifications-outline" size={20} color={colors.slate600} />
+          </Pressable>
         </View>
 
         <View style={[styles.hero, isOnShift ? styles.heroActive : styles.heroInactive]}>
@@ -74,10 +93,24 @@ export function HomeScreen() {
           </View>
         </View>
 
-        <Button
-          title={isOnShift ? 'End shift' : 'Start shift with live photo'}
+        {/* A row rather than a plain button: the icon and the second line carry
+            what the punch actually involves, which a single label cannot. */}
+        <Pressable
           onPress={() => navigation.navigate('Attendance')}
-        />
+          style={({ pressed }) => [styles.cta, pressed && styles.ctaPressed]}
+          accessibilityRole="button"
+        >
+          <View style={styles.ctaIcon}>
+            <Ionicons name="camera-outline" size={20} color={colors.brand[700]} />
+          </View>
+          <View style={styles.ctaText}>
+            <Text style={styles.ctaTitle}>
+              {isOnShift ? 'End shift with live photo' : 'Start shift with live photo'}
+            </Text>
+            <Text style={styles.ctaSubtitle}>Geo-fenced · location auto-captured</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={colors.slate400} />
+        </Pressable>
 
         <Card>
           <Text style={styles.cardTitle}>Today's timeline</Text>
@@ -86,15 +119,24 @@ export function HomeScreen() {
           ) : marks.length === 0 ? (
             <Text style={styles.emptyText}>No activity yet — start your shift to begin.</Text>
           ) : (
-            timelineMarks.map((m, i) => (
-              <View key={m.id} style={[styles.timelineRow, i === timelineMarks.length - 1 && styles.timelineRowLast]}>
-                <View style={[styles.dot, m.inside_geofence === false ? styles.dotOutside : styles.dotInside]} />
-                <Text style={styles.timelineType}>{m.mark_type.replace('-', ' ')}</Text>
-                <Text style={styles.timelineTime}>
-                  {new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </Text>
-              </View>
-            ))
+            timelineMarks.map((m, i) => {
+              const outside = m.inside_geofence === false;
+              return (
+                <View key={m.id} style={[styles.timelineRow, i === timelineMarks.length - 1 && styles.timelineRowLast]}>
+                  <View style={[styles.timelineIcon, outside ? styles.timelineIconBad : styles.timelineIconGood]}>
+                    <Ionicons
+                      name={outside ? 'close' : 'checkmark'}
+                      size={13}
+                      color={outside ? colors.danger : colors.success}
+                    />
+                  </View>
+                  <Text style={styles.timelineType}>{m.mark_type.replace('-', ' ')}</Text>
+                  <Text style={styles.timelineTime}>
+                    {new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </Text>
+                </View>
+              );
+            })
           )}
         </Card>
       </ScrollView>
@@ -106,17 +148,26 @@ const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.bgLight },
   content: { padding: 20, paddingTop: 8, gap: 16 },
 
-  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  headerRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  headerText: { flex: 1 },
   welcome: { fontSize: 12, color: colors.slate500, fontWeight: '600' },
   name: { fontSize: 20, fontWeight: '800', color: colors.textLight, marginTop: 2, letterSpacing: -0.3 },
   avatar: {
     width: 44, height: 44, borderRadius: 22, backgroundColor: colors.brand[700],
     alignItems: 'center', justifyContent: 'center',
   },
-  avatarInitial: { color: colors.white, fontSize: 17, fontWeight: '800' },
+  avatarInitial: { color: colors.white, fontSize: 15, fontWeight: '800', letterSpacing: 0.3 },
+  iconButton: {
+    width: 38, height: 38, borderRadius: 19, backgroundColor: colors.white,
+    alignItems: 'center', justifyContent: 'center',
+    shadowColor: colors.slate900, shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06, shadowRadius: 4, elevation: 1,
+  },
 
   hero: { borderRadius: radii.xl, padding: 20, overflow: 'hidden' },
-  heroActive: { backgroundColor: colors.brand[700] },
+  // Green while on shift, matching the reference build — the state is readable
+  // from the colour alone, across the room, without reading the label.
+  heroActive: { backgroundColor: '#0F9D58' },
   heroInactive: { backgroundColor: colors.slate800 },
   heroDecoration: {
     position: 'absolute', top: -40, right: -40, width: 140, height: 140, borderRadius: 70,
@@ -124,7 +175,7 @@ const styles = StyleSheet.create({
   },
   heroTopRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   statusDot: { width: 7, height: 7, borderRadius: 4 },
-  statusDotActive: { backgroundColor: colors.success },
+  statusDotActive: { backgroundColor: colors.white },
   statusDotInactive: { backgroundColor: colors.slate400 },
   heroLabel: { color: colors.white, opacity: 0.75, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.4 },
   heroTitle: { color: colors.white, fontSize: 26, fontWeight: '800', marginTop: 8, letterSpacing: -0.4 },
@@ -136,6 +187,21 @@ const styles = StyleSheet.create({
   heroStatLabel: { color: colors.white, opacity: 0.65, fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.3 },
   heroStatValue: { color: colors.white, fontSize: 16, fontWeight: '800', marginTop: 4 },
 
+  cta: {
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    backgroundColor: colors.white, borderRadius: radii.lg, padding: 14,
+    shadowColor: colors.slate900, shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06, shadowRadius: 8, elevation: 2,
+  },
+  ctaPressed: { opacity: 0.9 },
+  ctaIcon: {
+    width: 42, height: 42, borderRadius: radii.md, backgroundColor: colors.brand[50],
+    alignItems: 'center', justifyContent: 'center',
+  },
+  ctaText: { flex: 1 },
+  ctaTitle: { fontSize: 14.5, fontWeight: '800', color: colors.textLight, letterSpacing: -0.2 },
+  ctaSubtitle: { fontSize: 11.5, color: colors.slate500, marginTop: 2, fontWeight: '600' },
+
   cardTitle: { fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4, color: colors.slate500, marginBottom: 4 },
   loadingSpacer: { marginVertical: 12 },
   emptyText: { fontSize: 13, color: colors.slate400, paddingVertical: 8 },
@@ -144,9 +210,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1, borderBottomColor: colors.slate100,
   },
   timelineRowLast: { borderBottomWidth: 0 },
-  dot: { width: 9, height: 9, borderRadius: 5 },
-  dotInside: { backgroundColor: colors.success },
-  dotOutside: { backgroundColor: colors.danger },
+  timelineIcon: { width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
+  timelineIconGood: { backgroundColor: colors.successBg },
+  timelineIconBad: { backgroundColor: colors.dangerBg },
   timelineType: { flex: 1, fontSize: 13, fontWeight: '600', color: colors.textLight, textTransform: 'capitalize' },
   timelineTime: { fontSize: 12, color: colors.slate500, fontWeight: '600' },
 });
