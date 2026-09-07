@@ -13,4 +13,13 @@ export const isWeb = Platform.OS === 'web';
 export const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
 export const hasVisionCamera = !isWeb && !isExpoGo;
 export const supportsBackgroundLocation = !isWeb && !isExpoGo;
+/**
+ * modules/shift-timer is a local Expo module with an android/ directory and
+ * nothing else -- there is no iOS implementation. So it is missing from Expo
+ * Go on every platform AND from any iOS build, dev client included, and
+ * importing it throws "Cannot find native module ShiftTimer" at module
+ * evaluation, before anything renders.
+ */
+export const hasShiftTimer = !isWeb && !isExpoGo && Platform.OS === 'android';
+
 export const runtimeLabel = isWeb ? 'web' : isExpoGo ? 'Expo Go' : 'development build';

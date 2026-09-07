@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { toLocalDateKey } from '../../utils/datetime';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Badge, Button, Card, TextField } from '../../components/ui';
@@ -9,7 +10,7 @@ import { getMyRegularisations, submitRegularisation } from '../../api/attendance
 import { getApiErrorMessage } from '../../api/client';
 import type { Regularisation, RegularisationRequestType, RegularisationStatus } from '../../types/attendance';
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => toLocalDateKey();
 
 const STATUS_TONE: Record<RegularisationStatus, 'warning' | 'success' | 'danger' | 'slate'> = {
   pending: 'warning',

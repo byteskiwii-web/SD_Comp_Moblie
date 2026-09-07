@@ -1,9 +1,10 @@
 import JailMonkey from 'jail-monkey';
+import { toLocalDateKey } from './datetime';
 import { useShiftStore } from '../stores/shiftStore';
 import { reportIntegrityState, AttendanceAlertConditions, AttendanceAlertType } from '../api/attendanceAlerts.api';
 import { fireIntegrityAlertNotification } from './notifications';
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => toLocalDateKey();
 
 const WARNING_TITLE: Record<AttendanceAlertType, string> = {
   location_off: 'Location is off',
