@@ -6,18 +6,23 @@ import { useShiftStore } from '../stores/shiftStore';
 import { useAuthStore } from '../stores/authStore';
 import { locationCheck } from '../api/attendance.api';
 import { Platform } from 'react-native';
-import { isExpoGo } from './runtimeEnv';
+import { supportsBackgroundLocation } from '../native/runtime';
 
 // Required for scheduleNotificationAsync() below to actually surface a
 // notification while the app is foregrounded; harmless if we're backgrounded.
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-});
+//
+// expo-notifications has no web implementation; setting a handler in a
+// browser throws at module scope, so keep it off the web bundle's path.
+if (Platform.OS !== 'web') {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowBanner: true,
+      shouldShowList: true,
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+    }),
+  });
+}
 
 if (Platform.OS === 'android') {
   Notifications.setNotificationChannelAsync('default', {
@@ -29,54 +34,60 @@ if (Platform.OS === 'android') {
 // Must be registered at module scope, imported once from App.tsx, so the OS
 // can find this handler again even if it revived the JS context after the
 // app process was killed while a background task was still scheduled.
-TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
-  if (error) {
-    console.warn('[locationTask] error', error.message);
-    return;
-  }
-
-  // Safety net: if we're not actually clocked in anymore, or we're on a
-  // break (e.g. clock-out or break-start raced with a scheduled tick),
-  // don't call the API. useLocationPollingEffect stops this task on those
-  // same transitions, but a tick already in flight can still land here.
-  const shift = useShiftStore.getState();
-  if (!shift.isClockedIn || !shift.storeCode || shift.isOnBreak) return;
-
-  const auth = useAuthStore.getState();
-  const employeeId = auth.employee?.id;
-  if (!employeeId) return;
-
-  const locations = (data as { locations?: Location.LocationObject[] } | undefined)?.locations;
-  const point = locations?.[locations.length - 1];
-  if (!point) return;
-
-  try {
-    const result = await locationCheck({
-      employee_id: employeeId,
-      store_code: shift.storeCode,
-      latitude: point.coords.latitude,
-      longitude: point.coords.longitude,
-    });
-
-    if (result.alert) {
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title: 'Outside your store',
-          body: result.alert,
-        },
-        trigger: null,
-      });
+// Only a dev/standalone native build can actually run this task. Registering
+// it in Expo Go or on web throws, and App.tsx imports this module
+// unconditionally so the OS can find the handler after reviving a killed JS
+// context -- so the guard lives here, not at the import site.
+if (supportsBackgroundLocation) {
+  TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
+    if (error) {
+      console.warn('[locationTask] error', error.message);
+      return;
     }
-  } catch (err) {
-    console.warn('[locationTask] location-check failed', err);
-  }
-});
+
+    // Safety net: if we're not actually clocked in anymore, or we're on a
+    // break (e.g. clock-out or break-start raced with a scheduled tick),
+    // don't call the API. useLocationPollingEffect stops this task on those
+    // same transitions, but a tick already in flight can still land here.
+    const shift = useShiftStore.getState();
+    if (!shift.isClockedIn || !shift.storeCode || shift.isOnBreak) return;
+
+    const auth = useAuthStore.getState();
+    const employeeId = auth.employee?.id;
+    if (!employeeId) return;
+
+    const locations = (data as { locations?: Location.LocationObject[] } | undefined)?.locations;
+    const point = locations?.[locations.length - 1];
+    if (!point) return;
+
+    try {
+      const result = await locationCheck({
+        employee_id: employeeId,
+        store_code: shift.storeCode,
+        latitude: point.coords.latitude,
+        longitude: point.coords.longitude,
+      });
+
+      if (result.alert) {
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title: 'Outside your store',
+            body: result.alert,
+          },
+          trigger: null,
+        });
+      }
+    } catch (err) {
+      console.warn('[locationTask] location-check failed', err);
+    }
+  });
+}
 
 export async function startBackgroundLocationPolling(): Promise<void> {
-  // Expo Go has no background location on iOS -- startLocationUpdatesAsync
+  // No background location in Expo Go or on web -- startLocationUpdatesAsync
   // rejects there. No-op rather than surface an unhandled rejection to a
   // reviewer who is only here to look at screens.
-  if (isExpoGo) return;
+  if (!supportsBackgroundLocation) return;
 
   const alreadyRunning = await Location.hasStartedLocationUpdatesAsync(BACKGROUND_LOCATION_TASK);
   if (alreadyRunning) return;
@@ -96,7 +107,7 @@ export async function startBackgroundLocationPolling(): Promise<void> {
 }
 
 export async function stopBackgroundLocationPolling(): Promise<void> {
-  if (isExpoGo) return;
+  if (!supportsBackgroundLocation) return;
 
   const isRunning = await Location.hasStartedLocationUpdatesAsync(BACKGROUND_LOCATION_TASK);
   if (!isRunning) return;
