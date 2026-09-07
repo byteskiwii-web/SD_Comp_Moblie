@@ -77,7 +77,7 @@ import { FaceLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@m
 
 // ---- tunables: every threshold lives here so this is cheap to calibrate ----
 var SECTORS    = 16;    // head-direction buckets the ring is divided into
-var DASHES     = 48;    // drawn ticks; 3 per sector
+var DASHES     = 60;    // drawn ticks; there are DASHES/SECTORS per sector
 var NEEDED     = 11;    // sectors that must be covered to pass
 var MOVE_DEG   = 7;     // rotation from baseline that counts as "moved"
 var CENTRE_TOL = 0.18;  // how far off-centre the face may sit while aligning
@@ -179,7 +179,20 @@ function drawBrackets(colour) {
   var m = Math.min(cw, ch) * 0.10, len = Math.min(cw, ch) * 0.10;
   var l = m, r = cw - m, t = ch * 0.16, b = ch * 0.76;
   ctx.save();
-  ctx.strokeStyle = colour; ctx.lineWidth = 5; ctx.lineCap = "round";
+  ctx.lineCap = "round";
+
+  // The run between the corners, dashed and dimmer: it reads as a frame
+  // without competing with the ring that is actually showing progress.
+  ctx.strokeStyle = colour;
+  ctx.globalAlpha = 0.45;
+  ctx.lineWidth = 2;
+  ctx.setLineDash([7, 9]);
+  ctx.strokeRect(l, t, r - l, b - t);
+  ctx.setLineDash([]);
+  ctx.globalAlpha = 1;
+
+  // Solid corners on top, which is what makes it read as a viewfinder.
+  ctx.lineWidth = 5;
   var corners = [[l, t, 1, 1], [r, t, -1, 1], [l, b, 1, -1], [r, b, -1, -1]];
   for (var i = 0; i < corners.length; i++) {
     var c = corners[i];
@@ -200,12 +213,15 @@ function drawRing(box, idleColour, activeColour) {
   for (var i = 0; i < DASHES; i++) {
     var a = -Math.PI / 2 + (i / DASHES) * Math.PI * 2;
     var lit = covered[Math.floor(i / per)];
-    var outer = lit ? 1.13 : 1.07;
+    var outer = lit ? 1.14 : 1.06;
     ctx.beginPath();
     ctx.moveTo(box.cx + rx * Math.cos(a), box.cy + ry * Math.sin(a));
     ctx.lineTo(box.cx + rx * outer * Math.cos(a), box.cy + ry * outer * Math.sin(a));
     ctx.strokeStyle = lit ? activeColour : idleColour;
-    ctx.lineWidth = lit ? 6 : 4;
+    ctx.lineWidth = lit ? 4.5 : 2.5;
+    // A covered direction glows. Growth alone is hard to see against a face.
+    ctx.shadowBlur = lit ? 10 : 0;
+    ctx.shadowColor = lit ? activeColour : "transparent";
     ctx.stroke();
   }
   ctx.restore();
@@ -290,6 +306,13 @@ function loop() {
       subEl.textContent = "";
       if (blinkShut && lb < BLINK_OPEN && rb < BLINK_OPEN) {
         phase = "verified"; finished = true;
+        // Repaint once in green: the loop stops here, so without this the last
+        // frame on screen still shows the in-progress colour under a badge
+        // that says it passed.
+        for (var v = 0; v < SECTORS; v++) covered[v] = true;
+        ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+        drawBrackets("#10B981");
+        drawRing(box, idle, "#10B981");
         promptEl.textContent = "Liveness verified";
         badge.classList.add("show");
         send({ type: "status", phase: "verified" });

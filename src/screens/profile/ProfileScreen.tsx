@@ -1,6 +1,9 @@
 import React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { useQuery } from '@tanstack/react-query';
+import { getPolicies } from '../../api/policies.api';
 import { Button, Card } from '../../components/ui';
 import { colors, radii } from '../../theme/tokens';
 import { useAuthStore } from '../../stores/authStore';
@@ -44,10 +47,19 @@ export function ProfileScreen() {
 
         <Card>
           <Text style={styles.cardTitle}>Contact & assignment</Text>
-          <Row label="Phone" value={employee?.phone ?? '—'} />
-          <Row label="Email" value={employee?.email ?? '—'} />
-          <Row label="Store" value={store?.name ?? '—'} last />
+          <Row icon="call-outline" label="Phone" value={employee?.phone ?? '—'} />
+          <Row icon="mail-outline" label="Email" value={employee?.email ?? '—'} />
+          <Row icon="business-outline" label="Assigned site" value={store?.name ?? '—'} />
+          <Row icon="pricetag-outline" label="Site code" value={store?.store_code ?? employee?.store_code ?? '—'} />
+          <Row
+            icon="navigate-outline"
+            label="Geo-fence"
+            value={store?.geofence_radius_m ? store.geofence_radius_m + ' m radius' : '—'}
+            last
+          />
         </Card>
+
+        <PolicyLibrary />
 
         <Button title="Sign out" variant="outline" onPress={() => signOut()} />
       </ScrollView>
@@ -55,12 +67,60 @@ export function ProfileScreen() {
   );
 }
 
-function Row({ label, value, last }: { label: string; value: string; last?: boolean }) {
+function Row({
+  icon,
+  label,
+  value,
+  last,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  value: string;
+  last?: boolean;
+}) {
   return (
     <View style={[styles.row, last && styles.rowLast]}>
+      <Ionicons name={icon} size={15} color={colors.slate400} style={styles.rowIcon} />
       <Text style={styles.rowLabel}>{label}</Text>
-      <Text style={styles.rowValue}>{value}</Text>
+      <Text style={styles.rowValue} numberOfLines={1}>
+        {value}
+      </Text>
     </View>
+  );
+}
+
+/**
+ * The policy library, read-only here. Anything still needing a signature is
+ * surfaced on the home screen instead, where it can be acted on -- this is the
+ * reference copy, so it says what exists and what has already been signed.
+ */
+function PolicyLibrary() {
+  const { data } = useQuery({ queryKey: ['policies-library'], queryFn: () => getPolicies(50) });
+  const items = data?.items ?? [];
+  if (items.length === 0) return null;
+
+  const signed = items.filter((p) => p.acknowledgedByMe).length;
+  return (
+    <Card>
+      <Text style={styles.cardTitle}>Company policies</Text>
+      <Text style={styles.policySummary}>
+        {items.length} assigned to you · {signed} acknowledged
+      </Text>
+      {items.slice(0, 6).map((p, i) => (
+        <View key={p.id} style={[styles.row, i === Math.min(items.length, 6) - 1 && styles.rowLast]}>
+          <Ionicons
+            name={p.acknowledgedByMe ? 'checkmark-circle' : 'ellipse-outline'}
+            size={16}
+            color={p.acknowledgedByMe ? colors.success : colors.slate300}
+            style={styles.rowIcon}
+          />
+          <Text style={styles.rowLabel} numberOfLines={1}>
+            {p.title}
+          </Text>
+          <Text style={styles.rowValue}>v{p.version}</Text>
+        </View>
+      ))}
+    </Card>
   );
 }
 
@@ -85,10 +145,12 @@ const styles = StyleSheet.create({
 
   cardTitle: { fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4, color: colors.slate500, marginBottom: 4 },
   row: {
-    flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10,
+    flexDirection: 'row', alignItems: 'center', paddingVertical: 10,
     borderBottomWidth: 1, borderBottomColor: colors.slate100,
   },
   rowLast: { borderBottomWidth: 0 },
-  rowLabel: { fontSize: 12, fontWeight: '600', color: colors.slate500 },
+  rowIcon: { marginRight: 8 },
+  rowLabel: { flex: 1, fontSize: 12, fontWeight: '600', color: colors.slate500 },
+  policySummary: { fontSize: 12, color: colors.slate400, fontWeight: '600', marginBottom: 6 },
   rowValue: { fontSize: 13, fontWeight: '700', color: colors.textLight },
 });
