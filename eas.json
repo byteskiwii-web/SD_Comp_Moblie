@@ -7,12 +7,25 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
-      "android": {}
+      "channel": "development",
+      "android": {},
+      "env": {
+        "EXPO_UPDATES_TARGET": "build"
+      }
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "channel": "preview",
+      "env": {
+        "EXPO_UPDATES_TARGET": "build"
+      }
     },
-    "production": {}
+    "production": {
+      "channel": "production",
+      "env": {
+        "EXPO_UPDATES_TARGET": "build"
+      }
+    }
   },
   "submit": {
     "production": {}

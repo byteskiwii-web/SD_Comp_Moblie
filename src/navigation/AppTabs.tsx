@@ -1,5 +1,6 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { Ionicons } from '@expo/vector-icons';
 import { HomeScreen } from '../screens/home/HomeScreen';
 import { AttendanceScreen } from '../screens/attendance/AttendanceScreen';
 import { ProfileScreen } from '../screens/profile/ProfileScreen';
@@ -14,14 +15,31 @@ export type AppTabsParamList = {
 
 const Tab = createBottomTabNavigator<AppTabsParamList>();
 
+// Filled when focused, outlined when not -- the platform convention on both
+// iOS and Android, and it keeps the active tab readable at a glance without
+// relying on the tint colour alone.
+const ICONS: Record<keyof AppTabsParamList, [keyof typeof Ionicons.glyphMap, keyof typeof Ionicons.glyphMap]> = {
+  Home: ['home', 'home-outline'],
+  Attendance: ['calendar', 'calendar-outline'],
+  Profile: ['person-circle', 'person-circle-outline'],
+};
+
 export function AppTabs() {
   return (
     <Tab.Navigator
-      screenOptions={{
+      screenOptions={({ route }) => ({
         headerShown: false,
         tabBarActiveTintColor: colors.brand[700],
         tabBarInactiveTintColor: colors.slate400,
-      }}
+        // Without this every tab falls back to @react-navigation/elements'
+        // MissingIcon, which is the literal glyph U+23F7 rendered as text --
+        // a solid triangle on iOS, and whatever the system font happens to
+        // substitute (possibly tofu) on Android.
+        tabBarIcon: ({ focused, color, size }) => {
+          const [active, inactive] = ICONS[route.name];
+          return <Ionicons name={focused ? active : inactive} size={size} color={color} />;
+        },
+      })}
     >
       <Tab.Screen
         name="Home"

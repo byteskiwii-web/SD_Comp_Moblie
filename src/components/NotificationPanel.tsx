@@ -109,7 +109,16 @@ export function NotificationPanel({ visible, onClose }: { visible: boolean; onCl
 
 const styles = StyleSheet.create({
   root: { flex: 1, justifyContent: 'flex-end' },
-  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(15,23,42,0.4)' },
+  // Written out rather than spreading StyleSheet.absoluteFillObject, which
+  // React Native 0.86 no longer declares on the StyleSheet type.
+  backdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(15,23,42,0.4)',
+  },
   sheet: {
     backgroundColor: colors.white,
     borderTopLeftRadius: radii.xl,

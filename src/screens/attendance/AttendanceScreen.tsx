@@ -2,31 +2,29 @@ import React, { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, radii } from '../../theme/tokens';
-import { NotificationBell } from '../../components/NotificationBell';
-import { NotificationPanel } from '../../components/NotificationPanel';
 import { ClockPanel } from './ClockPanel';
 import { HistoryPanel } from './HistoryPanel';
 import { RegularisePanel } from './RegularisePanel';
 
 type Tab = 'clock' | 'history' | 'regularise';
 
+// Labels mirror the reference build. The first tab still covers breaks as well
+// as the shift punches -- breaks are a real part of this product even though
+// the reference mock-up predates them.
 const TAB_LABEL: Record<Tab, string> = {
-  clock: 'Shift & Breaks',
+  clock: 'Clock in/out',
   history: 'History',
   regularise: 'Regularise',
 };
 
 export function AttendanceScreen() {
   const [tab, setTab] = useState<Tab>('clock');
-  const [notifOpen, setNotifOpen] = useState(false);
 
   return (
     <SafeAreaView style={styles.flex} edges={['top']}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Attendance</Text>
-        <NotificationBell onPress={() => setNotifOpen(true)} />
       </View>
-      <NotificationPanel visible={notifOpen} onClose={() => setNotifOpen(false)} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.segment}>
           {(['clock', 'history', 'regularise'] as Tab[]).map((t) => (
@@ -50,10 +48,7 @@ export function AttendanceScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.bgLight },
-  header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 20, paddingTop: 12, paddingBottom: 4,
-  },
+  header: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 4 },
   headerTitle: { fontSize: 24, fontWeight: '800', color: colors.textLight, letterSpacing: -0.3 },
   content: { padding: 20, paddingTop: 12, gap: 14 },
   segment: {
@@ -70,6 +65,6 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 1,
   },
-  segmentText: { fontSize: 13, fontWeight: '700', color: colors.slate500 },
+  segmentText: { fontSize: 12, fontWeight: '700', color: colors.slate500 },
   segmentTextActive: { color: colors.brand[700] },
 });

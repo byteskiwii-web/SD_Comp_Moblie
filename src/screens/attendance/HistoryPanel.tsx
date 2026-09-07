@@ -5,14 +5,12 @@ import { Card } from '../../components/ui';
 import { colors } from '../../theme/tokens';
 import { useAuthStore } from '../../stores/authStore';
 import { getAttendanceHistory } from '../../api/attendance.api';
+import { getApiErrorMessage } from '../../api/client';
+import { formatDate, formatTime } from '../../utils/datetime';
 import type { AttendanceMark } from '../../types/attendance';
 
-function fmtDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
-}
-function fmtTime(ts: string) {
-  return new Date(ts).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
-}
+const fmtDate = (dateStr: string) => formatDate(dateStr);
+const fmtTime = (ts: string) => formatTime(ts);
 
 export function HistoryPanel() {
   const employee = useAuthStore((s) => s.employee);
@@ -43,7 +41,10 @@ export function HistoryPanel() {
   }
 
   if (error) {
-    return <Text style={styles.errorText}>Could not load your attendance history.</Text>;
+    // The reason, not a shrug. An expired session, an offline phone and a
+    // server fault need different things from whoever is reading this, and a
+    // single sentence for all three tells them nothing.
+    return <Text style={styles.errorText}>{getApiErrorMessage(error)}</Text>;
   }
 
   if (grouped.length === 0) {

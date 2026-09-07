@@ -9,10 +9,12 @@ import { useShiftStore } from '../../stores/shiftStore';
 import { haversineDistance } from '../../utils/haversine';
 import { clockIn, clockOut, endBreak, getAttendanceHistory, startBreak } from '../../api/attendance.api';
 import { CameraCaptureScreen } from './CameraCaptureScreen';
+import { runtimeLabel, supportsBackgroundLocation } from '../../native/runtime';
 import { getApiErrorMessage } from '../../api/client';
 import { getLatestMarkOfTypes, SHIFT_TYPES, BREAK_TYPES } from '../../utils/attendanceStatus';
+import { formatTimeWithSeconds, toLocalDateKey } from '../../utils/datetime';
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => toLocalDateKey();
 
 export function ClockPanel() {
   const employee = useAuthStore((s) => s.employee);
@@ -97,13 +99,20 @@ export function ClockPanel() {
         setClockedOut();
       }
       const isPending = result.attendance.approval_status === 'pending-approval';
+      // No background location in this runtime means no mid-shift geofence
+      // polling for this shift. Said on the receipt rather than left for
+      // someone to infer later from an attendance report with holes in it.
+      const unverified = supportsBackgroundLocation
+        ? ''
+        : ` No mid-shift location checks on ${runtimeLabel}.`;
       setBanner({
-        tone: isPending ? 'warning' : 'success',
-        text: isPending
-          ? 'Recorded — you were outside the store radius, so this is pending HR approval.'
-          : pendingAction === 'clock-in'
-            ? 'Shift started successfully.'
-            : 'Shift ended successfully.',
+        tone: isPending || !supportsBackgroundLocation ? 'warning' : 'success',
+        text:
+          (isPending
+            ? 'Recorded — you were outside the store radius, so this is pending HR approval.'
+            : pendingAction === 'clock-in'
+              ? 'Shift started successfully.'
+              : 'Shift ended successfully.') + unverified,
       });
       setPendingAction(null);
     },
@@ -160,8 +169,28 @@ export function ClockPanel() {
   // earlier, since Android only lets an app prompt for background access
   // after foreground access is already granted.
   const handleCaptured = async (filePath: string) => {
-    const bg = await Location.requestBackgroundPermissionsAsync();
-    if (bg.status !== 'granted') {
+    // requestBackgroundPermissionsAsync does not resolve to 'denied' when the
+    // runtime has no background location at all -- it *throws*
+    // (ERR_LOCATION_INFO_PLIST in Expo Go, whose Info.plist carries no
+    // NSLocationAlwaysAndWhenInUseUsageDescription). Unhandled, that rejection
+    // skipped the mutation and left this modal open with no feedback at all.
+    // A runtime that cannot grant the permission has not granted it, so treat
+    // the throw as a denial and fall into the same gate.
+    let granted = false;
+    try {
+      const bg = await Location.requestBackgroundPermissionsAsync();
+      granted = bg.status === 'granted';
+    } catch (err) {
+      console.warn('[ClockPanel] background location is unavailable in this runtime', err);
+    }
+
+    // The gate binds only where the permission can actually be granted. In a
+    // runtime that has no background location at all there is no setting to go
+    // and change, so refusing the punch protects nothing -- it just makes
+    // punching permanently impossible rather than merely unverified. Native
+    // builds are untouched: there the permission is real, a denial is a
+    // denial, and the employee is sent to Settings to fix it.
+    if (!granted && supportsBackgroundLocation) {
       setPendingAction(null);
       Alert.alert(
         'Background location required',
@@ -250,22 +279,22 @@ export function ClockPanel() {
         <Card>
           {lastClockIn && (
             <Text style={styles.lastPunchText}>
-              Last shift start: {new Date(lastClockIn.timestamp).toLocaleTimeString()}
+              Last shift start: {formatTimeWithSeconds(lastClockIn.timestamp)}
             </Text>
           )}
           {lastClockOut && (
             <Text style={styles.lastPunchText}>
-              Last shift end: {new Date(lastClockOut.timestamp).toLocaleTimeString()}
+              Last shift end: {formatTimeWithSeconds(lastClockOut.timestamp)}
             </Text>
           )}
           {lastBreakStart && (
             <Text style={styles.lastPunchText}>
-              Last break start: {new Date(lastBreakStart.timestamp).toLocaleTimeString()}
+              Last break start: {formatTimeWithSeconds(lastBreakStart.timestamp)}
             </Text>
           )}
           {lastBreakEnd && (
             <Text style={styles.lastPunchText}>
-              Last break end: {new Date(lastBreakEnd.timestamp).toLocaleTimeString()}
+              Last break end: {formatTimeWithSeconds(lastBreakEnd.timestamp)}
             </Text>
           )}
         </Card>

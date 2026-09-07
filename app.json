@@ -11,7 +11,8 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.sdcomputronix.ziphrmsmobile",
       "infoPlist": {
-        "NSCameraUsageDescription": "Allow zip-hrms-mobile to access your camera to verify your identity when you clock in or out."
+        "NSCameraUsageDescription": "Allow zip-hrms-mobile to access your camera to verify your identity when you clock in or out.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -33,7 +34,8 @@
       ]
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
     },
     "plugins": [
       "expo-secure-store",
@@ -54,7 +56,7 @@
           "color": "#1E40AF"
         }
       ],
-      "@react-native-community/datetimepicker"
+      "expo-status-bar"
     ],
     "extra": {
       "eas": {
