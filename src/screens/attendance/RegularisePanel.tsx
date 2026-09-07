@@ -9,7 +9,6 @@ import {
   cancelRegularisation,
   createRegularisation,
   getMyRegularisations,
-  getRegularisationBalance,
   type RegularisationRequestType,
   type RegularisationStatus,
 } from '../../api/regularisation.api';
@@ -43,17 +42,11 @@ export function RegularisePanel() {
   const [reason, setReason] = useState('');
   const [banner, setBanner] = useState<{ tone: 'success' | 'warning'; text: string } | null>(null);
 
-  // Keyed on the date: the ration is counted on the day being corrected, so
-  // editing the date changes which month's balance applies.
-  const balanceQuery = useQuery({
-    queryKey: ['regularisation-balance', isDate(markDate) ? markDate : todayISO()],
-    queryFn: () => getRegularisationBalance(isDate(markDate) ? markDate : todayISO()),
-  });
-
   const listQuery = useQuery({
     queryKey: ['regularisation-mine'],
-    queryFn: getMyRegularisations,
+    queryFn: () => getMyRegularisations(),
   });
+  const requests = listQuery.data?.items ?? [];
 
   const fieldError = useMemo(() => {
     if (!isDate(markDate)) return 'Use YYYY-MM-DD.';
@@ -81,7 +74,6 @@ export function RegularisePanel() {
       setClockOut('');
       setReason('');
       queryClient.invalidateQueries({ queryKey: ['regularisation-mine'] });
-      queryClient.invalidateQueries({ queryKey: ['regularisation-balance'] });
     },
     onError: (err) => setBanner({ tone: 'warning', text: getApiErrorMessage(err) }),
   });
@@ -91,13 +83,9 @@ export function RegularisePanel() {
     onSuccess: () => {
       setBanner({ tone: 'success', text: 'Request withdrawn.' });
       queryClient.invalidateQueries({ queryKey: ['regularisation-mine'] });
-      queryClient.invalidateQueries({ queryKey: ['regularisation-balance'] });
     },
     onError: (err) => setBanner({ tone: 'warning', text: getApiErrorMessage(err) }),
   });
-
-  const balance = balanceQuery.data;
-  const spent = balance ? balance.remaining === 0 : false;
 
   return (
     <View style={styles.wrap}>
@@ -157,14 +145,13 @@ export function RegularisePanel() {
           </>
         )}
 
-        {/* Shown before the form is filled in, not on submit — the limit is a
-            fact about the month, not a surprise about this attempt. */}
+        {/* The server rations these per calendar month but exposes no balance
+            endpoint, so the rule is stated rather than counted down. Hitting it
+            comes back as REGULARISATION_LIMIT_REACHED and lands in the banner. */}
         <View style={styles.balanceRow}>
           <Ionicons name="information-circle-outline" size={15} color={colors.slate500} />
           <Text style={styles.balanceText}>
-            {balanceQuery.isLoading || !balance
-              ? 'Checking your remaining balance…'
-              : `Remaining balance: ${balance.remaining} of ${balance.limit} this month`}
+            Corrections are limited per calendar month, counted on the day being corrected.
           </Text>
         </View>
 
@@ -178,16 +165,11 @@ export function RegularisePanel() {
         />
 
         {fieldError && reason.length > 0 && <Text style={styles.fieldError}>{fieldError}</Text>}
-        {spent && (
-          <Text style={styles.fieldError}>
-            You have used every correction for this month. Pick a date in another month, or ask your manager.
-          </Text>
-        )}
 
         <Button
           title="Request"
           onPress={() => submit.mutate()}
-          disabled={Boolean(fieldError) || spent}
+          disabled={Boolean(fieldError)}
           loading={submit.isPending}
         />
       </Card>
@@ -196,13 +178,13 @@ export function RegularisePanel() {
         <Text style={styles.sectionLabel}>Your requests</Text>
         {listQuery.isLoading ? (
           <ActivityIndicator color={colors.brand[700]} style={styles.spacer} />
-        ) : !listQuery.data?.length ? (
+        ) : requests.length === 0 ? (
           <Text style={styles.empty}>No corrections raised yet.</Text>
         ) : (
-          listQuery.data.map((r, i) => {
+          requests.map((r, i) => {
             const tone = STATUS_STYLE[r.status];
             return (
-              <View key={r.id} style={[styles.row, i === listQuery.data.length - 1 && styles.rowLast]}>
+              <View key={r.id} style={[styles.row, i === requests.length - 1 && styles.rowLast]}>
                 <View style={styles.rowMain}>
                   <View style={styles.rowTop}>
                     <Text style={styles.rowDate}>{r.markDate.slice(0, 10)}</Text>

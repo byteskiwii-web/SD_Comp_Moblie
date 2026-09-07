@@ -11,6 +11,8 @@ import { getAttendanceHistory } from '../../api/attendance.api';
 import { getLatestMarkOfTypes, SHIFT_TYPES } from '../../utils/attendanceStatus';
 import { getUnreadCount } from '../../api/notifications.api';
 import { NotificationsSheet } from '../notifications/NotificationsSheet';
+import { AppreciationCard } from './AppreciationCard';
+import { PoliciesCard } from './PoliciesCard';
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -130,6 +132,8 @@ export function HomeScreen() {
           <Ionicons name="chevron-forward" size={18} color={colors.slate400} />
         </Pressable>
 
+        <PoliciesCard />
+
         <Card>
           <Text style={styles.cardTitle}>Today's timeline</Text>
           {isLoading ? (
@@ -157,6 +161,8 @@ export function HomeScreen() {
             })
           )}
         </Card>
+
+        <AppreciationCard />
       </ScrollView>
 
       <NotificationsSheet visible={notificationsOpen} onClose={() => setNotificationsOpen(false)} />

@@ -1,8 +1,8 @@
 import { apiClient } from './client';
 
-// Mounted under attendance on the server: a correction is part of attendance to
-// everyone using it, and the app shows it as a tab on the attendance screen.
-const BASE = '/attendance/regularisation';
+// Top level, not under /attendance. Corrections are their own resource on the
+// server even though the app presents them as a tab on the attendance screen.
+const BASE = '/regularisation';
 
 export type RegularisationRequestType = 'adjust' | 'other';
 export type RegularisationStatus = 'pending' | 'approved' | 'rejected' | 'cancelled';
@@ -18,22 +18,9 @@ export type Regularisation = {
   reason: string;
   status: RegularisationStatus;
   createdAt: string;
-  createdBy: string | null;
   decidedAt: string | null;
   decidedBy: string | null;
   decisionNote: string | null;
-};
-
-/**
- * Three corrections per employee per calendar month, counted on the day being
- * corrected. Read before rendering the form so the remaining balance is visible
- * in advance rather than discovered on submit.
- */
-export type RegularisationBalance = {
-  month: string;
-  limit: number;
-  used: number;
-  remaining: number;
 };
 
 export type NewRegularisation = {
@@ -44,23 +31,32 @@ export type NewRegularisation = {
   reason: string;
 };
 
-export async function getMyRegularisations() {
-  const res = await apiClient.get<{ success: true; data: { items: Regularisation[] } }>(BASE);
-  return res.data.data.items;
-}
-
-export async function getRegularisationBalance(markDate?: string) {
-  const res = await apiClient.get<{ success: true; data: RegularisationBalance }>(`${BASE}/balance`, {
-    params: markDate ? { mark_date: markDate } : undefined,
-  });
+/**
+ * A reviewer gets their scoped queue here; everyone else gets their own
+ * requests. The employee app is always the second case, so this needs no
+ * parameters.
+ *
+ * Paged: `{ items, total, limit, offset }`. Pending first, then oldest first.
+ */
+export async function getMyRegularisations(limit = 50) {
+  const res = await apiClient.get<{
+    success: true;
+    data: { items: Regularisation[]; total: number; limit: number; offset: number };
+  }>(BASE, { params: { limit } });
   return res.data.data;
 }
 
+/**
+ * Corrections are rationed per calendar month, but the server exposes no
+ * balance endpoint — the limit surfaces as REGULARISATION_LIMIT_REACHED on
+ * submit. The form says the limit exists rather than counting down to it.
+ */
 export async function createRegularisation(input: NewRegularisation) {
   const res = await apiClient.post<{ success: true; data: Regularisation }>(BASE, input);
   return res.data.data;
 }
 
+/** The employee only, and only while still pending. */
 export async function cancelRegularisation(id: string) {
   const res = await apiClient.post<{ success: true; data: Regularisation }>(`${BASE}/${id}/cancel`);
   return res.data.data;
