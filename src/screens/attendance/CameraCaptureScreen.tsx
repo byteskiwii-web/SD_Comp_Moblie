@@ -1,19 +1,27 @@
 import React from 'react';
 import { hasVisionCamera } from '../../native/runtime';
-import { FallbackCameraCaptureScreen } from './CameraCaptureScreen.fallback';
+import { WebViewCameraCaptureScreen } from './CameraCaptureScreen.webview';
 import type { CameraCaptureProps } from './cameraCaptureTypes';
 
-// Picks a capture screen for whatever runtime we booted into, so ClockPanel
-// can keep importing one name.
+// Picks a capture screen for whatever runtime we booted into, so ClockPanel can
+// keep importing one name.
+//
+//   dev / standalone build -> VisionCamera + the Nitro face detector (native,
+//                             fastest, and the only one that works offline)
+//   Expo Go                -> the WebView liveness check, which does the same
+//                             job with MediaPipe in WASM
 //
 // The require() below is load-bearing and must NOT become a static import.
-// `import ... from './CameraCaptureScreen.vision'` is hoisted and evaluated
-// when *this* module is evaluated, which pulls in VisionCamera and the Nitro
-// face detector -- neither of which exists in the Expo Go binary. That throws
-// during bundle evaluation, before any component renders, so no runtime check
-// placed inside a component can ever save us. Metro still bundles the vision
-// screen either way (it statically sees the require), but a module factory
-// only *runs* on first require, which on Expo Go is never.
+// 'import ... from ./CameraCaptureScreen.vision' is hoisted and evaluated when
+// *this* module is evaluated, which pulls in VisionCamera and the Nitro face
+// detector -- neither of which exists in the Expo Go binary. That throws during
+// bundle evaluation, before any component renders, so no runtime check placed
+// inside a component can save us. Metro still bundles the vision screen either
+// way (it statically sees the require), but a module factory only *runs* on
+// first require, which on Expo Go is never.
+//
+// react-native-webview needs no such care: it ships inside Expo Go, so a static
+// import of it is safe in both runtimes.
 let visionScreen: React.ComponentType<CameraCaptureProps> | null = null;
 
 function loadVisionScreen(): React.ComponentType<CameraCaptureProps> {
@@ -29,7 +37,9 @@ function loadVisionScreen(): React.ComponentType<CameraCaptureProps> {
 }
 
 export function CameraCaptureScreen(props: CameraCaptureProps) {
-  if (!hasVisionCamera) return <FallbackCameraCaptureScreen {...props} />;
-  const VisionCameraCaptureScreen = loadVisionScreen();
-  return <VisionCameraCaptureScreen {...props} />;
+  if (hasVisionCamera) {
+    const VisionCameraCaptureScreen = loadVisionScreen();
+    return <VisionCameraCaptureScreen {...props} />;
+  }
+  return <WebViewCameraCaptureScreen {...props} />;
 }
