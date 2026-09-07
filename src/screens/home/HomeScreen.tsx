@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -9,6 +9,8 @@ import { colors, radii } from '../../theme/tokens';
 import { useAuthStore } from '../../stores/authStore';
 import { getAttendanceHistory } from '../../api/attendance.api';
 import { getLatestMarkOfTypes, SHIFT_TYPES } from '../../utils/attendanceStatus';
+import { getUnreadCount } from '../../api/notifications.api';
+import { NotificationsSheet } from '../notifications/NotificationsSheet';
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -19,6 +21,17 @@ export function HomeScreen() {
   const employee = useAuthStore((s) => s.employee);
   const store = useAuthStore((s) => s.store);
   const navigation = useNavigation<any>();
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+
+  // The badge number. Polled rather than pushed: expo-notifications remote push
+  // does not work in Expo Go at all, so a periodic read is the only way the
+  // count moves without the user opening the sheet.
+  const { data: unread = 0 } = useQuery({
+    queryKey: ['notifications-unread'],
+    queryFn: getUnreadCount,
+    enabled: !!employee,
+    refetchInterval: 60_000,
+  });
 
   const { data, isLoading } = useQuery({
     queryKey: ['attendance-today', employee?.id],
@@ -59,9 +72,14 @@ export function HomeScreen() {
             hitSlop={8}
             accessibilityRole="button"
             accessibilityLabel="Notifications"
-            onPress={() => {}}
+            onPress={() => setNotificationsOpen(true)}
           >
             <Ionicons name="notifications-outline" size={20} color={colors.slate600} />
+            {unread > 0 && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{unread > 9 ? '9+' : unread}</Text>
+              </View>
+            )}
           </Pressable>
         </View>
 
@@ -140,6 +158,8 @@ export function HomeScreen() {
           )}
         </Card>
       </ScrollView>
+
+      <NotificationsSheet visible={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
     </SafeAreaView>
   );
 }
@@ -163,6 +183,13 @@ const styles = StyleSheet.create({
     shadowColor: colors.slate900, shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.06, shadowRadius: 4, elevation: 1,
   },
+
+  badge: {
+    position: 'absolute', top: -2, right: -2, minWidth: 18, height: 18, borderRadius: 9,
+    backgroundColor: colors.danger, alignItems: 'center', justifyContent: 'center',
+    paddingHorizontal: 4, borderWidth: 2, borderColor: colors.bgLight,
+  },
+  badgeText: { color: colors.white, fontSize: 10, fontWeight: '800' },
 
   hero: { borderRadius: radii.xl, padding: 20, overflow: 'hidden' },
   // Green while on shift, matching the reference build — the state is readable

@@ -98,13 +98,20 @@ export function ClockPanel() {
         setClockedOut();
       }
       const isPending = result.attendance.approval_status === 'pending-approval';
+      // No background location in this runtime means no mid-shift geofence
+      // polling for this shift. Said on the receipt rather than left for
+      // someone to infer later from an attendance report with holes in it.
+      const unverified = supportsBackgroundLocation
+        ? ''
+        : ` No mid-shift location checks on ${runtimeLabel}.`;
       setBanner({
-        tone: isPending ? 'warning' : 'success',
-        text: isPending
-          ? 'Recorded — you were outside the store radius, so this is pending HR approval.'
-          : pendingAction === 'clock-in'
-            ? 'Shift started successfully.'
-            : 'Shift ended successfully.',
+        tone: isPending || !supportsBackgroundLocation ? 'warning' : 'success',
+        text:
+          (isPending
+            ? 'Recorded — you were outside the store radius, so this is pending HR approval.'
+            : pendingAction === 'clock-in'
+              ? 'Shift started successfully.'
+              : 'Shift ended successfully.') + unverified,
       });
       setPendingAction(null);
     },
@@ -176,19 +183,21 @@ export function ClockPanel() {
       console.warn('[ClockPanel] background location is unavailable in this runtime', err);
     }
 
-    if (!granted) {
+    // The gate binds only where the permission can actually be granted. In a
+    // runtime that has no background location at all there is no setting to go
+    // and change, so refusing the punch protects nothing -- it just makes
+    // punching permanently impossible rather than merely unverified. Native
+    // builds are untouched: there the permission is real, a denial is a
+    // denial, and the employee is sent to Settings to fix it.
+    if (!granted && supportsBackgroundLocation) {
       setPendingAction(null);
       Alert.alert(
         'Background location required',
-        supportsBackgroundLocation
-          ? 'To start or end your shift, you must allow location access "All the time" (not just "While using the app"), so we can periodically confirm you\'re still at the store during your shift.'
-          : `Starting or ending a shift needs "Allow all the time" location, which ${runtimeLabel} cannot grant at all. Use a development build to punch in or out.`,
-        supportsBackgroundLocation
-          ? [
-              { text: 'Cancel', style: 'cancel' },
-              { text: 'Open Settings', onPress: () => Linking.openSettings() },
-            ]
-          : [{ text: 'OK' }]
+        'To start or end your shift, you must allow location access "All the time" (not just "While using the app"), so we can periodically confirm you\'re still at the store during your shift.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Open Settings', onPress: () => Linking.openSettings() },
+        ]
       );
       return;
     }
