@@ -41,7 +41,10 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "check:api-url": "node scripts/check-api-url.js",
+    "update:preview": "npm run check:api-url && eas update --branch preview",
+    "update:production": "npm run check:api-url && eas update --branch production"
   },
   "private": true
 }
