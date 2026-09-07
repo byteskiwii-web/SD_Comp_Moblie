@@ -6,14 +6,11 @@ import { colors } from '../../theme/tokens';
 import { useAuthStore } from '../../stores/authStore';
 import { getAttendanceHistory } from '../../api/attendance.api';
 import { getApiErrorMessage } from '../../api/client';
+import { formatDate, formatTime } from '../../utils/datetime';
 import type { AttendanceMark } from '../../types/attendance';
 
-function fmtDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
-}
-function fmtTime(ts: string) {
-  return new Date(ts).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
-}
+const fmtDate = (dateStr: string) => formatDate(dateStr);
+const fmtTime = (ts: string) => formatTime(ts);
 
 export function HistoryPanel() {
   const employee = useAuthStore((s) => s.employee);

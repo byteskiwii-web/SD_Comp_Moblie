@@ -12,8 +12,9 @@ import { CameraCaptureScreen } from './CameraCaptureScreen';
 import { runtimeLabel, supportsBackgroundLocation } from '../../native/runtime';
 import { getApiErrorMessage } from '../../api/client';
 import { getLatestMarkOfTypes, SHIFT_TYPES, BREAK_TYPES } from '../../utils/attendanceStatus';
+import { formatTimeWithSeconds, toLocalDateKey } from '../../utils/datetime';
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => toLocalDateKey();
 
 export function ClockPanel() {
   const employee = useAuthStore((s) => s.employee);
@@ -278,22 +279,22 @@ export function ClockPanel() {
         <Card>
           {lastClockIn && (
             <Text style={styles.lastPunchText}>
-              Last shift start: {new Date(lastClockIn.timestamp).toLocaleTimeString()}
+              Last shift start: {formatTimeWithSeconds(lastClockIn.timestamp)}
             </Text>
           )}
           {lastClockOut && (
             <Text style={styles.lastPunchText}>
-              Last shift end: {new Date(lastClockOut.timestamp).toLocaleTimeString()}
+              Last shift end: {formatTimeWithSeconds(lastClockOut.timestamp)}
             </Text>
           )}
           {lastBreakStart && (
             <Text style={styles.lastPunchText}>
-              Last break start: {new Date(lastBreakStart.timestamp).toLocaleTimeString()}
+              Last break start: {formatTimeWithSeconds(lastBreakStart.timestamp)}
             </Text>
           )}
           {lastBreakEnd && (
             <Text style={styles.lastPunchText}>
-              Last break end: {new Date(lastBreakEnd.timestamp).toLocaleTimeString()}
+              Last break end: {formatTimeWithSeconds(lastBreakEnd.timestamp)}
             </Text>
           )}
         </Card>

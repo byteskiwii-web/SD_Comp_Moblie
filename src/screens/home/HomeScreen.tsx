@@ -9,12 +9,13 @@ import { colors, radii } from '../../theme/tokens';
 import { useAuthStore } from '../../stores/authStore';
 import { getAttendanceHistory } from '../../api/attendance.api';
 import { getLatestMarkOfTypes, SHIFT_TYPES } from '../../utils/attendanceStatus';
+import { formatDateLong, formatTime, toLocalDateKey } from '../../utils/datetime';
 import { getUnreadCount } from '../../api/notifications.api';
 import { NotificationsSheet } from '../notifications/NotificationsSheet';
 import { AppreciationCard } from './AppreciationCard';
 import { PoliciesCard } from './PoliciesCard';
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => toLocalDateKey();
 
 const initialsOf = (first?: string, last?: string) =>
   `${first?.[0] ?? ''}${last?.[0] ?? ''}`.toUpperCase() || '?';
@@ -90,7 +91,7 @@ export function HomeScreen() {
           <View style={styles.heroTopRow}>
             <View style={[styles.statusDot, isOnShift ? styles.statusDotActive : styles.statusDotInactive]} />
             <Text style={styles.heroLabel}>
-              {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
+              {formatDateLong(new Date())}
             </Text>
           </View>
           <Text style={styles.heroTitle}>{isOnShift ? 'On shift' : 'Not clocked in'}</Text>
@@ -100,14 +101,14 @@ export function HomeScreen() {
             <View style={styles.heroStat}>
               <Text style={styles.heroStatLabel}>Shift start</Text>
               <Text style={styles.heroStatValue}>
-                {lastClockIn ? new Date(lastClockIn.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
+                {formatTime(lastClockIn?.timestamp ?? '')}
               </Text>
             </View>
             <View style={styles.heroStatSeparator} />
             <View style={styles.heroStat}>
               <Text style={styles.heroStatLabel}>Shift end</Text>
               <Text style={styles.heroStatValue}>
-                {lastClockOut ? new Date(lastClockOut.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
+                {formatTime(lastClockOut?.timestamp ?? '')}
               </Text>
             </View>
           </View>
@@ -154,7 +155,7 @@ export function HomeScreen() {
                   </View>
                   <Text style={styles.timelineType}>{m.mark_type.replace('-', ' ')}</Text>
                   <Text style={styles.timelineTime}>
-                    {new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    {formatTime(m.timestamp)}
                   </Text>
                 </View>
               );

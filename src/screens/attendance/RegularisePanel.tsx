@@ -1,10 +1,12 @@
 import React, { useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button, Card, TextField } from '../../components/ui';
 import { colors, radii } from '../../theme/tokens';
 import { getApiErrorMessage } from '../../api/client';
+import { formatDate, formatTime, toLocalDateKey } from '../../utils/datetime';
 import {
   cancelRegularisation,
   createRegularisation,
@@ -13,18 +15,6 @@ import {
   type RegularisationStatus,
 } from '../../api/regularisation.api';
 
-const todayISO = () => new Date().toISOString().slice(0, 10);
-const isDate = (s: string) => /^\d{4}-\d{2}-\d{2}$/.test(s.trim());
-const isTime = (s: string) => /^([01]\d|2[0-3]):[0-5]\d$/.test(s.trim());
-
-/** 'HH:MM' on a given day, as the ISO instant the API expects. */
-function atLocalTime(day: string, hhmm: string) {
-  const [h, m] = hhmm.trim().split(':').map(Number);
-  const d = new Date(`${day}T00:00:00`);
-  d.setHours(h, m, 0, 0);
-  return d.toISOString();
-}
-
 const STATUS_STYLE: Record<RegularisationStatus, { bg: string; fg: string }> = {
   pending: { bg: colors.warningBg, fg: '#B45309' },
   approved: { bg: colors.successBg, fg: '#047857' },
@@ -32,14 +22,24 @@ const STATUS_STYLE: Record<RegularisationStatus, { bg: string; fg: string }> = {
   cancelled: { bg: colors.slate100, fg: colors.slate500 },
 };
 
+type PickerTarget = 'date' | 'in' | 'out' | null;
+
+/** A picked time expressed on the day being corrected, not on today. */
+function onDay(day: Date, time: Date) {
+  const d = new Date(day);
+  d.setHours(time.getHours(), time.getMinutes(), 0, 0);
+  return d;
+}
+
 export function RegularisePanel() {
   const queryClient = useQueryClient();
 
-  const [markDate, setMarkDate] = useState(todayISO());
+  const [markDate, setMarkDate] = useState<Date>(new Date());
   const [requestType, setRequestType] = useState<RegularisationRequestType>('adjust');
-  const [clockIn, setClockIn] = useState('');
-  const [clockOut, setClockOut] = useState('');
+  const [clockIn, setClockIn] = useState<Date | null>(null);
+  const [clockOut, setClockOut] = useState<Date | null>(null);
   const [reason, setReason] = useState('');
+  const [picker, setPicker] = useState<PickerTarget>(null);
   const [banner, setBanner] = useState<{ tone: 'success' | 'warning'; text: string } | null>(null);
 
   const listQuery = useQuery({
@@ -49,29 +49,31 @@ export function RegularisePanel() {
   const requests = listQuery.data?.items ?? [];
 
   const fieldError = useMemo(() => {
-    if (!isDate(markDate)) return 'Use YYYY-MM-DD.';
-    if (requestType === 'adjust') {
-      if (!clockIn && !clockOut) return 'Give at least one corrected time.';
-      if (clockIn && !isTime(clockIn)) return 'Clock-in must be HH:MM.';
-      if (clockOut && !isTime(clockOut)) return 'Clock-out must be HH:MM.';
+    if (requestType === 'adjust' && !clockIn && !clockOut) return 'Pick at least one corrected time.';
+    if (clockIn && clockOut && onDay(markDate, clockOut) <= onDay(markDate, clockIn)) {
+      return 'Clock-out has to be after clock-in.';
     }
     if (!reason.trim()) return 'Say why the correction is needed.';
     return null;
-  }, [markDate, requestType, clockIn, clockOut, reason]);
+  }, [requestType, clockIn, clockOut, markDate, reason]);
 
   const submit = useMutation({
     mutationFn: () =>
       createRegularisation({
-        mark_date: markDate.trim(),
+        mark_date: toLocalDateKey(markDate),
         request_type: requestType,
-        ...(requestType === 'adjust' && clockIn ? { requested_clock_in: atLocalTime(markDate, clockIn) } : {}),
-        ...(requestType === 'adjust' && clockOut ? { requested_clock_out: atLocalTime(markDate, clockOut) } : {}),
+        ...(requestType === 'adjust' && clockIn
+          ? { requested_clock_in: onDay(markDate, clockIn).toISOString() }
+          : {}),
+        ...(requestType === 'adjust' && clockOut
+          ? { requested_clock_out: onDay(markDate, clockOut).toISOString() }
+          : {}),
         reason: reason.trim(),
       }),
     onSuccess: () => {
       setBanner({ tone: 'success', text: 'Request sent for approval.' });
-      setClockIn('');
-      setClockOut('');
+      setClockIn(null);
+      setClockOut(null);
       setReason('');
       queryClient.invalidateQueries({ queryKey: ['regularisation-mine'] });
     },
@@ -87,6 +89,16 @@ export function RegularisePanel() {
     onError: (err) => setBanner({ tone: 'warning', text: getApiErrorMessage(err) }),
   });
 
+  // Android's picker is an OS modal that dismisses itself; iOS renders inline
+  // and has to be closed deliberately, so it keeps a Done button.
+  const onPicked = (target: Exclude<PickerTarget, null>) => (_e: unknown, picked?: Date) => {
+    if (Platform.OS !== 'ios') setPicker(null);
+    if (!picked) return;
+    if (target === 'date') setMarkDate(picked);
+    else if (target === 'in') setClockIn(picked);
+    else setClockOut(picked);
+  };
+
   return (
     <View style={styles.wrap}>
       {banner && (
@@ -97,13 +109,11 @@ export function RegularisePanel() {
 
       <Card>
         <Text style={styles.sectionLabel}>Date</Text>
-        <TextField
-          label=""
-          value={markDate}
-          onChangeText={setMarkDate}
-          placeholder="YYYY-MM-DD"
-          autoCapitalize="none"
-          keyboardType="numbers-and-punctuation"
+        <Field
+          icon="calendar-outline"
+          value={formatDate(markDate)}
+          onPress={() => setPicker(picker === 'date' ? null : 'date')}
+          active={picker === 'date'}
         />
 
         <Text style={styles.sectionLabel}>What are you asking for?</Text>
@@ -122,32 +132,49 @@ export function RegularisePanel() {
           <>
             <Text style={styles.sectionLabel}>Attendance adjustment</Text>
             <View style={styles.timeRow}>
-              <View style={styles.timeField}>
-                <TextField
-                  label="Clock in"
-                  value={clockIn}
-                  onChangeText={setClockIn}
-                  placeholder="HH:MM"
-                  keyboardType="numbers-and-punctuation"
+              <View style={styles.timeCol}>
+                <Text style={styles.miniLabel}>Clock in</Text>
+                <Field
+                  icon="time-outline"
+                  value={clockIn ? formatTime(clockIn) : 'Not set'}
+                  muted={!clockIn}
+                  onPress={() => setPicker(picker === 'in' ? null : 'in')}
+                  active={picker === 'in'}
                 />
               </View>
-              <View style={styles.timeField}>
-                <TextField
-                  label="Clock out"
-                  value={clockOut}
-                  onChangeText={setClockOut}
-                  placeholder="HH:MM"
-                  keyboardType="numbers-and-punctuation"
+              <View style={styles.timeCol}>
+                <Text style={styles.miniLabel}>Clock out</Text>
+                <Field
+                  icon="time-outline"
+                  value={clockOut ? formatTime(clockOut) : 'Not set'}
+                  muted={!clockOut}
+                  onPress={() => setPicker(picker === 'out' ? null : 'out')}
+                  active={picker === 'out'}
                 />
               </View>
             </View>
-            <Text style={styles.hint}>Leave one blank if only the other is missing.</Text>
+            <Text style={styles.hint}>Set only the one that is missing, if the other was recorded.</Text>
           </>
         )}
 
-        {/* The server rations these per calendar month but exposes no balance
-            endpoint, so the rule is stated rather than counted down. Hitting it
-            comes back as REGULARISATION_LIMIT_REACHED and lands in the banner. */}
+        {picker && (
+          <View style={styles.pickerWrap}>
+            <DateTimePicker
+              value={picker === 'date' ? markDate : picker === 'in' ? clockIn ?? markDate : clockOut ?? markDate}
+              mode={picker === 'date' ? 'date' : 'time'}
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              // A correction is always about a day that has already happened.
+              maximumDate={picker === 'date' ? new Date() : undefined}
+              onChange={onPicked(picker)}
+            />
+            {Platform.OS === 'ios' && (
+              <Pressable onPress={() => setPicker(null)} style={styles.pickerDone}>
+                <Text style={styles.pickerDoneText}>Done</Text>
+              </Pressable>
+            )}
+          </View>
+        )}
+
         <View style={styles.balanceRow}>
           <Ionicons name="information-circle-outline" size={15} color={colors.slate500} />
           <Text style={styles.balanceText}>
@@ -164,7 +191,7 @@ export function RegularisePanel() {
           multiline
         />
 
-        {fieldError && reason.length > 0 && <Text style={styles.fieldError}>{fieldError}</Text>}
+        {fieldError && reason.length > 0 ? <Text style={styles.fieldError}>{fieldError}</Text> : null}
 
         <Button
           title="Request"
@@ -187,7 +214,7 @@ export function RegularisePanel() {
               <View key={r.id} style={[styles.row, i === requests.length - 1 && styles.rowLast]}>
                 <View style={styles.rowMain}>
                   <View style={styles.rowTop}>
-                    <Text style={styles.rowDate}>{r.markDate.slice(0, 10)}</Text>
+                    <Text style={styles.rowDate}>{formatDate(r.markDate)}</Text>
                     <View style={[styles.pill, { backgroundColor: tone.bg }]}>
                       <Text style={[styles.pillText, { color: tone.fg }]}>{r.status}</Text>
                     </View>
@@ -216,12 +243,36 @@ export function RegularisePanel() {
   );
 }
 
+function Field({
+  icon,
+  value,
+  onPress,
+  active,
+  muted,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  value: string;
+  onPress: () => void;
+  active?: boolean;
+  muted?: boolean;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [styles.field, active && styles.fieldActive, pressed && styles.fieldPressed]}
+      accessibilityRole="button"
+    >
+      <Ionicons name={icon} size={16} color={active ? colors.brand[700] : colors.slate400} />
+      <Text style={[styles.fieldText, muted && styles.fieldTextMuted]}>{value}</Text>
+      <Ionicons name="chevron-down" size={15} color={colors.slate400} />
+    </Pressable>
+  );
+}
+
 function Choice({ selected, title, onPress }: { selected: boolean; title: string; onPress: () => void }) {
   return (
     <Pressable onPress={onPress} style={styles.choice} accessibilityRole="radio" accessibilityState={{ selected }}>
-      <View style={[styles.radio, selected && styles.radioOn]}>
-        {selected && <View style={styles.radioDot} />}
-      </View>
+      <View style={[styles.radio, selected && styles.radioOn]}>{selected && <View style={styles.radioDot} />}</View>
       <Text style={styles.choiceText}>{title}</Text>
     </Pressable>
   );
@@ -239,6 +290,24 @@ const styles = StyleSheet.create({
     fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4,
     color: colors.slate500, marginBottom: 8, marginTop: 4,
   },
+  miniLabel: {
+    fontSize: 10.5, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.3,
+    color: colors.slate400, marginBottom: 5,
+  },
+
+  field: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    height: 48, paddingHorizontal: 12, borderRadius: radii.md,
+    borderWidth: 1.5, borderColor: colors.slate200, backgroundColor: colors.white,
+  },
+  fieldActive: { borderColor: colors.brand[700] },
+  fieldPressed: { opacity: 0.85 },
+  fieldText: { flex: 1, fontSize: 14, fontWeight: '700', color: colors.textLight },
+  fieldTextMuted: { color: colors.slate400, fontWeight: '600' },
+
+  pickerWrap: { marginTop: 6, alignItems: 'stretch' },
+  pickerDone: { alignSelf: 'flex-end', paddingHorizontal: 14, paddingVertical: 8 },
+  pickerDoneText: { color: colors.brand[700], fontSize: 14, fontWeight: '800' },
 
   choice: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, paddingVertical: 8 },
   radio: {
@@ -250,12 +319,12 @@ const styles = StyleSheet.create({
   choiceText: { flex: 1, fontSize: 13, color: colors.textLight, lineHeight: 18 },
 
   timeRow: { flexDirection: 'row', gap: 12 },
-  timeField: { flex: 1 },
-  hint: { fontSize: 11.5, color: colors.slate400, marginTop: -6, marginBottom: 4 },
+  timeCol: { flex: 1 },
+  hint: { fontSize: 11.5, color: colors.slate400, marginTop: 8 },
 
   balanceRow: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: colors.slate50, borderRadius: radii.sm, padding: 10, marginVertical: 6,
+    backgroundColor: colors.slate50, borderRadius: radii.sm, padding: 10, marginVertical: 10,
   },
   balanceText: { flex: 1, fontSize: 12, color: colors.slate600, fontWeight: '600' },
 

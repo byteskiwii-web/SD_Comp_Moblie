@@ -2,6 +2,7 @@ import { useCallback, useEffect } from 'react';
 import { AppState } from 'react-native';
 import { useAuthStore } from '../stores/authStore';
 import { useShiftStore } from '../stores/shiftStore';
+import { toLocalDateKey } from '../utils/datetime';
 import { getAttendanceHistory } from '../api/attendance.api';
 import { getLatestMarkOfTypes, SHIFT_TYPES, BREAK_TYPES } from '../utils/attendanceStatus';
 
@@ -21,7 +22,7 @@ export function useShiftSync() {
 
   const sync = useCallback(async () => {
     if (!employee) return;
-    const today = new Date().toISOString().slice(0, 10);
+    const today = toLocalDateKey();
     try {
       // Marks come back most-recent-first -- with multiple clock-in/out
       // cycles per day (e.g. lunch breaks), only the LATEST mark tells you
