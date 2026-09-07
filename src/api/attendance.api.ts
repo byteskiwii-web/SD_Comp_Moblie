@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import { apiClient } from './client';
 import type { AttendanceMark, LocationCheckResult, PunchResult } from '../types/attendance';
 
@@ -10,7 +11,9 @@ type PunchInput = {
   selfieFilePath: string; // filesystem path from VisionCamera's capturePhotoToFile
 };
 
-function buildPunchFormData(input: PunchInput): FormData {
+// Async because the web branch has to read the captured image off a
+// blob:/data: URL before it can be attached.
+async function buildPunchFormData(input: PunchInput): Promise<FormData> {
   const form = new FormData();
   form.append('employee_id', input.employee_id);
   form.append('store_code', input.store_code);
@@ -19,6 +22,20 @@ function buildPunchFormData(input: PunchInput): FormData {
   form.append('client_timestamp', new Date().toISOString());
   if (input.device_id) form.append('device_id', input.device_id);
 
+  const filename = `selfie_${Date.now()}.jpg`;
+
+  if (Platform.OS === 'web') {
+    // In a browser this is the real DOM FormData, which stringifies anything
+    // that isn't a Blob -- RN's {uri,name,type} shape would be sent as the
+    // literal "[object Object]". That uploads silently and succeeds, so the
+    // damage only shows up later as a stored selfie that isn't an image.
+    // expo-camera hands back a blob:/data: URL on web; fetch resolves both
+    // locally without a network round-trip.
+    const blob = await (await fetch(input.selfieFilePath)).blob();
+    form.append('selfie', blob, filename);
+    return form;
+  }
+
   const uri = input.selfieFilePath.startsWith('file://')
     ? input.selfieFilePath
     : `file://${input.selfieFilePath}`;
@@ -26,7 +43,7 @@ function buildPunchFormData(input: PunchInput): FormData {
   // the documented convention RN's networking layer expects.
   form.append('selfie', {
     uri,
-    name: `selfie_${Date.now()}.jpg`,
+    name: filename,
     type: 'image/jpeg',
   } as unknown as Blob);
 
@@ -36,7 +53,7 @@ function buildPunchFormData(input: PunchInput): FormData {
 export async function clockIn(input: PunchInput) {
   const res = await apiClient.post<{ success: true; message: string; data: PunchResult }>(
     '/attendance/clock-in',
-    buildPunchFormData(input),
+    await buildPunchFormData(input),
     { headers: { 'Content-Type': 'multipart/form-data' } }
   );
   return res.data.data;
@@ -45,7 +62,7 @@ export async function clockIn(input: PunchInput) {
 export async function clockOut(input: PunchInput) {
   const res = await apiClient.post<{ success: true; message: string; data: PunchResult }>(
     '/attendance/clock-out',
-    buildPunchFormData(input),
+    await buildPunchFormData(input),
     { headers: { 'Content-Type': 'multipart/form-data' } }
   );
   return res.data.data;
