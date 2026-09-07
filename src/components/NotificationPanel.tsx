@@ -1,8 +1,10 @@
 import React, { useEffect } from 'react';
-import { Dimensions, FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Dimensions, FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Icon, IconName } from './Icon';
 import { colors, radii } from '../theme/tokens';
-import { LocalNotification, LocalNotificationType, useNotificationsStore } from '../stores/notificationsStore';
+import { LocalNotificationType } from '../stores/notificationsStore';
+import { ServerNotificationType } from '../api/notifications.api';
+import { InboxItem, useNotificationInbox } from '../hooks/useNotificationInbox';
 
 // An explicit pixel cap on the LIST itself, not a percentage on an ancestor.
 // A percentage maxHeight on `sheet` plus flexShrink on the FlatList was not
@@ -12,20 +14,60 @@ import { LocalNotification, LocalNotificationType, useNotificationsStore } from 
 // through the Modal -> Pressable -> Pressable chain above it.
 const LIST_MAX_HEIGHT = Dimensions.get('window').height * 0.6;
 
-const TYPE_ICON: Record<LocalNotificationType, IconName> = {
+// Keyed by feed as well as type: the two vocabularies are independent and a
+// flat map would silently collide the day the server adds a `general` or the
+// device adds a `policy`.
+const LOCAL_ICON: Record<LocalNotificationType, IconName> = {
   'clock-out-reminder': 'clock',
   'geofence-alert': 'target',
   'integrity-warning': 'target',
   'integrity-escalated': 'shield',
   general: 'bell',
 };
-const TYPE_TINT: Record<LocalNotificationType, { bg: string; fg: string }> = {
+const LOCAL_TINT: Record<LocalNotificationType, { bg: string; fg: string }> = {
   'clock-out-reminder': { bg: colors.warningBg, fg: colors.warning },
   'geofence-alert': { bg: colors.dangerBg, fg: colors.danger },
   'integrity-warning': { bg: colors.warningBg, fg: colors.warning },
   'integrity-escalated': { bg: colors.dangerBg, fg: colors.danger },
   general: { bg: colors.slate100, fg: colors.slate600 },
 };
+
+const SERVER_ICON: Record<ServerNotificationType, IconName> = {
+  kudos: 'user',
+  regularisation: 'calendar',
+  policy: 'file',
+  onboarding: 'building',
+  system: 'bell',
+};
+const SERVER_TINT: Record<ServerNotificationType, { bg: string; fg: string }> = {
+  kudos: { bg: colors.successBg, fg: colors.success },
+  regularisation: { bg: colors.brand[50], fg: colors.brand[700] },
+  policy: { bg: colors.brand[50], fg: colors.brand[700] },
+  onboarding: { bg: colors.slate100, fg: colors.slate600 },
+  system: { bg: colors.slate100, fg: colors.slate600 },
+};
+
+// A server notification's title is nullable -- several backend callers emit a
+// body only. Falling back to a per-type heading keeps every row structurally
+// the same rather than leaving a bare, unlabelled line.
+const SERVER_FALLBACK_TITLE: Record<ServerNotificationType, string> = {
+  kudos: 'Appreciation',
+  regularisation: 'Regularisation',
+  policy: 'Company policy',
+  onboarding: 'Onboarding',
+  system: 'Notification',
+};
+
+function presentation(item: InboxItem): { icon: IconName; tint: { bg: string; fg: string }; title: string } {
+  if (item.source === 'local') {
+    return { icon: LOCAL_ICON[item.type], tint: LOCAL_TINT[item.type], title: item.title };
+  }
+  return {
+    icon: SERVER_ICON[item.type],
+    tint: SERVER_TINT[item.type],
+    title: item.title ?? SERVER_FALLBACK_TITLE[item.type],
+  };
+}
 
 function fmtTimestamp(iso: string) {
   return new Date(iso).toLocaleString(undefined, {
@@ -36,21 +78,31 @@ function fmtTimestamp(iso: string) {
   });
 }
 
-function NotificationRow({ item, onRemove }: { item: LocalNotification; onRemove: (id: string) => void }) {
-  const tint = TYPE_TINT[item.type];
+function NotificationRow({ item, onRemove }: { item: InboxItem; onRemove: (id: string) => void }) {
+  const { icon, tint, title } = presentation(item);
   return (
     <View style={[styles.row, !item.read && styles.rowUnread]}>
       <View style={[styles.iconCircle, { backgroundColor: tint.bg }]}>
-        <Icon name={TYPE_ICON[item.type]} size={16} color={tint.fg} />
+        <Icon name={icon} size={16} color={tint.fg} />
       </View>
       <View style={styles.rowText}>
-        <Text style={styles.rowTitle}>{item.title}</Text>
+        <Text style={styles.rowTitle}>{title}</Text>
         <Text style={styles.rowBody}>{item.body}</Text>
         <Text style={styles.rowTime}>{fmtTimestamp(item.timestamp)}</Text>
       </View>
-      <Pressable onPress={() => onRemove(item.id)} hitSlop={10} style={styles.dismissButton}>
-        <Icon name="x" size={12} color={colors.slate400} />
-      </Pressable>
+      {/*
+        Dismiss is local-only. A server notification has no delete endpoint,
+        and removing it from this list alone would desync it from the same
+        inbox as seen in the web console -- so those rows get a spacer that
+        keeps the text column aligned across both feeds instead.
+      */}
+      {item.source === 'local' ? (
+        <Pressable onPress={() => onRemove(item.id)} hitSlop={10} style={styles.dismissButton}>
+          <Icon name="x" size={12} color={colors.slate400} />
+        </Pressable>
+      ) : (
+        <View style={styles.dismissSpacer} />
+      )}
     </View>
   );
 }
@@ -61,9 +113,7 @@ function NotificationRow({ item, onRemove }: { item: LocalNotification; onRemove
 // -- it marks everything read immediately, so there is no separate "mark all
 // read" affordance (the prototype's own mobile panel has none either).
 export function NotificationPanel({ visible, onClose }: { visible: boolean; onClose: () => void }) {
-  const items = useNotificationsStore((s) => s.items);
-  const markAllRead = useNotificationsStore((s) => s.markAllRead);
-  const remove = useNotificationsStore((s) => s.remove);
+  const { items, markAllRead, removeLocal, isLoading, isError } = useNotificationInbox();
 
   useEffect(() => {
     if (visible) markAllRead();
@@ -90,13 +140,26 @@ export function NotificationPanel({ visible, onClose }: { visible: boolean; onCl
               <Icon name="x" size={14} color={colors.slate600} />
             </Pressable>
           </View>
+          {/*
+            The server half failing is a footnote, not the whole panel: device
+            alerts are still listed below, and those are the ones most likely
+            to matter when a field employee is out of signal.
+          */}
+          {isError && <Text style={styles.errorText}>Could not load newer notifications.</Text>}
           {items.length === 0 ? (
-            <Text style={styles.emptyText}>No notifications yet.</Text>
+            isLoading ? (
+              <ActivityIndicator color={colors.brand[700]} style={styles.loadingSpacer} />
+            ) : (
+              <Text style={styles.emptyText}>No notifications yet.</Text>
+            )
           ) : (
             <FlatList
               data={items}
-              keyExtractor={(i) => i.id}
-              renderItem={({ item }) => <NotificationRow item={item} onRemove={remove} />}
+              // Ids are unique per feed but nothing guarantees they are unique
+              // ACROSS feeds -- the local ones are locally generated strings,
+              // the server ones are database ids.
+              keyExtractor={(i) => `${i.source}:${i.id}`}
+              renderItem={({ item }) => <NotificationRow item={item} onRemove={removeLocal} />}
               style={[styles.list, { maxHeight: LIST_MAX_HEIGHT }]}
               showsVerticalScrollIndicator
             />
@@ -137,6 +200,14 @@ const styles = StyleSheet.create({
   // defense (Yoga defaults it to 0, unlike web CSS flexbox's default of 1).
   list: { flexGrow: 0, flexShrink: 1 },
   emptyText: { fontSize: 13, color: colors.slate400, textAlign: 'center', padding: 24 },
+  errorText: {
+    fontSize: 11,
+    color: colors.slate500,
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 2,
+  },
+  loadingSpacer: { marginVertical: 24 },
 
   row: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, padding: 14, borderBottomWidth: 1, borderBottomColor: colors.slate100 },
   rowUnread: { backgroundColor: colors.brand[50] },
@@ -149,4 +220,7 @@ const styles = StyleSheet.create({
     width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center',
     backgroundColor: colors.slate100,
   },
+  // Matches dismissButton's footprint so a server row's text column ends at
+  // the same x as a local row's.
+  dismissSpacer: { width: 22, height: 22 },
 });

@@ -2,14 +2,19 @@ import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Icon } from './Icon';
 import { colors } from '../theme/tokens';
-import { selectUnreadCount, useNotificationsStore } from '../stores/notificationsStore';
+import { useNotificationInbox } from '../hooks/useNotificationInbox';
 
 // Circular slate button + a small unread dot, matching the reference
 // prototype's mobile bell exactly (a dot, not a numeric badge -- the
 // prototype's own mobile notification bell has no count, unlike its desktop
 // admin shell).
+//
+// The dot covers BOTH feeds: a device alert and a server notification are
+// equally worth surfacing, and a bell that stayed dark while an approval was
+// waiting in the panel would be worse than no bell. Because it is a dot and
+// not a count, a server page capped at PAGE_SIZE cannot under-report it.
 export function NotificationBell({ onPress }: { onPress: () => void }) {
-  const unreadCount = useNotificationsStore(selectUnreadCount);
+  const { unreadCount } = useNotificationInbox();
   return (
     <Pressable onPress={onPress} style={styles.button} hitSlop={8}>
       <Icon name="bell" size={16} color={colors.slate600} />

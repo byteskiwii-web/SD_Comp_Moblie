@@ -2,10 +2,20 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Local, on-device notification history -- there is no backend notification
-// table or push infrastructure (deliberately: see src/utils/notifications.ts).
-// Persisted the same way shiftStore.ts already persists shift state, so this
-// introduces no new pattern and no new native dependency.
+// Alerts THIS DEVICE raised, and only those.
+//
+// Background tasks fire these (clock-out reminder, geofence, shift-integrity)
+// from a headless context, often with the app killed and sometimes with no
+// connectivity -- so they cannot come from, or be written back to, the server.
+// The organisation's own inbox is a separate feed with a separate lifecycle;
+// see src/api/notifications.api.ts. useNotificationInbox merges the two for
+// display, deliberately without persisting server rows here, where they would
+// go stale and could never be reconciled with the web console's view.
+//
+// There is still no push infrastructure -- these are local notifications only
+// (see src/utils/notifications.ts). Persisted the same way shiftStore.ts
+// persists shift state, so this introduces no new pattern and no new native
+// dependency.
 export type LocalNotificationType =
   | 'clock-out-reminder'
   | 'geofence-alert'
@@ -59,8 +69,10 @@ export const useNotificationsStore = create<NotificationsState>()(
   )
 );
 
-// Derived, not stored -- an unreadCount field on the state would be a second
-// source of truth that could drift from `items` after a stale write.
-export function selectUnreadCount(state: NotificationsState): number {
-  return state.items.filter((i) => !i.read).length;
-}
+// There is deliberately no unread-count selector here. The badge counts BOTH
+// feeds, so a local-only count is a number no caller actually wants -- one
+// exported from this file would read as authoritative and quietly under-report
+// every server notification. useNotificationInbox owns that total.
+//
+// Storing a count on the state would be wrong for a second reason: it is a
+// second source of truth that could drift from `items` after a stale write.
