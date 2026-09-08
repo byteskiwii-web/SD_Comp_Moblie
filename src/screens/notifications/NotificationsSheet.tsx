@@ -37,10 +37,21 @@ export function NotificationsSheet({ visible, onClose }: { visible: boolean; onC
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
 
+  // Kept warm continuously rather than fetched only once the sheet opens
+  // (`enabled: visible` used to gate this entirely). This component is
+  // mounted for as long as Home is -- the Modal's `visible` prop only
+  // controls presentation, not whether it stays in the tree -- so this hook
+  // was already running the whole time; it just was not allowed to fetch.
+  // Home already pays this same round-trip every 60s for the unread badge
+  // (`notifications-unread`); polling the list on the same cadence costs
+  // nothing beyond what the badge was already spending, and means that by
+  // the time someone taps the bell the list has very likely already arrived
+  // and the sheet opens on cached data instead of a fresh skeleton.
   const { data, isLoading, error } = useQuery({
     queryKey: ['notifications'],
     queryFn: () => getNotifications({ limit: 30 }),
-    enabled: visible,
+    refetchInterval: 60_000,
+    staleTime: 30_000,
   });
 
   const invalidate = () => {
