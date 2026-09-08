@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { HomeScreen } from '../screens/home/HomeScreen';
 import { AttendanceStack } from './AttendanceStack';
 import { LeaveScreen } from '../screens/leave/LeaveScreen';
-import { ProfileScreen } from '../screens/profile/ProfileScreen';
+import { ProfileStack } from './ProfileStack';
 import { Icon } from '../components/Icon';
 import { colors } from '../theme/tokens';
 import { AppTour, hasSeenTour } from '../components/AppTour';
@@ -85,7 +85,7 @@ export function AppTabs() {
       />
       <Tab.Screen
         name="Profile"
-        component={ProfileScreen}
+        component={ProfileStack}
         options={{ tabBarIcon: ({ color, size }) => <Icon name="user" color={color} size={size} /> }}
       />
     </Tab.Navigator>

@@ -33,3 +33,38 @@ export const aadhaarOtpVerifySchema = z.object({
   otp: z.string().length(OTP_LENGTH, { error: `Enter the ${OTP_LENGTH}-digit code` }),
 });
 export type AadhaarOtpVerifyFormInput = z.infer<typeof aadhaarOtpVerifySchema>;
+
+/**
+ * Bank account. Patterns match the server's own (`verification.schema.js`)
+ * exactly, so a rejection happens here rather than after a billable call.
+ *
+ * The confirm field has no server counterpart and is not sent. It exists
+ * because a mistyped account number is not a validation error — it is a valid
+ * account number belonging to somebody else, which no pattern can catch and
+ * which, in penny-drop mode, means a rupee lands in a stranger's account.
+ */
+export const bankVerifySchema = z
+  .object({
+    ifsc: z
+      .string()
+      .trim()
+      .toUpperCase()
+      .regex(/^[A-Z]{4}0[A-Z0-9]{6}$/, { error: 'Enter a valid IFSC (e.g. HDFC0001234)' }),
+    account_number: z
+      .string()
+      .trim()
+      .regex(/^[0-9]{6,18}$/, { error: 'Account number must be 6 to 18 digits' }),
+    confirm_account_number: z.string().trim(),
+    name: z.string().trim().optional(),
+    mobile: z
+      .string()
+      .trim()
+      .regex(/^[6-9][0-9]{9}$/, { error: 'Enter a 10-digit Indian mobile number' })
+      .optional()
+      .or(z.literal('')),
+  })
+  .refine((v) => v.account_number === v.confirm_account_number, {
+    error: 'The account numbers do not match',
+    path: ['confirm_account_number'],
+  });
+export type BankVerifyFormInput = z.infer<typeof bankVerifySchema>;

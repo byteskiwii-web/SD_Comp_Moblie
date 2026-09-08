@@ -1,11 +1,12 @@
 import React from 'react';
-import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
 import { getPolicies } from '../../api/policies.api';
 import { getKycStatus, KYC_STATUS_LABEL, KycCheckStatus, kycStatusTone } from '../../api/verification.api';
+import { useNavigation } from '@react-navigation/native';
 import { formatDate, newestFirst } from '../../utils/datetime';
 import { TourTarget } from '../../components/tour/TourTarget';
 import { useTourStore } from '../../stores/tourStore';
@@ -168,6 +169,7 @@ function KycCard() {
 
   if (!isFieldEmployee) return null;
 
+  const navigation = useNavigation<any>();
   const kyc = data?.kyc ?? null;
 
   return (
@@ -187,6 +189,15 @@ function KycCard() {
             status={kyc.bank.status}
             detail={kyc.bank.masked}
             last
+            // Unlike PAN and Aadhaar this one is not covered by the KYC
+            // gate, so an unverified account has no other route in. Only
+            // offered while there is something to do -- a verified account
+            // is changed through the ration, not by tapping a status.
+            onPress={
+              kyc.bank.status === 'verified'
+                ? undefined
+                : () => navigation.navigate('BankVerify')
+            }
           />
         </>
       ) : (
@@ -202,23 +213,39 @@ function KycRow({
   status,
   detail,
   last,
+  onPress,
 }: {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
   status: KycCheckStatus;
   detail?: string | null;
   last?: boolean;
+  onPress?: () => void;
 }) {
   const tone = kycStatusTone(status);
-  return (
-    <View style={[styles.row, last && styles.rowLast]}>
+  const body = (
+    <>
       <Ionicons name={icon} size={15} color={colors.slate400} style={styles.rowIcon} />
       <Text style={styles.rowLabel}>{label}</Text>
       {detail ? <Text style={styles.kycDetail}>{detail}</Text> : null}
       <View style={[styles.kycChip, { backgroundColor: tone.bg }]}>
         <Text style={[styles.kycChipText, { color: tone.fg }]}>{KYC_STATUS_LABEL[status]}</Text>
       </View>
-    </View>
+      {onPress ? (
+        <Ionicons name="chevron-forward" size={14} color={colors.slate300} style={styles.rowChevron} />
+      ) : null}
+    </>
+  );
+
+  if (!onPress) return <View style={[styles.row, last && styles.rowLast]}>{body}</View>;
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [styles.row, last && styles.rowLast, pressed && styles.rowPressed]}
+      accessibilityRole="button"
+    >
+      {body}
+    </Pressable>
   );
 }
 
@@ -283,6 +310,8 @@ const styles = StyleSheet.create({
   },
   rowLast: { borderBottomWidth: 0 },
   rowIcon: { marginRight: 8 },
+  rowChevron: { marginLeft: 6 },
+  rowPressed: { opacity: 0.6 },
   rowLabel: { flex: 1, fontSize: 11, fontWeight: '600', color: colors.slate500 },
   policySummary: { fontSize: 11, color: colors.slate400, fontWeight: '600', marginBottom: 6 },
   rowValue: { fontSize: 11.5, fontWeight: '700', color: colors.textLight },

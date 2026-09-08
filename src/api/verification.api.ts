@@ -123,6 +123,77 @@ export async function verifyAadhaarOtp(input: AadhaarOtpVerifyInput): Promise<Aa
   return res.data.data;
 }
 
+export type IfscLookupResult = {
+  ifsc: string;
+  bank: string | null;
+  branch: string | null;
+  city: string | null;
+  district: string | null;
+  state: string | null;
+  address: string | null;
+};
+
+/**
+ * Resolves an IFSC to its bank and branch.
+ *
+ * Free — public reference data, no quota, no money. Worth calling before the
+ * verify: it turns a typo in the IFSC into "no such code" rather than into a
+ * failed account check that has already spent quota (or, in penny-drop mode, a
+ * rupee sent somewhere unintended).
+ */
+export async function lookupIfsc(ifsc: string): Promise<IfscLookupResult> {
+  const res = await apiClient.post<{ success: true; data: IfscLookupResult }>('/verification/bank/ifsc', {
+    ifsc,
+  });
+  return res.data.data;
+}
+
+/** `penniless` checks without moving money. `pennydrop` deposits ₹1 to prove the account is live. */
+export type BankVerifyMode = 'penniless' | 'pennydrop';
+
+export type BankVerifyInput = {
+  account_number: string;
+  ifsc: string;
+  name?: string;
+  mobile?: string;
+  mode?: BankVerifyMode;
+};
+
+export type BankVerifyResult = {
+  /**
+   * Usable for payroll — NOT the provider's raw `account_exists`.
+   *
+   * The provider reports an account as existing while also reporting it
+   * blocked, or an NRE account. The server collapses that to one honest
+   * answer; `accountExists` is kept alongside so a failure can be explained.
+   */
+  verified: boolean;
+  accountExists: boolean;
+  outcome: string;
+  message: string;
+  account: { masked: string; ifsc: string; nameAtBank: string | null };
+  mode: BankVerifyMode;
+  /** Penny-drop only: proof the rupee actually landed. */
+  transfer: { utr: string | null; amountDeposited: number | null } | null;
+  meta: Record<string, unknown>;
+};
+
+/**
+ * Verify a bank account.
+ *
+ * NOT idempotent in penny-drop mode: the server marks that operation
+ * non-replayable and never auto-retries it, because a retry deposits a second
+ * rupee. Callers must not retry it either — the screen disables its button on
+ * the first press for exactly this reason.
+ */
+export async function verifyBankAccount(input: BankVerifyInput): Promise<BankVerifyResult> {
+  const res = await apiClient.post<{ success: true; data: BankVerifyResult }>(
+    '/verification/bank/account',
+    input
+  );
+  return res.data.data;
+}
+
 // Shared "is the KYC gate required" fetch, consumed by both useKycGate (the
 // mandatory Attendance-blocking gate) and the Profile screen's read-only KYC
 // section, so there's exactly one place that decides fail-open vs fail-closed.
