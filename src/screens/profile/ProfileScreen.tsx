@@ -149,6 +149,9 @@ function Row({
 function KycCard() {
   const employee = useAuthStore((s) => s.employee);
   const isFieldEmployee = employee?.role === 'field-employee';
+  // Above the early return below: a hook after a conditional `return null`
+  // changes the hook count between renders the moment the role resolves.
+  const navigation = useNavigation<any>();
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['profile-kyc-status', employee?.id],
@@ -169,7 +172,6 @@ function KycCard() {
 
   if (!isFieldEmployee) return null;
 
-  const navigation = useNavigation<any>();
   const kyc = data?.kyc ?? null;
 
   return (
@@ -181,18 +183,33 @@ function KycCard() {
         <Text style={styles.kycMuted}>Could not load verification status.</Text>
       ) : kyc ? (
         <>
-          <KycRow icon="card-outline" label="PAN" status={kyc.pan.status} detail={kyc.pan.masked} />
-          <KycRow icon="finger-print-outline" label="Aadhaar" status={kyc.aadhaar.status} />
+          {/* Every check that is not yet verified offers a way to finish it.
+              A status nobody can act on is just a reminder that something is
+              wrong -- and for two of these three, the KYC gate that used to be
+              the only route in is gone by the time anyone reaches Profile. */}
+          <KycRow
+            icon="card-outline"
+            label="PAN"
+            status={kyc.pan.status}
+            detail={kyc.pan.masked}
+            onPress={kyc.pan.status === 'verified' ? undefined : () => navigation.navigate('PanVerify')}
+          />
+          <KycRow
+            icon="finger-print-outline"
+            label="Aadhaar"
+            status={kyc.aadhaar.status}
+            onPress={
+              kyc.aadhaar.status === 'verified'
+                ? undefined
+                : () => navigation.navigate('AadhaarOtpRequest')
+            }
+          />
           <KycRow
             icon="wallet-outline"
             label="Bank account"
             status={kyc.bank.status}
             detail={kyc.bank.masked}
             last
-            // Unlike PAN and Aadhaar this one is not covered by the KYC
-            // gate, so an unverified account has no other route in. Only
-            // offered while there is something to do -- a verified account
-            // is changed through the ration, not by tapping a status.
             onPress={
               kyc.bank.status === 'verified'
                 ? undefined
@@ -231,8 +248,15 @@ function KycRow({
       <View style={[styles.kycChip, { backgroundColor: tone.bg }]}>
         <Text style={[styles.kycChipText, { color: tone.fg }]}>{KYC_STATUS_LABEL[status]}</Text>
       </View>
+      {/* An actionable row says what to do as well as what is wrong. The chip
+          stays -- "Failed" and "Pending" mean different things and both are
+          worth keeping -- and this is what to do about either. Without it,
+          people tap a Pending badge hoping something happens. */}
       {onPress ? (
-        <Ionicons name="chevron-forward" size={14} color={colors.slate300} style={styles.rowChevron} />
+        <View style={styles.kycAction}>
+          <Text style={styles.kycActionText}>Verify now</Text>
+          <Ionicons name="chevron-forward" size={13} color={colors.brand[700]} />
+        </View>
       ) : null}
     </>
   );
@@ -311,6 +335,8 @@ const styles = StyleSheet.create({
   rowLast: { borderBottomWidth: 0 },
   rowIcon: { marginRight: 8 },
   rowChevron: { marginLeft: 6 },
+  kycAction: { flexDirection: 'row', alignItems: 'center', gap: 1, marginLeft: 8 },
+  kycActionText: { fontSize: 11, fontWeight: '800', color: colors.brand[700] },
   rowPressed: { opacity: 0.6 },
   rowLabel: { flex: 1, fontSize: 11, fontWeight: '600', color: colors.slate500 },
   policySummary: { fontSize: 11, color: colors.slate400, fontWeight: '600', marginBottom: 6 },

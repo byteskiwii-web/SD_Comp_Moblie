@@ -35,4 +35,10 @@ export type AttendanceStackParamList = {
 export type ProfileStackParamList = {
   ProfileHome: undefined;
   BankVerify: undefined;
+  // The same three screens KycStack hosts, by the same route names. A check
+  // that is still pending has to be completable from Profile, and once the
+  // gate is satisfied KycStack no longer exists to reach them through.
+  PanVerify: undefined;
+  AadhaarOtpRequest: undefined;
+  AadhaarOtpVerify: { referenceId: string };
 };

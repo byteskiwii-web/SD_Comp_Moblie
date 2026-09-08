@@ -2,6 +2,9 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ProfileScreen } from '../screens/profile/ProfileScreen';
 import { BankVerifyScreen } from '../screens/kyc/BankVerifyScreen';
+import { PanVerifyScreen } from '../screens/kyc/PanVerifyScreen';
+import { AadhaarOtpRequestScreen } from '../screens/kyc/AadhaarOtpRequestScreen';
+import { AadhaarOtpVerifyScreen } from '../screens/kyc/AadhaarOtpVerifyScreen';
 import type { ProfileStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<ProfileStackParamList>();
@@ -21,6 +24,9 @@ export function ProfileStack() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="ProfileHome" component={ProfileScreen} />
       <Stack.Screen name="BankVerify" component={BankVerifyScreen} />
+      <Stack.Screen name="PanVerify" component={PanVerifyScreen} />
+      <Stack.Screen name="AadhaarOtpRequest" component={AadhaarOtpRequestScreen} />
+      <Stack.Screen name="AadhaarOtpVerify" component={AadhaarOtpVerifyScreen} />
     </Stack.Navigator>
   );
 }
