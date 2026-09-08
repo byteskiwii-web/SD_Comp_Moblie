@@ -7,6 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getPolicies } from '../../api/policies.api';
 import { getKycStatus, KYC_STATUS_LABEL, KycCheckStatus, kycStatusTone } from '../../api/verification.api';
 import { formatDate } from '../../utils/datetime';
+import { AppTour } from '../../components/AppTour';
 import { Button, Card } from '../../components/ui';
 import { colors, radii } from '../../theme/tokens';
 import { useAuthStore } from '../../stores/authStore';
@@ -25,6 +26,7 @@ export function ProfileScreen() {
   const profile = useAuthStore((s) => s.profile);
   const refreshProfile = useAuthStore((s) => s.refreshProfile);
   const [refreshing, setRefreshing] = React.useState(false);
+  const [tourOpen, setTourOpen] = React.useState(false);
 
   // Pull to refresh: the automatic read happens at boot, and somebody whose
   // details were changed while the app was open needs a way to ask again
@@ -92,7 +94,10 @@ export function ProfileScreen() {
 
         <PolicyLibrary />
 
-        <Button title="Sign out" variant="outline" onPress={() => signOut()} />
+        <Button title="Replay app tour" variant="outline" onPress={() => setTourOpen(true)} />
+                <Button title="Sign out" variant="outline" onPress={() => signOut()} />
+        
+                <AppTour visible={tourOpen} onClose={() => setTourOpen(false)} />
       </ScrollView>
     </SafeAreaView>
   );

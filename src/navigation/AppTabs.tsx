@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { HomeScreen } from '../screens/home/HomeScreen';
@@ -6,6 +7,7 @@ import { AttendanceScreen } from '../screens/attendance/AttendanceScreen';
 import { ProfileScreen } from '../screens/profile/ProfileScreen';
 import { Icon } from '../components/Icon';
 import { colors } from '../theme/tokens';
+import { AppTour, hasSeenTour } from '../components/AppTour';
 
 export type AppTabsParamList = {
   Home: undefined;
@@ -25,7 +27,16 @@ const ICONS: Record<keyof AppTabsParamList, [keyof typeof Ionicons.glyphMap, key
 };
 
 export function AppTabs() {
+  // There is no sign-up in this product -- HR creates employees -- so the
+  // first time the tabs mount after a sign-in is the only moment that means
+  // "new user".
+  const [tourOpen, setTourOpen] = useState(false);
+  useEffect(() => {
+    void hasSeenTour().then((seen) => setTourOpen(!seen));
+  }, []);
+
   return (
+    <View style={{ flex: 1 }}>
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
@@ -57,5 +68,8 @@ export function AppTabs() {
         options={{ tabBarIcon: ({ color, size }) => <Icon name="user" color={color} size={size} /> }}
       />
     </Tab.Navigator>
+
+      <AppTour visible={tourOpen} onClose={() => setTourOpen(false)} />
+    </View>
   );
 }
