@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Badge, Button, Card, TextField } from '../../components/ui';
 import { DatePickerField, TimePickerField } from '../../components/PickerField';
 import { TourTarget } from '../../components/tour/TourTarget';
+import { Toast, ToastState } from '../../components/Toast';
 import { colors, radii } from '../../theme/tokens';
 import { useAuthStore } from '../../stores/authStore';
 import { getAttendanceHistory, getMyRegularisations, submitRegularisation } from '../../api/attendance.api';
@@ -73,7 +74,13 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
   const [rows, setRows] = useState<StampRow[]>([]);
   const [reason, setReason] = useState('');
   const [errors, setErrors] = useState<{ time?: string; reason?: string }>({});
-  const [banner, setBanner] = useState<{ tone: 'success' | 'warning'; text: string } | null>(null);
+  // Replaces the old top-of-card banner, which sat above whatever the person
+  // had scrolled down the form to reach in order to press Request in the
+  // first place -- see components/Toast.tsx. justSubmitted is the button's
+  // own echo of the same event, cleared in lockstep with the toast so the
+  // two read as one acknowledgement rather than two independently-timed ones.
+  const [toast, setToast] = useState<ToastState>(null);
+  const [justSubmitted, setJustSubmitted] = useState(false);
 
   const dayStart = shiftHHMM(profile?.shiftStart, '10:00');
   const dayEnd = shiftHHMM(profile?.shiftEnd, '19:00');
@@ -144,10 +151,11 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['regularisation-mine', employee?.id] });
       queryClient.invalidateQueries({ queryKey: ['attendance-day', employee?.id, markDate] });
-      setBanner({ tone: 'success', text: 'Request submitted for approval.' });
+      setToast({ tone: 'success', text: 'Regularisation request submitted successfully.' });
+      setJustSubmitted(true);
       setReason('');
     },
-    onError: (err) => setBanner({ tone: 'warning', text: getApiErrorMessage(err) }),
+    onError: (err) => setToast({ tone: 'warning', text: getApiErrorMessage(err) }),
   });
 
   function validate(): boolean {
@@ -185,11 +193,7 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
 
   return (
     <View style={styles.wrap}>
-      {banner && (
-        <View style={[styles.banner, banner.tone === 'success' ? styles.bannerSuccess : styles.bannerWarning]}>
-          <Text style={styles.bannerText}>{banner.text}</Text>
-        </View>
-      )}
+      <Toast state={toast} onHide={() => { setToast(null); setJustSubmitted(false); }} />
 
       <Card style={styles.formCard}>
         <View style={styles.hoursRow}>
@@ -303,7 +307,8 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
               title="Cancel"
               variant="outline"
               onPress={() => {
-                setBanner(null);
+                setToast(null);
+                setJustSubmitted(false);
                 setErrors({});
                 setReason('');
                 setMarkDate(today());
@@ -312,12 +317,20 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
           </View>
           <View style={styles.actionHalf}>
             <Button
-              title="Request"
+              // The label change is the confirmation staying put on the one
+              // thing that cannot scroll out of view -- the control the
+              // person's thumb is already on. Disabled with it so the same
+              // request cannot be fired again while that's still on screen;
+              // it re-enables the moment the toast clears (see onHide above),
+              // by which point "Request" reads as the next request, not this
+              // one repeated.
+              title={justSubmitted ? 'Request sent' : 'Request'}
               onPress={() => {
-                setBanner(null);
+                setToast(null);
                 if (validate()) submitMutation.mutate();
               }}
               loading={submitMutation.isPending}
+              disabled={justSubmitted}
             />
           </View>
         </View>
@@ -353,11 +366,6 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
 
 const styles = StyleSheet.create({
   wrap: { gap: 14 },
-
-  banner: { borderRadius: radii.md, padding: 12 },
-  bannerSuccess: { backgroundColor: colors.successBg },
-  bannerWarning: { backgroundColor: colors.warningBg },
-  bannerText: { fontSize: 11.5, fontWeight: '600', color: colors.slate800 },
 
   formCard: {},
   hoursRow: { flexDirection: 'row', gap: 12, marginBottom: 16 },

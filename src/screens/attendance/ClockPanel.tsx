@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Linking, Modal, StyleSheet, Text, View } from 'react-native';
 import * as Location from 'expo-location';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -17,7 +17,24 @@ import { formatTimeWithSeconds, toLocalDateKey } from '../../utils/datetime';
 
 const today = () => toLocalDateKey();
 
-export function ClockPanel() {
+// Tighter than locationProbe.ts's 5 minutes: that is a background integrity
+// check the employee never sees, this feeds a fix they are about to submit
+// on a live punch, watching the screen while it happens.
+const CACHED_FIX_MAX_AGE_MS = 2 * 60 * 1000;
+
+type Props = {
+  // Set by Home's "Start/End shift with live photo" CTA, which already knows
+  // the direction from its own attendance query. Consumed at most once --
+  // see onAutoPunchStarted.
+  autoPunch?: 'clock-in' | 'clock-out';
+  // Fired the moment autoPunch is acted on, so the caller can drop it from
+  // state it owns. Without this, re-passing the same prop value across an
+  // unrelated re-render is indistinguishable from a fresh request to
+  // auto-punch again.
+  onAutoPunchStarted?: () => void;
+};
+
+export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
   const employee = useAuthStore((s) => s.employee);
   const store = useAuthStore((s) => s.store);
   const setClockedIn = useShiftStore((s) => s.setClockedIn);
@@ -96,11 +113,36 @@ export function ClockPanel() {
       return;
     }
     setPermission('granted');
+
+    // A cached fix (Play Services' fused location, or the device's last GPS
+    // lock) resolves in milliseconds; a cold getCurrentPositionAsync call can
+    // take several seconds to acquire a signal, which is the delay this is
+    // for. Showing the cached one first unblocks the geofence read and
+    // enables Start/End Shift immediately -- it is not a lesser answer, since
+    // getCurrentPositionAsync below still runs right behind it and overwrites
+    // coords the moment a fresh fix lands, so what actually gets submitted on
+    // Start/End Shift is never worse than a live-only fetch would have given,
+    // only arrived-at sooner. locationProbe.ts's background check uses the
+    // same two-step shape for the same reason.
+    let hasFix = false;
+    try {
+      const cached = await Location.getLastKnownPositionAsync({ maxAge: CACHED_FIX_MAX_AGE_MS });
+      if (cached) {
+        setCoords({ latitude: cached.coords.latitude, longitude: cached.coords.longitude });
+        hasFix = true;
+      }
+    } catch {
+      // No cached fix to fall back on -- the live fetch below is still tried.
+    }
+
     try {
       const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
       setCoords({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
     } catch {
-      setLocationError('Could not get your location. Try again.');
+      // Only an error if the cached fix above never landed either -- a
+      // screen that is already unblocked should not be knocked back into an
+      // error state because the background refresh happened to fail.
+      if (!hasFix) setLocationError('Could not get your location. Try again.');
     }
   }, []);
 
@@ -113,6 +155,33 @@ export function ClockPanel() {
       ? haversineDistance(coords.latitude, coords.longitude, parseFloat(store.lat), parseFloat(store.lng))
       : null;
   const insideFence = distanceMetres != null && store ? distanceMetres <= store.geofence_radius_m : null;
+
+  // Home's one-tap shortcut: open the camera the moment it is safe to, rather
+  // than landing here and making the employee press Start/End Shift a second
+  // time for a decision they already made by tapping the CTA.
+  //
+  // "Safe to" is exactly the condition the button below disables itself on --
+  // this mirrors that check rather than skipping it, so autoPunch can never
+  // fire a punch the manual button would have refused (already clocked in,
+  // no fix yet, mid-break on an end-shift). It waits for today's history to
+  // load rather than trusting Home's snapshot of it, because the two screens
+  // read that state independently and a moment can pass between them.
+  //
+  // The ref makes this a true one-shot within this mount: without it, every
+  // re-render while still waiting on a condition (e.g. no coords yet) would
+  // re-enter the effect, and the moment the condition clears it could double
+  // fire before React commits the state update that is meant to prevent that.
+  const autoPunchFired = useRef(false);
+  useEffect(() => {
+    if (!autoPunch || autoPunchFired.current || pendingAction) return;
+    if (!coords || historyQuery.isLoading) return;
+    const wouldBeDisabled =
+      autoPunch === 'clock-in' ? isCurrentlyClockedIn : !isCurrentlyClockedIn || isCurrentlyOnBreak;
+    if (wouldBeDisabled) return;
+    autoPunchFired.current = true;
+    onAutoPunchStarted?.();
+    setPendingAction(autoPunch);
+  }, [autoPunch, coords, historyQuery.isLoading, isCurrentlyClockedIn, isCurrentlyOnBreak, onAutoPunchStarted, pendingAction]);
 
   const punchMutation = useMutation({
     mutationFn: async (filePath: string) => {

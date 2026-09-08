@@ -132,7 +132,17 @@ export function HomeScreen() {
         {/* A row rather than a plain button: the icon and the second line carry
             what the punch actually involves, which a single label cannot. */}
         <Pressable
-          onPress={() => navigation.navigate('Attendance')}
+          // isOnShift here is the same read that chose the label two lines
+          // below, so the direction handed to Attendance always matches what
+          // this row just told the employee it would do -- opening the
+          // camera straight away instead of landing on the tab and asking
+          // them to press Start/End Shift again for a decision already made.
+          onPress={() =>
+            navigation.navigate('Attendance', {
+              screen: 'AttendanceHome',
+              params: { tab: 'clock', autoPunch: isOnShift ? 'clock-out' : 'clock-in' },
+            })
+          }
           style={({ pressed }) => [styles.cta, pressed && styles.ctaPressed]}
           accessibilityRole="button"
         >

@@ -23,12 +23,22 @@ export function AttendanceScreen() {
   const params = useRoute<RouteProp<AttendanceStackParamList, 'AttendanceHome'>>().params;
   const [tab, setTab] = useState<Tab>(params?.tab ?? 'clock');
 
+  // Held here, not read straight off params, on purpose. ClockPanel remounts
+  // every time the segmented control leaves 'clock' and comes back (this
+  // screen conditionally renders it), which would hand it the same truthy
+  // params.autoPunch again and reopen the camera on every return trip to the
+  // tab. Owning the flag here, at the level that survives that remount, and
+  // clearing it the moment ClockPanel acts on it, makes it fire exactly once
+  // per arrival from Home -- never on a tab flip within the same visit.
+  const [autoPunch, setAutoPunch] = useState(params?.autoPunch);
+
   // The day detail sends people here with a tab and a date already chosen.
   // Keyed on the whole params object rather than on params.tab, so arriving
   // a second time for a different day moves the form again instead of
   // silently staying put because the tab name has not changed.
   useEffect(() => {
     if (params?.tab) setTab(params.tab);
+    setAutoPunch(params?.autoPunch);
   }, [params]);
 
   return (
@@ -52,7 +62,7 @@ export function AttendanceScreen() {
         </View>
 
         {tab === 'clock' ? (
-          <ClockPanel />
+          <ClockPanel autoPunch={autoPunch} onAutoPunchStarted={() => setAutoPunch(undefined)} />
         ) : tab === 'history' ? (
           <HistoryPanel />
         ) : (

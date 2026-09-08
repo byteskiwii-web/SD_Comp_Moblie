@@ -166,6 +166,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
+    // Explicit rather than left to the parent's default cross-axis stretch:
+    // Button is routinely one Pressable inside an unstyled wrapper (TourTarget,
+    // a plain row View) two or more levels below whatever actually declares a
+    // width. Each of those levels resolves the percentage fine on its own, but
+    // on Android the chain was visibly full width while only the text in the
+    // middle registered a tap -- the painted box and the responder's hit rect
+    // had come from different layout passes. Stating the width on the
+    // Pressable itself, instead of counting on it to inherit correctly through
+    // several ancestors, makes the two the same measurement.
+    alignSelf: 'stretch',
+    width: '100%',
   },
   buttonPrimary: {
     backgroundColor: colors.brand[700],
