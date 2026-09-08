@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
@@ -15,6 +15,7 @@ import { NotificationsSheet } from '../notifications/NotificationsSheet';
 import { AppreciationCard } from './AppreciationCard';
 import { PoliciesCard } from './PoliciesCard';
 import { MonthlyStatsCard } from './MonthlyStatsCard';
+import { SkeletonRows } from '../../components/Skeleton';
 
 const today = () => toLocalDateKey();
 
@@ -141,7 +142,7 @@ export function HomeScreen() {
         <Card>
           <Text style={styles.cardTitle}>Today's timeline</Text>
           {isLoading ? (
-            <ActivityIndicator color={colors.brand[700]} style={styles.loadingSpacer} />
+            <SkeletonRows count={3} />
           ) : marks.length === 0 ? (
             <Text style={styles.emptyText}>No activity yet — start your shift to begin.</Text>
           ) : (

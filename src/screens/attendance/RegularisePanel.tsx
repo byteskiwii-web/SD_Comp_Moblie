@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Badge, Button, Card, TextField } from '../../components/ui';
@@ -9,8 +9,9 @@ import { useAuthStore } from '../../stores/authStore';
 import { getAttendanceHistory, getMyRegularisations, submitRegularisation } from '../../api/attendance.api';
 import { getApiErrorMessage } from '../../api/client';
 import { formatDuration, summariseDay } from '../../utils/attendanceDay';
-import { formatTime, toLocalDateKey } from '../../utils/datetime';
+import { formatTime, newestFirst, toLocalDateKey } from '../../utils/datetime';
 import type { Regularisation, RegularisationRequestType, RegularisationStatus } from '../../types/attendance';
+import { SkeletonRows } from '../../components/Skeleton';
 
 const today = () => toLocalDateKey();
 
@@ -172,6 +173,13 @@ export function RegularisePanel() {
       { key: newKey(), inTime: rs.length ? rs[rs.length - 1].outTime : dayStart, outTime: dayEnd },
     ]);
 
+  // markDate leads so the dates on screen descend; createdAt breaks ties for
+  // two corrections raised against the same day.
+  const myRequests = useMemo(
+    () => newestFirst(listQuery.data ?? [], 'markDate', 'createdAt'),
+    [listQuery.data]
+  );
+
   if (!employee || !store) return null;
 
   return (
@@ -315,14 +323,14 @@ export function RegularisePanel() {
       <Card style={styles.listCard}>
         <Text style={styles.listTitle}>Your requests</Text>
         {listQuery.isLoading ? (
-          <ActivityIndicator color={colors.brand[700]} style={styles.spacer} />
-        ) : !listQuery.data?.length ? (
+          <SkeletonRows count={3} />
+        ) : myRequests.length === 0 ? (
           <Text style={styles.empty}>No corrections raised yet.</Text>
         ) : (
-          listQuery.data.map((r: Regularisation, i: number) => (
+          myRequests.map((r: Regularisation, i: number) => (
             <View
               key={r.id}
-              style={[styles.reqRow, i === listQuery.data.length - 1 && styles.reqRowLast]}
+              style={[styles.reqRow, i === myRequests.length - 1 && styles.reqRowLast]}
             >
               <View style={styles.reqMain}>
                 <Text style={styles.reqDate}>{fmtDate(r.markDate)}</Text>

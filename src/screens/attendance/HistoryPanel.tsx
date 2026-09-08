@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { Card } from '../../components/ui';
@@ -9,6 +9,7 @@ import { getAttendanceHistory } from '../../api/attendance.api';
 import { getApiErrorMessage } from '../../api/client';
 import { formatTime, toLocalDateKey } from '../../utils/datetime';
 import { formatDuration, punctuality, summariseDays, type DaySummary } from '../../utils/attendanceDay';
+import { SkeletonList } from '../../components/Skeleton';
 
 /**
  * Logs and shifts.
@@ -96,7 +97,7 @@ export function HistoryPanel() {
       </Pressable>
 
       {isLoading ? (
-        <ActivityIndicator color={colors.brand[700]} style={styles.spacer} />
+        <SkeletonList count={3} lines={2} />
       ) : error ? (
         <Text style={styles.error}>{getApiErrorMessage(error)}</Text>
       ) : days.length === 0 ? (
@@ -107,7 +108,6 @@ export function HistoryPanel() {
             key={day.date}
             day={day}
             shiftStart={profile?.shiftStart ?? null}
-            shiftEnd={profile?.shiftEnd ?? null}
             open={expanded === day.date}
             onToggle={() => setExpanded(expanded === day.date ? null : day.date)}
           />
@@ -145,40 +145,24 @@ export function HistoryPanel() {
 function DayCard({
   day,
   shiftStart,
-  shiftEnd,
   open,
   onToggle,
 }: {
   day: DaySummary;
   shiftStart: string | null;
-  shiftEnd: string | null;
   open: boolean;
   onToggle: () => void;
 }) {
   const status = punctuality(day.firstIn, shiftStart);
-  const window =
-    day.firstIn && day.lastOut
-      ? `${formatTime(day.firstIn.timestamp)} - ${formatTime(day.lastOut.timestamp)}`
-      : day.firstIn
-        ? `${formatTime(day.firstIn.timestamp)} - —`
-        : '—';
-
   return (
     <Card style={styles.dayCard}>
       <Pressable onPress={onToggle} accessibilityRole="button">
-        <Text style={styles.dayHeading}>{longDate(day.date)}</Text>
-
-        <View style={styles.divider} />
-
-        <View style={styles.topRow}>
-          <Text style={styles.window} numberOfLines={1}>
-            {window}
-            {shiftStart && shiftEnd ? <Text style={styles.shiftName}>  ·  Rostered {shiftStart.slice(0, 5)}–{shiftEnd.slice(0, 5)}</Text> : null}
-          </Text>
+        <View style={styles.headRow}>
+          <Text style={styles.dayHeading}>{longDate(day.date)}</Text>
           {status && (
             <View style={[styles.badge, status === 'on-time' ? styles.badgeOk : styles.badgeLate]}>
               <Text style={[styles.badgeText, status === 'on-time' ? styles.badgeTextOk : styles.badgeTextLate]}>
-                {status === 'on-time' ? 'ON TIME' : 'LATE'}
+                {status === 'on-time' ? 'On time' : 'Late'}
               </Text>
             </View>
           )}
@@ -186,28 +170,33 @@ function DayCard({
 
         <View style={styles.punchRow}>
           <View style={styles.punch}>
-            <Ionicons name="arrow-down-outline" size={15} color={colors.success} />
+            <Ionicons name="arrow-down-outline" size={14} color={colors.success} />
             <Text style={styles.punchTime}>{day.firstIn ? formatTime(day.firstIn.timestamp) : '—'}</Text>
           </View>
           <View style={styles.punchRight}>
-            <Ionicons name="arrow-up-outline" size={15} color={colors.danger} />
+            <Ionicons name="arrow-up-outline" size={14} color={colors.danger} />
             <Text style={styles.punchTime}>{day.lastOut ? formatTime(day.lastOut.timestamp) : '—'}</Text>
           </View>
         </View>
 
         <View style={styles.hoursRow}>
           <Text style={styles.hoursLabel}>
-            Effective hours: <Text style={styles.hoursValue}>{formatDuration(day.effectiveMinutes)}</Text>
+            Effective <Text style={styles.hoursValue}>{formatDuration(day.effectiveMinutes)}</Text>
           </Text>
           <Text style={styles.hoursLabel}>
-            Gross hours: <Text style={styles.hoursValue}>{formatDuration(day.grossMinutes)}</Text>
+            Gross <Text style={styles.hoursValue}>{formatDuration(day.grossMinutes)}</Text>
           </Text>
         </View>
 
-        {day.openEnded && <Text style={styles.note}>No clock-out recorded — raise a correction under Regularise.</Text>}
-        {day.hasOutsideFence && <Text style={styles.note}>A punch that day was outside the store radius.</Text>}
+        {/* One short line, not two sentences. The detail is one tap away. */}
+        {(day.openEnded || day.hasOutsideFence) && (
+          <Text style={styles.note}>
+            {[day.openEnded ? 'No clock-out' : null, day.hasOutsideFence ? 'Outside radius' : null]
+              .filter(Boolean)
+              .join('  ·  ')}
+          </Text>
+        )}
       </Pressable>
-
       {open && (
         <View style={styles.logs}>
           <Text style={styles.logsTitle}>{day.storeName ?? 'Time logs'}</Text>
@@ -249,37 +238,26 @@ const styles = StyleSheet.create({
   error: { color: colors.danger, fontSize: 13, fontWeight: '600', paddingVertical: 12 },
   empty: { fontSize: 13, color: colors.slate400, paddingVertical: 12 },
 
-  dayCard: { padding: 0, overflow: 'hidden' },
-  dayHeading: { fontSize: 14, fontWeight: '800', color: colors.textLight, padding: 14, paddingBottom: 12 },
-  divider: { height: 1, backgroundColor: colors.slate100 },
-
-  topRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, paddingTop: 12 },
-  window: { flex: 1, fontSize: 14, fontWeight: '700', color: colors.textLight },
-  shiftName: { fontSize: 11.5, fontWeight: '600', color: colors.slate400 },
-  badge: { paddingHorizontal: 9, paddingVertical: 4, borderRadius: radii.sm },
+  dayCard: { padding: 14, gap: 10 },
+  headRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  dayHeading: { flex: 1, fontSize: 13, fontWeight: '700', color: colors.slate600 },
+  badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: radii.sm },
   badgeOk: { backgroundColor: colors.successBg },
   badgeLate: { backgroundColor: colors.warningBg },
-  badgeText: { fontSize: 10, fontWeight: '800', letterSpacing: 0.3 },
+  badgeText: { fontSize: 10, fontWeight: '800' },
   badgeTextOk: { color: '#047857' },
   badgeTextLate: { color: '#B45309' },
 
-  punchRow: { flexDirection: 'row', paddingHorizontal: 14, paddingTop: 10 },
-  punch: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
-  punchRight: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: 'flex-end' },
-  punchTime: { fontSize: 16, fontWeight: '800', color: colors.textLight, letterSpacing: 0.2 },
+  punchRow: { flexDirection: 'row' },
+  punch: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6 },
+  punchRight: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6, justifyContent: 'flex-end' },
+  punchTime: { fontSize: 17, fontWeight: '800', color: colors.textLight, letterSpacing: -0.2 },
 
-  hoursRow: {
-    flexDirection: 'row', justifyContent: 'space-between',
-    paddingHorizontal: 14, paddingTop: 10, paddingBottom: 14,
-  },
-  hoursLabel: { fontSize: 12, color: colors.slate500, fontWeight: '600' },
-  hoursValue: { color: colors.textLight, fontWeight: '800' },
+  hoursRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  hoursLabel: { fontSize: 11.5, color: colors.slate400, fontWeight: '600' },
+  hoursValue: { color: colors.textLight, fontWeight: '800', fontSize: 12.5 },
 
-  note: {
-    fontSize: 11.5, color: '#B45309', fontWeight: '600',
-    paddingHorizontal: 14, paddingBottom: 12, marginTop: -6,
-  },
-
+  note: { fontSize: 11, color: '#B45309', fontWeight: '700' },
   logs: { borderTopWidth: 1, borderTopColor: colors.slate100, backgroundColor: colors.slate50, padding: 14 },
   logsTitle: {
     fontSize: 10.5, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4,

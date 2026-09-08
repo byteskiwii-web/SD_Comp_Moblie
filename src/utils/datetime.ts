@@ -68,3 +68,28 @@ export function toLocalDateKey(value: string | number | Date = new Date()): stri
   const d = toDate(value) ?? new Date();
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
+
+/**
+ * Newest first, for any list a person reads.
+ *
+ * Server ordering cannot be relied on for this. GET /regularisation, for
+ * example, returns "pending first then oldest first" — correct for a
+ * reviewer working a queue, backwards for somebody reading their own history,
+ * and the same endpoint serves both. Sorting on the client is what makes the
+ * order match what the screen is for.
+ *
+ * Accepts several keys and uses the first one present, so a row can be dated
+ * by whichever field it actually carries.
+ */
+export function newestFirst<T>(rows: readonly T[], ...keys: (keyof T)[]): T[] {
+  const stamp = (row: T): number => {
+    for (const k of keys) {
+      const v = row[k];
+      if (v == null || v === '') continue;
+      const t = new Date(v as unknown as string).getTime();
+      if (!Number.isNaN(t)) return t;
+    }
+    return 0;
+  };
+  return [...rows].sort((a, b) => stamp(b) - stamp(a));
+}

@@ -6,7 +6,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
 import { getPolicies } from '../../api/policies.api';
 import { getKycStatus, KYC_STATUS_LABEL, KycCheckStatus, kycStatusTone } from '../../api/verification.api';
-import { formatDate } from '../../utils/datetime';
+import { formatDate, newestFirst } from '../../utils/datetime';
 import { AppTour } from '../../components/AppTour';
 import { KitCard } from './KitCard';
 import { Button, Card } from '../../components/ui';
@@ -229,7 +229,7 @@ function KycRow({
  */
 function PolicyLibrary() {
   const { data } = useQuery({ queryKey: ['policies-library'], queryFn: () => getPolicies(50) });
-  const items = data?.items ?? [];
+  const items = newestFirst(data?.items ?? [], 'publishedAt', 'updatedAt', 'createdAt');
   if (items.length === 0) return null;
 
   const signed = items.filter((p) => p.acknowledgedByMe).length;

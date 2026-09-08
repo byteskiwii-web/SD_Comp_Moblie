@@ -1,10 +1,11 @@
 import React from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { Card } from '../../components/ui';
 import { colors, radii } from '../../theme/tokens';
 import { BADGE_LABEL, getMyKudos } from '../../api/kudos.api';
+import { SkeletonRows } from '../../components/Skeleton';
 
 /**
  * Kudos received, newest first.
@@ -25,7 +26,7 @@ export function AppreciationCard() {
     return (
       <Card>
         <Text style={styles.title}>Appreciation</Text>
-        <ActivityIndicator color={colors.brand[700]} style={styles.spacer} />
+        <SkeletonRows count={2} />
       </Card>
     );
   }

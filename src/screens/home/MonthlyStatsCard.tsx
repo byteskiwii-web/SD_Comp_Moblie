@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { Card } from '../../components/ui';
 import { colors, radii } from '../../theme/tokens';
@@ -7,6 +7,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { getAttendanceHistory } from '../../api/attendance.api';
 import { formatDuration, summariseDays } from '../../utils/attendanceDay';
 import { toLocalDateKey } from '../../utils/datetime';
+import { Skeleton } from '../../components/Skeleton';
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
@@ -57,7 +58,11 @@ export function MonthlyStatsCard() {
       </View>
 
       {isLoading ? (
-        <ActivityIndicator color={colors.brand[700]} style={styles.spacer} />
+        <View style={styles.row}>
+          <Skeleton height={44} radius={12} />
+          <Skeleton height={44} radius={12} />
+          <Skeleton height={44} radius={12} />
+        </View>
       ) : (
         <>
           <View style={styles.row}>

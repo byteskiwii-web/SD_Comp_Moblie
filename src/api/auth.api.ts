@@ -51,12 +51,14 @@ export const SHIRT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'] as const;
 export type ShirtSize = (typeof SHIRT_SIZES)[number];
 
 /**
- * Self-service edit of your own record. Deliberately one field on the server
- * too -- PATCH /users/:id is administrative and a field employee cannot use it
- * on themselves.
+ * Self-service edit of your own record.
+ *
+ * On /auth/me, not /users/me: the users router is gated at SITE scope, so a
+ * field employee is refused there before any handler runs -- which is exactly
+ * how this first shipped, and it returned 403 to the only people who need it.
  */
 export async function updateMyProfile(input: { shirt_size: ShirtSize | null }) {
-  const res = await apiClient.patch<{ success: true; data: unknown }>('/users/me', input);
+  const res = await apiClient.patch<{ success: true; data: unknown }>('/auth/me', input);
   return res.data.data;
 }
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -12,6 +12,7 @@ import {
   type AppNotification,
   type NotificationType,
 } from '../../api/notifications.api';
+import { SkeletonRows } from '../../components/Skeleton';
 
 /** Per-kind icon and tint. `system` is the fallback for anything unrecognised. */
 const KIND: Record<NotificationType, { icon: keyof typeof Ionicons.glyphMap; tint: string; bg: string }> = {
@@ -73,7 +74,7 @@ export function NotificationsSheet({ visible, onClose }: { visible: boolean; onC
 
         <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
           {isLoading ? (
-            <ActivityIndicator color={colors.brand[700]} style={styles.spacer} />
+            <SkeletonRows count={4} />
           ) : error ? (
             <Text style={styles.error}>{getApiErrorMessage(error)}</Text>
           ) : items.length === 0 ? (
