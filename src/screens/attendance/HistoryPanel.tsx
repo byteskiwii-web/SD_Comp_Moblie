@@ -12,6 +12,7 @@ import { getApiErrorMessage } from '../../api/client';
 import { formatTime, toLocalDateKey } from '../../utils/datetime';
 import { formatDuration, punctuality, summariseDays, type DaySummary } from '../../utils/attendanceDay';
 import { SkeletonRows } from '../../components/Skeleton';
+import { TourTarget } from '../../components/tour/TourTarget';
 import type { AttendanceStackParamList } from '../../navigation/types';
 
 /**
@@ -109,6 +110,7 @@ export function HistoryPanel() {
           <Text style={styles.empty}>No punches recorded in this period.</Text>
         </Card>
       ) : (
+        <TourTarget id="history-list">
         <Card style={styles.listCard}>
           {days.map((day, i) => (
             <DayRow
@@ -120,6 +122,7 @@ export function HistoryPanel() {
             />
           ))}
         </Card>
+        </TourTarget>
       )}
 
       <Modal visible={pickerOpen} transparent animationType="slide" onRequestClose={() => setPickerOpen(false)}>

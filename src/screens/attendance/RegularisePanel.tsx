@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Badge, Button, Card, TextField } from '../../components/ui';
 import { DatePickerField, TimePickerField } from '../../components/PickerField';
+import { TourTarget } from '../../components/tour/TourTarget';
 import { colors, radii } from '../../theme/tokens';
 import { useAuthStore } from '../../stores/authStore';
 import { getAttendanceHistory, getMyRegularisations, submitRegularisation } from '../../api/attendance.api';
@@ -202,7 +203,9 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
           </View>
         </View>
 
-        <DatePickerField label="Date" value={markDate} onChange={setMarkDate} maximumDate={new Date()} />
+        <TourTarget id="regularise-form">
+          <DatePickerField label="Date" value={markDate} onChange={setMarkDate} maximumDate={new Date()} />
+        </TourTarget>
 
         <Text style={styles.fieldLabel}>Request type</Text>
         <View style={styles.segment}>

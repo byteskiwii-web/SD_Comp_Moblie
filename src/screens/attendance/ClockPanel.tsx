@@ -3,6 +3,7 @@ import { Alert, Linking, Modal, StyleSheet, Text, View } from 'react-native';
 import * as Location from 'expo-location';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button, Card } from '../../components/ui';
+import { TourTarget } from '../../components/tour/TourTarget';
 import { colors, radii } from '../../theme/tokens';
 import { useAuthStore } from '../../stores/authStore';
 import { useShiftStore } from '../../stores/shiftStore';
@@ -250,6 +251,7 @@ export function ClockPanel() {
         </View>
       )}
 
+      <TourTarget id="clock-location">
       <Card style={styles.geoCard}>
         {locationError ? (
           <>
@@ -279,7 +281,9 @@ export function ClockPanel() {
           </>
         )}
       </Card>
+      </TourTarget>
 
+      <TourTarget id="clock-action">
       <View style={styles.actionsRow}>
         <Button
           title="Start Shift"
@@ -295,6 +299,7 @@ export function ClockPanel() {
           disabled={!isCurrentlyClockedIn || !coords || isCurrentlyOnBreak}
         />
       </View>
+      </TourTarget>
       {isCurrentlyOnBreak && (
         <Text style={styles.geoWarning}>End your break before ending your shift.</Text>
       )}

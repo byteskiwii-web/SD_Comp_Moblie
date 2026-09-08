@@ -15,7 +15,8 @@ import { NotificationsSheet } from '../notifications/NotificationsSheet';
 import { AppreciationCard } from './AppreciationCard';
 import { PoliciesCard } from './PoliciesCard';
 import { MonthlyStatsCard } from './MonthlyStatsCard';
-import { AppTour } from '../../components/AppTour';
+import { TourTarget } from '../../components/tour/TourTarget';
+import { useTourStore } from '../../stores/tourStore';
 import { SkeletonRows } from '../../components/Skeleton';
 
 const today = () => toLocalDateKey();
@@ -28,7 +29,7 @@ export function HomeScreen() {
   const store = useAuthStore((s) => s.store);
   const navigation = useNavigation<any>();
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [tourOpen, setTourOpen] = useState(false);
+  const startTour = useTourStore((s) => s.start);
 
   // The badge number. Polled rather than pushed: expo-notifications remote push
   // does not work in Expo Go at all, so a periodic read is the only way the
@@ -79,7 +80,7 @@ export function HomeScreen() {
             hitSlop={8}
             accessibilityRole="button"
             accessibilityLabel="Replay app tour"
-            onPress={() => setTourOpen(true)}
+            onPress={startTour}
           >
             <Ionicons name="help-circle-outline" size={20} color={colors.slate600} />
           </Pressable>
@@ -100,7 +101,7 @@ export function HomeScreen() {
           </Pressable>
         </View>
 
-        <View style={[styles.hero, isOnShift ? styles.heroActive : styles.heroInactive]}>
+        <TourTarget id="home-hero" style={[styles.hero, isOnShift ? styles.heroActive : styles.heroInactive]}>
           <View style={styles.heroDecoration} pointerEvents="none" />
           <View style={styles.heroTopRow}>
             <View style={[styles.statusDot, isOnShift ? styles.statusDotActive : styles.statusDotInactive]} />
@@ -126,7 +127,7 @@ export function HomeScreen() {
               </Text>
             </View>
           </View>
-        </View>
+        </TourTarget>
 
         {/* A row rather than a plain button: the icon and the second line carry
             what the punch actually involves, which a single label cannot. */}
@@ -183,7 +184,6 @@ export function HomeScreen() {
       </ScrollView>
 
       <NotificationsSheet visible={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
-      <AppTour visible={tourOpen} onClose={() => setTourOpen(false)} />
     </SafeAreaView>
   );
 }

@@ -7,7 +7,8 @@ import { useQuery } from '@tanstack/react-query';
 import { getPolicies } from '../../api/policies.api';
 import { getKycStatus, KYC_STATUS_LABEL, KycCheckStatus, kycStatusTone } from '../../api/verification.api';
 import { formatDate, newestFirst } from '../../utils/datetime';
-import { AppTour } from '../../components/AppTour';
+import { TourTarget } from '../../components/tour/TourTarget';
+import { useTourStore } from '../../stores/tourStore';
 import { KitCard } from './KitCard';
 import { Button, Card } from '../../components/ui';
 import { colors, radii } from '../../theme/tokens';
@@ -27,7 +28,7 @@ export function ProfileScreen() {
   const profile = useAuthStore((s) => s.profile);
   const refreshProfile = useAuthStore((s) => s.refreshProfile);
   const [refreshing, setRefreshing] = React.useState(false);
-  const [tourOpen, setTourOpen] = React.useState(false);
+  const startTour = useTourStore((s) => s.start);
 
   // Pull to refresh: the automatic read happens at boot, and somebody whose
   // details were changed while the app was open needs a way to ask again
@@ -48,7 +49,7 @@ export function ProfileScreen() {
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.brand[700]} />}
       >
-        <View style={styles.heroCard}>
+        <TourTarget id="profile-top" style={styles.heroCard}>
           <View style={styles.avatar}>
             <Text style={styles.avatarInitial}>{employee?.first_name?.[0] ?? '?'}</Text>
           </View>
@@ -65,7 +66,7 @@ export function ProfileScreen() {
               </Text>
             </View>
           </View>
-        </View>
+        </TourTarget>
 
         <Card>
           <Text style={styles.cardTitle}>Contact & assignment</Text>
@@ -97,10 +98,9 @@ export function ProfileScreen() {
 
         <PolicyLibrary />
 
-        <Button title="Replay app tour" variant="outline" onPress={() => setTourOpen(true)} />
+        <Button title="Replay app tour" variant="outline" onPress={startTour} />
                 <Button title="Sign out" variant="outline" onPress={() => signOut()} />
         
-                <AppTour visible={tourOpen} onClose={() => setTourOpen(false)} />
       </ScrollView>
     </SafeAreaView>
   );

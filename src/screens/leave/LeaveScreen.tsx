@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { colors, radii } from '../../theme/tokens';
 import { Card } from '../../components/ui';
 import { SkeletonList, SkeletonRows } from '../../components/Skeleton';
+import { TourTarget } from '../../components/tour/TourTarget';
 import { getApiErrorMessage } from '../../api/client';
 import { newestFirst } from '../../utils/datetime';
 import {
@@ -83,14 +84,16 @@ export function LeaveScreen() {
     <SafeAreaView style={styles.flex} edges={['top']}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Leave</Text>
-        <Pressable
-          onPress={() => setApplyOpen(true)}
-          style={({ pressed }) => [styles.applyBtn, pressed && styles.pressed]}
-          accessibilityRole="button"
-        >
-          <Ionicons name="add" size={17} color={colors.white} />
-          <Text style={styles.applyBtnText}>Apply</Text>
-        </Pressable>
+        <TourTarget id="leave-apply">
+          <Pressable
+            onPress={() => setApplyOpen(true)}
+            style={({ pressed }) => [styles.applyBtn, pressed && styles.pressed]}
+            accessibilityRole="button"
+          >
+            <Ionicons name="add" size={17} color={colors.white} />
+            <Text style={styles.applyBtnText}>Apply</Text>
+          </Pressable>
+        </TourTarget>
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>

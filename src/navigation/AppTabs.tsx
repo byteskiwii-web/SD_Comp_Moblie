@@ -9,6 +9,8 @@ import { ProfileScreen } from '../screens/profile/ProfileScreen';
 import { Icon } from '../components/Icon';
 import { colors } from '../theme/tokens';
 import { AppTour, hasSeenTour } from '../components/AppTour';
+import { TourTargetProvider } from '../components/tour/TourTarget';
+import { useTourStore } from '../stores/tourStore';
 
 export type AppTabsParamList = {
   Home: undefined;
@@ -30,15 +32,26 @@ const ICONS: Record<keyof AppTabsParamList, [keyof typeof Ionicons.glyphMap, key
 };
 
 export function AppTabs() {
+  // The one and only tour instance, mounted above the tabs.
+  //
+  // It has to live here now that it navigates: an instance inside Profile
+  // would unmount the moment it walked somebody to Attendance. The buttons on
+  // Home and Profile set the store flag; this renders it.
+  const tourOpen = useTourStore((s) => s.open);
+  const startTour = useTourStore((s) => s.start);
+  const stopTour = useTourStore((s) => s.stop);
+
   // There is no sign-up in this product -- HR creates employees -- so the
   // first time the tabs mount after a sign-in is the only moment that means
   // "new user".
-  const [tourOpen, setTourOpen] = useState(false);
   useEffect(() => {
-    void hasSeenTour().then((seen) => setTourOpen(!seen));
-  }, []);
+    void hasSeenTour().then((seen) => {
+      if (!seen) startTour();
+    });
+  }, [startTour]);
 
   return (
+    <TourTargetProvider>
     <View style={{ flex: 1 }}>
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -77,7 +90,8 @@ export function AppTabs() {
       />
     </Tab.Navigator>
 
-      <AppTour visible={tourOpen} onClose={() => setTourOpen(false)} />
+      <AppTour visible={tourOpen} onClose={stopTour} />
     </View>
+    </TourTargetProvider>
   );
 }
