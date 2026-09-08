@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRoute, type RouteProp } from '@react-navigation/native';
+import type { AttendanceStackParamList } from '../../navigation/types';
 import { colors, radii } from '../../theme/tokens';
 import { ClockPanel } from './ClockPanel';
 import { HistoryPanel } from './HistoryPanel';
@@ -18,7 +20,16 @@ const TAB_LABEL: Record<Tab, string> = {
 };
 
 export function AttendanceScreen() {
-  const [tab, setTab] = useState<Tab>('clock');
+  const params = useRoute<RouteProp<AttendanceStackParamList, 'AttendanceHome'>>().params;
+  const [tab, setTab] = useState<Tab>(params?.tab ?? 'clock');
+
+  // The day detail sends people here with a tab and a date already chosen.
+  // Keyed on the whole params object rather than on params.tab, so arriving
+  // a second time for a different day moves the form again instead of
+  // silently staying put because the tab name has not changed.
+  useEffect(() => {
+    if (params?.tab) setTab(params.tab);
+  }, [params]);
 
   return (
     <SafeAreaView style={styles.flex} edges={['top']}>
@@ -40,7 +51,13 @@ export function AttendanceScreen() {
           ))}
         </View>
 
-        {tab === 'clock' ? <ClockPanel /> : tab === 'history' ? <HistoryPanel /> : <RegularisePanel />}
+        {tab === 'clock' ? (
+          <ClockPanel />
+        ) : tab === 'history' ? (
+          <HistoryPanel />
+        ) : (
+          <RegularisePanel initialDate={params?.date} />
+        )}
       </ScrollView>
     </SafeAreaView>
   );

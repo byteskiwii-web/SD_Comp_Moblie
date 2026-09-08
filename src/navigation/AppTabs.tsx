@@ -3,7 +3,8 @@ import { View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { HomeScreen } from '../screens/home/HomeScreen';
-import { AttendanceScreen } from '../screens/attendance/AttendanceScreen';
+import { AttendanceStack } from './AttendanceStack';
+import { LeaveScreen } from '../screens/leave/LeaveScreen';
 import { ProfileScreen } from '../screens/profile/ProfileScreen';
 import { Icon } from '../components/Icon';
 import { colors } from '../theme/tokens';
@@ -12,6 +13,7 @@ import { AppTour, hasSeenTour } from '../components/AppTour';
 export type AppTabsParamList = {
   Home: undefined;
   Attendance: undefined;
+  Leave: undefined;
   Profile: undefined;
 };
 
@@ -23,6 +25,7 @@ const Tab = createBottomTabNavigator<AppTabsParamList>();
 const ICONS: Record<keyof AppTabsParamList, [keyof typeof Ionicons.glyphMap, keyof typeof Ionicons.glyphMap]> = {
   Home: ['home', 'home-outline'],
   Attendance: ['calendar', 'calendar-outline'],
+  Leave: ['airplane', 'airplane-outline'],
   Profile: ['person-circle', 'person-circle-outline'],
 };
 
@@ -59,8 +62,13 @@ export function AppTabs() {
       />
       <Tab.Screen
         name="Attendance"
-        component={AttendanceScreen}
+        component={AttendanceStack}
         options={{ tabBarIcon: ({ color, size }) => <Icon name="target" color={color} size={size} /> }}
+      />
+      <Tab.Screen
+        name="Leave"
+        component={LeaveScreen}
+        options={{ tabBarIcon: ({ color, size }) => <Icon name="calendar" color={color} size={size} /> }}
       />
       <Tab.Screen
         name="Profile"

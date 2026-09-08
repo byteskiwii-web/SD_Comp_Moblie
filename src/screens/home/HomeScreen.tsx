@@ -15,6 +15,7 @@ import { NotificationsSheet } from '../notifications/NotificationsSheet';
 import { AppreciationCard } from './AppreciationCard';
 import { PoliciesCard } from './PoliciesCard';
 import { MonthlyStatsCard } from './MonthlyStatsCard';
+import { AppTour } from '../../components/AppTour';
 import { SkeletonRows } from '../../components/Skeleton';
 
 const today = () => toLocalDateKey();
@@ -27,6 +28,7 @@ export function HomeScreen() {
   const store = useAuthStore((s) => s.store);
   const navigation = useNavigation<any>();
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [tourOpen, setTourOpen] = useState(false);
 
   // The badge number. Polled rather than pushed: expo-notifications remote push
   // does not work in Expo Go at all, so a periodic read is the only way the
@@ -72,6 +74,16 @@ export function HomeScreen() {
               {employee?.first_name ?? 'there'}
             </Text>
           </View>
+          <Pressable
+            style={styles.iconButton}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Replay app tour"
+            onPress={() => setTourOpen(true)}
+          >
+            <Ionicons name="help-circle-outline" size={20} color={colors.slate600} />
+          </Pressable>
+
           <Pressable
             style={styles.iconButton}
             hitSlop={8}
@@ -171,6 +183,7 @@ export function HomeScreen() {
       </ScrollView>
 
       <NotificationsSheet visible={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
+      <AppTour visible={tourOpen} onClose={() => setTourOpen(false)} />
     </SafeAreaView>
   );
 }
@@ -179,7 +192,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.bgLight },
   content: { padding: 20, paddingTop: 8, gap: 16 },
 
-  headerRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  headerRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   headerText: { flex: 1 },
   welcome: { fontSize: 12, color: colors.slate500, fontWeight: '600' },
   name: { fontSize: 20, fontWeight: '800', color: colors.textLight, marginTop: 2, letterSpacing: -0.3 },

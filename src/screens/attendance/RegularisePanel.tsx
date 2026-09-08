@@ -61,13 +61,13 @@ type StampRow = { key: string; inTime: string; outTime: string };
 let rowSeq = 0;
 const newKey = () => `r${++rowSeq}`;
 
-export function RegularisePanel() {
+export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) {
   const employee = useAuthStore((s) => s.employee);
   const store = useAuthStore((s) => s.store);
   const profile = useAuthStore((s) => s.profile);
   const queryClient = useQueryClient();
 
-  const [markDate, setMarkDate] = useState(today());
+  const [markDate, setMarkDate] = useState(initialDate ?? today());
   const [requestType, setRequestType] = useState<RegularisationRequestType>('adjust');
   const [rows, setRows] = useState<StampRow[]>([]);
   const [reason, setReason] = useState('');

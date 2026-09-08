@@ -50,7 +50,12 @@ const STEPS: Step[] = [
   {
     icon: 'time-outline',
     title: 'Your hours',
-    body: 'Attendance › History groups every day with your effective and gross hours. Tap a day to see each stamp.',
+    body: 'Attendance › History lists every day with your effective hours. Tap a day for the full shift and every stamp behind it.',
+  },
+  {
+    icon: 'calendar-outline',
+    title: 'Time off',
+    body: 'The Leave tab. Pick the dates, say why, send it — your manager approves it and you can withdraw it while it is still pending.',
   },
   {
     icon: 'person-circle-outline',

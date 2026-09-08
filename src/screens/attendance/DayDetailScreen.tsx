@@ -1,0 +1,260 @@
+import React, { useMemo } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { useQuery } from '@tanstack/react-query';
+import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { colors, radii } from '../../theme/tokens';
+import { Button } from '../../components/ui';
+import { SkeletonCard } from '../../components/Skeleton';
+import { useAuthStore } from '../../stores/authStore';
+import { getAttendanceHistory } from '../../api/attendance.api';
+import { getApiErrorMessage } from '../../api/client';
+import { formatTime, formatTimeWithSeconds, toLocalDateKey } from '../../utils/datetime';
+import { formatDuration, punctuality, summariseDay } from '../../utils/attendanceDay';
+import type { AttendanceStackParamList } from '../../navigation/types';
+
+/**
+ * One day, in full.
+ *
+ * The list answers "which days need my attention"; this answers "what actually
+ * happened on this one" — the rostered window, the two hour counts, and every
+ * individual stamp behind them. Splitting it out is what let the list rows get
+ * short: a row no longer has to carry the detail, because the detail is one
+ * tap away.
+ *
+ * The stamps are shown to the SECOND here and to the minute everywhere else,
+ * on purpose. A summary reads better rounded; a log is evidence, and the
+ * seconds are the difference between "I clocked in at 9" and the record that
+ * proves it.
+ */
+
+type Nav = NativeStackNavigationProp<AttendanceStackParamList, 'AttendanceDay'>;
+type DayRoute = RouteProp<AttendanceStackParamList, 'AttendanceDay'>;
+
+const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+const longDate = (key: string) => {
+  const d = new Date(`${key}T00:00:00`);
+  return `${DAYS[d.getDay()]}, ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+};
+
+/** "09:30 AM" from the "HH:MM:SS" the profile carries. */
+function rosterTime(hhmmss: string | null): string | null {
+  if (!hhmmss) return null;
+  const [h, m] = hhmmss.split(':').map(Number);
+  if (Number.isNaN(h) || Number.isNaN(m)) return null;
+  const d = new Date();
+  d.setHours(h, m, 0, 0);
+  return formatTime(d);
+}
+
+export function DayDetailScreen() {
+  const navigation = useNavigation<Nav>();
+  const { date } = useRoute<DayRoute>().params;
+  const employee = useAuthStore((s) => s.employee);
+  const profile = useAuthStore((s) => s.profile);
+
+  // Refetched for the single day rather than handed down the route. A route
+  // param would be a snapshot of the list at tap time, and this screen is
+  // where somebody lands after clocking out to check it registered.
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['attendance-day', employee?.id, date],
+    queryFn: () => getAttendanceHistory(employee!.id, date, date),
+    enabled: !!employee,
+  });
+
+  const day = useMemo(() => summariseDay(date, data ?? []), [date, data]);
+  const status = punctuality(day.firstIn, profile?.shiftStart ?? null);
+  const isToday = date === toLocalDateKey();
+
+  const window = useMemo(() => {
+    const from = rosterTime(profile?.shiftStart ?? null);
+    const to = rosterTime(profile?.shiftEnd ?? null);
+    return from && to ? `${from} – ${to}` : null;
+  }, [profile?.shiftStart, profile?.shiftEnd]);
+
+  return (
+    <SafeAreaView style={styles.flex} edges={['top']}>
+      <View style={styles.nav}>
+        <Pressable onPress={() => navigation.goBack()} hitSlop={12} accessibilityRole="button" accessibilityLabel="Back">
+          <Ionicons name="chevron-back" size={26} color={colors.textLight} />
+        </Pressable>
+        <Text style={styles.navTitle}>{isToday ? 'Attendance · Today' : 'Attendance'}</Text>
+        {/* Balances the back chevron so the title sits centred. */}
+        <View style={styles.navSpacer} />
+      </View>
+
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <Text style={styles.date}>{longDate(date)}</Text>
+
+        {isLoading ? (
+          <SkeletonCard lines={4} />
+        ) : error ? (
+          <Text style={styles.error}>{getApiErrorMessage(error)}</Text>
+        ) : day.marks.length === 0 ? (
+          <View style={styles.card}>
+            <Text style={styles.empty}>Nothing was recorded on this day.</Text>
+          </View>
+        ) : (
+          <View style={styles.card}>
+            <View style={styles.windowRow}>
+              <Text style={styles.window} numberOfLines={1}>
+                {window ?? 'No rostered shift'}
+              </Text>
+              {status && (
+                <View style={[styles.pill, status === 'on-time' ? styles.pillOk : styles.pillLate]}>
+                  <Text style={[styles.pillText, status === 'on-time' ? styles.pillTextOk : styles.pillTextLate]}>
+                    {status === 'on-time' ? 'ON TIME' : 'LATE'}
+                  </Text>
+                </View>
+              )}
+            </View>
+
+            <View style={styles.punchRow}>
+              <View style={styles.punchCol}>
+                <Text style={styles.punchLabel}>Clock In</Text>
+                <View style={styles.punchValue}>
+                  <Ionicons name="arrow-down-outline" size={15} color={colors.success} />
+                  <Text style={styles.punchTime}>{day.firstIn ? formatTime(day.firstIn.timestamp) : '—'}</Text>
+                </View>
+              </View>
+              <View style={[styles.punchCol, styles.punchColRight]}>
+                <Text style={styles.punchLabel}>Clock Out</Text>
+                <View style={styles.punchValue}>
+                  <Ionicons name="arrow-up-outline" size={15} color={colors.danger} />
+                  <Text style={styles.punchTime}>{day.lastOut ? formatTime(day.lastOut.timestamp) : '—'}</Text>
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.divider} />
+
+            <View style={styles.hoursRow}>
+              <View>
+                <Text style={styles.hoursLabel}>Effective hours</Text>
+                <Text style={styles.hoursValue}>{formatDuration(day.effectiveMinutes)}</Text>
+              </View>
+              <View style={styles.hoursRight}>
+                <Text style={styles.hoursLabel}>Gross hours</Text>
+                <Text style={styles.hoursValue}>{formatDuration(day.grossMinutes)}</Text>
+              </View>
+            </View>
+
+            <View style={styles.divider} />
+
+            <Text style={styles.logsTitle}>Time Logs</Text>
+            {day.storeName && (
+              <View style={styles.storeChip}>
+                <Text style={styles.storeChipText}>{day.storeName}</Text>
+              </View>
+            )}
+            <View style={styles.logs}>
+              {day.marks.map((m) => {
+                const isIn = m.mark_type === 'clock-in' || m.mark_type === 'break-end';
+                const outside = m.inside_geofence === false;
+                return (
+                  <View key={m.id} style={styles.logRow}>
+                    <Ionicons
+                      name={isIn ? 'arrow-down-outline' : 'arrow-up-outline'}
+                      size={15}
+                      color={isIn ? colors.success : colors.danger}
+                    />
+                    <Text style={styles.logTime}>{formatTimeWithSeconds(m.timestamp)}</Text>
+                    <Text style={styles.logType} numberOfLines={1}>
+                      {m.mark_type.replace('-', ' ')}
+                      {outside ? ' · outside radius' : ''}
+                    </Text>
+                  </View>
+                );
+              })}
+
+              {/* The gap, stated rather than left blank. A missing close is the
+                  single most common reason somebody opens this screen. */}
+              {day.openEnded && (
+                <View style={[styles.logRow, styles.logRowMissing]}>
+                  <Ionicons name="arrow-up-outline" size={15} color={colors.danger} />
+                  <Text style={[styles.logTime, styles.logTimeMissing]}>OUT missing</Text>
+                  <Text style={styles.logType} />
+                </View>
+              )}
+            </View>
+          </View>
+        )}
+      </ScrollView>
+
+      <View style={styles.footer}>
+        <Button
+          title="Raise Request"
+          onPress={() => navigation.navigate('AttendanceHome', { tab: 'regularise', date })}
+        />
+      </View>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  flex: { flex: 1, backgroundColor: colors.bgLight },
+
+  nav: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 16, paddingVertical: 10,
+    backgroundColor: colors.white, borderBottomWidth: 1, borderBottomColor: colors.slate200,
+  },
+  navTitle: { fontSize: 15, fontWeight: '800', color: colors.textLight, letterSpacing: -0.2 },
+  navSpacer: { width: 26 },
+
+  content: { padding: 16, gap: 12, paddingBottom: 24 },
+  date: { fontSize: 17, fontWeight: '800', color: colors.textLight, letterSpacing: -0.3 },
+
+  card: {
+    backgroundColor: colors.white, borderRadius: radii.lg,
+    borderWidth: 1, borderColor: colors.slate200, padding: 14, gap: 12,
+  },
+  empty: { fontSize: 13, color: colors.slate400, fontWeight: '600' },
+  error: { color: colors.danger, fontSize: 13, fontWeight: '600' },
+
+  windowRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  window: { flex: 1, fontSize: 13.5, fontWeight: '700', color: colors.slate700 },
+  pill: { paddingHorizontal: 9, paddingVertical: 4, borderRadius: radii.sm },
+  pillOk: { backgroundColor: colors.successBg },
+  pillLate: { backgroundColor: colors.warningBg },
+  pillText: { fontSize: 10, fontWeight: '800', letterSpacing: 0.3 },
+  pillTextOk: { color: '#047857' },
+  pillTextLate: { color: '#B45309' },
+
+  punchRow: { flexDirection: 'row' },
+  punchCol: { flex: 1, gap: 5 },
+  punchColRight: { alignItems: 'flex-end' },
+  punchLabel: { fontSize: 11.5, color: colors.slate400, fontWeight: '700' },
+  punchValue: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  punchTime: { fontSize: 19, fontWeight: '800', color: colors.textLight, letterSpacing: -0.3 },
+
+  divider: { height: 1, backgroundColor: colors.slate100 },
+
+  hoursRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  hoursRight: { alignItems: 'flex-end' },
+  hoursLabel: { fontSize: 11.5, color: colors.slate400, fontWeight: '700' },
+  hoursValue: { fontSize: 15, fontWeight: '800', color: colors.textLight, marginTop: 2 },
+
+  logsTitle: { fontSize: 13, fontWeight: '800', color: colors.textLight },
+  storeChip: {
+    alignSelf: 'flex-start', backgroundColor: colors.slate100,
+    borderTopLeftRadius: radii.sm, borderTopRightRadius: radii.sm,
+    paddingHorizontal: 10, paddingVertical: 5, marginBottom: -1,
+  },
+  storeChipText: { fontSize: 11.5, fontWeight: '700', color: colors.slate600 },
+  logs: { backgroundColor: colors.slate50, borderRadius: radii.md, padding: 4 },
+  logRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 9, paddingHorizontal: 8 },
+  logRowMissing: { backgroundColor: colors.dangerBg, borderRadius: radii.sm },
+  logTime: { fontSize: 13.5, fontWeight: '700', color: colors.textLight, minWidth: 104 },
+  logTimeMissing: { color: colors.danger },
+  logType: { flex: 1, fontSize: 11.5, color: colors.slate400, fontWeight: '600', textTransform: 'capitalize' },
+
+  footer: {
+    padding: 16, paddingBottom: 20,
+    backgroundColor: colors.white, borderTopWidth: 1, borderTopColor: colors.slate200,
+  },
+});

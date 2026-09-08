@@ -2,6 +2,8 @@ import React, { useMemo, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Card } from '../../components/ui';
 import { colors, radii } from '../../theme/tokens';
 import { useAuthStore } from '../../stores/authStore';
@@ -9,22 +11,30 @@ import { getAttendanceHistory } from '../../api/attendance.api';
 import { getApiErrorMessage } from '../../api/client';
 import { formatTime, toLocalDateKey } from '../../utils/datetime';
 import { formatDuration, punctuality, summariseDays, type DaySummary } from '../../utils/attendanceDay';
-import { SkeletonList } from '../../components/Skeleton';
+import { SkeletonRows } from '../../components/Skeleton';
+import type { AttendanceStackParamList } from '../../navigation/types';
 
 /**
  * Logs and shifts.
  *
- * A day is the unit people think in, so raw punches are rolled up into one card
- * each: when the shift ran, whether it started on time, and the two hour counts
- * that mean different things — gross is time on site, effective is gross minus
- * breaks. Tap a card for the individual stamps behind those numbers.
+ * A list, not a stack of cards. Every day used to carry its own card with the
+ * date, both punches, both hour counts and a warning line — five pieces of
+ * furniture per row, which is what made a month of attendance exhausting to
+ * scan. A row here answers one question: was this day normal? Everything
+ * behind that answer is one tap away on the day detail, which is where
+ * somebody goes once they have found the day that was not.
  *
  * The reference build also shows "Week Off" days. There is no roster in this
  * API — nothing says which days somebody was scheduled — so days with no
  * punches are simply absent rather than labelled with a guess.
  */
 
+type Nav = NativeStackNavigationProp<AttendanceStackParamList, 'AttendanceHome'>;
 type Range = { key: string; label: string; from: string; to: string };
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const MONTHS_LONG = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 function buildRanges(): Range[] {
   const now = new Date();
@@ -39,13 +49,12 @@ function buildRanges(): Range[] {
     to: toLocalDateKey(now),
   });
 
-  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   for (let back = 1; back <= 3; back++) {
     const first = new Date(now.getFullYear(), now.getMonth() - back, 1);
     const last = new Date(now.getFullYear(), now.getMonth() - back + 1, 0);
     ranges.push({
       key: `m${back}`,
-      label: MONTHS[first.getMonth()],
+      label: MONTHS_LONG[first.getMonth()],
       from: toLocalDateKey(first),
       to: toLocalDateKey(last),
     });
@@ -55,24 +64,17 @@ function buildRanges(): Range[] {
 
 const shortDate = (key: string) => {
   const d = new Date(`${key}T00:00:00`);
-  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   return `${d.getDate()} ${MONTHS[d.getMonth()]}`;
-};
-const longDate = (key: string) => {
-  const d = new Date(`${key}T00:00:00`);
-  const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  return `${DAYS[d.getDay()]}, ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 };
 
 export function HistoryPanel() {
+  const navigation = useNavigation<Nav>();
   const employee = useAuthStore((s) => s.employee);
   const profile = useAuthStore((s) => s.profile);
 
   const ranges = useMemo(buildRanges, []);
   const [range, setRange] = useState<Range>(ranges[0]);
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [expanded, setExpanded] = useState<string | null>(null);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['attendance-history', employee?.id, range.from, range.to],
@@ -88,7 +90,7 @@ export function HistoryPanel() {
         <View>
           <Text style={styles.rangeLabel}>{range.label}</Text>
           <Text style={styles.rangeDates}>
-            ({shortDate(range.from)} – {shortDate(range.to)})
+            {shortDate(range.from)} – {shortDate(range.to)}
           </Text>
         </View>
         <View style={styles.rangeChevron}>
@@ -97,21 +99,27 @@ export function HistoryPanel() {
       </Pressable>
 
       {isLoading ? (
-        <SkeletonList count={3} lines={2} />
+        <Card style={styles.listCard}>
+          <SkeletonRows count={5} />
+        </Card>
       ) : error ? (
         <Text style={styles.error}>{getApiErrorMessage(error)}</Text>
       ) : days.length === 0 ? (
-        <Text style={styles.empty}>No punches recorded in this period.</Text>
+        <Card style={styles.listCard}>
+          <Text style={styles.empty}>No punches recorded in this period.</Text>
+        </Card>
       ) : (
-        days.map((day) => (
-          <DayCard
-            key={day.date}
-            day={day}
-            shiftStart={profile?.shiftStart ?? null}
-            open={expanded === day.date}
-            onToggle={() => setExpanded(expanded === day.date ? null : day.date)}
-          />
-        ))
+        <Card style={styles.listCard}>
+          {days.map((day, i) => (
+            <DayRow
+              key={day.date}
+              day={day}
+              shiftStart={profile?.shiftStart ?? null}
+              first={i === 0}
+              onPress={() => navigation.navigate('AttendanceDay', { date: day.date })}
+            />
+          ))}
+        </Card>
       )}
 
       <Modal visible={pickerOpen} transparent animationType="slide" onRequestClose={() => setPickerOpen(false)}>
@@ -142,81 +150,66 @@ export function HistoryPanel() {
   );
 }
 
-function DayCard({
+/**
+ * One day, at a glance.
+ *
+ * A dot rather than a worded badge for punctuality: down a list this long the
+ * words "On time" twenty times over are noise, and the eye is hunting for the
+ * days that are not green.
+ */
+function DayRow({
   day,
   shiftStart,
-  open,
-  onToggle,
+  first,
+  onPress,
 }: {
   day: DaySummary;
   shiftStart: string | null;
-  open: boolean;
-  onToggle: () => void;
+  first: boolean;
+  onPress: () => void;
 }) {
   const status = punctuality(day.firstIn, shiftStart);
+  const d = new Date(`${day.date}T00:00:00`);
+  const flagged = day.openEnded || day.hasOutsideFence;
+
   return (
-    <Card style={styles.dayCard}>
-      <Pressable onPress={onToggle} accessibilityRole="button">
-        <View style={styles.headRow}>
-          <Text style={styles.dayHeading}>{longDate(day.date)}</Text>
-          {status && (
-            <View style={[styles.badge, status === 'on-time' ? styles.badgeOk : styles.badgeLate]}>
-              <Text style={[styles.badgeText, status === 'on-time' ? styles.badgeTextOk : styles.badgeTextLate]}>
-                {status === 'on-time' ? 'On time' : 'Late'}
-              </Text>
-            </View>
-          )}
-        </View>
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [styles.row, !first && styles.rowDivided, pressed && styles.rowPressed]}
+      accessibilityRole="button"
+    >
+      <View style={styles.dateBlock}>
+        <Text style={styles.dateDay}>{d.getDate()}</Text>
+        <Text style={styles.dateWeekday}>{WEEKDAYS[d.getDay()]}</Text>
+      </View>
 
-        <View style={styles.punchRow}>
-          <View style={styles.punch}>
-            <Ionicons name="arrow-down-outline" size={14} color={colors.success} />
-            <Text style={styles.punchTime}>{day.firstIn ? formatTime(day.firstIn.timestamp) : '—'}</Text>
-          </View>
-          <View style={styles.punchRight}>
-            <Ionicons name="arrow-up-outline" size={14} color={colors.danger} />
-            <Text style={styles.punchTime}>{day.lastOut ? formatTime(day.lastOut.timestamp) : '—'}</Text>
-          </View>
-        </View>
-
-        <View style={styles.hoursRow}>
-          <Text style={styles.hoursLabel}>
-            Effective <Text style={styles.hoursValue}>{formatDuration(day.effectiveMinutes)}</Text>
-          </Text>
-          <Text style={styles.hoursLabel}>
-            Gross <Text style={styles.hoursValue}>{formatDuration(day.grossMinutes)}</Text>
+      <View style={styles.middle}>
+        <View style={styles.timesRow}>
+          {status && <View style={[styles.dot, status === 'on-time' ? styles.dotOk : styles.dotLate]} />}
+          <Text style={styles.times} numberOfLines={1}>
+            {day.firstIn ? formatTime(day.firstIn.timestamp) : '—'}
+            {'  →  '}
+            {day.lastOut ? formatTime(day.lastOut.timestamp) : '—'}
           </Text>
         </View>
-
-        {/* One short line, not two sentences. The detail is one tap away. */}
-        {(day.openEnded || day.hasOutsideFence) && (
-          <Text style={styles.note}>
+        {flagged ? (
+          <Text style={styles.flag} numberOfLines={1}>
             {[day.openEnded ? 'No clock-out' : null, day.hasOutsideFence ? 'Outside radius' : null]
               .filter(Boolean)
-              .join('  ·  ')}
+              .join(' · ')}
+          </Text>
+        ) : (
+          <Text style={styles.sub}>
+            {MONTHS[d.getMonth()]} {d.getFullYear()}
           </Text>
         )}
-      </Pressable>
-      {open && (
-        <View style={styles.logs}>
-          <Text style={styles.logsTitle}>{day.storeName ?? 'Time logs'}</Text>
-          {day.marks.map((m) => {
-            const isIn = m.mark_type === 'clock-in' || m.mark_type === 'break-end';
-            return (
-              <View key={m.id} style={styles.logRow}>
-                <Ionicons
-                  name={isIn ? 'arrow-down-outline' : 'arrow-up-outline'}
-                  size={14}
-                  color={isIn ? colors.success : colors.danger}
-                />
-                <Text style={styles.logType}>{m.mark_type.replace('-', ' ')}</Text>
-                <Text style={styles.logTime}>{formatTime(m.timestamp)}</Text>
-              </View>
-            );
-          })}
-        </View>
-      )}
-    </Card>
+      </View>
+
+      <View style={styles.right}>
+        <Text style={styles.hours}>{formatDuration(day.effectiveMinutes)}</Text>
+        <Ionicons name="chevron-forward" size={16} color={colors.slate300} />
+      </View>
+    </Pressable>
   );
 }
 
@@ -225,47 +218,42 @@ const styles = StyleSheet.create({
 
   rangeRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingVertical: 4, paddingHorizontal: 2,
+    paddingVertical: 2, paddingHorizontal: 2,
   },
-  rangeLabel: { fontSize: 19, fontWeight: '800', color: colors.textLight, letterSpacing: -0.3 },
-  rangeDates: { fontSize: 12, color: colors.slate500, marginTop: 2, fontWeight: '600' },
+  rangeLabel: { fontSize: 17, fontWeight: '800', color: colors.textLight, letterSpacing: -0.3 },
+  rangeDates: { fontSize: 11.5, color: colors.slate400, marginTop: 1, fontWeight: '600' },
   rangeChevron: {
     width: 30, height: 30, borderRadius: 15, backgroundColor: colors.brand[50],
     alignItems: 'center', justifyContent: 'center',
   },
 
-  spacer: { marginVertical: 24 },
   error: { color: colors.danger, fontSize: 13, fontWeight: '600', paddingVertical: 12 },
-  empty: { fontSize: 13, color: colors.slate400, paddingVertical: 12 },
+  empty: { fontSize: 13, color: colors.slate400, fontWeight: '600', paddingVertical: 14 },
 
-  dayCard: { padding: 14, gap: 10 },
-  headRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  dayHeading: { flex: 1, fontSize: 13, fontWeight: '700', color: colors.slate600 },
-  badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: radii.sm },
-  badgeOk: { backgroundColor: colors.successBg },
-  badgeLate: { backgroundColor: colors.warningBg },
-  badgeText: { fontSize: 10, fontWeight: '800' },
-  badgeTextOk: { color: '#047857' },
-  badgeTextLate: { color: '#B45309' },
+  listCard: { padding: 0, paddingHorizontal: 14, overflow: 'hidden' },
 
-  punchRow: { flexDirection: 'row' },
-  punch: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6 },
-  punchRight: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6, justifyContent: 'flex-end' },
-  punchTime: { fontSize: 17, fontWeight: '800', color: colors.textLight, letterSpacing: -0.2 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12 },
+  rowDivided: { borderTopWidth: 1, borderTopColor: colors.slate100 },
+  rowPressed: { opacity: 0.6 },
 
-  hoursRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  hoursLabel: { fontSize: 11.5, color: colors.slate400, fontWeight: '600' },
-  hoursValue: { color: colors.textLight, fontWeight: '800', fontSize: 12.5 },
-
-  note: { fontSize: 11, color: '#B45309', fontWeight: '700' },
-  logs: { borderTopWidth: 1, borderTopColor: colors.slate100, backgroundColor: colors.slate50, padding: 14 },
-  logsTitle: {
-    fontSize: 10.5, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4,
-    color: colors.slate500, marginBottom: 8,
+  dateBlock: { width: 34, alignItems: 'center' },
+  dateDay: { fontSize: 17, fontWeight: '800', color: colors.textLight, letterSpacing: -0.4 },
+  dateWeekday: {
+    fontSize: 9.5, fontWeight: '800', color: colors.slate400,
+    textTransform: 'uppercase', letterSpacing: 0.3, marginTop: 1,
   },
-  logRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6 },
-  logType: { flex: 1, fontSize: 12.5, color: colors.slate600, fontWeight: '600', textTransform: 'capitalize' },
-  logTime: { fontSize: 13, fontWeight: '700', color: colors.textLight },
+
+  middle: { flex: 1, gap: 3 },
+  timesRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
+  dot: { width: 7, height: 7, borderRadius: 4 },
+  dotOk: { backgroundColor: colors.success },
+  dotLate: { backgroundColor: colors.warning },
+  times: { flex: 1, fontSize: 13.5, fontWeight: '700', color: colors.textLight },
+  sub: { fontSize: 11, color: colors.slate400, fontWeight: '600', marginLeft: 14 },
+  flag: { fontSize: 11, color: '#B45309', fontWeight: '700', marginLeft: 14 },
+
+  right: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  hours: { fontSize: 13, fontWeight: '800', color: colors.slate600 },
 
   backdrop: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
