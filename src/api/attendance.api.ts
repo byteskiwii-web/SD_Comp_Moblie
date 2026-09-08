@@ -146,3 +146,18 @@ export async function getMyRegularisations() {
   const res = await apiClient.get<{ success: true; data: Regularisation[] }>('/regularisation');
   return res.data.data;
 }
+
+/**
+ * Withdraws one of the caller's own requests, and only while it is pending.
+ *
+ * The server collapses every refusal into a 404 -- not yours, already decided,
+ * or never existed all answer identically, so ids cannot be probed by their
+ * error. That means a 404 here is NOT necessarily "gone": the likeliest cause
+ * is a reviewer deciding the request between this list being rendered and the
+ * button being pressed. Callers should refetch the list on failure rather than
+ * report the request as missing.
+ */
+export async function cancelRegularisation(id: string) {
+  const res = await apiClient.post<{ success: true; data: Regularisation }>(`/regularisation/${id}/cancel`);
+  return res.data.data;
+}

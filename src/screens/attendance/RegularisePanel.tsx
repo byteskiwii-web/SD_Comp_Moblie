@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Badge, Button, Card, TextField } from '../../components/ui';
 import { DatePickerField, TimePickerField } from '../../components/PickerField';
 import { colors, radii } from '../../theme/tokens';
 import { useAuthStore } from '../../stores/authStore';
-import { getMyRegularisations, submitRegularisation } from '../../api/attendance.api';
-import { getApiErrorMessage } from '../../api/client';
+import { cancelRegularisation, getMyRegularisations, submitRegularisation } from '../../api/attendance.api';
+import { getApiErrorCode, getApiErrorMessage } from '../../api/client';
 import type { Regularisation, RegularisationRequestType, RegularisationStatus } from '../../types/attendance';
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -81,6 +81,50 @@ export function RegularisePanel() {
     },
     onError: (err) => setBanner({ tone: 'warning', text: getApiErrorMessage(err) }),
   });
+
+  const cancelMutation = useMutation({
+    mutationFn: cancelRegularisation,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['regularisation-mine', employee?.id] });
+      setBanner({ tone: 'success', text: 'Request withdrawn.' });
+    },
+    // Refetch on failure too. The server answers "not yours", "already
+    // decided" and "never existed" with the same 404 so ids cannot be probed,
+    // and by far the likeliest of those here is a reviewer deciding the
+    // request between this list rendering and the button being pressed --
+    // in which case the list on screen is simply stale, and refetching both
+    // explains the message and corrects the row.
+    onError: (err) => {
+      queryClient.invalidateQueries({ queryKey: ['regularisation-mine', employee?.id] });
+      // The server's own copy for that 404 is "That request was not found.",
+      // which is the honest wording for an id nobody can see and the wrong
+      // one for a row the employee is looking at. Only the collapsed code is
+      // available to tell them apart, so this substitutes the reading that
+      // fits being here at all -- every other error keeps the server's text.
+      const text =
+        getApiErrorCode(err) === 'REGULARISATION_NOT_FOUND'
+          ? 'That request is no longer pending — it may have just been decided.'
+          : getApiErrorMessage(err);
+      setBanner({ tone: 'warning', text });
+    },
+  });
+
+  function confirmWithdraw(request: Regularisation) {
+    // Cancelling is one-way: there is no un-cancel, and re-raising means
+    // filling the form in again. Worth a confirm on a row whose button sits
+    // directly under a scrolling list.
+    Alert.alert('Withdraw request?', `Your regularisation for ${fmtDate(request.markDate)} will be cancelled.`, [
+      { text: 'Keep', style: 'cancel' },
+      {
+        text: 'Withdraw',
+        style: 'destructive',
+        onPress: () => {
+          setBanner(null);
+          cancelMutation.mutate(request.id);
+        },
+      },
+    ]);
+  }
 
   function validate(): boolean {
     const next: typeof errors = {};
@@ -177,17 +221,38 @@ export function RegularisePanel() {
         ) : (listQuery.data ?? []).length === 0 ? (
           <Text style={styles.emptyText}>No requests yet.</Text>
         ) : (
-          (listQuery.data as Regularisation[]).map((r, i, arr) => (
-            <View key={r.id} style={[styles.reqRow, i === arr.length - 1 && styles.reqRowLast]}>
-              <View style={styles.reqHeader}>
-                <Text style={styles.reqDate}>{fmtDate(r.markDate)}</Text>
-                <Badge tone={STATUS_TONE[r.status]}>{STATUS_LABEL[r.status]}</Badge>
+          (listQuery.data as Regularisation[]).map((r, i, arr) => {
+            // Only the row actually being withdrawn shows a busy state --
+            // `variables` is the id passed to the in-flight mutate call, so a
+            // slow request cannot grey out every other row's button too.
+            const withdrawing = cancelMutation.isPending && cancelMutation.variables === r.id;
+            return (
+              <View key={r.id} style={[styles.reqRow, i === arr.length - 1 && styles.reqRowLast]}>
+                <View style={styles.reqHeader}>
+                  <Text style={styles.reqDate}>{fmtDate(r.markDate)}</Text>
+                  <Badge tone={STATUS_TONE[r.status]}>{STATUS_LABEL[r.status]}</Badge>
+                </View>
+                <Text style={styles.reqReason} numberOfLines={2}>
+                  {r.reason}
+                </Text>
+                {/* Pending is the only withdrawable state -- the server
+                    refuses anything else, so offering the button on a decided
+                    row would only produce an error the UI already knows. */}
+                {r.status === 'pending' && (
+                  <Pressable
+                    onPress={() => confirmWithdraw(r)}
+                    disabled={cancelMutation.isPending}
+                    hitSlop={8}
+                    style={styles.withdrawButton}
+                  >
+                    <Text style={[styles.withdrawText, cancelMutation.isPending && styles.withdrawTextDisabled]}>
+                      {withdrawing ? 'Withdrawing…' : 'Withdraw'}
+                    </Text>
+                  </Pressable>
+                )}
               </View>
-              <Text style={styles.reqReason} numberOfLines={2}>
-                {r.reason}
-              </Text>
-            </View>
-          ))
+            );
+          })
         )}
       </Card>
     </View>
@@ -237,4 +302,11 @@ const styles = StyleSheet.create({
   reqHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   reqDate: { fontSize: 13, fontWeight: '700', color: colors.textLight },
   reqReason: { fontSize: 12, color: colors.slate500 },
+  // Text-only, and sized to its own text rather than the row: a filled button
+  // per row would compete with "Submit request" above, which is the panel's
+  // primary action, and a full-width tap target under a scrolling list is easy
+  // to hit by accident.
+  withdrawButton: { alignSelf: 'flex-start', paddingVertical: 2 },
+  withdrawText: { fontSize: 12, fontWeight: '700', color: colors.danger },
+  withdrawTextDisabled: { color: colors.slate400 },
 });
