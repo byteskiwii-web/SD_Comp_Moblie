@@ -1,14 +1,20 @@
-import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
+import React, { useState } from 'react';
+import { Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { Icon, IconName } from './Icon';
 import { colors, radii } from '../theme/tokens';
 
-// Android only, by design -- DateTimePickerAndroid.open() is an
-// Android-specific imperative API (the library's iOS equivalent is a
-// declarative inline component with a different interaction model
-// entirely). This app currently ships Android only; an iOS pass would add
-// a platform branch here rather than change these two exports' contracts.
+// Two platforms, two interaction models, one contract.
+//
+// Android gets DateTimePickerAndroid.open() — an imperative call that raises
+// the OS dialog. That call is a NO-OP on iOS: it neither opens anything nor
+// throws, so the field simply did nothing when tapped, which is what shipped
+// once this app started running on iOS as well.
+//
+// iOS gets the library's declarative component instead, in a sheet with an
+// explicit Done, because the inline picker has no dismissal of its own. Both
+// exports keep taking and returning the same "YYYY-MM-DD" / "HH:MM" strings,
+// so callers need no platform knowledge.
 
 function pad(n: number): string {
   return n < 10 ? `0${n}` : String(n);
@@ -16,8 +22,7 @@ function pad(n: number): string {
 
 // "YYYY-MM-DD" <-> a local Date, built from local y/m/d components (never
 // through toISOString(), which would convert to UTC and can shift the
-// calendar day) -- same convention RegularisePanel's own combineDateTime
-// already uses for the corrected clock-in/out times.
+// calendar day).
 function parseDateKey(key: string): Date {
   const [y, m, d] = key.split('-').map(Number);
   const date = new Date();
@@ -28,18 +33,16 @@ function parseDateKey(key: string): Date {
 function formatDateKey(date: Date): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
+
+const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
 function formatDateDisplay(key: string): string {
-  return parseDateKey(key).toLocaleDateString(undefined, {
-    weekday: 'short',
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
+  const d = parseDateKey(key);
+  return `${WEEKDAYS[d.getDay()]}, ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 }
 
-// "HH:MM" <-> a Date carrying just that wall-clock time (today's date part
-// is irrelevant and discarded by callers -- RegularisePanel re-combines the
-// HH:MM with its own selected mark_date before submitting).
+// "HH:MM" <-> a Date carrying just that wall-clock time.
 function parseTimeKey(key: string): Date {
   const [h, m] = key.split(':').map(Number);
   const date = new Date();
@@ -49,12 +52,14 @@ function parseTimeKey(key: string): Date {
 function formatTimeKey(date: Date): string {
   return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
+// Computed rather than via toLocaleTimeString, which on Hermes reported
+// noon-hour times as AM — see utils/datetime.ts for the full account.
 function formatTimeDisplay(key: string): string {
-  // Same toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) pattern
-  // already used everywhere else times are shown (ClockPanel, HomeScreen) --
-  // 12- vs 24-hour follows the device's own locale setting either way, so
-  // this reads exactly as it would if it appeared anywhere else in the app.
-  return parseTimeKey(key).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const d = parseTimeKey(key);
+  const h = d.getHours();
+  const period = h < 12 ? 'AM' : 'PM';
+  const hour12 = h % 12 === 0 ? 12 : h % 12;
+  return `${hour12}:${pad(d.getMinutes())} ${period}`;
 }
 
 function FieldShell({
@@ -78,6 +83,7 @@ function FieldShell({
       <Pressable
         onPress={onPress}
         style={({ pressed }) => [styles.input, error ? styles.inputError : null, pressed && styles.inputPressed]}
+        accessibilityRole="button"
       >
         <Text style={[styles.valueText, !displayValue && styles.placeholderText]} numberOfLines={1}>
           {displayValue ?? placeholder}
@@ -86,6 +92,62 @@ function FieldShell({
       </Pressable>
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
     </View>
+  );
+}
+
+/**
+ * The iOS half: a sheet holding the declarative picker.
+ *
+ * The value is held locally while spinning and only handed back on Done, so a
+ * cancelled spin leaves the field exactly as it was rather than committing
+ * whatever happened to be under the wheel.
+ */
+function IosPickerSheet({
+  visible,
+  initial,
+  mode,
+  maximumDate,
+  minimumDate,
+  onCancel,
+  onConfirm,
+}: {
+  visible: boolean;
+  initial: Date;
+  mode: 'date' | 'time';
+  maximumDate?: Date;
+  minimumDate?: Date;
+  onCancel: () => void;
+  onConfirm: (d: Date) => void;
+}) {
+  const [draft, setDraft] = useState(initial);
+
+  // Remount on each open so the wheel starts from the current field value.
+  React.useEffect(() => {
+    if (visible) setDraft(initial);
+  }, [visible, initial]);
+
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onCancel}>
+      <Pressable style={styles.backdrop} onPress={onCancel} />
+      <View style={styles.sheet}>
+        <View style={styles.sheetBar}>
+          <Pressable onPress={onCancel} hitSlop={8}>
+            <Text style={styles.sheetCancel}>Cancel</Text>
+          </Pressable>
+          <Pressable onPress={() => onConfirm(draft)} hitSlop={8}>
+            <Text style={styles.sheetDone}>Done</Text>
+          </Pressable>
+        </View>
+        <DateTimePicker
+          value={draft}
+          mode={mode}
+          display="spinner"
+          maximumDate={maximumDate}
+          minimumDate={minimumDate}
+          onChange={(_e, picked) => picked && setDraft(picked)}
+        />
+      </View>
+    </Modal>
   );
 }
 
@@ -98,32 +160,52 @@ type DatePickerFieldProps = {
   error?: string;
 };
 
-// Tap -> Android's native Material calendar dialog -> selected date. Kept as
-// a plain "YYYY-MM-DD" string in and out, so RegularisePanel's existing
-// state, validation and submit payload need no changes -- this is purely a
-// friendlier way to produce the same value a typed date always was.
 export function DatePickerField({ label, value, onChange, maximumDate, minimumDate, error }: DatePickerFieldProps) {
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const current = value ? parseDateKey(value) : new Date();
+
   const open = () => {
-    DateTimePickerAndroid.open({
-      value: value ? parseDateKey(value) : new Date(),
-      mode: 'date',
-      display: 'calendar',
-      maximumDate,
-      minimumDate,
-      onChange: (event, selected) => {
-        if (event.type === 'set' && selected) onChange(formatDateKey(selected));
-      },
-    });
+    if (Platform.OS === 'android') {
+      DateTimePickerAndroid.open({
+        value: current,
+        mode: 'date',
+        display: 'calendar',
+        maximumDate,
+        minimumDate,
+        onChange: (event, selected) => {
+          if (event.type === 'set' && selected) onChange(formatDateKey(selected));
+        },
+      });
+      return;
+    }
+    setSheetOpen(true);
   };
+
   return (
-    <FieldShell
-      label={label}
-      error={error}
-      placeholder="Select date"
-      displayValue={value ? formatDateDisplay(value) : null}
-      icon="calendar"
-      onPress={open}
-    />
+    <>
+      <FieldShell
+        label={label}
+        error={error}
+        placeholder="Select date"
+        displayValue={value ? formatDateDisplay(value) : null}
+        icon="calendar"
+        onPress={open}
+      />
+      {Platform.OS !== 'android' && (
+        <IosPickerSheet
+          visible={sheetOpen}
+          initial={current}
+          mode="date"
+          maximumDate={maximumDate}
+          minimumDate={minimumDate}
+          onCancel={() => setSheetOpen(false)}
+          onConfirm={(d) => {
+            setSheetOpen(false);
+            onChange(formatDateKey(d));
+          }}
+        />
+      )}
+    </>
   );
 }
 
@@ -134,30 +216,48 @@ type TimePickerFieldProps = {
   error?: string;
 };
 
-// Tap -> Android's native clock-face dialog -> selected time. 12- vs
-// 24-hour is left to the device's own setting (is24Hour omitted), matching
-// how every other time display in this app already defers to locale rather
-// than hardcoding a format.
 export function TimePickerField({ label, value, onChange, error }: TimePickerFieldProps) {
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const current = value ? parseTimeKey(value) : new Date();
+
   const open = () => {
-    DateTimePickerAndroid.open({
-      value: value ? parseTimeKey(value) : new Date(),
-      mode: 'time',
-      display: 'clock',
-      onChange: (event, selected) => {
-        if (event.type === 'set' && selected) onChange(formatTimeKey(selected));
-      },
-    });
+    if (Platform.OS === 'android') {
+      DateTimePickerAndroid.open({
+        value: current,
+        mode: 'time',
+        display: 'clock',
+        onChange: (event, selected) => {
+          if (event.type === 'set' && selected) onChange(formatTimeKey(selected));
+        },
+      });
+      return;
+    }
+    setSheetOpen(true);
   };
+
   return (
-    <FieldShell
-      label={label}
-      error={error}
-      placeholder="Select time"
-      displayValue={value ? formatTimeDisplay(value) : null}
-      icon="clock"
-      onPress={open}
-    />
+    <>
+      <FieldShell
+        label={label}
+        error={error}
+        placeholder="Select time"
+        displayValue={value ? formatTimeDisplay(value) : null}
+        icon="clock"
+        onPress={open}
+      />
+      {Platform.OS !== 'android' && (
+        <IosPickerSheet
+          visible={sheetOpen}
+          initial={current}
+          mode="time"
+          onCancel={() => setSheetOpen(false)}
+          onConfirm={(d) => {
+            setSheetOpen(false);
+            onChange(formatTimeKey(d));
+          }}
+        />
+      )}
+    </>
   );
 }
 
@@ -187,4 +287,34 @@ const styles = StyleSheet.create({
   valueText: { fontSize: 15, fontWeight: '600', color: colors.textLight, flexShrink: 1 },
   placeholderText: { color: colors.slate400, fontWeight: '500' },
   errorText: { color: colors.danger, fontSize: 12, fontWeight: '600', marginTop: 6 },
+
+  backdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(15,23,42,0.35)',
+  },
+  sheet: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: colors.white,
+    borderTopLeftRadius: radii.xl,
+    borderTopRightRadius: radii.xl,
+    paddingBottom: 24,
+  },
+  sheetBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.slate100,
+  },
+  sheetCancel: { fontSize: 15, fontWeight: '600', color: colors.slate500 },
+  sheetDone: { fontSize: 15, fontWeight: '800', color: colors.brand[700] },
 });
