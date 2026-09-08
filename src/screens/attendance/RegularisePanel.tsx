@@ -1,16 +1,15 @@
-import React, { useMemo, useState } from 'react';
-import { toLocalDateKey } from '../../utils/datetime';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Badge, Button, Card, TextField } from '../../components/ui';
 import { DatePickerField, TimePickerField } from '../../components/PickerField';
 import { colors, radii } from '../../theme/tokens';
 import { useAuthStore } from '../../stores/authStore';
-import { getMyRegularisations, submitRegularisation } from '../../api/attendance.api';
+import { getAttendanceHistory, getMyRegularisations, submitRegularisation } from '../../api/attendance.api';
 import { getApiErrorMessage } from '../../api/client';
-import { getAttendanceHistory } from '../../api/attendance.api';
-import { formatTime } from '../../utils/datetime';
-import { formatDuration, summariseDay, type PunchPair } from '../../utils/attendanceDay';
+import { formatDuration, summariseDay } from '../../utils/attendanceDay';
+import { formatTime, toLocalDateKey } from '../../utils/datetime';
 import type { Regularisation, RegularisationRequestType, RegularisationStatus } from '../../types/attendance';
 
 const today = () => toLocalDateKey();
@@ -29,13 +28,16 @@ const STATUS_LABEL: Record<RegularisationStatus, string> = {
 };
 
 function fmtDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+  const d = new Date(`${String(dateStr).slice(0, 10)}T00:00:00`);
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 }
 
-// Combines a YYYY-MM-DD date with an HH:MM wall-clock time into a proper UTC
-// ISO instant, the same way every other punch on this app is timestamped
-// (new Date(...).toISOString()) -- avoids ever sending an offset-less string
-// whose timezone a server would have to guess.
+/**
+ * Combines a YYYY-MM-DD date with an HH:MM wall-clock time into a UTC ISO
+ * instant, the way every other punch in this app is timestamped — never an
+ * offset-less string whose timezone the server would have to guess.
+ */
 function combineDateTime(markDate: string, hhmm: string): string | null {
   const [y, mo, d] = markDate.split('-').map(Number);
   const [h, mi] = hhmm.split(':').map(Number);
@@ -44,31 +46,61 @@ function combineDateTime(markDate: string, hhmm: string): string | null {
   return Number.isNaN(dt.getTime()) ? null : dt.toISOString();
 }
 
+const pad = (n: number) => String(n).padStart(2, '0');
+const hhmmOf = (iso: string) => {
+  const d = new Date(iso);
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+/** 'HH:MM:SS' from /auth/me down to 'HH:MM'; falls back when there is no roster. */
+const shiftHHMM = (v: string | null | undefined, fallback: string) =>
+  v && /^\d{2}:\d{2}/.test(v) ? v.slice(0, 5) : fallback;
+
+type StampRow = { key: string; inTime: string; outTime: string };
+
+let rowSeq = 0;
+const newKey = () => `r${++rowSeq}`;
+
 export function RegularisePanel() {
   const employee = useAuthStore((s) => s.employee);
   const store = useAuthStore((s) => s.store);
+  const profile = useAuthStore((s) => s.profile);
   const queryClient = useQueryClient();
 
   const [markDate, setMarkDate] = useState(today());
-  const [requestType, setRequestType] = useState<RegularisationRequestType>('other');
-  const [clockIn, setClockIn] = useState('');
-  const [clockOut, setClockOut] = useState('');
+  const [requestType, setRequestType] = useState<RegularisationRequestType>('adjust');
+  const [rows, setRows] = useState<StampRow[]>([]);
   const [reason, setReason] = useState('');
-  const [errors, setErrors] = useState<{ markDate?: string; time?: string; reason?: string }>({});
+  const [errors, setErrors] = useState<{ time?: string; reason?: string }>({});
   const [banner, setBanner] = useState<{ tone: 'success' | 'warning'; text: string } | null>(null);
 
-  // The day being corrected, so the form can show what was actually recorded.
-  // Asking somebody to correct a day without showing them the day is asking
-  // them to work from memory.
+  const dayStart = shiftHHMM(profile?.shiftStart, '10:00');
+  const dayEnd = shiftHHMM(profile?.shiftEnd, '19:00');
+
   const dayQuery = useQuery({
     queryKey: ['attendance-day', employee?.id, markDate],
     queryFn: () => getAttendanceHistory(employee!.id, markDate, markDate),
-    enabled: !!employee && /^d{4}-d{2}-d{2}$/.test(markDate),
+    enabled: !!employee,
   });
-  const day = useMemo(
-    () => summariseDay(markDate, dayQuery.data ?? []),
-    [markDate, dayQuery.data]
-  );
+  const day = useMemo(() => summariseDay(markDate, dayQuery.data ?? []), [markDate, dayQuery.data]);
+
+  /**
+   * Seed the editable rows from what was actually recorded that day.
+   *
+   * Never blank: a correction form that opens empty makes somebody retype times
+   * the system already knows, and the commonest case — a missed clock-out — is
+   * one where the clock-IN is on file and correct. A missing half is filled
+   * with the rostered time as a starting point to adjust, not left for the user
+   * to invent.
+   */
+  useEffect(() => {
+    if (dayQuery.isLoading) return;
+    const seeded: StampRow[] = day.pairs.map((p) => ({
+      key: newKey(),
+      inTime: hhmmOf(p.inAt),
+      outTime: p.outAt ? hhmmOf(p.outAt) : dayEnd,
+    }));
+    setRows(seeded.length > 0 ? seeded : [{ key: newKey(), inTime: dayStart, outTime: dayEnd }]);
+  }, [markDate, dayQuery.isLoading, dayQuery.data]);
 
   const listQuery = useQuery({
     queryKey: ['regularisation-mine', employee?.id],
@@ -76,56 +108,69 @@ export function RegularisePanel() {
     enabled: !!employee,
   });
 
+  /**
+   * What the server will actually store.
+   *
+   * The API takes ONE corrected clock-in and ONE corrected clock-out per
+   * request, so several rows collapse to the day's span: earliest in, latest
+   * out. Shown on the form rather than done quietly, because a row someone
+   * edited that turns out not to be submitted separately is worse than one they
+   * were told about.
+   */
+  const submitted = useMemo(() => {
+    const ins = rows.map((r) => r.inTime).filter(Boolean).sort();
+    const outs = rows.map((r) => r.outTime).filter(Boolean).sort();
+    return { inTime: ins[0] ?? '', outTime: outs[outs.length - 1] ?? '' };
+  }, [rows]);
+
   const submitMutation = useMutation({
-    mutationFn: async () => {
-      const requested_clock_in = clockIn ? combineDateTime(markDate, clockIn) ?? undefined : undefined;
-      const requested_clock_out = clockOut ? combineDateTime(markDate, clockOut) ?? undefined : undefined;
-      return submitRegularisation({
+    mutationFn: async () =>
+      submitRegularisation({
         store_code: store!.store_code,
         mark_date: markDate,
         request_type: requestType,
-        requested_clock_in,
-        requested_clock_out,
+        requested_clock_in:
+          requestType === 'adjust' && submitted.inTime
+            ? combineDateTime(markDate, submitted.inTime) ?? undefined
+            : undefined,
+        requested_clock_out:
+          requestType === 'adjust' && submitted.outTime
+            ? combineDateTime(markDate, submitted.outTime) ?? undefined
+            : undefined,
         reason: reason.trim(),
-      });
-    },
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['regularisation-mine', employee?.id] });
+      queryClient.invalidateQueries({ queryKey: ['attendance-day', employee?.id, markDate] });
       setBanner({ tone: 'success', text: 'Request submitted for approval.' });
       setReason('');
-      setClockIn('');
-      setClockOut('');
     },
     onError: (err) => setBanner({ tone: 'warning', text: getApiErrorMessage(err) }),
   });
 
   function validate(): boolean {
     const next: typeof errors = {};
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(markDate) || Number.isNaN(new Date(markDate).getTime())) {
-      next.markDate = 'Enter a valid date as YYYY-MM-DD';
-    }
-    if (!reason.trim()) {
-      next.reason = 'Please add a reason';
-    }
-    if (requestType === 'adjust' && !clockIn && !clockOut) {
-      next.time = 'Enter at least one corrected time';
-    }
-    if (clockIn && clockOut) {
-      const inIso = combineDateTime(markDate, clockIn);
-      const outIso = combineDateTime(markDate, clockOut);
-      if (inIso && outIso && outIso <= inIso) {
-        next.time = 'Corrected clock-out must be after clock-in';
+    if (!reason.trim()) next.reason = 'Please add a note';
+    if (requestType === 'adjust') {
+      if (!submitted.inTime && !submitted.outTime) next.time = 'Set at least one time';
+      else if (submitted.inTime && submitted.outTime && submitted.outTime <= submitted.inTime) {
+        next.time = 'Clock-out must be after clock-in';
       }
     }
     setErrors(next);
     return Object.keys(next).length === 0;
   }
 
-  function handleSubmit() {
-    setBanner(null);
-    if (!validate()) return;
-    submitMutation.mutate();
-  }
+  const updateRow = (key: string, patch: Partial<StampRow>) =>
+    setRows((rs) => rs.map((r) => (r.key === key ? { ...r, ...patch } : r)));
+  const removeRow = (key: string) => setRows((rs) => rs.filter((r) => r.key !== key));
+  const addRow = () =>
+    setRows((rs) => [
+      ...rs,
+      // Seeded, not blank: a new row opens on the rostered window so it is
+      // adjusted rather than authored from nothing.
+      { key: newKey(), inTime: rs.length ? rs[rs.length - 1].outTime : dayStart, outTime: dayEnd },
+    ]);
 
   if (!employee || !store) return null;
 
@@ -149,13 +194,7 @@ export function RegularisePanel() {
           </View>
         </View>
 
-        <DatePickerField
-          label="Date"
-          value={markDate}
-          onChange={setMarkDate}
-          maximumDate={new Date()}
-          error={errors.markDate}
-        />
+        <DatePickerField label="Date" value={markDate} onChange={setMarkDate} maximumDate={new Date()} />
 
         <Text style={styles.fieldLabel}>Request type</Text>
         <View style={styles.segment}>
@@ -172,65 +211,127 @@ export function RegularisePanel() {
           ))}
         </View>
 
-        {day.marks.length > 0 && (
-          <View style={styles.recorded}>
-            <Text style={styles.recordedTitle}>{day.storeName ?? 'Recorded that day'}</Text>
-            {day.pairs.map((pair: PunchPair, i: number) => (
-              <View key={i} style={styles.recordedRow}>
-                <Text style={styles.recordedTime}>{formatTime(pair.inAt)}</Text>
-                <Text style={styles.recordedArrow}>→</Text>
-                <Text style={styles.recordedTime}>{pair.outAt ? formatTime(pair.outAt) : 'missing'}</Text>
-              </View>
-            ))}
-          </View>
-        )}
-
         {requestType === 'adjust' && (
-          <View style={styles.timeRow}>
-            <View style={styles.timeField}>
-              {/* What the day actually holds. Read-only: the API accepts ONE
-                  corrected clock-in and ONE corrected clock-out per request, so
-                  showing an editable row per stamp would promise an edit that
-                  cannot be submitted. */}
-              <TimePickerField label="Corrected clock-in" value={clockIn} onChange={setClockIn} />
+          <>
+            <Text style={styles.fieldLabel}>Attendance adjustment</Text>
+            <Text style={styles.help}>
+              {dayQuery.isLoading
+                ? 'Loading what was recorded that day…'
+                : day.pairs.length > 0
+                  ? 'Times below are what was recorded. Tap any of them to change it.'
+                  : 'Nothing was recorded that day, so these start from your rostered shift.'}
+            </Text>
+
+            <View style={styles.stampBox}>
+              <Text style={styles.stampBoxTitle}>{day.storeName ?? store.name}</Text>
+              {rows.map((row) => (
+                <View key={row.key} style={styles.stampRow}>
+                  <Ionicons name="arrow-down-outline" size={15} color={colors.success} />
+                  <View style={styles.stampCell}>
+                    <TimePickerField
+                      label=""
+                      value={row.inTime}
+                      onChange={(v) => updateRow(row.key, { inTime: v })}
+                    />
+                  </View>
+                  <Ionicons name="arrow-up-outline" size={15} color={colors.danger} />
+                  <View style={styles.stampCell}>
+                    <TimePickerField
+                      label=""
+                      value={row.outTime}
+                      onChange={(v) => updateRow(row.key, { outTime: v })}
+                    />
+                  </View>
+                  <Pressable
+                    onPress={() => removeRow(row.key)}
+                    disabled={rows.length === 1}
+                    hitSlop={8}
+                    accessibilityRole="button"
+                    accessibilityLabel="Remove this pair"
+                  >
+                    <Ionicons
+                      name="remove-circle-outline"
+                      size={22}
+                      color={rows.length === 1 ? colors.slate200 : colors.danger}
+                    />
+                  </Pressable>
+                </View>
+              ))}
+
+              <Pressable onPress={addRow} style={styles.addRow} accessibilityRole="button">
+                <Ionicons name="add-circle-outline" size={26} color={colors.brand[700]} />
+              </Pressable>
             </View>
-            <View style={styles.timeField}>
-              <TimePickerField label="Corrected clock-out" value={clockOut} onChange={setClockOut} />
-            </View>
-          </View>
+
+            {rows.length > 1 && submitted.inTime && submitted.outTime && (
+              <View style={styles.submitNote}>
+                <Ionicons name="information-circle-outline" size={15} color={colors.slate500} />
+                <Text style={styles.submitNoteText}>
+                  Sent as one correction for the day: {formatTime(new Date(`${markDate}T${submitted.inTime}:00`))} to{' '}
+                  {formatTime(new Date(`${markDate}T${submitted.outTime}:00`))}
+                </Text>
+              </View>
+            )}
+
+            {errors.time ? <Text style={styles.errorText}>{errors.time}</Text> : null}
+          </>
         )}
-        {errors.time && <Text style={styles.errorText}>{errors.time}</Text>}
 
         <TextField
-          label="Reason"
+          label="Note (mandatory)"
           value={reason}
           onChangeText={setReason}
-          placeholder="Missed clock-in, network issue…"
-          error={errors.reason}
+          placeholder="Missed clock-out, network issue…"
           multiline
+          error={errors.reason}
         />
 
-        <Button title="Submit request" onPress={handleSubmit} loading={submitMutation.isPending} />
+        <View style={styles.actions}>
+          <View style={styles.actionHalf}>
+            <Button
+              title="Cancel"
+              variant="outline"
+              onPress={() => {
+                setBanner(null);
+                setErrors({});
+                setReason('');
+                setMarkDate(today());
+              }}
+            />
+          </View>
+          <View style={styles.actionHalf}>
+            <Button
+              title="Request"
+              onPress={() => {
+                setBanner(null);
+                if (validate()) submitMutation.mutate();
+              }}
+              loading={submitMutation.isPending}
+            />
+          </View>
+        </View>
       </Card>
 
       <Card style={styles.listCard}>
-        <Text style={styles.cardTitle}>Your requests</Text>
+        <Text style={styles.listTitle}>Your requests</Text>
         {listQuery.isLoading ? (
-          <ActivityIndicator color={colors.brand[700]} style={styles.loadingSpacer} />
-        ) : listQuery.isError ? (
-          <Text style={styles.errorText}>Could not load your requests.</Text>
-        ) : (listQuery.data ?? []).length === 0 ? (
-          <Text style={styles.emptyText}>No requests yet.</Text>
+          <ActivityIndicator color={colors.brand[700]} style={styles.spacer} />
+        ) : !listQuery.data?.length ? (
+          <Text style={styles.empty}>No corrections raised yet.</Text>
         ) : (
-          (listQuery.data as Regularisation[]).map((r, i, arr) => (
-            <View key={r.id} style={[styles.reqRow, i === arr.length - 1 && styles.reqRowLast]}>
-              <View style={styles.reqHeader}>
+          listQuery.data.map((r: Regularisation, i: number) => (
+            <View
+              key={r.id}
+              style={[styles.reqRow, i === listQuery.data.length - 1 && styles.reqRowLast]}
+            >
+              <View style={styles.reqMain}>
                 <Text style={styles.reqDate}>{fmtDate(r.markDate)}</Text>
-                <Badge tone={STATUS_TONE[r.status]}>{STATUS_LABEL[r.status]}</Badge>
+                <Text style={styles.reqReason} numberOfLines={2}>
+                  {r.reason}
+                </Text>
+                {r.decisionNote ? <Text style={styles.reqNote}>“{r.decisionNote}”</Text> : null}
               </View>
-              <Text style={styles.reqReason} numberOfLines={2}>
-                {r.reason}
-              </Text>
+              <Badge tone={STATUS_TONE[r.status]}>{STATUS_LABEL[r.status]}</Badge>
             </View>
           ))
         )}
@@ -240,6 +341,14 @@ export function RegularisePanel() {
 }
 
 const styles = StyleSheet.create({
+  wrap: { gap: 14 },
+
+  banner: { borderRadius: radii.md, padding: 12 },
+  bannerSuccess: { backgroundColor: colors.successBg },
+  bannerWarning: { backgroundColor: colors.warningBg },
+  bannerText: { fontSize: 13, fontWeight: '600', color: colors.slate800 },
+
+  formCard: {},
   hoursRow: { flexDirection: 'row', gap: 12, marginBottom: 16 },
   hoursTile: {
     flex: 1, borderWidth: 1, borderColor: colors.slate200, borderRadius: radii.md,
@@ -247,56 +356,53 @@ const styles = StyleSheet.create({
   },
   hoursValue: { fontSize: 18, fontWeight: '800', color: colors.textLight },
   hoursLabel: { fontSize: 11.5, color: colors.slate500, fontWeight: '600', marginTop: 2 },
-  recorded: {
-    backgroundColor: colors.slate50, borderRadius: radii.md, padding: 12, marginBottom: 14,
-  },
-  recordedTitle: {
-    fontSize: 10.5, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4,
-    color: colors.slate500, marginBottom: 8,
-  },
-  recordedRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 4 },
-  recordedTime: { fontSize: 13.5, fontWeight: '700', color: colors.textLight },
-  recordedArrow: { fontSize: 13, color: colors.slate400 },
-  wrap: { gap: 12 },
-  banner: { borderRadius: radii.md, padding: 12 },
-  bannerSuccess: { backgroundColor: colors.successBg },
-  bannerWarning: { backgroundColor: colors.warningBg },
-  bannerText: { fontSize: 12, fontWeight: '600', color: colors.slate800 },
 
-  formCard: { gap: 2 },
   fieldLabel: {
     fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.4,
     color: colors.slate500, marginBottom: 6,
   },
-  segment: {
-    flexDirection: 'row', backgroundColor: colors.slate100, borderRadius: radii.md, padding: 4, marginBottom: 14,
-  },
+  help: { fontSize: 12, color: colors.slate500, marginBottom: 10, lineHeight: 17 },
+
+  segment: { flexDirection: 'row', backgroundColor: colors.slate100, borderRadius: radii.md, padding: 4, marginBottom: 14 },
   segmentItem: { flex: 1, alignItems: 'center', paddingVertical: 9, borderRadius: radii.sm },
-  segmentItemActive: {
-    backgroundColor: colors.white,
-    shadowColor: colors.slate900,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  segmentText: { fontSize: 12, fontWeight: '700', color: colors.slate500, textAlign: 'center' },
+  segmentItemActive: { backgroundColor: colors.white },
+  segmentText: { fontSize: 12, fontWeight: '700', color: colors.slate500 },
   segmentTextActive: { color: colors.brand[700] },
-  timeRow: { flexDirection: 'row', gap: 12 },
-  timeField: { flex: 1 },
 
-  errorText: { color: colors.danger, fontSize: 12, fontWeight: '600', marginTop: -8, marginBottom: 14 },
+  stampBox: { backgroundColor: colors.slate50, borderRadius: radii.md, padding: 12, marginBottom: 10 },
+  stampBoxTitle: {
+    fontSize: 10.5, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4,
+    color: colors.slate500, marginBottom: 6,
+  },
+  stampRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  stampCell: { flex: 1 },
+  addRow: { alignItems: 'center', paddingTop: 4 },
 
-  listCard: { gap: 4 },
-  cardTitle: {
+  submitNote: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: colors.brand[50], borderRadius: radii.sm, padding: 10, marginBottom: 10,
+  },
+  submitNoteText: { flex: 1, fontSize: 11.5, color: colors.slate600, fontWeight: '600', lineHeight: 16 },
+
+  errorText: { color: colors.danger, fontSize: 12, fontWeight: '600', marginBottom: 8 },
+
+  actions: { flexDirection: 'row', gap: 12, marginTop: 4 },
+  actionHalf: { flex: 1 },
+
+  listCard: {},
+  listTitle: {
     fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4,
     color: colors.slate500, marginBottom: 4,
   },
-  loadingSpacer: { marginVertical: 12 },
-  emptyText: { fontSize: 13, color: colors.slate400, paddingVertical: 8, textAlign: 'center' },
-  reqRow: { paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.slate100, gap: 4 },
+  spacer: { marginVertical: 12 },
+  empty: { fontSize: 13, color: colors.slate400, paddingVertical: 8 },
+  reqRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12,
+    borderBottomWidth: 1, borderBottomColor: colors.slate100,
+  },
   reqRowLast: { borderBottomWidth: 0 },
-  reqHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  reqDate: { fontSize: 13, fontWeight: '700', color: colors.textLight },
-  reqReason: { fontSize: 12, color: colors.slate500 },
+  reqMain: { flex: 1 },
+  reqDate: { fontSize: 13.5, fontWeight: '800', color: colors.textLight },
+  reqReason: { fontSize: 12.5, color: colors.slate600, marginTop: 3 },
+  reqNote: { fontSize: 12, color: colors.slate500, marginTop: 4, fontStyle: 'italic' },
 });
