@@ -14,6 +14,7 @@ import { getUnreadCount } from '../../api/notifications.api';
 import { NotificationsSheet } from '../notifications/NotificationsSheet';
 import { AppreciationCard } from './AppreciationCard';
 import { PoliciesCard } from './PoliciesCard';
+import { MonthlyStatsCard } from './MonthlyStatsCard';
 
 const today = () => toLocalDateKey();
 
@@ -132,6 +133,8 @@ export function HomeScreen() {
           </View>
           <Ionicons name="chevron-forward" size={18} color={colors.slate400} />
         </Pressable>
+
+        <MonthlyStatsCard />
 
         <PoliciesCard />
 

@@ -41,7 +41,24 @@ export type Me = {
   shiftStart: string | null;
   shiftEnd: string | null;
   zoneCode: string | null;
+  /** Joining kit. shirtSize is the employee's own; the kit fields are HR's. */
+  shirtSize: string | null;
+  welcomeKitIssued: boolean;
+  welcomeKitIssuedAt: string | null;
 };
+
+export const SHIRT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'] as const;
+export type ShirtSize = (typeof SHIRT_SIZES)[number];
+
+/**
+ * Self-service edit of your own record. Deliberately one field on the server
+ * too -- PATCH /users/:id is administrative and a field employee cannot use it
+ * on themselves.
+ */
+export async function updateMyProfile(input: { shirt_size: ShirtSize | null }) {
+  const res = await apiClient.patch<{ success: true; data: unknown }>('/users/me', input);
+  return res.data.data;
+}
 
 export async function getMe() {
   const res = await apiClient.get<{ success: true; data: Me }>('/auth/me');

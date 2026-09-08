@@ -8,6 +8,7 @@ import { getPolicies } from '../../api/policies.api';
 import { getKycStatus, KYC_STATUS_LABEL, KycCheckStatus, kycStatusTone } from '../../api/verification.api';
 import { formatDate } from '../../utils/datetime';
 import { AppTour } from '../../components/AppTour';
+import { KitCard } from './KitCard';
 import { Button, Card } from '../../components/ui';
 import { colors, radii } from '../../theme/tokens';
 import { useAuthStore } from '../../stores/authStore';
@@ -91,6 +92,8 @@ export function ProfileScreen() {
         </Card>
 
         <KycCard />
+
+        <KitCard />
 
         <PolicyLibrary />
 
