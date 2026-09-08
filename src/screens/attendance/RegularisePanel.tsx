@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { toLocalDateKey } from '../../utils/datetime';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -8,6 +8,9 @@ import { colors, radii } from '../../theme/tokens';
 import { useAuthStore } from '../../stores/authStore';
 import { getMyRegularisations, submitRegularisation } from '../../api/attendance.api';
 import { getApiErrorMessage } from '../../api/client';
+import { getAttendanceHistory } from '../../api/attendance.api';
+import { formatTime } from '../../utils/datetime';
+import { formatDuration, summariseDay, type PunchPair } from '../../utils/attendanceDay';
 import type { Regularisation, RegularisationRequestType, RegularisationStatus } from '../../types/attendance';
 
 const today = () => toLocalDateKey();
@@ -53,6 +56,19 @@ export function RegularisePanel() {
   const [reason, setReason] = useState('');
   const [errors, setErrors] = useState<{ markDate?: string; time?: string; reason?: string }>({});
   const [banner, setBanner] = useState<{ tone: 'success' | 'warning'; text: string } | null>(null);
+
+  // The day being corrected, so the form can show what was actually recorded.
+  // Asking somebody to correct a day without showing them the day is asking
+  // them to work from memory.
+  const dayQuery = useQuery({
+    queryKey: ['attendance-day', employee?.id, markDate],
+    queryFn: () => getAttendanceHistory(employee!.id, markDate, markDate),
+    enabled: !!employee && /^d{4}-d{2}-d{2}$/.test(markDate),
+  });
+  const day = useMemo(
+    () => summariseDay(markDate, dayQuery.data ?? []),
+    [markDate, dayQuery.data]
+  );
 
   const listQuery = useQuery({
     queryKey: ['regularisation-mine', employee?.id],
@@ -122,6 +138,17 @@ export function RegularisePanel() {
       )}
 
       <Card style={styles.formCard}>
+        <View style={styles.hoursRow}>
+          <View style={styles.hoursTile}>
+            <Text style={styles.hoursValue}>{formatDuration(day.grossMinutes)}</Text>
+            <Text style={styles.hoursLabel}>Gross hours</Text>
+          </View>
+          <View style={styles.hoursTile}>
+            <Text style={styles.hoursValue}>{formatDuration(day.effectiveMinutes)}</Text>
+            <Text style={styles.hoursLabel}>Effective hours</Text>
+          </View>
+        </View>
+
         <DatePickerField
           label="Date"
           value={markDate}
@@ -145,9 +172,26 @@ export function RegularisePanel() {
           ))}
         </View>
 
+        {day.marks.length > 0 && (
+          <View style={styles.recorded}>
+            <Text style={styles.recordedTitle}>{day.storeName ?? 'Recorded that day'}</Text>
+            {day.pairs.map((pair: PunchPair, i: number) => (
+              <View key={i} style={styles.recordedRow}>
+                <Text style={styles.recordedTime}>{formatTime(pair.inAt)}</Text>
+                <Text style={styles.recordedArrow}>→</Text>
+                <Text style={styles.recordedTime}>{pair.outAt ? formatTime(pair.outAt) : 'missing'}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+
         {requestType === 'adjust' && (
           <View style={styles.timeRow}>
             <View style={styles.timeField}>
+              {/* What the day actually holds. Read-only: the API accepts ONE
+                  corrected clock-in and ONE corrected clock-out per request, so
+                  showing an editable row per stamp would promise an edit that
+                  cannot be submitted. */}
               <TimePickerField label="Corrected clock-in" value={clockIn} onChange={setClockIn} />
             </View>
             <View style={styles.timeField}>
@@ -196,6 +240,23 @@ export function RegularisePanel() {
 }
 
 const styles = StyleSheet.create({
+  hoursRow: { flexDirection: 'row', gap: 12, marginBottom: 16 },
+  hoursTile: {
+    flex: 1, borderWidth: 1, borderColor: colors.slate200, borderRadius: radii.md,
+    paddingVertical: 12, paddingHorizontal: 14,
+  },
+  hoursValue: { fontSize: 18, fontWeight: '800', color: colors.textLight },
+  hoursLabel: { fontSize: 11.5, color: colors.slate500, fontWeight: '600', marginTop: 2 },
+  recorded: {
+    backgroundColor: colors.slate50, borderRadius: radii.md, padding: 12, marginBottom: 14,
+  },
+  recordedTitle: {
+    fontSize: 10.5, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4,
+    color: colors.slate500, marginBottom: 8,
+  },
+  recordedRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 4 },
+  recordedTime: { fontSize: 13.5, fontWeight: '700', color: colors.textLight },
+  recordedArrow: { fontSize: 13, color: colors.slate400 },
   wrap: { gap: 12 },
   banner: { borderRadius: radii.md, padding: 12 },
   bannerSuccess: { backgroundColor: colors.successBg },
