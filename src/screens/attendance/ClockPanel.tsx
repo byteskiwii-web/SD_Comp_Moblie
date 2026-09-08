@@ -29,7 +29,7 @@ export function ClockPanel() {
   const [locationError, setLocationError] = useState('');
   // 'blocked' means iOS will not show the dialog again -- the only route back
   // is Settings. Distinguishing it matters because the recovery differs.
-  const [permission, setPermission] = useState<'unknown' | 'granted' | 'askable' | 'blocked'>('unknown');
+  const [permission, setPermission] = useState<'unknown' | 'granted' | 'askable' | 'blocked' | 'services-off'>('unknown');
   const [pendingAction, setPendingAction] = useState<'clock-in' | 'clock-out' | null>(null);
   const [banner, setBanner] = useState<{ tone: 'success' | 'warning'; text: string } | null>(null);
 
@@ -66,6 +66,20 @@ export function ClockPanel() {
    */
   const acquireLocation = useCallback(async () => {
     setLocationError('');
+
+    // Device-wide Location Services, checked BEFORE asking for permission.
+    // While it is off iOS shows no per-app prompt at all, and an app that has
+    // never asked has no row in Settings either -- so the phone looks like it
+    // simply ignored us, and the usual "allow it in Settings" advice sends
+    // people hunting for an entry that is not there yet.
+    if (!(await Location.hasServicesEnabledAsync())) {
+      setPermission('services-off');
+      setLocationError(
+        'Location Services is switched off for this phone. Open Settings › Privacy & Security › Location Services and turn it on, then tap Try again.'
+      );
+      return;
+    }
+
     const perm = await Location.requestForegroundPermissionsAsync();
     if (perm.status !== 'granted') {
       setPermission(perm.canAskAgain ? 'askable' : 'blocked');
