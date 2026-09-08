@@ -222,9 +222,11 @@ export function RegularisePanel() {
           <Text style={styles.emptyText}>No requests yet.</Text>
         ) : (
           (listQuery.data as Regularisation[]).map((r, i, arr) => {
-            // Only the row actually being withdrawn shows a busy state --
-            // `variables` is the id passed to the in-flight mutate call, so a
-            // slow request cannot grey out every other row's button too.
+            // Two different things during an in-flight cancel, deliberately.
+            // Every row's button is disabled and greyed, so a second withdraw
+            // cannot be started before the first has settled. Only the row
+            // being withdrawn says so, which `variables` -- the id handed to
+            // the in-flight mutate call -- is what identifies.
             const withdrawing = cancelMutation.isPending && cancelMutation.variables === r.id;
             return (
               <View key={r.id} style={[styles.reqRow, i === arr.length - 1 && styles.reqRowLast]}>
