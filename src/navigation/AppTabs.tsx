@@ -5,6 +5,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { HomeScreen } from '../screens/home/HomeScreen';
 import { AttendanceStack } from './AttendanceStack';
 import { LeaveScreen } from '../screens/leave/LeaveScreen';
+import { TeamScreen } from '../screens/team/TeamScreen';
+import { useAuthStore } from '../stores/authStore';
 import { ProfileStack } from './ProfileStack';
 import { Icon } from '../components/Icon';
 import { colors } from '../theme/tokens';
@@ -16,6 +18,7 @@ export type AppTabsParamList = {
   Home: undefined;
   Attendance: undefined;
   Leave: undefined;
+  Team: undefined;
   Profile: undefined;
 };
 
@@ -28,6 +31,7 @@ const ICONS: Record<keyof AppTabsParamList, [keyof typeof Ionicons.glyphMap, key
   Home: ['home', 'home-outline'],
   Attendance: ['calendar', 'calendar-outline'],
   Leave: ['airplane', 'airplane-outline'],
+  Team: ['people', 'people-outline'],
   Profile: ['person-circle', 'person-circle-outline'],
 };
 
@@ -37,6 +41,14 @@ export function AppTabs() {
   // It has to live here now that it navigates: an instance inside Profile
   // would unmount the moment it walked somebody to Attendance. The buttons on
   // Home and Profile set the store flag; this renders it.
+  // The tab is navigation, not authority -- the server decides what a
+  // principal may read, and refuses every write from this role by name. It is
+  // shown for team leads only so the panel`s "View only" label stays true: a
+  // site manager reading the same screens CAN approve, and telling them
+  // otherwise would be worse than not showing it.
+  const role = useAuthStore((s) => s.employee?.role);
+  const isTeamLead = role === 'team-lead';
+
   const tourOpen = useTourStore((s) => s.open);
   const startTour = useTourStore((s) => s.start);
   const stopTour = useTourStore((s) => s.stop);
@@ -83,6 +95,15 @@ export function AppTabs() {
         component={LeaveScreen}
         options={{ tabBarIcon: ({ color, size }) => <Icon name="calendar" color={color} size={size} /> }}
       />
+      {isTeamLead && (
+        <Tab.Screen
+          name="Team"
+          component={TeamScreen}
+          options={{
+            tabBarIcon: ({ color, size }) => <Ionicons name="people-outline" size={size} color={color} />,
+          }}
+        />
+      )}
       <Tab.Screen
         name="Profile"
         component={ProfileStack}
