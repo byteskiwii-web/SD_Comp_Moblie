@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 import { File, Paths } from 'expo-file-system';
 import { colors, radii } from '../../theme/tokens';
@@ -33,6 +33,10 @@ type LivenessMessage =
 
 export function WebViewCameraCaptureScreen({ onCaptured, onCancel }: CameraCaptureProps) {
   const [loading, setLoading] = useState(true);
+  // What the page is actually doing. A single "starting…" for the whole boot
+  // is indistinguishable from a hang, and on older hardware the model load is
+  // genuinely slow rather than broken.
+  const [stage, setStage] = useState('Starting liveness check…');
   // Set when the page reports it cannot run at all (camera blocked, model
   // failed to load) and the reviewer chose to carry on anyway. Swapping to the
   // plain expo-camera screen keeps the punch flow reachable rather than
@@ -55,11 +59,18 @@ export function WebViewCameraCaptureScreen({ onCaptured, onCancel }: CameraCaptu
           setLoading(false);
           return;
 
-        case 'status':
+        case 'status': {
           // Surfaced in the Metro log so a failing check can be diagnosed
           // without attaching a debugger to the WebView.
           console.log('[liveness] phase:', msg.phase);
+          const label: Record<string, string> = {
+            'camera-ready': 'Loading the face model…',
+            'loading-model': 'Loading the face model…',
+            'gpu-unavailable-using-cpu': 'This device needs the slower check — one moment…',
+          };
+          if (label[msg.phase]) setStage(label[msg.phase]);
           return;
+        }
 
         case 'captured': {
           if (handledRef.current) return;
@@ -80,6 +91,7 @@ export function WebViewCameraCaptureScreen({ onCaptured, onCancel }: CameraCaptu
         }
 
         case 'fallback':
+          setLoading(false);
           setUseFallback(true);
           return;
 
@@ -89,6 +101,7 @@ export function WebViewCameraCaptureScreen({ onCaptured, onCancel }: CameraCaptu
 
         case 'error':
           console.warn(`[liveness] ${msg.kind}: ${msg.message}`);
+          setLoading(false);
           return;
       }
     },
@@ -122,9 +135,14 @@ export function WebViewCameraCaptureScreen({ onCaptured, onCancel }: CameraCaptu
       />
 
       {loading && (
-        <View style={styles.loading} pointerEvents="none">
+        <View style={styles.loading}>
           <ActivityIndicator color={colors.white} size="large" />
-          <Text style={styles.loadingText}>Starting liveness check…</Text>
+          <Text style={styles.loadingText}>{stage}</Text>
+          {/* Always reachable. The page can take a while on older hardware,
+              and waiting with no way out is worse than giving up. */}
+          <Pressable onPress={onCancel} hitSlop={10} style={styles.loadingCancel}>
+            <Text style={styles.loadingCancelText}>Cancel</Text>
+          </Pressable>
         </View>
       )}
     </View>
@@ -144,6 +162,8 @@ const styles = StyleSheet.create({
     gap: 14,
     backgroundColor: colors.bgDark,
   },
+  loadingCancel: { marginTop: 18, paddingHorizontal: 18, paddingVertical: 10 },
+  loadingCancelText: { color: colors.white, fontSize: 14, fontWeight: '800', opacity: 0.9 },
   loadingText: {
     color: colors.white,
     fontSize: 13,

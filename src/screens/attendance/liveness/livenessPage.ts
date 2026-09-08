@@ -339,23 +339,42 @@ async function boot() {
     });
     video.srcObject = stream;
     await video.play();
+    send({ type: "status", phase: "camera-ready" });
   } catch (e) {
     fail("Camera blocked", "Allow camera access to verify your identity, then try again.",
          "camera", (e && e.name ? e.name + ": " : "") + (e && e.message ? e.message : e));
     return;
   }
   try {
+    send({ type: "status", phase: "loading-model" });
     var fileset = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.18/wasm");
-    landmarker = await FaceLandmarker.createFromOptions(fileset, {
-      baseOptions: {
-        modelAssetPath: "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",
-        delegate: "GPU"
-      },
-      outputFaceBlendshapes: true,
-      outputFacialTransformationMatrixes: true,
-      runningMode: "VIDEO",
-      numFaces: 1
-    });
+
+    // GPU first, CPU when the device will not give WebGL a context.
+    //
+    // On an A11 iPhone the GPU delegate fails with
+    // emscripten_webgl_create_context() returned error 0 -- WKWebView simply
+    // does not hand MediaPipe a WebGL context there. CPU inference is slower
+    // but works, and a slower check beats no check on the older half of the
+    // device estate.
+    var buildLandmarker = function (delegate) {
+      return FaceLandmarker.createFromOptions(fileset, {
+        baseOptions: {
+          modelAssetPath: "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",
+          delegate: delegate
+        },
+        outputFaceBlendshapes: true,
+        outputFacialTransformationMatrixes: true,
+        runningMode: "VIDEO",
+        numFaces: 1
+      });
+    };
+
+    try {
+      landmarker = await buildLandmarker("GPU");
+    } catch (gpuErr) {
+      send({ type: "status", phase: "gpu-unavailable-using-cpu" });
+      landmarker = await buildLandmarker("CPU");
+    }
   } catch (e) {
     fail("Face check unavailable",
          "The liveness model could not be loaded. Check your connection and try again.",
