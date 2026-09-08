@@ -141,15 +141,23 @@ export function NotificationPanel({ visible, onClose }: { visible: boolean; onCl
             </Pressable>
           </View>
           {/*
-            The server half failing is a footnote, not the whole panel: device
-            alerts are still listed below, and those are the ones most likely
-            to matter when a field employee is out of signal.
+            A failed server fetch is a footnote when there are still device
+            alerts to list -- those are the ones most likely to matter when a
+            field employee is out of signal -- and the whole message when there
+            are not. It must never appear alongside "No notifications yet":
+            that line asserts an empty inbox, which is precisely what a failed
+            fetch leaves unknown, so the two together would have the panel
+            contradict itself.
           */}
-          {isError && <Text style={styles.errorText}>Could not load newer notifications.</Text>}
+          {isError && (
+            <Text style={items.length === 0 ? styles.emptyText : styles.errorText}>
+              Could not load newer notifications.
+            </Text>
+          )}
           {items.length === 0 ? (
             isLoading ? (
               <ActivityIndicator color={colors.brand[700]} style={styles.loadingSpacer} />
-            ) : (
+            ) : isError ? null : (
               <Text style={styles.emptyText}>No notifications yet.</Text>
             )
           ) : (
