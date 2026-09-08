@@ -29,6 +29,13 @@ export const LIVENESS_HTML = `<!doctype html>
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
   #stage { position:fixed; inset:0; }
   video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transform:scaleX(-1); }
+  /* iOS draws a play/pause control over an inline video. It lands squarely on
+     the face and can pause the stream if tapped. */
+  video::-webkit-media-controls,
+  video::-webkit-media-controls-panel,
+  video::-webkit-media-controls-play-button,
+  video::-webkit-media-controls-start-playback-button {
+    display:none !important; -webkit-appearance:none; opacity:0; }
   canvas#overlay { position:absolute; inset:0; width:100%; height:100%; }
   #hud { position:absolute; left:0; right:0; bottom:0; padding:18px 20px calc(20px + env(safe-area-inset-bottom));
     background:linear-gradient(transparent,rgba(0,0,0,.78) 45%); text-align:center; }
@@ -54,7 +61,7 @@ export const LIVENESS_HTML = `<!doctype html>
 </head>
 <body>
 <div id="stage">
-  <video id="video" playsinline autoplay muted></video>
+  <video id="video" playsinline webkit-playsinline autoplay muted disablepictureinpicture controls="false"></video>
   <canvas id="overlay"></canvas>
   <div id="badge"><div class="tick">&#10003;</div><div class="txt">Liveness Verified</div></div>
   <div id="hud">
@@ -335,7 +342,7 @@ async function boot() {
   reset();
   try {
     stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false
+      video: { facingMode: "user", width: { ideal: 960 }, height: { ideal: 540 } }, audio: false
     });
     video.srcObject = stream;
     await video.play();
