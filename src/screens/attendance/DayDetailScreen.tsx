@@ -165,8 +165,16 @@ export function DayDetailScreen() {
                     <Text style={styles.logTime}>{formatTimeWithSeconds(m.timestamp)}</Text>
                     <Text style={styles.logType} numberOfLines={1}>
                       {m.mark_type.replace('-', ' ')}
-                      {outside ? ' · outside radius' : ''}
                     </Text>
+                    {/* This is the screen the geo-fence flag belongs on, so it
+                        is allowed to be loud here. It marks the individual
+                        punch that was outside, which is the question the list
+                        could never answer. */}
+                    {outside && (
+                      <View style={styles.outsideChip}>
+                        <Text style={styles.outsideChipText}>OUTSIDE</Text>
+                      </View>
+                    )}
                   </View>
                 );
               })}
@@ -252,6 +260,11 @@ const styles = StyleSheet.create({
   logTime: { fontSize: 12, fontWeight: '700', color: colors.textLight, minWidth: 104 },
   logTimeMissing: { color: colors.danger },
   logType: { flex: 1, fontSize: 10.5, color: colors.slate400, fontWeight: '600', textTransform: 'capitalize' },
+  outsideChip: {
+    backgroundColor: colors.warningBg, borderRadius: radii.sm,
+    paddingHorizontal: 7, paddingVertical: 3,
+  },
+  outsideChipText: { fontSize: 9, fontWeight: '800', color: '#B45309', letterSpacing: 0.3 },
 
   footer: {
     padding: 16, paddingBottom: 20,

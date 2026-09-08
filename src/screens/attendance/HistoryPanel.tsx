@@ -118,6 +118,10 @@ export function HistoryPanel() {
               day={day}
               shiftStart={profile?.shiftStart ?? null}
               first={i === 0}
+              // The month is only worth printing where it changes. A range can
+              // straddle two of them and the date block shows a bare number, so
+              // "31 MON" needs saying once -- on every row it is just filler.
+              showMonth={i === 0 || day.date.slice(0, 7) !== days[i - 1].date.slice(0, 7)}
               onPress={() => navigation.navigate('AttendanceDay', { date: day.date })}
             />
           ))}
@@ -159,21 +163,32 @@ export function HistoryPanel() {
  * A dot rather than a worded badge for punctuality: down a list this long the
  * words "On time" twenty times over are noise, and the eye is hunting for the
  * days that are not green.
+ *
+ * Geo-fence is deliberately NOT here. "Outside radius" was true of almost every
+ * row, so as a list-level flag it marked nothing out — it just painted the
+ * whole column amber and buried the one row that genuinely needed attention.
+ * It is a fact about individual punches rather than about a day, and that is
+ * where it now lives: against each stamp on the day detail, where you can see
+ * WHICH punch was outside and at what time.
+ *
+ * A missing clock-out stays, because that one really is a property of the day
+ * and it is the thing somebody is scanning for.
  */
 function DayRow({
   day,
   shiftStart,
   first,
+  showMonth,
   onPress,
 }: {
   day: DaySummary;
   shiftStart: string | null;
   first: boolean;
+  showMonth: boolean;
   onPress: () => void;
 }) {
   const status = punctuality(day.firstIn, shiftStart);
   const d = new Date(`${day.date}T00:00:00`);
-  const flagged = day.openEnded || day.hasOutsideFence;
 
   return (
     <Pressable
@@ -195,13 +210,12 @@ function DayRow({
             {day.lastOut ? formatTime(day.lastOut.timestamp) : '—'}
           </Text>
         </View>
-        {flagged ? (
+        {day.openEnded && (
           <Text style={styles.flag} numberOfLines={1}>
-            {[day.openEnded ? 'No clock-out' : null, day.hasOutsideFence ? 'Outside radius' : null]
-              .filter(Boolean)
-              .join(' · ')}
+            No clock-out
           </Text>
-        ) : (
+        )}
+        {showMonth && (
           <Text style={styles.sub}>
             {MONTHS[d.getMonth()]} {d.getFullYear()}
           </Text>
