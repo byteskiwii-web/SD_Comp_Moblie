@@ -196,6 +196,9 @@ function KycCard() {
             status={kyc.pan.status}
             detail={kyc.pan.masked}
             onPress={kyc.pan.status === 'verified' ? undefined : () => navigation.navigate('PanVerify')}
+            // The linkage line below belongs to PAN. A rule between them reads
+            // as a boundary and hands the line to Aadhaar instead.
+            noDivider
           />
           {/* PAN-Aadhaar linkage.
 
@@ -239,7 +242,10 @@ function KycCard() {
                   : 'PAN-Aadhaar link not checked'}
             </Text>
             {kyc.pan.aadhaarLinked !== true && (
-              <Text style={styles.linkAction}>Check now</Text>
+              <View style={styles.linkActionRow}>
+                <Text style={styles.linkAction}>Check now</Text>
+                <Ionicons name="chevron-forward" size={13} color={colors.brand[700]} />
+              </View>
             )}
           </Pressable>
 
@@ -279,6 +285,7 @@ function KycRow({
   status,
   detail,
   last,
+  noDivider,
   onPress,
 }: {
   icon: keyof typeof Ionicons.glyphMap;
@@ -286,6 +293,8 @@ function KycRow({
   status: KycCheckStatus;
   detail?: string | null;
   last?: boolean;
+  /** Suppress the rule when the row below is a continuation of this one. */
+  noDivider?: boolean;
   onPress?: () => void;
 }) {
   const tone = kycStatusTone(status);
@@ -310,11 +319,11 @@ function KycRow({
     </>
   );
 
-  if (!onPress) return <View style={[styles.row, last && styles.rowLast]}>{body}</View>;
+  if (!onPress) return <View style={[styles.row, (last || noDivider) && styles.rowLast]}>{body}</View>;
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [styles.row, last && styles.rowLast, pressed && styles.rowPressed]}
+      style={({ pressed }) => [styles.row, (last || noDivider) && styles.rowLast, pressed && styles.rowPressed]}
       accessibilityRole="button"
     >
       {body}
@@ -386,9 +395,14 @@ const styles = StyleSheet.create({
   rowChevron: { marginLeft: 6 },
   kycAction: { flexDirection: 'row', alignItems: 'center', gap: 1, marginLeft: 8 },
   kycActionText: { fontSize: 11, fontWeight: '800', color: colors.brand[700] },
-  linkRow: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingLeft: 25, paddingBottom: 8, marginTop: -4 },
+  linkRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingLeft: 25, paddingBottom: 10, marginTop: -2,
+    borderBottomWidth: 1, borderBottomColor: colors.slate100,
+  },
   linkText: { fontSize: 10.5, color: colors.slate500, fontWeight: '600' },
-  linkAction: { fontSize: 10.5, fontWeight: '800', color: colors.brand[700], marginLeft: 'auto' },
+  linkActionRow: { flexDirection: 'row', alignItems: 'center', gap: 1, marginLeft: 'auto' },
+  linkAction: { fontSize: 10.5, fontWeight: '800', color: colors.brand[700] },
   rowPressed: { opacity: 0.6 },
   rowLabel: { flex: 1, fontSize: 11, fontWeight: '600', color: colors.slate500 },
   policySummary: { fontSize: 11, color: colors.slate400, fontWeight: '600', marginBottom: 6 },
