@@ -56,7 +56,8 @@
           "color": "#1E40AF"
         }
       ],
-      "expo-status-bar"
+      "expo-status-bar",
+      "expo-font"
     ],
     "extra": {
       "eas": {
