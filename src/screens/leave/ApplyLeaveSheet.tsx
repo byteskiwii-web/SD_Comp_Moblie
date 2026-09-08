@@ -222,7 +222,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20, paddingTop: 18, paddingBottom: 12,
     borderBottomWidth: 1, borderBottomColor: colors.slate100,
   },
-  title: { fontSize: 16, fontWeight: '800', color: colors.textLight, letterSpacing: -0.2 },
+  title: { fontSize: 14, fontWeight: '800', color: colors.textLight, letterSpacing: -0.2 },
 
   body: { padding: 20, paddingBottom: 32, gap: 10 },
   label: {
@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5, borderColor: colors.slate200, backgroundColor: colors.white,
   },
   typeOn: { borderColor: colors.brand[700], backgroundColor: colors.brand[50] },
-  typeText: { fontSize: 13, fontWeight: '800', color: colors.slate600 },
+  typeText: { fontSize: 11.5, fontWeight: '800', color: colors.slate600 },
   typeTextOn: { color: colors.brand[700] },
   pressed: { opacity: 0.75 },
 
@@ -244,23 +244,23 @@ const styles = StyleSheet.create({
   dateCol: { flex: 1 },
 
   halfRow: { flexDirection: 'row', alignItems: 'center', gap: 9, paddingVertical: 4 },
-  halfText: { fontSize: 13.5, fontWeight: '700', color: colors.slate600 },
+  halfText: { fontSize: 12, fontWeight: '700', color: colors.slate600 },
 
   totalRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     backgroundColor: colors.slate50, borderRadius: radii.md,
     paddingHorizontal: 14, paddingVertical: 11,
   },
-  totalLabel: { fontSize: 12, fontWeight: '700', color: colors.slate500 },
-  totalValue: { fontSize: 15, fontWeight: '800', color: colors.textLight },
+  totalLabel: { fontSize: 11, fontWeight: '700', color: colors.slate500 },
+  totalValue: { fontSize: 13, fontWeight: '800', color: colors.textLight },
 
   input: {
     borderWidth: 1, borderColor: colors.slate200, borderRadius: radii.md,
     paddingHorizontal: 14, paddingVertical: 12, minHeight: 86,
-    fontSize: 14, color: colors.textLight, backgroundColor: colors.white,
+    fontSize: 12.5, color: colors.textLight, backgroundColor: colors.white,
   },
 
-  error: { color: colors.danger, fontSize: 12.5, fontWeight: '600' },
-  hint: { color: colors.slate400, fontSize: 12, fontWeight: '600' },
+  error: { color: colors.danger, fontSize: 11.5, fontWeight: '600' },
+  hint: { color: colors.slate400, fontSize: 11, fontWeight: '600' },
   actions: { marginTop: 6 },
 });

@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
   buttonDanger: { backgroundColor: colors.dangerBg, borderWidth: 1.5, borderColor: 'rgba(244,63,94,0.35)' },
   buttonDisabled: { opacity: 0.45, shadowOpacity: 0 },
   buttonPressed: { opacity: 0.85 },
-  buttonText: { fontSize: 15, fontWeight: '700', letterSpacing: 0.1 },
+  buttonText: { fontSize: 13, fontWeight: '700', letterSpacing: 0.1 },
   buttonTextPrimary: { color: colors.white },
   buttonTextOutline: { color: colors.slate700 },
   buttonTextDanger: { color: colors.danger },
@@ -199,13 +199,13 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: colors.slate200,
     paddingHorizontal: 14,
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: '600',
     color: colors.textLight,
     backgroundColor: colors.white,
   },
   inputError: { borderColor: colors.danger },
-  errorText: { color: colors.danger, fontSize: 12, fontWeight: '600', marginTop: 6 },
+  errorText: { color: colors.danger, fontSize: 11, fontWeight: '600', marginTop: 6 },
 
   card: {
     backgroundColor: colors.white,
@@ -247,5 +247,5 @@ const styles = StyleSheet.create({
     letterSpacing: 0.4,
     color: colors.slate500,
   },
-  infoRowValue: { fontSize: 12, fontWeight: '700', color: colors.textLight, marginTop: 2 },
+  infoRowValue: { fontSize: 11, fontWeight: '700', color: colors.textLight, marginTop: 2 },
 });

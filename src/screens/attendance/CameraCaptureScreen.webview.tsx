@@ -163,10 +163,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bgDark,
   },
   loadingCancel: { marginTop: 18, paddingHorizontal: 18, paddingVertical: 10 },
-  loadingCancelText: { color: colors.white, fontSize: 14, fontWeight: '800', opacity: 0.9 },
+  loadingCancelText: { color: colors.white, fontSize: 12.5, fontWeight: '800', opacity: 0.9 },
   loadingText: {
     color: colors.white,
-    fontSize: 13,
+    fontSize: 11.5,
     fontWeight: '600',
     paddingHorizontal: 16,
     paddingVertical: 8,

@@ -84,8 +84,8 @@ const styles = StyleSheet.create({
   },
   body: { flex: 1 },
   topLine: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  badge: { fontSize: 13, fontWeight: '800', color: '#7C3AED' },
+  badge: { fontSize: 11.5, fontWeight: '800', color: '#7C3AED' },
   date: { fontSize: 11, color: colors.slate400, fontWeight: '600' },
-  message: { fontSize: 12.5, color: colors.slate600, marginTop: 3, lineHeight: 18 },
-  from: { fontSize: 11.5, color: colors.slate400, marginTop: 3, fontWeight: '600' },
+  message: { fontSize: 11.5, color: colors.slate600, marginTop: 3, lineHeight: 18 },
+  from: { fontSize: 10.5, color: colors.slate400, marginTop: 3, fontWeight: '600' },
 });

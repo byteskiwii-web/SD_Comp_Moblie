@@ -94,9 +94,9 @@ export function AadhaarOtpRequestScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.white },
   scroll: { flexGrow: 1, justifyContent: 'center', padding: 24 },
-  title: { fontSize: 20, fontWeight: '800', color: colors.textLight, textAlign: 'center' },
+  title: { fontSize: 17.5, fontWeight: '800', color: colors.textLight, textAlign: 'center' },
   subtitle: {
-    fontSize: 12,
+    fontSize: 11,
     color: colors.slate500,
     textAlign: 'center',
     marginTop: 8,
@@ -115,8 +115,8 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   checkboxChecked: { backgroundColor: colors.brand[700], borderColor: colors.brand[700] },
-  checkmark: { color: colors.white, fontSize: 13, fontWeight: '800' },
-  consentText: { flex: 1, fontSize: 12, color: colors.slate600, lineHeight: 17 },
-  errorText: { color: colors.danger, fontSize: 12, fontWeight: '600', marginBottom: 12, textAlign: 'center' },
+  checkmark: { color: colors.white, fontSize: 11.5, fontWeight: '800' },
+  consentText: { flex: 1, fontSize: 11, color: colors.slate600, lineHeight: 17 },
+  errorText: { color: colors.danger, fontSize: 11, fontWeight: '600', marginBottom: 12, textAlign: 'center' },
   buttonGap: { marginBottom: 12 },
 });

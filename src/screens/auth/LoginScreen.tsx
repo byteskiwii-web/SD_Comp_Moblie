@@ -102,14 +102,14 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     shadowColor: colors.brand[900], shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.25, shadowRadius: 8, elevation: 4,
   },
-  logoDotText: { color: colors.white, fontSize: 22, fontWeight: '800' },
+  logoDotText: { color: colors.white, fontSize: 19, fontWeight: '800' },
   brandLabel: {
     fontSize: 11, fontWeight: '800', letterSpacing: 1.5, color: colors.brand[700], marginBottom: 16,
   },
-  title: { fontSize: 22, fontWeight: '800', color: colors.textLight },
+  title: { fontSize: 19, fontWeight: '800', color: colors.textLight },
   subtitle: {
-    fontSize: 12, color: colors.slate500, textAlign: 'center', marginTop: 6, lineHeight: 18, paddingHorizontal: 12,
+    fontSize: 11, color: colors.slate500, textAlign: 'center', marginTop: 6, lineHeight: 18, paddingHorizontal: 12,
   },
-  errorText: { color: colors.danger, fontSize: 12, fontWeight: '600', marginBottom: 12, textAlign: 'center' },
+  errorText: { color: colors.danger, fontSize: 11, fontWeight: '600', marginBottom: 12, textAlign: 'center' },
   buttonGap: { marginBottom: 12 },
 });

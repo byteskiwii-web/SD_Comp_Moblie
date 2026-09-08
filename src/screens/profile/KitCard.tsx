@@ -103,14 +103,14 @@ const styles = StyleSheet.create({
   },
   sizeOn: { borderColor: colors.brand[700], backgroundColor: colors.brand[50] },
   sizePressed: { opacity: 0.75 },
-  sizeText: { fontSize: 13, fontWeight: '800', color: colors.slate600 },
+  sizeText: { fontSize: 11.5, fontWeight: '800', color: colors.slate600 },
   sizeTextOn: { color: colors.brand[700] },
-  hint: { fontSize: 11.5, color: colors.slate400, marginTop: 8, fontWeight: '600' },
-  error: { fontSize: 12, color: colors.danger, fontWeight: '600', marginTop: 8 },
+  hint: { fontSize: 10.5, color: colors.slate400, marginTop: 8, fontWeight: '600' },
+  error: { fontSize: 11, color: colors.danger, fontWeight: '600', marginTop: 8 },
 
   statusRow: {
     flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 14,
     paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.slate100,
   },
-  statusText: { fontSize: 13, color: colors.slate600, fontWeight: '600' },
+  statusText: { fontSize: 11.5, color: colors.slate600, fontWeight: '600' },
 });

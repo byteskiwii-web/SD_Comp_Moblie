@@ -66,7 +66,7 @@ export function AttendanceScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.bgLight },
   header: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 4 },
-  headerTitle: { fontSize: 24, fontWeight: '800', color: colors.textLight, letterSpacing: -0.3 },
+  headerTitle: { fontSize: 21, fontWeight: '800', color: colors.textLight, letterSpacing: -0.3 },
   content: { padding: 20, paddingTop: 12, gap: 14 },
   segment: {
     flexDirection: 'row', backgroundColor: colors.slate100, borderRadius: radii.md, padding: 4,
@@ -82,6 +82,6 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 1,
   },
-  segmentText: { fontSize: 12, fontWeight: '700', color: colors.slate500 },
+  segmentText: { fontSize: 11, fontWeight: '700', color: colors.slate500 },
   segmentTextActive: { color: colors.brand[700] },
 });

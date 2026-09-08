@@ -223,15 +223,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingVertical: 2, paddingHorizontal: 2,
   },
-  rangeLabel: { fontSize: 17, fontWeight: '800', color: colors.textLight, letterSpacing: -0.3 },
-  rangeDates: { fontSize: 11.5, color: colors.slate400, marginTop: 1, fontWeight: '600' },
+  rangeLabel: { fontSize: 15, fontWeight: '800', color: colors.textLight, letterSpacing: -0.3 },
+  rangeDates: { fontSize: 10.5, color: colors.slate400, marginTop: 1, fontWeight: '600' },
   rangeChevron: {
     width: 30, height: 30, borderRadius: 15, backgroundColor: colors.brand[50],
     alignItems: 'center', justifyContent: 'center',
   },
 
-  error: { color: colors.danger, fontSize: 13, fontWeight: '600', paddingVertical: 12 },
-  empty: { fontSize: 13, color: colors.slate400, fontWeight: '600', paddingVertical: 14 },
+  error: { color: colors.danger, fontSize: 11.5, fontWeight: '600', paddingVertical: 12 },
+  empty: { fontSize: 11.5, color: colors.slate400, fontWeight: '600', paddingVertical: 14 },
 
   listCard: { padding: 0, paddingHorizontal: 14, overflow: 'hidden' },
 
@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
   rowPressed: { opacity: 0.6 },
 
   dateBlock: { width: 34, alignItems: 'center' },
-  dateDay: { fontSize: 17, fontWeight: '800', color: colors.textLight, letterSpacing: -0.4 },
+  dateDay: { fontSize: 15, fontWeight: '800', color: colors.textLight, letterSpacing: -0.4 },
   dateWeekday: {
     fontSize: 9.5, fontWeight: '800', color: colors.slate400,
     textTransform: 'uppercase', letterSpacing: 0.3, marginTop: 1,
@@ -251,12 +251,12 @@ const styles = StyleSheet.create({
   dot: { width: 7, height: 7, borderRadius: 4 },
   dotOk: { backgroundColor: colors.success },
   dotLate: { backgroundColor: colors.warning },
-  times: { flex: 1, fontSize: 13.5, fontWeight: '700', color: colors.textLight },
+  times: { flex: 1, fontSize: 12, fontWeight: '700', color: colors.textLight },
   sub: { fontSize: 11, color: colors.slate400, fontWeight: '600', marginLeft: 14 },
   flag: { fontSize: 11, color: '#B45309', fontWeight: '700', marginLeft: 14 },
 
   right: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  hours: { fontSize: 13, fontWeight: '800', color: colors.slate600 },
+  hours: { fontSize: 11.5, fontWeight: '800', color: colors.slate600 },
 
   backdrop: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
@@ -280,5 +280,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 20, paddingVertical: 16,
   },
-  sheetRowText: { fontSize: 15, fontWeight: '600', color: colors.textLight },
+  sheetRowText: { fontSize: 13, fontWeight: '600', color: colors.textLight },
 });

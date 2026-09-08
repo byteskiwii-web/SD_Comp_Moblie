@@ -194,13 +194,13 @@ const styles = StyleSheet.create({
 
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   headerText: { flex: 1 },
-  welcome: { fontSize: 12, color: colors.slate500, fontWeight: '600' },
-  name: { fontSize: 20, fontWeight: '800', color: colors.textLight, marginTop: 2, letterSpacing: -0.3 },
+  welcome: { fontSize: 11, color: colors.slate500, fontWeight: '600' },
+  name: { fontSize: 17.5, fontWeight: '800', color: colors.textLight, marginTop: 2, letterSpacing: -0.3 },
   avatar: {
     width: 44, height: 44, borderRadius: 22, backgroundColor: colors.brand[700],
     alignItems: 'center', justifyContent: 'center',
   },
-  avatarInitial: { color: colors.white, fontSize: 15, fontWeight: '800', letterSpacing: 0.3 },
+  avatarInitial: { color: colors.white, fontSize: 13, fontWeight: '800', letterSpacing: 0.3 },
   iconButton: {
     width: 38, height: 38, borderRadius: 19, backgroundColor: colors.white,
     alignItems: 'center', justifyContent: 'center',
@@ -229,14 +229,14 @@ const styles = StyleSheet.create({
   statusDotActive: { backgroundColor: colors.white },
   statusDotInactive: { backgroundColor: colors.slate400 },
   heroLabel: { color: colors.white, opacity: 0.75, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.4 },
-  heroTitle: { color: colors.white, fontSize: 26, fontWeight: '800', marginTop: 8, letterSpacing: -0.4 },
-  heroSubtitle: { color: colors.white, opacity: 0.85, fontSize: 13, marginTop: 3, fontWeight: '600' },
+  heroTitle: { color: colors.white, fontSize: 22, fontWeight: '800', marginTop: 8, letterSpacing: -0.4 },
+  heroSubtitle: { color: colors.white, opacity: 0.85, fontSize: 11.5, marginTop: 3, fontWeight: '600' },
   heroDivider: { height: 1, backgroundColor: 'rgba(255,255,255,0.15)', marginTop: 18, marginBottom: 14 },
   heroStatsRow: { flexDirection: 'row', alignItems: 'center' },
   heroStat: { flex: 1 },
   heroStatSeparator: { width: 1, height: 28, backgroundColor: 'rgba(255,255,255,0.15)', marginHorizontal: 16 },
   heroStatLabel: { color: colors.white, opacity: 0.65, fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.3 },
-  heroStatValue: { color: colors.white, fontSize: 16, fontWeight: '800', marginTop: 4 },
+  heroStatValue: { color: colors.white, fontSize: 14, fontWeight: '800', marginTop: 4 },
 
   cta: {
     flexDirection: 'row', alignItems: 'center', gap: 14,
@@ -250,12 +250,12 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   ctaText: { flex: 1 },
-  ctaTitle: { fontSize: 14.5, fontWeight: '800', color: colors.textLight, letterSpacing: -0.2 },
-  ctaSubtitle: { fontSize: 11.5, color: colors.slate500, marginTop: 2, fontWeight: '600' },
+  ctaTitle: { fontSize: 13, fontWeight: '800', color: colors.textLight, letterSpacing: -0.2 },
+  ctaSubtitle: { fontSize: 10.5, color: colors.slate500, marginTop: 2, fontWeight: '600' },
 
   cardTitle: { fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4, color: colors.slate500, marginBottom: 4 },
   loadingSpacer: { marginVertical: 12 },
-  emptyText: { fontSize: 13, color: colors.slate400, paddingVertical: 8 },
+  emptyText: { fontSize: 11.5, color: colors.slate400, paddingVertical: 8 },
   timelineRow: {
     flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10,
     borderBottomWidth: 1, borderBottomColor: colors.slate100,
@@ -264,6 +264,6 @@ const styles = StyleSheet.create({
   timelineIcon: { width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   timelineIconGood: { backgroundColor: colors.successBg },
   timelineIconBad: { backgroundColor: colors.dangerBg },
-  timelineType: { flex: 1, fontSize: 13, fontWeight: '600', color: colors.textLight, textTransform: 'capitalize' },
-  timelineTime: { fontSize: 12, color: colors.slate500, fontWeight: '600' },
+  timelineType: { flex: 1, fontSize: 11.5, fontWeight: '600', color: colors.textLight, textTransform: 'capitalize' },
+  timelineTime: { fontSize: 11, color: colors.slate500, fontWeight: '600' },
 });

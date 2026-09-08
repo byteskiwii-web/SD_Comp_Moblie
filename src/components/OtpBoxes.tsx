@@ -61,7 +61,7 @@ const styles = StyleSheet.create({
   },
   boxFilled: { borderColor: colors.brand[500], backgroundColor: colors.brand[50] },
   boxTextWrap: { pointerEvents: 'none' },
-  boxText: { fontSize: 18, fontWeight: '700', textAlign: 'center', padding: 0 },
+  boxText: { fontSize: 15.5, fontWeight: '700', textAlign: 'center', padding: 0 },
   boxTextEmpty: { color: colors.slate300 },
   boxTextFilled: { color: colors.brand[800] },
   hiddenInput: { position: 'absolute', opacity: 0, height: 48, width: '100%' },

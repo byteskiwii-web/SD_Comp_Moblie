@@ -74,7 +74,7 @@ export function ResetPasswordScreen({ navigation, route }: Props) {
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.white },
   scroll: { flexGrow: 1, justifyContent: 'center', padding: 24 },
-  title: { fontSize: 20, fontWeight: '800', color: colors.textLight, textAlign: 'center' },
-  subtitle: { fontSize: 12, color: colors.slate500, textAlign: 'center', marginTop: 8, marginBottom: 24 },
-  errorText: { color: colors.danger, fontSize: 12, fontWeight: '600', marginBottom: 12, textAlign: 'center' },
+  title: { fontSize: 17.5, fontWeight: '800', color: colors.textLight, textAlign: 'center' },
+  subtitle: { fontSize: 11, color: colors.slate500, textAlign: 'center', marginTop: 8, marginBottom: 24 },
+  errorText: { color: colors.danger, fontSize: 11, fontWeight: '600', marginBottom: 12, textAlign: 'center' },
 });

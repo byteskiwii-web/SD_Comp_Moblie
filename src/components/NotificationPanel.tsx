@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.slate100,
   },
-  sheetTitle: { fontSize: 15, fontWeight: '800', color: colors.textLight },
+  sheetTitle: { fontSize: 13, fontWeight: '800', color: colors.textLight },
   closeButton: {
     width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center',
     backgroundColor: colors.slate100,
@@ -145,14 +145,14 @@ const styles = StyleSheet.create({
   // -> Pressable ancestor chain. flexShrink: 1 stays as a second line of
   // defense (Yoga defaults it to 0, unlike web CSS flexbox's default of 1).
   list: { flexGrow: 0, flexShrink: 1 },
-  emptyText: { fontSize: 13, color: colors.slate400, textAlign: 'center', padding: 24 },
+  emptyText: { fontSize: 11.5, color: colors.slate400, textAlign: 'center', padding: 24 },
 
   row: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, padding: 14, borderBottomWidth: 1, borderBottomColor: colors.slate100 },
   rowUnread: { backgroundColor: colors.brand[50] },
   iconCircle: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
   rowText: { flex: 1, minWidth: 0 },
-  rowTitle: { fontSize: 13, fontWeight: '700', color: colors.textLight },
-  rowBody: { fontSize: 12, color: colors.slate600, marginTop: 2 },
+  rowTitle: { fontSize: 11.5, fontWeight: '700', color: colors.textLight },
+  rowBody: { fontSize: 11, color: colors.slate600, marginTop: 2 },
   rowTime: { fontSize: 10, color: colors.slate400, marginTop: 4 },
   dismissButton: {
     width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center',

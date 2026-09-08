@@ -284,9 +284,9 @@ const styles = StyleSheet.create({
   },
   inputPressed: { backgroundColor: colors.slate50, borderColor: colors.slate300 },
   inputError: { borderColor: colors.danger },
-  valueText: { fontSize: 15, fontWeight: '600', color: colors.textLight, flexShrink: 1 },
+  valueText: { fontSize: 13, fontWeight: '600', color: colors.textLight, flexShrink: 1 },
   placeholderText: { color: colors.slate400, fontWeight: '500' },
-  errorText: { color: colors.danger, fontSize: 12, fontWeight: '600', marginTop: 6 },
+  errorText: { color: colors.danger, fontSize: 11, fontWeight: '600', marginTop: 6 },
 
   backdrop: {
     position: 'absolute',
@@ -315,6 +315,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.slate100,
   },
-  sheetCancel: { fontSize: 15, fontWeight: '600', color: colors.slate500 },
-  sheetDone: { fontSize: 15, fontWeight: '800', color: colors.brand[700] },
+  sheetCancel: { fontSize: 13, fontWeight: '600', color: colors.slate500 },
+  sheetDone: { fontSize: 13, fontWeight: '800', color: colors.brand[700] },
 });

@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
   center: {
     flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, padding: 24, backgroundColor: colors.textLight,
   },
-  permissionText: { color: colors.white, fontSize: 14, textAlign: 'center', marginBottom: 8 },
+  permissionText: { color: colors.white, fontSize: 12.5, textAlign: 'center', marginBottom: 8 },
   viewfinder: { position: 'absolute', left: 32, right: 32 },
   corner: { position: 'absolute', width: 32, height: 32, borderColor: colors.white },
   cornerTL: { top: 0, left: 0, borderTopWidth: 3, borderLeftWidth: 3, borderTopLeftRadius: 8 },
@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
   cornerBR: { bottom: 0, right: 0, borderBottomWidth: 3, borderRightWidth: 3, borderBottomRightRadius: 8 },
   topBar: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
   topBarText: {
-    color: colors.white, fontSize: 12, fontWeight: '700', backgroundColor: 'rgba(0,0,0,0.4)',
+    color: colors.white, fontSize: 11, fontWeight: '700', backgroundColor: 'rgba(0,0,0,0.4)',
     paddingHorizontal: 12, paddingVertical: 6, borderRadius: radii.pill, overflow: 'hidden',
   },
   banner: {
@@ -132,12 +132,12 @@ const styles = StyleSheet.create({
     borderRadius: radii.sm, paddingHorizontal: 12, paddingVertical: 8,
   },
   bannerText: {
-    color: colors.slate900, fontSize: 12, fontWeight: '700', textAlign: 'center', lineHeight: 17,
+    color: colors.slate900, fontSize: 11, fontWeight: '700', textAlign: 'center', lineHeight: 17,
   },
   bottomBar: {
     position: 'absolute', bottom: 0, left: 0, right: 0, paddingHorizontal: 20, paddingTop: 24,
     backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', gap: 12,
   },
-  hintText: { color: colors.white, fontSize: 15, fontWeight: '700', textAlign: 'center' },
+  hintText: { color: colors.white, fontSize: 13, fontWeight: '700', textAlign: 'center' },
   actionWrap: { width: '100%' },
 });

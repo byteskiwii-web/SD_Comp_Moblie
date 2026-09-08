@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
     flex: 1, borderWidth: 1, borderColor: colors.slate200, borderRadius: radii.md,
     paddingVertical: 12, paddingHorizontal: 10, alignItems: 'flex-start',
   },
-  tileValue: { fontSize: 20, fontWeight: '800', color: colors.textLight, letterSpacing: -0.4 },
+  tileValue: { fontSize: 17.5, fontWeight: '800', color: colors.textLight, letterSpacing: -0.4 },
   tileOk: { color: '#047857' },
   tileWarn: { color: '#B45309' },
   tileLabel: { fontSize: 11, color: colors.slate500, fontWeight: '700', marginTop: 3 },

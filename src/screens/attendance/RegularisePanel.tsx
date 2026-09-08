@@ -357,7 +357,7 @@ const styles = StyleSheet.create({
   banner: { borderRadius: radii.md, padding: 12 },
   bannerSuccess: { backgroundColor: colors.successBg },
   bannerWarning: { backgroundColor: colors.warningBg },
-  bannerText: { fontSize: 13, fontWeight: '600', color: colors.slate800 },
+  bannerText: { fontSize: 11.5, fontWeight: '600', color: colors.slate800 },
 
   formCard: {},
   hoursRow: { flexDirection: 'row', gap: 12, marginBottom: 16 },
@@ -365,19 +365,19 @@ const styles = StyleSheet.create({
     flex: 1, borderWidth: 1, borderColor: colors.slate200, borderRadius: radii.md,
     paddingVertical: 12, paddingHorizontal: 14,
   },
-  hoursValue: { fontSize: 18, fontWeight: '800', color: colors.textLight },
-  hoursLabel: { fontSize: 11.5, color: colors.slate500, fontWeight: '600', marginTop: 2 },
+  hoursValue: { fontSize: 15.5, fontWeight: '800', color: colors.textLight },
+  hoursLabel: { fontSize: 10.5, color: colors.slate500, fontWeight: '600', marginTop: 2 },
 
   fieldLabel: {
     fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.4,
     color: colors.slate500, marginBottom: 6,
   },
-  help: { fontSize: 12, color: colors.slate500, marginBottom: 10, lineHeight: 17 },
+  help: { fontSize: 11, color: colors.slate500, marginBottom: 10, lineHeight: 17 },
 
   segment: { flexDirection: 'row', backgroundColor: colors.slate100, borderRadius: radii.md, padding: 4, marginBottom: 14 },
   segmentItem: { flex: 1, alignItems: 'center', paddingVertical: 9, borderRadius: radii.sm },
   segmentItemActive: { backgroundColor: colors.white },
-  segmentText: { fontSize: 12, fontWeight: '700', color: colors.slate500 },
+  segmentText: { fontSize: 11, fontWeight: '700', color: colors.slate500 },
   segmentTextActive: { color: colors.brand[700] },
 
   stampBox: { backgroundColor: colors.slate50, borderRadius: radii.md, padding: 12, marginBottom: 10 },
@@ -393,9 +393,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 8,
     backgroundColor: colors.brand[50], borderRadius: radii.sm, padding: 10, marginBottom: 10,
   },
-  submitNoteText: { flex: 1, fontSize: 11.5, color: colors.slate600, fontWeight: '600', lineHeight: 16 },
+  submitNoteText: { flex: 1, fontSize: 10.5, color: colors.slate600, fontWeight: '600', lineHeight: 16 },
 
-  errorText: { color: colors.danger, fontSize: 12, fontWeight: '600', marginBottom: 8 },
+  errorText: { color: colors.danger, fontSize: 11, fontWeight: '600', marginBottom: 8 },
 
   actions: { flexDirection: 'row', gap: 12, marginTop: 4 },
   actionHalf: { flex: 1 },
@@ -406,14 +406,14 @@ const styles = StyleSheet.create({
     color: colors.slate500, marginBottom: 4,
   },
   spacer: { marginVertical: 12 },
-  empty: { fontSize: 13, color: colors.slate400, paddingVertical: 8 },
+  empty: { fontSize: 11.5, color: colors.slate400, paddingVertical: 8 },
   reqRow: {
     flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12,
     borderBottomWidth: 1, borderBottomColor: colors.slate100,
   },
   reqRowLast: { borderBottomWidth: 0 },
   reqMain: { flex: 1 },
-  reqDate: { fontSize: 13.5, fontWeight: '800', color: colors.textLight },
-  reqReason: { fontSize: 12.5, color: colors.slate600, marginTop: 3 },
-  reqNote: { fontSize: 12, color: colors.slate500, marginTop: 4, fontStyle: 'italic' },
+  reqDate: { fontSize: 12, fontWeight: '800', color: colors.textLight },
+  reqReason: { fontSize: 11.5, color: colors.slate600, marginTop: 3 },
+  reqNote: { fontSize: 11, color: colors.slate500, marginTop: 4, fontStyle: 'italic' },
 });

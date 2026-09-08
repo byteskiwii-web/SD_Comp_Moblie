@@ -260,7 +260,7 @@ function PolicyLibrary() {
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.bgLight },
   header: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 4 },
-  headerTitle: { fontSize: 24, fontWeight: '800', color: colors.textLight, letterSpacing: -0.3 },
+  headerTitle: { fontSize: 21, fontWeight: '800', color: colors.textLight, letterSpacing: -0.3 },
   content: { padding: 20, paddingTop: 12, gap: 16 },
 
   heroCard: { alignItems: 'center', paddingVertical: 8 },
@@ -268,8 +268,8 @@ const styles = StyleSheet.create({
     width: 76, height: 76, borderRadius: 38, backgroundColor: colors.brand[700],
     alignItems: 'center', justifyContent: 'center', marginBottom: 14,
   },
-  avatarInitial: { color: colors.white, fontSize: 30, fontWeight: '800' },
-  name: { fontSize: 19, fontWeight: '800', color: colors.textLight },
+  avatarInitial: { color: colors.white, fontSize: 26, fontWeight: '800' },
+  name: { fontSize: 16.5, fontWeight: '800', color: colors.textLight },
   pillRow: { flexDirection: 'row', gap: 8, marginTop: 10 },
   pill: { backgroundColor: colors.slate100, paddingHorizontal: 12, paddingVertical: 5, borderRadius: radii.pill },
   pillBrand: { backgroundColor: colors.brand[50] },
@@ -283,12 +283,12 @@ const styles = StyleSheet.create({
   },
   rowLast: { borderBottomWidth: 0 },
   rowIcon: { marginRight: 8 },
-  rowLabel: { flex: 1, fontSize: 12, fontWeight: '600', color: colors.slate500 },
-  policySummary: { fontSize: 12, color: colors.slate400, fontWeight: '600', marginBottom: 6 },
-  rowValue: { fontSize: 13, fontWeight: '700', color: colors.textLight },
+  rowLabel: { flex: 1, fontSize: 11, fontWeight: '600', color: colors.slate500 },
+  policySummary: { fontSize: 11, color: colors.slate400, fontWeight: '600', marginBottom: 6 },
+  rowValue: { fontSize: 11.5, fontWeight: '700', color: colors.textLight },
 
-  kycMuted: { fontSize: 12, color: colors.slate400, fontWeight: '600', paddingVertical: 8 },
-  kycDetail: { fontSize: 12, color: colors.slate400, fontWeight: '600', marginRight: 8 },
+  kycMuted: { fontSize: 11, color: colors.slate400, fontWeight: '600', paddingVertical: 8 },
+  kycDetail: { fontSize: 11, color: colors.slate400, fontWeight: '600', marginRight: 8 },
   kycChip: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: radii.pill },
   kycChipText: { fontSize: 11, fontWeight: '800' },
 });

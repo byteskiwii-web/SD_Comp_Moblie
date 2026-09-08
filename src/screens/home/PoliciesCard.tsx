@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.warning, alignItems: 'center', justifyContent: 'center',
   },
   pillText: { color: colors.white, fontSize: 11, fontWeight: '800' },
-  error: { color: colors.danger, fontSize: 12, fontWeight: '600', paddingVertical: 6 },
+  error: { color: colors.danger, fontSize: 11, fontWeight: '600', paddingVertical: 6 },
 
   row: {
     flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 11,
@@ -106,8 +106,8 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   body: { flex: 1 },
-  name: { fontSize: 13.5, fontWeight: '800', color: colors.textLight },
-  summary: { fontSize: 12, color: colors.slate500, marginTop: 2, lineHeight: 16 },
+  name: { fontSize: 12, fontWeight: '800', color: colors.textLight },
+  summary: { fontSize: 11, color: colors.slate500, marginTop: 2, lineHeight: 16 },
   meta: { fontSize: 11, color: colors.slate400, marginTop: 3, fontWeight: '600' },
 
   ackButton: {
@@ -115,5 +115,5 @@ const styles = StyleSheet.create({
     backgroundColor: colors.brand[700],
   },
   ackPressed: { opacity: 0.85 },
-  ackText: { color: colors.white, fontSize: 12, fontWeight: '800' },
+  ackText: { color: colors.white, fontSize: 11, fontWeight: '800' },
 });

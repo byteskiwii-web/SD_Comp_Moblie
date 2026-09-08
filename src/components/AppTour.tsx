@@ -337,10 +337,10 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 0.6,
   },
-  title: { color: colors.white, fontSize: 17, fontWeight: '800', marginTop: 2, letterSpacing: -0.3 },
+  title: { color: colors.white, fontSize: 15, fontWeight: '800', marginTop: 2, letterSpacing: -0.3 },
 
   body: { padding: 16 },
-  bodyText: { fontSize: 13.5, lineHeight: 19, color: colors.slate700 },
+  bodyText: { fontSize: 12, lineHeight: 19, color: colors.slate700 },
 
   dots: { flexDirection: 'row', gap: 5, marginTop: 16 },
   dot: { width: 16, height: 3.5, borderRadius: 2, backgroundColor: colors.slate200 },
@@ -352,7 +352,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginTop: 16,
   },
-  skip: { fontSize: 14, fontWeight: '700', color: colors.slate500 },
+  skip: { fontSize: 12.5, fontWeight: '700', color: colors.slate500 },
   navButtons: { flexDirection: 'row', gap: 10 },
   navButton: {
     flexDirection: 'row',
@@ -363,7 +363,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.md,
   },
   navBack: { backgroundColor: colors.white, borderWidth: 1.5, borderColor: colors.slate200 },
-  navBackText: { fontSize: 14, fontWeight: '700', color: colors.slate700 },
+  navBackText: { fontSize: 12.5, fontWeight: '700', color: colors.slate700 },
   navNext: { backgroundColor: colors.brand[700] },
-  navNextText: { fontSize: 14, fontWeight: '800', color: colors.white },
+  navNextText: { fontSize: 12.5, fontWeight: '800', color: colors.white },
 });
