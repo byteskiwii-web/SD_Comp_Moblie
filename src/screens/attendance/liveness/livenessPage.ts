@@ -67,6 +67,7 @@ export const LIVENESS_HTML = `<!doctype html>
   <div id="hud">
     <div id="prompt">Starting camera&hellip;</div>
     <div id="sub"></div>
+    <button class="btn ghost" id="hudFallback" hidden>Continue without liveness</button>
     <button class="btn ghost" id="cancel">Cancel</button>
   </div>
   <div id="err">
@@ -110,6 +111,10 @@ var landmarker = null, stream = null, lastRes = null;
 var covered = [], baseYaw = null, basePitch = null;
 var phase = "boot", finished = false, startedAt = 0, alignedAt = 0;
 var lastVideoTime = -1, blinkShut = false;
+// Detection health. A CPU-delegate graph on old hardware can throw on every
+// frame, and the empty catch this replaces made that look identical to "no
+// face yet" -- forever, with nothing said.
+var detectFails = 0, everSawFace = false;
 
 function reset() {
   covered = []; for (var i = 0; i < SECTORS; i++) covered.push(false);
@@ -128,6 +133,7 @@ function fail(title, body, kind, detail) {
 document.getElementById("cancel").onclick   = function () { send({ type: "cancel" }); };
 document.getElementById("cancel2").onclick  = function () { send({ type: "cancel" }); };
 document.getElementById("fallback").onclick = function () { send({ type: "fallback" }); };
+document.getElementById("hudFallback").onclick = function () { send({ type: "fallback" }); };
 document.getElementById("retry").onclick    = function () {
   errBox.classList.remove("show");
   if (!landmarker || !stream) { boot(); } else { reset(); requestAnimationFrame(loop); }
@@ -251,7 +257,22 @@ function loop() {
 
   if (video.readyState >= 2 && video.currentTime !== lastVideoTime) {
     lastVideoTime = video.currentTime;
-    try { lastRes = landmarker.detectForVideo(video, performance.now()); } catch (e) {}
+    try {
+      lastRes = landmarker.detectForVideo(video, performance.now());
+      detectFails = 0;
+    } catch (e) {
+      detectFails++;
+      // Report the first, then allow for a transient. A graph that cannot run
+      // at all fails every frame, so this trips in about a second rather than
+      // silently burning the full timeout.
+      if (detectFails === 1) send({ type: "error", kind: "detect", message: String(e && e.message ? e.message : e) });
+      if (detectFails > 30) {
+        fail("Face check will not run on this phone",
+             "The camera works, but this device cannot run the face model. Continue without the liveness check, or use a newer phone.",
+             "detect", String(e && e.message ? e.message : e));
+        return;
+      }
+    }
   }
 
   var hasFace = lastRes && lastRes.faceLandmarks && lastRes.faceLandmarks.length > 0;
@@ -259,9 +280,17 @@ function loop() {
   drawBrackets(accent);
 
   if (!hasFace) {
+    var waiting = performance.now() - startedAt;
     promptEl.textContent = "Position your face in the frame";
-    subEl.textContent = "";
+    // Say something more useful the longer nothing is found, and after ten
+    // seconds stop pretending that waiting is the answer.
+    subEl.textContent =
+      waiting < 4000 ? ""
+      : waiting < 10000 ? (everSawFace ? "Move back into the frame" : "Hold the phone at arm's length, face towards the light")
+      : "Still looking. This phone runs the check slowly — give it a moment, or continue without it.";
+    if (waiting > 10000) document.getElementById("hudFallback").hidden = false;
   } else {
+    if (!everSawFace) { everSawFace = true; send({ type: "status", phase: "face-detected" }); }
     var project = projector();
     var box = faceBox(lastRes.faceLandmarks[0], project);
     var frac = box.h / window.innerHeight;
