@@ -18,7 +18,9 @@ import { useAuthStore } from '../../stores/authStore';
 
 const ROLE_LABEL: Record<string, string> = {
   'field-employee': 'Field Employee',
+  'team-lead': 'Team Lead',
   'site-manager': 'Site Manager',
+  'cluster-manager': 'Cluster Manager',
   'hr-manager': 'HR Manager',
   'super-admin': 'Super Admin',
 };
@@ -146,12 +148,20 @@ function Row({
  * gate disappears, and without this there is nowhere in the app left to see
  * verification status.
  *
- * Field employees only -- KYC does not apply to office roles, and the backend
+ * Shown to anyone POSTED TO A SITE, which is the real question -- not to a
+ * named role, which is what this used to test and what quietly hid the whole
+ * card from the first new on-site role that appeared (team-lead). KYC is
+ * about having a PAN and an account that payroll pays into, and a team lead
+ * has both exactly as a field employee does.
+ *
+ * store_code is the signal because it is the one that stays true: office
+ * roles -- admin, HR, cluster manager -- carry no store, and a role list has
+ * to be remembered every time somebody adds a role. The backend
  * scopes the subject to the caller regardless.
  */
 function KycCard() {
   const employee = useAuthStore((s) => s.employee);
-  const isFieldEmployee = employee?.role === 'field-employee';
+  const worksAtSite = Boolean(employee?.store_code);
   // Above the early return below: a hook after a conditional `return null`
   // changes the hook count between renders the moment the role resolves.
   const navigation = useNavigation<any>();
@@ -159,7 +169,7 @@ function KycCard() {
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['profile-kyc-status', employee?.id],
     queryFn: getKycStatus,
-    enabled: isFieldEmployee,
+    enabled: worksAtSite,
     retry: false,
   });
 
@@ -169,11 +179,11 @@ function KycCard() {
   // in the background.
   useFocusEffect(
     React.useCallback(() => {
-      if (isFieldEmployee) refetch();
-    }, [isFieldEmployee, refetch])
+      if (worksAtSite) refetch();
+    }, [worksAtSite, refetch])
   );
 
-  if (!isFieldEmployee) return null;
+  if (!worksAtSite) return null;
 
   const kyc = data?.kyc ?? null;
 
