@@ -5,7 +5,21 @@ import { colors } from '../theme/tokens';
 export type KycCheckStatus = 'pending' | 'verified' | 'failed';
 
 export type KycStatus = {
-  pan: { status: KycCheckStatus; verifiedAt: string | null; masked: string | null };
+  pan: {
+    status: KycCheckStatus;
+    verifiedAt: string | null;
+    masked: string | null;
+    /**
+     * PAN-Aadhaar linkage, tri-state.
+     *
+     * `null` means NOT ESTABLISHED, never "not linked" -- the provider
+     * returns an undocumented enum and only a plain yes or no is recorded.
+     * Rendering null as unlinked would put a false claim about somebody`s
+     * tax compliance on their own profile.
+     */
+    aadhaarLinked?: boolean | null;
+    aadhaarLinkCheckedAt?: string | null;
+  };
   aadhaar: { status: KycCheckStatus; verifiedAt: string | null };
   bank: { status: KycCheckStatus; verifiedAt: string | null; masked: string | null; ifsc: string | null };
 };
@@ -31,7 +45,13 @@ export function kycStatusTone(status: KycCheckStatus): { bg: string; fg: string 
 
 export type HealthDepsResponse = {
   status: 'ok';
-  dependencies: { database: 'connected' | 'unavailable'; verification: 'enabled' | 'disabled' };
+  dependencies: {
+    database: 'connected' | 'unavailable';
+    verification: 'enabled' | 'disabled';
+    // Drive-backed uploads. The whole /documents router is mounted only
+    // when this is enabled, so the UI checks it before offering one.
+    documents?: 'enabled' | 'disabled';
+  };
 };
 
 // Unauthenticated, bare-host route -- NOT under /api/v1, so this passes an

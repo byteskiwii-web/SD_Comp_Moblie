@@ -11,6 +11,7 @@ import { formatDate, newestFirst } from '../../utils/datetime';
 import { TourTarget } from '../../components/tour/TourTarget';
 import { useTourStore } from '../../stores/tourStore';
 import { KitCard } from './KitCard';
+import { DocumentsCard } from './DocumentsCard';
 import { Button, Card } from '../../components/ui';
 import { colors, radii } from '../../theme/tokens';
 import { useAuthStore } from '../../stores/authStore';
@@ -94,6 +95,8 @@ export function ProfileScreen() {
         </Card>
 
         <KycCard />
+
+        <DocumentsCard />
 
         <KitCard />
 
@@ -194,6 +197,52 @@ function KycCard() {
             detail={kyc.pan.masked}
             onPress={kyc.pan.status === 'verified' ? undefined : () => navigation.navigate('PanVerify')}
           />
+          {/* PAN-Aadhaar linkage.
+
+              Always shown, because "we have never checked" is itself
+              something the employee should be able to act on -- that is the
+              whole point of offering a check. Three states, and the unknown
+              one is never rendered as "not linked": the provider returns an
+              undocumented enum, and a false claim about somebody`s tax
+              compliance on their own profile is worse than an honest gap.
+
+              Re-running the PAN check is what establishes it -- the linkage
+              arrives on that response, so there is no separate call to
+              make and no extra quota to spend. */}
+          <Pressable
+            style={({ pressed }) => [styles.linkRow, pressed && styles.rowPressed]}
+            onPress={() => navigation.navigate('PanVerify')}
+            accessibilityRole="button"
+          >
+            <Ionicons
+              name={
+                kyc.pan.aadhaarLinked === true
+                  ? 'link-outline'
+                  : kyc.pan.aadhaarLinked === false
+                    ? 'unlink-outline'
+                    : 'help-circle-outline'
+              }
+              size={13}
+              color={
+                kyc.pan.aadhaarLinked === true
+                  ? colors.success
+                  : kyc.pan.aadhaarLinked === false
+                    ? colors.warning
+                    : colors.slate400
+              }
+            />
+            <Text style={styles.linkText}>
+              {kyc.pan.aadhaarLinked === true
+                ? 'PAN linked to Aadhaar'
+                : kyc.pan.aadhaarLinked === false
+                  ? 'PAN not linked to Aadhaar'
+                  : 'PAN-Aadhaar link not checked'}
+            </Text>
+            {kyc.pan.aadhaarLinked !== true && (
+              <Text style={styles.linkAction}>Check now</Text>
+            )}
+          </Pressable>
+
           <KycRow
             icon="finger-print-outline"
             label="Aadhaar"
@@ -337,6 +386,9 @@ const styles = StyleSheet.create({
   rowChevron: { marginLeft: 6 },
   kycAction: { flexDirection: 'row', alignItems: 'center', gap: 1, marginLeft: 8 },
   kycActionText: { fontSize: 11, fontWeight: '800', color: colors.brand[700] },
+  linkRow: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingLeft: 25, paddingBottom: 8, marginTop: -4 },
+  linkText: { fontSize: 10.5, color: colors.slate500, fontWeight: '600' },
+  linkAction: { fontSize: 10.5, fontWeight: '800', color: colors.brand[700], marginLeft: 'auto' },
   rowPressed: { opacity: 0.6 },
   rowLabel: { flex: 1, fontSize: 11, fontWeight: '600', color: colors.slate500 },
   policySummary: { fontSize: 11, color: colors.slate400, fontWeight: '600', marginBottom: 6 },
