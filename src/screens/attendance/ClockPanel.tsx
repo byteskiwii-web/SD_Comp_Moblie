@@ -13,7 +13,6 @@ import { runtimeLabel, supportsBackgroundLocation } from '../../native/runtime';
 import { getApiErrorMessage } from '../../api/client';
 import { getLatestMarkOfTypes, SHIFT_TYPES, BREAK_TYPES } from '../../utils/attendanceStatus';
 import { formatTimeWithSeconds, toLocalDateKey } from '../../utils/datetime';
-import { isExpoGo } from '../../native/runtime';
 
 const today = () => toLocalDateKey();
 
@@ -73,9 +72,11 @@ export function ClockPanel() {
       setLocationError(
         perm.canAskAgain
           ? 'Location permission is needed to start or end your shift.'
-          : isExpoGo
-            ? 'Location is turned off for Expo Go. In iOS Settings open Expo Go and allow location, then tap Try again.'
-            : 'Location is turned off for this app. Enable it in Settings, then tap Try again.'
+          : // Open Settings lands on this app's own page, so the path starts
+            // there. Naming the option matters: iOS offers four on that screen
+            // and only this one works. In Expo Go the page is Expo Go's -- there
+            // is no zip-hrms row to find -- but the steps read the same either way.
+            'Tap Open Settings, choose Location, then ‘While Using the App’. Come back and tap Try again.'
       );
       return;
     }
