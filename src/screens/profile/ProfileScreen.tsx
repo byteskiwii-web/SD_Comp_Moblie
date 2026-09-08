@@ -212,52 +212,25 @@ function KycCard() {
           />
           {/* PAN-Aadhaar linkage.
 
-              Always shown, because "we have never checked" is itself
-              something the employee should be able to act on -- that is the
-              whole point of offering a check. Three states, and the unknown
-              one is never rendered as "not linked": the provider returns an
-              undocumented enum, and a false claim about somebody`s tax
-              compliance on their own profile is worse than an honest gap.
+              Shown in all three states, because "never checked" is itself
+              something worth acting on. The unknown is never rendered as "not
+              linked": the provider's enum is undocumented past y | n, and a
+              false claim about somebody's tax compliance on their own profile
+              is worse than an honest gap.
 
-              Re-running the PAN check is what establishes it -- the linkage
-              arrives on that response, so there is no separate call to
-              make and no extra quota to spend. */}
-          <Pressable
-            style={({ pressed }) => [styles.linkRow, pressed && styles.rowPressed]}
-            onPress={() => navigation.navigate('PanVerify')}
-            accessibilityRole="button"
-          >
-            <Ionicons
-              name={
-                kyc.pan.aadhaarLinked === true
-                  ? 'link-outline'
-                  : kyc.pan.aadhaarLinked === false
-                    ? 'unlink-outline'
-                    : 'help-circle-outline'
-              }
-              size={13}
-              color={
-                kyc.pan.aadhaarLinked === true
-                  ? colors.success
-                  : kyc.pan.aadhaarLinked === false
-                    ? colors.warning
-                    : colors.slate400
-              }
-            />
-            <Text style={styles.linkText}>
-              {kyc.pan.aadhaarLinked === true
-                ? 'PAN linked to Aadhaar'
-                : kyc.pan.aadhaarLinked === false
-                  ? 'PAN not linked to Aadhaar'
-                  : 'PAN-Aadhaar link not checked'}
-            </Text>
-            {kyc.pan.aadhaarLinked !== true && (
-              <View style={styles.linkActionRow}>
-                <Text style={styles.linkAction}>Check now</Text>
-                <Ionicons name="chevron-forward" size={13} color={colors.brand[700]} />
-              </View>
-            )}
-          </Pressable>
+              PRESSABLE ONLY WHEN THERE IS SOMETHING TO ESTABLISH, which is the
+              same rule the PAN row above follows. Establishing linkage means
+              re-running the PAN check -- the answer rides in on that response,
+              so there is no separate call -- and that check is billable and
+              charges the wallet. A confirmed-linked row with no visible
+              affordance that silently navigated into a paid verification was
+              both a hidden tap target and a way to spend quota by accident. */}
+          <LinkRow
+            linked={kyc.pan.aadhaarLinked ?? null}
+            onCheck={
+              kyc.pan.aadhaarLinked === true ? undefined : () => navigation.navigate('PanVerify')
+            }
+          />
 
           <KycRow
             icon="finger-print-outline"
@@ -286,6 +259,49 @@ function KycCard() {
         <Text style={styles.kycMuted}>No verification on record yet.</Text>
       )}
     </Card>
+  );
+}
+
+/**
+ * The PAN-Aadhaar linkage line.
+ *
+ * Belongs to the PAN row above it and is drawn as a continuation of it, which
+ * is why PAN suppresses its own rule and this carries one instead.
+ */
+function LinkRow({ linked, onCheck }: { linked: boolean | null; onCheck?: () => void }) {
+  const body = (
+    <>
+      <Ionicons
+        name={linked === true ? 'link-outline' : linked === false ? 'unlink-outline' : 'help-circle-outline'}
+        size={13}
+        color={linked === true ? colors.success : linked === false ? colors.warning : colors.slate400}
+      />
+      <Text style={styles.linkText}>
+        {linked === true
+          ? 'PAN linked to Aadhaar'
+          : linked === false
+            ? 'PAN not linked to Aadhaar'
+            : 'PAN-Aadhaar link not checked'}
+      </Text>
+      {onCheck ? (
+        <View style={styles.linkActionRow}>
+          <Text style={styles.linkAction}>Check now</Text>
+          <Ionicons name="chevron-forward" size={13} color={colors.brand[700]} />
+        </View>
+      ) : null}
+    </>
+  );
+
+  if (!onCheck) return <View style={styles.linkRow}>{body}</View>;
+  return (
+    <Pressable
+      style={({ pressed }) => [styles.linkRow, pressed && styles.rowPressed]}
+      onPress={onCheck}
+      accessibilityRole="button"
+      accessibilityLabel="Check whether your PAN is linked to Aadhaar"
+    >
+      {body}
+    </Pressable>
   );
 }
 
