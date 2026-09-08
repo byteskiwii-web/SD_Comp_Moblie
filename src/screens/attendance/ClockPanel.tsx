@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, Linking, Modal, StyleSheet, Text, View } from 'react-native';
 import * as Location from 'expo-location';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -13,6 +13,7 @@ import { runtimeLabel, supportsBackgroundLocation } from '../../native/runtime';
 import { getApiErrorMessage } from '../../api/client';
 import { getLatestMarkOfTypes, SHIFT_TYPES, BREAK_TYPES } from '../../utils/attendanceStatus';
 import { formatTimeWithSeconds, toLocalDateKey } from '../../utils/datetime';
+import { isExpoGo } from '../../native/runtime';
 
 const today = () => toLocalDateKey();
 
@@ -27,6 +28,9 @@ export function ClockPanel() {
 
   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
   const [locationError, setLocationError] = useState('');
+  // 'blocked' means iOS will not show the dialog again -- the only route back
+  // is Settings. Distinguishing it matters because the recovery differs.
+  const [permission, setPermission] = useState<'unknown' | 'granted' | 'askable' | 'blocked'>('unknown');
   const [pendingAction, setPendingAction] = useState<'clock-in' | 'clock-out' | null>(null);
   const [banner, setBanner] = useState<{ tone: 'success' | 'warning'; text: string } | null>(null);
 
@@ -52,25 +56,41 @@ export function ClockPanel() {
   const lastBreakStart = marks.find((m) => m.mark_type === 'break-start');
   const lastBreakEnd = marks.find((m) => m.mark_type === 'break-end');
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const perm = await Location.requestForegroundPermissionsAsync();
-      if (perm.status !== 'granted') {
-        if (!cancelled) setLocationError('Location permission is needed to start or end your shift.');
-        return;
-      }
-      try {
-        const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-        if (!cancelled) setCoords({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
-      } catch {
-        if (!cancelled) setLocationError('Could not get your location. Try again.');
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
+  /**
+   * Ask for location, then fix a position.
+   *
+   * Callable so the screen can retry after the user changes the setting,
+   * instead of making them relaunch the app. iOS shows its dialog ONCE per
+   * app ever; after that requestForegroundPermissionsAsync returns the
+   * recorded answer with no prompt, which is why a phone that has already
+   * answered appears to "not ask".
+   */
+  const acquireLocation = useCallback(async () => {
+    setLocationError('');
+    const perm = await Location.requestForegroundPermissionsAsync();
+    if (perm.status !== 'granted') {
+      setPermission(perm.canAskAgain ? 'askable' : 'blocked');
+      setLocationError(
+        perm.canAskAgain
+          ? 'Location permission is needed to start or end your shift.'
+          : isExpoGo
+            ? 'Location is turned off for Expo Go. In iOS Settings open Expo Go and allow location, then tap Try again.'
+            : 'Location is turned off for this app. Enable it in Settings, then tap Try again.'
+      );
+      return;
+    }
+    setPermission('granted');
+    try {
+      const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      setCoords({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
+    } catch {
+      setLocationError('Could not get your location. Try again.');
+    }
   }, []);
+
+  useEffect(() => {
+    void acquireLocation();
+  }, [acquireLocation]);
 
   const distanceMetres =
     coords && store?.lat && store?.lng
@@ -217,7 +237,15 @@ export function ClockPanel() {
 
       <Card style={styles.geoCard}>
         {locationError ? (
-          <Text style={styles.geoError}>{locationError}</Text>
+          <>
+            <Text style={styles.geoError}>{locationError}</Text>
+            <View style={styles.geoActions}>
+              <Button title="Try again" onPress={() => void acquireLocation()} variant="outline" />
+              {permission === 'blocked' && (
+                <Button title="Open Settings" onPress={() => Linking.openSettings()} variant="outline" />
+              )}
+            </View>
+          </>
         ) : distanceMetres == null ? (
           <Text style={styles.geoLoading}>Getting your location…</Text>
         ) : (
@@ -317,6 +345,7 @@ const styles = StyleSheet.create({
   bannerWarning: { backgroundColor: colors.warningBg },
   bannerText: { fontSize: 12, fontWeight: '600', color: colors.slate800 },
   geoCard: { alignItems: 'center' },
+  geoActions: { alignSelf: 'stretch', gap: 8, marginTop: 12 },
   geoLoading: { fontSize: 13, color: colors.slate500 },
   geoError: { fontSize: 13, color: colors.danger, textAlign: 'center' },
   geoStatus: { fontSize: 14, fontWeight: '800' },
