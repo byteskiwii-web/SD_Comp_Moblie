@@ -1,6 +1,6 @@
 import { apiClient } from './client';
 import { API_BASE_URL } from '../constants/config';
-import { colors } from '../theme/tokens';
+import { ColorScheme } from '../theme/tokens';
 
 export type KycCheckStatus = 'pending' | 'verified' | 'failed';
 
@@ -37,10 +37,10 @@ export const KYC_STATUS_LABEL: Record<KycCheckStatus, string> = {
   failed: 'Failed',
 };
 
-export function kycStatusTone(status: KycCheckStatus): { bg: string; fg: string } {
-  if (status === 'verified') return { bg: colors.successBg, fg: colors.success };
-  if (status === 'failed') return { bg: colors.dangerBg, fg: colors.danger };
-  return { bg: colors.warningBg, fg: colors.warning };
+export function kycStatusTone(status: KycCheckStatus, colors: ColorScheme): { bg: string; fg: string } {
+  if (status === 'verified') return { bg: colors.successBg, fg: colors.successText };
+  if (status === 'failed') return { bg: colors.dangerBg, fg: colors.dangerText };
+  return { bg: colors.warningBg, fg: colors.warningText };
 }
 
 export type HealthDepsResponse = {

@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Alert, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, radii } from '../theme/tokens';
+import { ColorScheme, radii } from '../theme/tokens';
+import { useThemeStore } from '../stores/themeStore';
 import type { PickedFile } from '../api/documents.api';
 
 /**
@@ -90,6 +91,9 @@ export function FilePickerSheet({
   onPicked: (file: PickedFile) => void;
   title?: string;
 }) {
+  const colors = useThemeStore((s) => s.colors);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const choose = async (source: Source) => {
     try {
       const picked =
@@ -175,6 +179,8 @@ function Option({
   onPress: () => void;
   last?: boolean;
 }) {
+  const colors = useThemeStore((s) => s.colors);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <Pressable
       onPress={onPress}
@@ -193,32 +199,34 @@ function Option({
   );
 }
 
-const styles = StyleSheet.create({
-  backdrop: {
-    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: 'rgba(15,23,42,0.35)',
-  },
-  sheet: {
-    position: 'absolute', left: 0, right: 0, bottom: 0,
-    backgroundColor: colors.white,
-    borderTopLeftRadius: radii.xl, borderTopRightRadius: radii.xl,
-    paddingBottom: 28,
-  },
-  bar: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 20, paddingTop: 18, paddingBottom: 12,
-    borderBottomWidth: 1, borderBottomColor: colors.slate100,
-  },
-  title: { fontSize: 14, fontWeight: '800', color: colors.textLight },
+function makeStyles(colors: ColorScheme) {
+  return StyleSheet.create({
+    backdrop: {
+      position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+      backgroundColor: 'rgba(15,23,42,0.35)',
+    },
+    sheet: {
+      position: 'absolute', left: 0, right: 0, bottom: 0,
+      backgroundColor: colors.surface,
+      borderTopLeftRadius: radii.xl, borderTopRightRadius: radii.xl,
+      paddingBottom: 28,
+    },
+    bar: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+      paddingHorizontal: 20, paddingTop: 18, paddingBottom: 12,
+      borderBottomWidth: 1, borderBottomColor: colors.slate100,
+    },
+    title: { fontSize: 14, fontWeight: '800', color: colors.textLight },
 
-  option: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20, paddingVertical: 14 },
-  optionDivided: { borderBottomWidth: 1, borderBottomColor: colors.slate100 },
-  optionPressed: { backgroundColor: colors.slate50 },
-  optionIcon: {
-    width: 36, height: 36, borderRadius: radii.md, backgroundColor: colors.brand[50],
-    alignItems: 'center', justifyContent: 'center',
-  },
-  optionText: { flex: 1 },
-  optionLabel: { fontSize: 13, fontWeight: '700', color: colors.textLight },
-  optionHint: { fontSize: 11, color: colors.slate400, marginTop: 2 },
-});
+    option: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20, paddingVertical: 14 },
+    optionDivided: { borderBottomWidth: 1, borderBottomColor: colors.slate100 },
+    optionPressed: { backgroundColor: colors.slate50 },
+    optionIcon: {
+      width: 36, height: 36, borderRadius: radii.md, backgroundColor: colors.brand[50],
+      alignItems: 'center', justifyContent: 'center',
+    },
+    optionText: { flex: 1 },
+    optionLabel: { fontSize: 13, fontWeight: '700', color: colors.textLight },
+    optionHint: { fontSize: 11, color: colors.slate400, marginTop: 2 },
+  });
+}

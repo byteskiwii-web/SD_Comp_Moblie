@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useMutation } from '@tanstack/react-query';
 import { Card } from '../../components/ui';
-import { colors, radii } from '../../theme/tokens';
+import { ColorScheme, radii } from '../../theme/tokens';
+import { useThemeStore } from '../../stores/themeStore';
 import { getApiErrorMessage } from '../../api/client';
 import { useAuthStore } from '../../stores/authStore';
 import { SHIRT_SIZES, updateMyProfile, type ShirtSize } from '../../api/auth.api';
@@ -24,6 +25,8 @@ export function KitCard() {
   const profile = useAuthStore((s) => s.profile);
   const refreshProfile = useAuthStore((s) => s.refreshProfile);
   const [error, setError] = useState<string | null>(null);
+  const colors = useThemeStore((s) => s.colors);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const save = useMutation({
     mutationFn: (size: ShirtSize) => updateMyProfile({ shirt_size: size }),
@@ -74,7 +77,7 @@ export function KitCard() {
         <Ionicons
           name={profile?.welcomeKitIssued ? 'checkmark-circle' : 'time-outline'}
           size={17}
-          color={profile?.welcomeKitIssued ? colors.success : colors.slate400}
+          color={profile?.welcomeKitIssued ? colors.successText : colors.slate400}
         />
         <Text style={styles.statusText}>
           {profile?.welcomeKitIssued
@@ -86,31 +89,33 @@ export function KitCard() {
   );
 }
 
-const styles = StyleSheet.create({
-  title: {
-    fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4,
-    color: colors.slate500, marginBottom: 10,
-  },
-  label: {
-    fontSize: 10.5, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.3,
-    color: colors.slate400, marginBottom: 8,
-  },
-  sizes: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  size: {
-    minWidth: 46, paddingHorizontal: 12, paddingVertical: 9, borderRadius: radii.sm,
-    borderWidth: 1.5, borderColor: colors.slate200, backgroundColor: colors.white,
-    alignItems: 'center',
-  },
-  sizeOn: { borderColor: colors.brand[700], backgroundColor: colors.brand[50] },
-  sizePressed: { opacity: 0.75 },
-  sizeText: { fontSize: 11.5, fontWeight: '800', color: colors.slate600 },
-  sizeTextOn: { color: colors.brand[700] },
-  hint: { fontSize: 10.5, color: colors.slate400, marginTop: 8, fontWeight: '600' },
-  error: { fontSize: 11, color: colors.danger, fontWeight: '600', marginTop: 8 },
+function makeStyles(colors: ColorScheme) {
+  return StyleSheet.create({
+    title: {
+      fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4,
+      color: colors.slate500, marginBottom: 10,
+    },
+    label: {
+      fontSize: 10.5, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.3,
+      color: colors.slate400, marginBottom: 8,
+    },
+    sizes: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    size: {
+      minWidth: 46, paddingHorizontal: 12, paddingVertical: 9, borderRadius: radii.sm,
+      borderWidth: 1.5, borderColor: colors.slate200, backgroundColor: colors.surface,
+      alignItems: 'center',
+    },
+    sizeOn: { borderColor: colors.brand[700], backgroundColor: colors.brand[50] },
+    sizePressed: { opacity: 0.75 },
+    sizeText: { fontSize: 11.5, fontWeight: '800', color: colors.slate600 },
+    sizeTextOn: { color: colors.brand[700] },
+    hint: { fontSize: 10.5, color: colors.slate400, marginTop: 8, fontWeight: '600' },
+    error: { fontSize: 11, color: colors.dangerText, fontWeight: '600', marginTop: 8 },
 
-  statusRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 14,
-    paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.slate100,
-  },
-  statusText: { fontSize: 11.5, color: colors.slate600, fontWeight: '600' },
-});
+    statusRow: {
+      flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 14,
+      paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.slate100,
+    },
+    statusText: { fontSize: 11.5, color: colors.slate600, fontWeight: '600' },
+  });
+}
