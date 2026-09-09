@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card } from '../../components/ui';
-import { colors, radii } from '../../theme/tokens';
+import { ColorScheme, radii } from '../../theme/tokens';
+import { useThemeStore } from '../../stores/themeStore';
 import { getApiErrorMessage } from '../../api/client';
 import { acknowledgePolicy, getOutstandingPolicies } from '../../api/policies.api';
 
@@ -20,6 +21,8 @@ import { acknowledgePolicy, getOutstandingPolicies } from '../../api/policies.ap
 export function PoliciesCard() {
   const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
+  const colors = useThemeStore((s) => s.colors);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const { data } = useQuery({
     queryKey: ['policies-outstanding'],
@@ -83,37 +86,39 @@ export function PoliciesCard() {
   );
 }
 
-const styles = StyleSheet.create({
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
-  title: {
-    fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4,
-    color: colors.slate500,
-  },
-  pill: {
-    minWidth: 20, height: 20, borderRadius: 10, paddingHorizontal: 6,
-    backgroundColor: colors.warning, alignItems: 'center', justifyContent: 'center',
-  },
-  pillText: { color: colors.white, fontSize: 11, fontWeight: '800' },
-  error: { color: colors.danger, fontSize: 11, fontWeight: '600', paddingVertical: 6 },
+function makeStyles(colors: ColorScheme) {
+  return StyleSheet.create({
+    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
+    title: {
+      fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4,
+      color: colors.slate500,
+    },
+    pill: {
+      minWidth: 20, height: 20, borderRadius: 10, paddingHorizontal: 6,
+      backgroundColor: colors.warning, alignItems: 'center', justifyContent: 'center',
+    },
+    pillText: { color: colors.white, fontSize: 11, fontWeight: '800' },
+    error: { color: colors.dangerText, fontSize: 11, fontWeight: '600', paddingVertical: 6 },
 
-  row: {
-    flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 11,
-    borderBottomWidth: 1, borderBottomColor: colors.slate100,
-  },
-  rowLast: { borderBottomWidth: 0 },
-  icon: {
-    width: 30, height: 30, borderRadius: 15, backgroundColor: colors.brand[50],
-    alignItems: 'center', justifyContent: 'center',
-  },
-  body: { flex: 1 },
-  name: { fontSize: 12, fontWeight: '800', color: colors.textLight },
-  summary: { fontSize: 11, color: colors.slate500, marginTop: 2, lineHeight: 16 },
-  meta: { fontSize: 11, color: colors.slate400, marginTop: 3, fontWeight: '600' },
+    row: {
+      flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 11,
+      borderBottomWidth: 1, borderBottomColor: colors.slate100,
+    },
+    rowLast: { borderBottomWidth: 0 },
+    icon: {
+      width: 30, height: 30, borderRadius: 15, backgroundColor: colors.brand[50],
+      alignItems: 'center', justifyContent: 'center',
+    },
+    body: { flex: 1 },
+    name: { fontSize: 12, fontWeight: '800', color: colors.textLight },
+    summary: { fontSize: 11, color: colors.slate500, marginTop: 2, lineHeight: 16 },
+    meta: { fontSize: 11, color: colors.slate400, marginTop: 3, fontWeight: '600' },
 
-  ackButton: {
-    paddingHorizontal: 12, paddingVertical: 8, borderRadius: radii.sm,
-    backgroundColor: colors.brand[700],
-  },
-  ackPressed: { opacity: 0.85 },
-  ackText: { color: colors.white, fontSize: 11, fontWeight: '800' },
-});
+    ackButton: {
+      paddingHorizontal: 12, paddingVertical: 8, borderRadius: radii.sm,
+      backgroundColor: colors.brand[700],
+    },
+    ackPressed: { opacity: 0.85 },
+    ackText: { color: colors.white, fontSize: 11, fontWeight: '800' },
+  });
+}

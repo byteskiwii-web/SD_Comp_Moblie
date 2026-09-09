@@ -5,7 +5,8 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Card } from '../../components/ui';
-import { colors, radii } from '../../theme/tokens';
+import { ColorScheme, radii } from '../../theme/tokens';
+import { useThemeStore } from '../../stores/themeStore';
 import { useAuthStore } from '../../stores/authStore';
 import { getAttendanceHistory } from '../../api/attendance.api';
 import { getApiErrorMessage } from '../../api/client';
@@ -69,6 +70,8 @@ const shortDate = (key: string) => {
 };
 
 export function HistoryPanel() {
+  const colors = useThemeStore((s) => s.colors);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const navigation = useNavigation<Nav>();
   const employee = useAuthStore((s) => s.employee);
   const profile = useAuthStore((s) => s.profile);
@@ -187,6 +190,8 @@ function DayRow({
   showMonth: boolean;
   onPress: () => void;
 }) {
+  const colors = useThemeStore((s) => s.colors);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const status = punctuality(day.firstIn, shiftStart);
   const d = new Date(`${day.date}T00:00:00`);
 
@@ -230,7 +235,8 @@ function DayRow({
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(colors: ColorScheme) {
+  return StyleSheet.create({
   wrap: { gap: 12 },
 
   rangeRow: {
@@ -244,7 +250,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
 
-  error: { color: colors.danger, fontSize: 11.5, fontWeight: '600', paddingVertical: 12 },
+  error: { color: colors.dangerText, fontSize: 11.5, fontWeight: '600', paddingVertical: 12 },
   empty: { fontSize: 11.5, color: colors.slate400, fontWeight: '600', paddingVertical: 14 },
 
   listCard: { padding: 0, paddingHorizontal: 14, overflow: 'hidden' },
@@ -267,7 +273,7 @@ const styles = StyleSheet.create({
   dotLate: { backgroundColor: colors.warning },
   times: { flex: 1, fontSize: 12, fontWeight: '700', color: colors.textLight },
   sub: { fontSize: 11, color: colors.slate400, fontWeight: '600', marginLeft: 14 },
-  flag: { fontSize: 11, color: '#B45309', fontWeight: '700', marginLeft: 14 },
+  flag: { fontSize: 11, color: colors.warningText, fontWeight: '700', marginLeft: 14 },
 
   right: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   hours: { fontSize: 11.5, fontWeight: '800', color: colors.slate600 },
@@ -278,7 +284,7 @@ const styles = StyleSheet.create({
   },
   sheet: {
     position: 'absolute', left: 0, right: 0, bottom: 0,
-    backgroundColor: colors.white, borderTopLeftRadius: radii.xl, borderTopRightRadius: radii.xl,
+    backgroundColor: colors.surface, borderTopLeftRadius: radii.xl, borderTopRightRadius: radii.xl,
     paddingBottom: 28,
   },
   sheetBar: {
@@ -295,4 +301,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20, paddingVertical: 16,
   },
   sheetRowText: { fontSize: 13, fontWeight: '600', color: colors.textLight },
-});
+  });
+}

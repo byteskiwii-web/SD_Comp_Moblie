@@ -3,7 +3,8 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { colors, radii } from '../../theme/tokens';
+import { ColorScheme, radii } from '../../theme/tokens';
+import { useThemeStore } from '../../stores/themeStore';
 import { Card } from '../../components/ui';
 import { SkeletonList, SkeletonRows } from '../../components/Skeleton';
 import { TourTarget } from '../../components/tour/TourTarget';
@@ -48,17 +49,22 @@ function rangeLabel(r: LeaveRequest) {
   return `${shortDate(from)} – ${shortDate(to)}`;
 }
 
-const STATUS_TONE: Record<LeaveStatus, { bg: string; fg: string; label: string }> = {
-  pending: { bg: colors.warningBg, fg: '#B45309', label: 'Pending' },
-  approved: { bg: colors.successBg, fg: '#047857', label: 'Approved' },
-  rejected: { bg: colors.dangerBg, fg: '#BE123C', label: 'Rejected' },
-  cancelled: { bg: colors.slate100, fg: colors.slate500, label: 'Withdrawn' },
-};
+function statusTone(colors: ColorScheme): Record<LeaveStatus, { bg: string; fg: string; label: string }> {
+  return {
+    pending: { bg: colors.warningBg, fg: colors.warningText, label: 'Pending' },
+    approved: { bg: colors.successBg, fg: colors.successText, label: 'Approved' },
+    rejected: { bg: colors.dangerBg, fg: colors.dangerText, label: 'Rejected' },
+    cancelled: { bg: colors.slate100, fg: colors.slate500, label: 'Withdrawn' },
+  };
+}
 
 export function LeaveScreen() {
   const queryClient = useQueryClient();
   const [applyOpen, setApplyOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const colors = useThemeStore((s) => s.colors);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const STATUS_TONE = useMemo(() => statusTone(colors), [colors]);
 
   const listQuery = useQuery({ queryKey: ['leave'], queryFn: () => getMyLeave() });
   const summaryQuery = useQuery({ queryKey: ['leave-summary'], queryFn: () => getLeaveSummary() });
@@ -195,62 +201,64 @@ export function LeaveScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: colors.bgLight },
-  header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 20, paddingTop: 12, paddingBottom: 4,
-  },
-  headerTitle: { fontSize: 21, fontWeight: '800', color: colors.textLight, letterSpacing: -0.3 },
-  applyBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: colors.brand[700], paddingHorizontal: 13, paddingVertical: 8,
-    borderRadius: radii.pill,
-  },
-  applyBtnText: { color: colors.white, fontSize: 11.5, fontWeight: '800' },
-  pressed: { opacity: 0.75 },
+function makeStyles(colors: ColorScheme) {
+  return StyleSheet.create({
+    flex: { flex: 1, backgroundColor: colors.bgLight },
+    header: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+      paddingHorizontal: 20, paddingTop: 12, paddingBottom: 4,
+    },
+    headerTitle: { fontSize: 21, fontWeight: '800', color: colors.textLight, letterSpacing: -0.3 },
+    applyBtn: {
+      flexDirection: 'row', alignItems: 'center', gap: 4,
+      backgroundColor: colors.brand[700], paddingHorizontal: 13, paddingVertical: 8,
+      borderRadius: radii.pill,
+    },
+    applyBtnText: { color: colors.white, fontSize: 11.5, fontWeight: '800' },
+    pressed: { opacity: 0.75 },
 
-  content: { padding: 20, paddingTop: 12, gap: 12, paddingBottom: 28 },
+    content: { padding: 20, paddingTop: 12, gap: 12, paddingBottom: 28 },
 
-  cardTitle: {
-    fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4,
-    color: colors.slate500, marginBottom: 12,
-  },
-  tiles: { flexDirection: 'row', gap: 10 },
-  tile: {
-    flex: 1, borderWidth: 1, borderColor: colors.slate200, borderRadius: radii.md,
-    paddingVertical: 12, paddingHorizontal: 12,
-  },
-  tileValue: { fontSize: 19, fontWeight: '800', color: colors.textLight, letterSpacing: -0.5 },
-  tilePending: { color: '#B45309' },
-  tileLabel: { fontSize: 11, color: colors.slate500, fontWeight: '700', marginTop: 3 },
+    cardTitle: {
+      fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4,
+      color: colors.slate500, marginBottom: 12,
+    },
+    tiles: { flexDirection: 'row', gap: 10 },
+    tile: {
+      flex: 1, borderWidth: 1, borderColor: colors.slate200, borderRadius: radii.md,
+      paddingVertical: 12, paddingHorizontal: 12,
+    },
+    tileValue: { fontSize: 19, fontWeight: '800', color: colors.textLight, letterSpacing: -0.5 },
+    tilePending: { color: colors.warningText },
+    tileLabel: { fontSize: 11, color: colors.slate500, fontWeight: '700', marginTop: 3 },
 
-  byType: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 },
-  typeChip: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: colors.slate50, borderRadius: radii.sm,
-    paddingHorizontal: 10, paddingVertical: 6,
-  },
-  typeChipLabel: { fontSize: 10.5, color: colors.slate500, fontWeight: '700' },
-  typeChipValue: { fontSize: 11.5, color: colors.textLight, fontWeight: '800' },
+    byType: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 },
+    typeChip: {
+      flexDirection: 'row', alignItems: 'center', gap: 6,
+      backgroundColor: colors.slate50, borderRadius: radii.sm,
+      paddingHorizontal: 10, paddingVertical: 6,
+    },
+    typeChipLabel: { fontSize: 10.5, color: colors.slate500, fontWeight: '700' },
+    typeChipValue: { fontSize: 11.5, color: colors.textLight, fontWeight: '800' },
 
-  footnote: { fontSize: 11, color: colors.slate400, marginTop: 10, lineHeight: 15 },
+    footnote: { fontSize: 11, color: colors.slate400, marginTop: 10, lineHeight: 15 },
 
-  sectionTitle: {
-    fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4,
-    color: colors.slate500, marginTop: 6, marginLeft: 2,
-  },
-  empty: { fontSize: 11.5, color: colors.slate400, fontWeight: '600' },
-  error: { color: colors.danger, fontSize: 11.5, fontWeight: '600' },
+    sectionTitle: {
+      fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4,
+      color: colors.slate500, marginTop: 6, marginLeft: 2,
+    },
+    empty: { fontSize: 11.5, color: colors.slate400, fontWeight: '600' },
+    error: { color: colors.dangerText, fontSize: 11.5, fontWeight: '600' },
 
-  reqCard: { padding: 14, gap: 7 },
-  reqHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  reqDates: { flex: 1, fontSize: 13, fontWeight: '800', color: colors.textLight, letterSpacing: -0.2 },
-  badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: radii.sm },
-  badgeText: { fontSize: 10, fontWeight: '800' },
-  reqMeta: { fontSize: 10.5, color: colors.slate500, fontWeight: '700' },
-  reqReason: { fontSize: 11.5, color: colors.slate600, lineHeight: 17 },
-  reqNote: { fontSize: 11, color: colors.slate500, fontStyle: 'italic' },
-  withdraw: { alignSelf: 'flex-start', paddingVertical: 4 },
-  withdrawText: { fontSize: 11.5, fontWeight: '800', color: colors.danger },
-});
+    reqCard: { padding: 14, gap: 7 },
+    reqHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+    reqDates: { flex: 1, fontSize: 13, fontWeight: '800', color: colors.textLight, letterSpacing: -0.2 },
+    badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: radii.sm },
+    badgeText: { fontSize: 10, fontWeight: '800' },
+    reqMeta: { fontSize: 10.5, color: colors.slate500, fontWeight: '700' },
+    reqReason: { fontSize: 11.5, color: colors.slate600, lineHeight: 17 },
+    reqNote: { fontSize: 11, color: colors.slate500, fontStyle: 'italic' },
+    withdraw: { alignSelf: 'flex-start', paddingVertical: 4 },
+    withdrawText: { fontSize: 11.5, fontWeight: '800', color: colors.dangerText },
+  });
+}

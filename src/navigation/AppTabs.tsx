@@ -9,7 +9,7 @@ import { TeamScreen } from '../screens/team/TeamScreen';
 import { useAuthStore } from '../stores/authStore';
 import { ProfileStack } from './ProfileStack';
 import { Icon } from '../components/Icon';
-import { colors } from '../theme/tokens';
+import { useThemeStore } from '../stores/themeStore';
 import { AppTour, hasSeenTour } from '../components/AppTour';
 import { TourTargetProvider } from '../components/tour/TourTarget';
 import { useTourStore } from '../stores/tourStore';
@@ -48,6 +48,7 @@ export function AppTabs() {
   // otherwise would be worse than not showing it.
   const role = useAuthStore((s) => s.employee?.role);
   const isTeamLead = role === 'team-lead';
+  const colors = useThemeStore((s) => s.colors);
 
   const tourOpen = useTourStore((s) => s.open);
   const startTour = useTourStore((s) => s.start);
@@ -70,6 +71,7 @@ export function AppTabs() {
         headerShown: false,
         tabBarActiveTintColor: colors.brand[700],
         tabBarInactiveTintColor: colors.slate400,
+        tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.slate200 },
         // Without this every tab falls back to @react-navigation/elements'
         // MissingIcon, which is the literal glyph U+23F7 rendered as text --
         // a solid triangle on iOS, and whatever the system font happens to

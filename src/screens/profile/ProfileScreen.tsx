@@ -13,7 +13,8 @@ import { useTourStore } from '../../stores/tourStore';
 import { KitCard } from './KitCard';
 import { DocumentsCard } from './DocumentsCard';
 import { Button, Card } from '../../components/ui';
-import { colors, radii } from '../../theme/tokens';
+import { ColorScheme, radii } from '../../theme/tokens';
+import { useThemeStore } from '../../stores/themeStore';
 import { useAuthStore } from '../../stores/authStore';
 
 const ROLE_LABEL: Record<string, string> = {
@@ -33,6 +34,8 @@ export function ProfileScreen() {
   const refreshProfile = useAuthStore((s) => s.refreshProfile);
   const [refreshing, setRefreshing] = React.useState(false);
   const startTour = useTourStore((s) => s.start);
+  const colors = useThemeStore((s) => s.colors);
+  const styles = React.useMemo(() => makeStyles(colors), [colors]);
 
   // Pull to refresh: the automatic read happens at boot, and somebody whose
   // details were changed while the app was open needs a way to ask again
@@ -123,6 +126,8 @@ function Row({
   value: string;
   last?: boolean;
 }) {
+  const colors = useThemeStore((s) => s.colors);
+  const styles = React.useMemo(() => makeStyles(colors), [colors]);
   return (
     <View style={[styles.row, last && styles.rowLast]}>
       <Ionicons name={icon} size={15} color={colors.slate400} style={styles.rowIcon} />
@@ -165,6 +170,8 @@ function KycCard() {
   // Above the early return below: a hook after a conditional `return null`
   // changes the hook count between renders the moment the role resolves.
   const navigation = useNavigation<any>();
+  const colors = useThemeStore((s) => s.colors);
+  const styles = React.useMemo(() => makeStyles(colors), [colors]);
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['profile-kyc-status', employee?.id],
@@ -269,12 +276,14 @@ function KycCard() {
  * is why PAN suppresses its own rule and this carries one instead.
  */
 function LinkRow({ linked, onCheck }: { linked: boolean | null; onCheck?: () => void }) {
+  const colors = useThemeStore((s) => s.colors);
+  const styles = React.useMemo(() => makeStyles(colors), [colors]);
   const body = (
     <>
       <Ionicons
         name={linked === true ? 'link-outline' : linked === false ? 'unlink-outline' : 'help-circle-outline'}
         size={13}
-        color={linked === true ? colors.success : linked === false ? colors.warning : colors.slate400}
+        color={linked === true ? colors.successText : linked === false ? colors.warningText : colors.slate400}
       />
       <Text style={styles.linkText}>
         {linked === true
@@ -323,7 +332,9 @@ function KycRow({
   noDivider?: boolean;
   onPress?: () => void;
 }) {
-  const tone = kycStatusTone(status);
+  const colors = useThemeStore((s) => s.colors);
+  const styles = React.useMemo(() => makeStyles(colors), [colors]);
+  const tone = kycStatusTone(status, colors);
   const body = (
     <>
       <Ionicons name={icon} size={15} color={colors.slate400} style={styles.rowIcon} />
@@ -364,6 +375,8 @@ function KycRow({
  */
 function PolicyLibrary() {
   const { data } = useQuery({ queryKey: ['policies-library'], queryFn: () => getPolicies(50) });
+  const colors = useThemeStore((s) => s.colors);
+  const styles = React.useMemo(() => makeStyles(colors), [colors]);
   const items = newestFirst(data?.items ?? [], 'publishedAt', 'updatedAt', 'createdAt');
   if (items.length === 0) return null;
 
@@ -392,50 +405,52 @@ function PolicyLibrary() {
   );
 }
 
-const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: colors.bgLight },
-  header: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 4 },
-  headerTitle: { fontSize: 21, fontWeight: '800', color: colors.textLight, letterSpacing: -0.3 },
-  content: { padding: 20, paddingTop: 12, gap: 16 },
+function makeStyles(colors: ColorScheme) {
+  return StyleSheet.create({
+    flex: { flex: 1, backgroundColor: colors.bgLight },
+    header: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 4 },
+    headerTitle: { fontSize: 21, fontWeight: '800', color: colors.textLight, letterSpacing: -0.3 },
+    content: { padding: 20, paddingTop: 12, gap: 16 },
 
-  heroCard: { alignItems: 'center', paddingVertical: 8 },
-  avatar: {
-    width: 76, height: 76, borderRadius: 38, backgroundColor: colors.brand[700],
-    alignItems: 'center', justifyContent: 'center', marginBottom: 14,
-  },
-  avatarInitial: { color: colors.white, fontSize: 26, fontWeight: '800' },
-  name: { fontSize: 16.5, fontWeight: '800', color: colors.textLight },
-  pillRow: { flexDirection: 'row', gap: 8, marginTop: 10 },
-  pill: { backgroundColor: colors.slate100, paddingHorizontal: 12, paddingVertical: 5, borderRadius: radii.pill },
-  pillBrand: { backgroundColor: colors.brand[50] },
-  pillText: { fontSize: 11, fontWeight: '700', color: colors.slate600 },
-  pillTextBrand: { color: colors.brand[700] },
+    heroCard: { alignItems: 'center', paddingVertical: 8 },
+    avatar: {
+      width: 76, height: 76, borderRadius: 38, backgroundColor: colors.brand[700],
+      alignItems: 'center', justifyContent: 'center', marginBottom: 14,
+    },
+    avatarInitial: { color: colors.white, fontSize: 26, fontWeight: '800' },
+    name: { fontSize: 16.5, fontWeight: '800', color: colors.textLight },
+    pillRow: { flexDirection: 'row', gap: 8, marginTop: 10 },
+    pill: { backgroundColor: colors.slate100, paddingHorizontal: 12, paddingVertical: 5, borderRadius: radii.pill },
+    pillBrand: { backgroundColor: colors.brand[50] },
+    pillText: { fontSize: 11, fontWeight: '700', color: colors.slate600 },
+    pillTextBrand: { color: colors.brand[700] },
 
-  cardTitle: { fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4, color: colors.slate500, marginBottom: 4 },
-  row: {
-    flexDirection: 'row', alignItems: 'center', paddingVertical: 10,
-    borderBottomWidth: 1, borderBottomColor: colors.slate100,
-  },
-  rowLast: { borderBottomWidth: 0 },
-  rowIcon: { marginRight: 8 },
-  rowChevron: { marginLeft: 6 },
-  kycAction: { flexDirection: 'row', alignItems: 'center', gap: 1, marginLeft: 8 },
-  kycActionText: { fontSize: 11, fontWeight: '800', color: colors.brand[700] },
-  linkRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    paddingLeft: 25, paddingBottom: 10, marginTop: -2,
-    borderBottomWidth: 1, borderBottomColor: colors.slate100,
-  },
-  linkText: { fontSize: 10.5, color: colors.slate500, fontWeight: '600' },
-  linkActionRow: { flexDirection: 'row', alignItems: 'center', gap: 1, marginLeft: 'auto' },
-  linkAction: { fontSize: 10.5, fontWeight: '800', color: colors.brand[700] },
-  rowPressed: { opacity: 0.6 },
-  rowLabel: { flex: 1, fontSize: 11, fontWeight: '600', color: colors.slate500 },
-  policySummary: { fontSize: 11, color: colors.slate400, fontWeight: '600', marginBottom: 6 },
-  rowValue: { fontSize: 11.5, fontWeight: '700', color: colors.textLight },
+    cardTitle: { fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4, color: colors.slate500, marginBottom: 4 },
+    row: {
+      flexDirection: 'row', alignItems: 'center', paddingVertical: 10,
+      borderBottomWidth: 1, borderBottomColor: colors.slate100,
+    },
+    rowLast: { borderBottomWidth: 0 },
+    rowIcon: { marginRight: 8 },
+    rowChevron: { marginLeft: 6 },
+    kycAction: { flexDirection: 'row', alignItems: 'center', gap: 1, marginLeft: 8 },
+    kycActionText: { fontSize: 11, fontWeight: '800', color: colors.brand[700] },
+    linkRow: {
+      flexDirection: 'row', alignItems: 'center', gap: 6,
+      paddingLeft: 25, paddingBottom: 10, marginTop: -2,
+      borderBottomWidth: 1, borderBottomColor: colors.slate100,
+    },
+    linkText: { fontSize: 10.5, color: colors.slate500, fontWeight: '600' },
+    linkActionRow: { flexDirection: 'row', alignItems: 'center', gap: 1, marginLeft: 'auto' },
+    linkAction: { fontSize: 10.5, fontWeight: '800', color: colors.brand[700] },
+    rowPressed: { opacity: 0.6 },
+    rowLabel: { flex: 1, fontSize: 11, fontWeight: '600', color: colors.slate500 },
+    policySummary: { fontSize: 11, color: colors.slate400, fontWeight: '600', marginBottom: 6 },
+    rowValue: { fontSize: 11.5, fontWeight: '700', color: colors.textLight },
 
-  kycMuted: { fontSize: 11, color: colors.slate400, fontWeight: '600', paddingVertical: 8 },
-  kycDetail: { fontSize: 11, color: colors.slate400, fontWeight: '600', marginRight: 8 },
-  kycChip: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: radii.pill },
-  kycChipText: { fontSize: 11, fontWeight: '800' },
-});
+    kycMuted: { fontSize: 11, color: colors.slate400, fontWeight: '600', paddingVertical: 8 },
+    kycDetail: { fontSize: 11, color: colors.slate400, fontWeight: '600', marginRight: 8 },
+    kycChip: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: radii.pill },
+    kycChipText: { fontSize: 11, fontWeight: '800' },
+  });
+}

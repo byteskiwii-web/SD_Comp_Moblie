@@ -6,7 +6,8 @@ import { Badge, Button, Card, TextField } from '../../components/ui';
 import { DatePickerField, TimePickerField } from '../../components/PickerField';
 import { TourTarget } from '../../components/tour/TourTarget';
 import { Toast, ToastState } from '../../components/Toast';
-import { colors, radii } from '../../theme/tokens';
+import { ColorScheme, radii } from '../../theme/tokens';
+import { useThemeStore } from '../../stores/themeStore';
 import { useAuthStore } from '../../stores/authStore';
 import { getAttendanceHistory, getMyRegularisations, submitRegularisation } from '../../api/attendance.api';
 import { getApiErrorMessage } from '../../api/client';
@@ -64,6 +65,8 @@ let rowSeq = 0;
 const newKey = () => `r${++rowSeq}`;
 
 export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) {
+  const colors = useThemeStore((s) => s.colors);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const employee = useAuthStore((s) => s.employee);
   const store = useAuthStore((s) => s.store);
   const profile = useAuthStore((s) => s.profile);
@@ -364,7 +367,8 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(colors: ColorScheme) {
+  return StyleSheet.create({
   wrap: { gap: 14 },
 
   formCard: {},
@@ -384,7 +388,7 @@ const styles = StyleSheet.create({
 
   segment: { flexDirection: 'row', backgroundColor: colors.slate100, borderRadius: radii.md, padding: 4, marginBottom: 14 },
   segmentItem: { flex: 1, alignItems: 'center', paddingVertical: 9, borderRadius: radii.sm },
-  segmentItemActive: { backgroundColor: colors.white },
+  segmentItemActive: { backgroundColor: colors.surface },
   segmentText: { fontSize: 11, fontWeight: '700', color: colors.slate500 },
   segmentTextActive: { color: colors.brand[700] },
 
@@ -403,7 +407,7 @@ const styles = StyleSheet.create({
   },
   submitNoteText: { flex: 1, fontSize: 10.5, color: colors.slate600, fontWeight: '600', lineHeight: 16 },
 
-  errorText: { color: colors.danger, fontSize: 11, fontWeight: '600', marginBottom: 8 },
+  errorText: { color: colors.dangerText, fontSize: 11, fontWeight: '600', marginBottom: 8 },
 
   actions: { flexDirection: 'row', gap: 12, marginTop: 4 },
   actionHalf: { flex: 1 },
@@ -424,4 +428,5 @@ const styles = StyleSheet.create({
   reqDate: { fontSize: 12, fontWeight: '800', color: colors.textLight },
   reqReason: { fontSize: 11.5, color: colors.slate600, marginTop: 3 },
   reqNote: { fontSize: 11, color: colors.slate500, marginTop: 4, fontStyle: 'italic' },
-});
+  });
+}

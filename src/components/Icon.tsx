@@ -1,6 +1,6 @@
 import React from 'react';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
-import { colors } from '../theme/tokens';
+import { useThemeStore } from '../stores/themeStore';
 
 // Ported verbatim (path/shape data only) from the reference prototype's
 // Icon component (C:\Users\visma\Kiwi bytes\S.D.Computronix_Proto\js\utils.jsx)
@@ -17,8 +17,14 @@ type IconProps = {
   strokeWidth?: number;
 };
 
-export function Icon({ name, size = 18, color = colors.slate400, strokeWidth = 1.75 }: IconProps) {
-  const p = { stroke: color, strokeWidth, fill: 'none', strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
+export function Icon({ name, size = 18, color, strokeWidth = 1.75 }: IconProps) {
+  // Theme-store default rather than the old static import: most callers pass
+  // their own colour explicitly, but the few that rely on the default (a
+  // muted slate) need it to actually be the current theme's muted slate, not
+  // whichever scheme happened to be active when this module first loaded.
+  const defaultColor = useThemeStore((s) => s.colors.slate400);
+  const resolved = color ?? defaultColor;
+  const p = { stroke: resolved, strokeWidth, fill: 'none', strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
 
   const shape: Record<IconName, React.ReactNode> = {
     phone: (

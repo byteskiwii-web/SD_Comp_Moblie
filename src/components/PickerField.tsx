@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { Icon, IconName } from './Icon';
-import { colors, radii } from '../theme/tokens';
+import { ColorScheme, radii } from '../theme/tokens';
+import { useThemeStore } from '../stores/themeStore';
 
 // Two platforms, two interaction models, one contract.
 //
@@ -77,6 +78,8 @@ function FieldShell({
   icon: IconName;
   onPress: () => void;
 }) {
+  const colors = useThemeStore((s) => s.colors);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <View style={styles.fieldWrap}>
       <Text style={styles.fieldLabel}>{label}</Text>
@@ -119,6 +122,8 @@ function IosPickerSheet({
   onCancel: () => void;
   onConfirm: (d: Date) => void;
 }) {
+  const colors = useThemeStore((s) => s.colors);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [draft, setDraft] = useState(initial);
 
   // Remount on each open so the wheel starts from the current field value.
@@ -261,7 +266,8 @@ export function TimePickerField({ label, value, onChange, error }: TimePickerFie
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(colors: ColorScheme) {
+  return StyleSheet.create({
   fieldWrap: { marginBottom: 14 },
   fieldLabel: {
     fontSize: 11,
@@ -277,7 +283,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: colors.slate200,
     paddingHorizontal: 14,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -286,7 +292,7 @@ const styles = StyleSheet.create({
   inputError: { borderColor: colors.danger },
   valueText: { fontSize: 13, fontWeight: '600', color: colors.textLight, flexShrink: 1 },
   placeholderText: { color: colors.slate400, fontWeight: '500' },
-  errorText: { color: colors.danger, fontSize: 11, fontWeight: '600', marginTop: 6 },
+  errorText: { color: colors.dangerText, fontSize: 11, fontWeight: '600', marginTop: 6 },
 
   backdrop: {
     position: 'absolute',
@@ -301,7 +307,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderTopLeftRadius: radii.xl,
     borderTopRightRadius: radii.xl,
     paddingBottom: 24,
@@ -317,4 +323,5 @@ const styles = StyleSheet.create({
   },
   sheetCancel: { fontSize: 13, fontWeight: '600', color: colors.slate500 },
   sheetDone: { fontSize: 13, fontWeight: '800', color: colors.brand[700] },
-});
+  });
+}

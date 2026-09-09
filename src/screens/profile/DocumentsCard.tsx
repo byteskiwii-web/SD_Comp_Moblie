@@ -5,7 +5,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card } from '../../components/ui';
 import { SkeletonRows } from '../../components/Skeleton';
 import { FilePickerSheet } from '../../components/FilePickerSheet';
-import { colors, radii } from '../../theme/tokens';
+import { ColorScheme, radii } from '../../theme/tokens';
+import { useThemeStore } from '../../stores/themeStore';
 import { getApiErrorMessage } from '../../api/client';
 import { getHealthDeps } from '../../api/verification.api';
 import {
@@ -48,16 +49,21 @@ const HINT: Partial<Record<DocType, string>> = {
   bank_passbook: 'The page with your name and account number',
 };
 
-const STATUS_TONE: Record<DocumentStatus, { bg: string; fg: string; label: string }> = {
-  pending: { bg: colors.warningBg, fg: '#B45309', label: 'In review' },
-  verified: { bg: colors.successBg, fg: '#047857', label: 'Verified' },
-  rejected: { bg: colors.dangerBg, fg: '#BE123C', label: 'Rejected' },
-};
+function statusTone(colors: ColorScheme): Record<DocumentStatus, { bg: string; fg: string; label: string }> {
+  return {
+    pending: { bg: colors.warningBg, fg: colors.warningText, label: 'In review' },
+    verified: { bg: colors.successBg, fg: colors.successText, label: 'Verified' },
+    rejected: { bg: colors.dangerBg, fg: colors.dangerText, label: 'Rejected' },
+  };
+}
 
 export function DocumentsCard() {
   const queryClient = useQueryClient();
   const [picking, setPicking] = useState<DocType | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const colors = useThemeStore((s) => s.colors);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const STATUS_TONE = useMemo(() => statusTone(colors), [colors]);
 
   const deps = useQuery({ queryKey: ['health-deps'], queryFn: getHealthDeps, retry: false });
   const enabled = deps.data?.dependencies?.documents === 'enabled';
@@ -211,32 +217,34 @@ export function DocumentsCard() {
   );
 }
 
-const styles = StyleSheet.create({
-  cardTitle: {
-    fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4,
-    color: colors.slate500, marginBottom: 10,
-  },
-  off: { fontSize: 11.5, color: colors.slate400, lineHeight: 17 },
-  error: { fontSize: 11.5, color: colors.danger, fontWeight: '600', marginBottom: 8 },
+function makeStyles(colors: ColorScheme) {
+  return StyleSheet.create({
+    cardTitle: {
+      fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4,
+      color: colors.slate500, marginBottom: 10,
+    },
+    off: { fontSize: 11.5, color: colors.slate400, lineHeight: 17 },
+    error: { fontSize: 11.5, color: colors.dangerText, fontWeight: '600', marginBottom: 8 },
 
-  row: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    paddingVertical: 11, borderBottomWidth: 1, borderBottomColor: colors.slate100,
-  },
-  rowLast: { borderBottomWidth: 0 },
-  rowText: { flex: 1 },
-  rowLabel: { fontSize: 12.5, fontWeight: '700', color: colors.textLight },
-  rowMeta: { fontSize: 10.5, color: colors.slate400, marginTop: 2 },
-  rowHint: { fontSize: 10.5, color: colors.slate400, marginTop: 2, lineHeight: 14 },
-  rejected: { fontSize: 10.5, color: colors.danger, marginTop: 3, fontWeight: '600' },
+    row: {
+      flexDirection: 'row', alignItems: 'center', gap: 8,
+      paddingVertical: 11, borderBottomWidth: 1, borderBottomColor: colors.slate100,
+    },
+    rowLast: { borderBottomWidth: 0 },
+    rowText: { flex: 1 },
+    rowLabel: { fontSize: 12.5, fontWeight: '700', color: colors.textLight },
+    rowMeta: { fontSize: 10.5, color: colors.slate400, marginTop: 2 },
+    rowHint: { fontSize: 10.5, color: colors.slate400, marginTop: 2, lineHeight: 14 },
+    rejected: { fontSize: 10.5, color: colors.dangerText, marginTop: 3, fontWeight: '600' },
 
-  chip: { paddingHorizontal: 7, paddingVertical: 3, borderRadius: radii.sm },
-  chipText: { fontSize: 9.5, fontWeight: '800' },
+    chip: { paddingHorizontal: 7, paddingVertical: 3, borderRadius: radii.sm },
+    chipText: { fontSize: 9.5, fontWeight: '800' },
 
-  action: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  actionPressed: { opacity: 0.6 },
-  actionText: { fontSize: 11, fontWeight: '800', color: colors.brand[700] },
-  removeBtn: { paddingLeft: 2 },
+    action: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+    actionPressed: { opacity: 0.6 },
+    actionText: { fontSize: 11, fontWeight: '800', color: colors.brand[700] },
+    removeBtn: { paddingLeft: 2 },
 
-  consent: { fontSize: 10.5, color: colors.slate400, marginTop: 12, lineHeight: 15 },
-});
+    consent: { fontSize: 10.5, color: colors.slate400, marginTop: 12, lineHeight: 15 },
+  });
+}

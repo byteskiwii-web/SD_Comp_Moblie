@@ -1,10 +1,11 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Linking, Modal, StyleSheet, Text, View } from 'react-native';
 import * as Location from 'expo-location';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button, Card } from '../../components/ui';
 import { TourTarget } from '../../components/tour/TourTarget';
-import { colors, radii } from '../../theme/tokens';
+import { ColorScheme, radii } from '../../theme/tokens';
+import { useThemeStore } from '../../stores/themeStore';
 import { useAuthStore } from '../../stores/authStore';
 import { useShiftStore } from '../../stores/shiftStore';
 import { haversineDistance } from '../../utils/haversine';
@@ -35,6 +36,8 @@ type Props = {
 };
 
 export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
+  const colors = useThemeStore((s) => s.colors);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const employee = useAuthStore((s) => s.employee);
   const store = useAuthStore((s) => s.store);
   const setClockedIn = useShiftStore((s) => s.setClockedIn);
@@ -427,7 +430,8 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(colors: ColorScheme) {
+  return StyleSheet.create({
   wrap: { gap: 12 },
   banner: { borderRadius: radii.md, padding: 12 },
   bannerSuccess: { backgroundColor: colors.successBg },
@@ -436,14 +440,15 @@ const styles = StyleSheet.create({
   geoCard: { alignItems: 'center' },
   geoActions: { alignSelf: 'stretch', gap: 8, marginTop: 12 },
   geoLoading: { fontSize: 11.5, color: colors.slate500 },
-  geoError: { fontSize: 11.5, color: colors.danger, textAlign: 'center' },
+  geoError: { fontSize: 11.5, color: colors.dangerText, textAlign: 'center' },
   geoStatus: { fontSize: 12.5, fontWeight: '800' },
-  geoInside: { color: colors.success },
-  geoOutside: { color: colors.danger },
+  geoInside: { color: colors.successText },
+  geoOutside: { color: colors.dangerText },
   geoDetail: { fontSize: 11, color: colors.slate500, marginTop: 4 },
-  geoWarning: { fontSize: 11, color: colors.warning, marginTop: 8, textAlign: 'center', fontWeight: '600' },
+  geoWarning: { fontSize: 11, color: colors.warningText, marginTop: 8, textAlign: 'center', fontWeight: '600' },
   actionsRow: { width: '100%' },
   breakRow: { flexDirection: 'row', gap: 12 },
   breakButton: { flex: 1 },
   lastPunchText: { fontSize: 11, color: colors.slate500, fontWeight: '600' },
-});
+  });
+}

@@ -5,7 +5,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { colors, radii } from '../../theme/tokens';
+import { ColorScheme, radii } from '../../theme/tokens';
+import { useThemeStore } from '../../stores/themeStore';
 import { Button } from '../../components/ui';
 import { SkeletonCard } from '../../components/Skeleton';
 import { useAuthStore } from '../../stores/authStore';
@@ -52,6 +53,8 @@ function rosterTime(hhmmss: string | null): string | null {
 }
 
 export function DayDetailScreen() {
+  const colors = useThemeStore((s) => s.colors);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const navigation = useNavigation<Nav>();
   const { date } = useRoute<DayRoute>().params;
   const employee = useAuthStore((s) => s.employee);
@@ -203,13 +206,14 @@ export function DayDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(colors: ColorScheme) {
+  return StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.bgLight },
 
   nav: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 16, paddingVertical: 10,
-    backgroundColor: colors.white, borderBottomWidth: 1, borderBottomColor: colors.slate200,
+    backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.slate200,
   },
   navTitle: { fontSize: 13, fontWeight: '800', color: colors.textLight, letterSpacing: -0.2 },
   navSpacer: { width: 26 },
@@ -218,11 +222,11 @@ const styles = StyleSheet.create({
   date: { fontSize: 15, fontWeight: '800', color: colors.textLight, letterSpacing: -0.3 },
 
   card: {
-    backgroundColor: colors.white, borderRadius: radii.lg,
+    backgroundColor: colors.surface, borderRadius: radii.lg,
     borderWidth: 1, borderColor: colors.slate200, padding: 14, gap: 12,
   },
   empty: { fontSize: 11.5, color: colors.slate400, fontWeight: '600' },
-  error: { color: colors.danger, fontSize: 11.5, fontWeight: '600' },
+  error: { color: colors.dangerText, fontSize: 11.5, fontWeight: '600' },
 
   windowRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   window: { flex: 1, fontSize: 12, fontWeight: '700', color: colors.slate700 },
@@ -230,8 +234,8 @@ const styles = StyleSheet.create({
   pillOk: { backgroundColor: colors.successBg },
   pillLate: { backgroundColor: colors.warningBg },
   pillText: { fontSize: 10, fontWeight: '800', letterSpacing: 0.3 },
-  pillTextOk: { color: '#047857' },
-  pillTextLate: { color: '#B45309' },
+  pillTextOk: { color: colors.successText },
+  pillTextLate: { color: colors.warningText },
 
   punchRow: { flexDirection: 'row' },
   punchCol: { flex: 1, gap: 5 },
@@ -258,16 +262,17 @@ const styles = StyleSheet.create({
   logRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 9, paddingHorizontal: 8 },
   logRowMissing: { backgroundColor: colors.dangerBg, borderRadius: radii.sm },
   logTime: { fontSize: 12, fontWeight: '700', color: colors.textLight, minWidth: 104 },
-  logTimeMissing: { color: colors.danger },
+  logTimeMissing: { color: colors.dangerText },
   logType: { flex: 1, fontSize: 10.5, color: colors.slate400, fontWeight: '600', textTransform: 'capitalize' },
   outsideChip: {
     backgroundColor: colors.warningBg, borderRadius: radii.sm,
     paddingHorizontal: 7, paddingVertical: 3,
   },
-  outsideChipText: { fontSize: 9, fontWeight: '800', color: '#B45309', letterSpacing: 0.3 },
+  outsideChipText: { fontSize: 9, fontWeight: '800', color: colors.warningText, letterSpacing: 0.3 },
 
   footer: {
     padding: 16, paddingBottom: 20,
-    backgroundColor: colors.white, borderTopWidth: 1, borderTopColor: colors.slate200,
+    backgroundColor: colors.surface, borderTopWidth: 1, borderTopColor: colors.slate200,
   },
-});
+  });
+}

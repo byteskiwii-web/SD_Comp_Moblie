@@ -4,7 +4,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Button, Card } from '../../components/ui';
-import { colors, radii } from '../../theme/tokens';
+import { ColorScheme, radii } from '../../theme/tokens';
+import { useThemeStore } from '../../stores/themeStore';
 import { useAuthStore } from '../../stores/authStore';
 import { useKycGate } from '../../hooks/useKycGate';
 import { KycCheckStatus, KYC_STATUS_LABEL as STATUS_LABEL, kycStatusTone as statusTone } from '../../api/verification.api';
@@ -13,7 +14,9 @@ import { KycStackParamList } from '../../navigation/types';
 type Nav = NativeStackNavigationProp<KycStackParamList>;
 
 function StatusRow({ label, status }: { label: string; status: KycCheckStatus }) {
-  const tone = statusTone(status);
+  const colors = useThemeStore((s) => s.colors);
+  const styles = React.useMemo(() => makeStyles(colors), [colors]);
+  const tone = statusTone(status, colors);
   return (
     <View style={styles.statusRow}>
       <Text style={styles.statusLabel}>{label}</Text>
@@ -28,6 +31,8 @@ export function KycGateScreen() {
   const navigation = useNavigation<Nav>();
   const signOut = useAuthStore((s) => s.signOut);
   const { kyc, isError, isFetching, refetch } = useKycGate();
+  const colors = useThemeStore((s) => s.colors);
+  const styles = React.useMemo(() => makeStyles(colors), [colors]);
 
   const panDone = kyc?.pan.status === 'verified';
 
@@ -83,28 +88,30 @@ export function KycGateScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: colors.white },
-  content: { flex: 1, justifyContent: 'center', padding: 24 },
-  title: { fontSize: 19, fontWeight: '800', color: colors.textLight, textAlign: 'center' },
-  subtitle: {
-    fontSize: 11.5,
-    color: colors.slate500,
-    textAlign: 'center',
-    marginTop: 10,
-    marginBottom: 28,
-    lineHeight: 19,
-  },
-  statusCard: { marginBottom: 8 },
-  statusRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10 },
-  statusLabel: { fontSize: 12.5, fontWeight: '600', color: colors.textLight },
-  divider: { height: 1, backgroundColor: colors.slate100 },
-  chip: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: radii.pill },
-  chipText: { fontSize: 11, fontWeight: '700' },
-  refreshing: { fontSize: 11, color: colors.slate400, textAlign: 'center', marginTop: 10 },
-  ctaGap: { marginTop: 24 },
-  errorCard: { alignItems: 'center' },
-  errorText: { fontSize: 11.5, color: colors.slate600, textAlign: 'center', lineHeight: 19 },
-  retryGap: { marginTop: 16, alignSelf: 'stretch' },
-  signOutGap: { marginTop: 32 },
-});
+function makeStyles(colors: ColorScheme) {
+  return StyleSheet.create({
+    flex: { flex: 1, backgroundColor: colors.bgLight },
+    content: { flex: 1, justifyContent: 'center', padding: 24 },
+    title: { fontSize: 19, fontWeight: '800', color: colors.textLight, textAlign: 'center' },
+    subtitle: {
+      fontSize: 11.5,
+      color: colors.slate500,
+      textAlign: 'center',
+      marginTop: 10,
+      marginBottom: 28,
+      lineHeight: 19,
+    },
+    statusCard: { marginBottom: 8 },
+    statusRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10 },
+    statusLabel: { fontSize: 12.5, fontWeight: '600', color: colors.textLight },
+    divider: { height: 1, backgroundColor: colors.slate100 },
+    chip: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: radii.pill },
+    chipText: { fontSize: 11, fontWeight: '700' },
+    refreshing: { fontSize: 11, color: colors.slate400, textAlign: 'center', marginTop: 10 },
+    ctaGap: { marginTop: 24 },
+    errorCard: { alignItems: 'center' },
+    errorText: { fontSize: 11.5, color: colors.slate600, textAlign: 'center', lineHeight: 19 },
+    retryGap: { marginTop: 16, alignSelf: 'stretch' },
+    signOutGap: { marginTop: 32 },
+  });
+}
