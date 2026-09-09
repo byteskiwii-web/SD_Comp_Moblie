@@ -1,9 +1,10 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Dimensions, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { colors, radii } from '../theme/tokens';
+import { ColorScheme, radii } from '../theme/tokens';
+import { useThemeStore } from '../stores/themeStore';
 import { useTourRegistry, type Rect } from './tour/TourTarget';
 
 /**
@@ -123,6 +124,8 @@ const CARD_ESTIMATE = 250;
 export function AppTour({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const navigation = useNavigation<any>();
   const registry = useTourRegistry();
+  const colors = useThemeStore((s) => s.colors);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [index, setIndex] = useState(0);
   const [spot, setSpot] = useState<Rect | null>(null);
   const cancelled = useRef(false);
@@ -293,77 +296,79 @@ export function AppTour({ visible, onClose }: { visible: boolean; onClose: () =>
 
 const DIM = 'rgba(15,23,42,0.72)';
 
-const styles = StyleSheet.create({
-  fill: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
-  dimAll: { backgroundColor: DIM },
-  dim: { position: 'absolute', backgroundColor: DIM },
-  ring: {
-    position: 'absolute',
-    borderRadius: radii.md,
-    borderWidth: 2.5,
-    borderColor: colors.white,
-  },
+function makeStyles(colors: ColorScheme) {
+  return StyleSheet.create({
+    fill: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
+    dimAll: { backgroundColor: DIM },
+    dim: { position: 'absolute', backgroundColor: DIM },
+    ring: {
+      position: 'absolute',
+      borderRadius: radii.md,
+      borderWidth: 2.5,
+      borderColor: colors.white,
+    },
 
-  cardWrap: { position: 'absolute', left: 0, right: 0, paddingHorizontal: 16 },
-  cardCentred: { top: 0, bottom: 0, justifyContent: 'center' },
-  card: {
-    width: '100%',
-    maxWidth: 460,
-    alignSelf: 'center',
-    borderRadius: radii.xl,
-    backgroundColor: colors.white,
-    overflow: 'hidden',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    padding: 16,
-    backgroundColor: colors.brand[700],
-  },
-  iconWrap: {
-    width: 38,
-    height: 38,
-    borderRadius: radii.md,
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerText: { flex: 1 },
-  stepCount: {
-    color: colors.white,
-    opacity: 0.8,
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 0.6,
-  },
-  title: { color: colors.white, fontSize: 15, fontWeight: '800', marginTop: 2, letterSpacing: -0.3 },
+    cardWrap: { position: 'absolute', left: 0, right: 0, paddingHorizontal: 16 },
+    cardCentred: { top: 0, bottom: 0, justifyContent: 'center' },
+    card: {
+      width: '100%',
+      maxWidth: 460,
+      alignSelf: 'center',
+      borderRadius: radii.xl,
+      backgroundColor: colors.surface,
+      overflow: 'hidden',
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      padding: 16,
+      backgroundColor: colors.brand[700],
+    },
+    iconWrap: {
+      width: 38,
+      height: 38,
+      borderRadius: radii.md,
+      backgroundColor: 'rgba(255,255,255,0.18)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    headerText: { flex: 1 },
+    stepCount: {
+      color: colors.white,
+      opacity: 0.8,
+      fontSize: 10,
+      fontWeight: '800',
+      letterSpacing: 0.6,
+    },
+    title: { color: colors.white, fontSize: 15, fontWeight: '800', marginTop: 2, letterSpacing: -0.3 },
 
-  body: { padding: 16 },
-  bodyText: { fontSize: 12, lineHeight: 19, color: colors.slate700 },
+    body: { padding: 16 },
+    bodyText: { fontSize: 12, lineHeight: 19, color: colors.slate700 },
 
-  dots: { flexDirection: 'row', gap: 5, marginTop: 16 },
-  dot: { width: 16, height: 3.5, borderRadius: 2, backgroundColor: colors.slate200 },
-  dotActive: { backgroundColor: colors.brand[700], width: 24 },
+    dots: { flexDirection: 'row', gap: 5, marginTop: 16 },
+    dot: { width: 16, height: 3.5, borderRadius: 2, backgroundColor: colors.slate200 },
+    dotActive: { backgroundColor: colors.brand[700], width: 24 },
 
-  actions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 16,
-  },
-  skip: { fontSize: 12.5, fontWeight: '700', color: colors.slate500 },
-  navButtons: { flexDirection: 'row', gap: 10 },
-  navButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: radii.md,
-  },
-  navBack: { backgroundColor: colors.white, borderWidth: 1.5, borderColor: colors.slate200 },
-  navBackText: { fontSize: 12.5, fontWeight: '700', color: colors.slate700 },
-  navNext: { backgroundColor: colors.brand[700] },
-  navNextText: { fontSize: 12.5, fontWeight: '800', color: colors.white },
-});
+    actions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginTop: 16,
+    },
+    skip: { fontSize: 12.5, fontWeight: '700', color: colors.slate500 },
+    navButtons: { flexDirection: 'row', gap: 10 },
+    navButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      borderRadius: radii.md,
+    },
+    navBack: { backgroundColor: colors.surface, borderWidth: 1.5, borderColor: colors.slate200 },
+    navBackText: { fontSize: 12.5, fontWeight: '700', color: colors.slate700 },
+    navNext: { backgroundColor: colors.brand[700] },
+    navNextText: { fontSize: 12.5, fontWeight: '800', color: colors.white },
+  });
+}
