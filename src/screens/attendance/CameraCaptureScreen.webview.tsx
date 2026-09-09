@@ -2,7 +2,7 @@ import React, { useCallback, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 import { File, Paths } from 'expo-file-system';
-import { colors, radii } from '../../theme/tokens';
+import { radii } from '../../theme/tokens';
 import { API_BASE_URL } from '../../constants/config';
 import { LIVENESS_HTML } from './liveness/livenessPage';
 import { FallbackCameraCaptureScreen } from './CameraCaptureScreen.fallback';
@@ -136,7 +136,7 @@ export function WebViewCameraCaptureScreen({ onCaptured, onCancel }: CameraCaptu
 
       {loading && (
         <View style={styles.loading}>
-          <ActivityIndicator color={colors.white} size="large" />
+          <ActivityIndicator color="#FFFFFF" size="large" />
           <Text style={styles.loadingText}>{stage}</Text>
           {/* Always reachable. The page can take a while on older hardware,
               and waiting with no way out is worse than giving up. */}
@@ -149,6 +149,9 @@ export function WebViewCameraCaptureScreen({ onCaptured, onCancel }: CameraCaptu
   );
 }
 
+// Fixed colors, not read from useThemeStore: this is a camera overlay, not a
+// themed app surface, and stays visually identical regardless of the app's
+// light/dark setting -- same reasoning as CameraCaptureScreen.vision/.fallback.
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: '#000' },
   loading: {
@@ -160,12 +163,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 14,
-    backgroundColor: colors.bgDark,
+    backgroundColor: '#0B0F1A',
   },
   loadingCancel: { marginTop: 18, paddingHorizontal: 18, paddingVertical: 10 },
-  loadingCancelText: { color: colors.white, fontSize: 12.5, fontWeight: '800', opacity: 0.9 },
+  loadingCancelText: { color: '#FFFFFF', fontSize: 12.5, fontWeight: '800', opacity: 0.9 },
   loadingText: {
-    color: colors.white,
+    color: '#FFFFFF',
     fontSize: 11.5,
     fontWeight: '600',
     paddingHorizontal: 16,

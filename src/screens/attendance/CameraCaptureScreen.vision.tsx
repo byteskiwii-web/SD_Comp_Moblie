@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Camera, useCameraDevice, useCameraPermission, usePhotoOutput } from 'react-native-vision-camera';
 import { useFaceDetectorOutput } from 'react-native-vision-camera-face-detector';
 import { Button } from '../../components/ui';
-import { colors, radii } from '../../theme/tokens';
+import { radii } from '../../theme/tokens';
 import { useLiveness } from '../../hooks/useLiveness';
 import type { CameraCaptureProps } from './cameraCaptureTypes';
 
@@ -105,7 +105,7 @@ export function VisionCameraCaptureScreen({ onCaptured, onCancel }: Props) {
 
       <View style={[styles.bottomBar, { paddingBottom: 20 + insets.bottom }]}>
         {captured ? (
-          <ActivityIndicator color={colors.white} size="large" />
+          <ActivityIndicator color="#FFFFFF" size="large" />
         ) : (
           <Text style={styles.challengeText}>{CHALLENGE_LABEL[state]}</Text>
         )}
@@ -122,14 +122,19 @@ export function VisionCameraCaptureScreen({ onCaptured, onCancel }: Props) {
   );
 }
 
+// This screen is a full-screen camera viewfinder overlaid on a live feed, not
+// a themed app surface -- its colors are fixed regardless of the app's
+// light/dark setting, the same way the '#000' backdrop below is. Reading them
+// from useThemeStore would invert the neutral ramp under dark mode and turn
+// this dark overlay pale (the same bug once found on Home's heroInactive).
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: '#000' },
   center: {
-    flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, padding: 24, backgroundColor: colors.textLight,
+    flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, padding: 24, backgroundColor: '#0F172A',
   },
-  permissionText: { color: colors.white, fontSize: 12.5, textAlign: 'center', marginBottom: 8 },
+  permissionText: { color: '#FFFFFF', fontSize: 12.5, textAlign: 'center', marginBottom: 8 },
   viewfinder: { position: 'absolute', left: 32, right: 32 },
-  corner: { position: 'absolute', width: 32, height: 32, borderColor: colors.white },
+  corner: { position: 'absolute', width: 32, height: 32, borderColor: '#FFFFFF' },
   cornerTL: { top: 0, left: 0, borderTopWidth: 3, borderLeftWidth: 3, borderTopLeftRadius: 8 },
   cornerTR: { top: 0, right: 0, borderTopWidth: 3, borderRightWidth: 3, borderTopRightRadius: 8 },
   cornerBL: { bottom: 0, left: 0, borderBottomWidth: 3, borderLeftWidth: 3, borderBottomLeftRadius: 8 },
@@ -138,13 +143,13 @@ const styles = StyleSheet.create({
     position: 'absolute', left: 0, right: 0, alignItems: 'center',
   },
   topBarText: {
-    color: colors.white, fontSize: 11, fontWeight: '700', backgroundColor: 'rgba(0,0,0,0.4)',
+    color: '#FFFFFF', fontSize: 11, fontWeight: '700', backgroundColor: 'rgba(0,0,0,0.4)',
     paddingHorizontal: 12, paddingVertical: 6, borderRadius: radii.pill, overflow: 'hidden',
   },
   bottomBar: {
     position: 'absolute', bottom: 0, left: 0, right: 0, paddingHorizontal: 20, paddingTop: 24,
     backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', gap: 12,
   },
-  challengeText: { color: colors.white, fontSize: 13, fontWeight: '700', textAlign: 'center' },
+  challengeText: { color: '#FFFFFF', fontSize: 13, fontWeight: '700', textAlign: 'center' },
   cancelWrap: { width: '100%', marginTop: 4 },
 });

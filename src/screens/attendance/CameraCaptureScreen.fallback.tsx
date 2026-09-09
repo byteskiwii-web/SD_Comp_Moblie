@@ -3,7 +3,7 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Button } from '../../components/ui';
-import { colors, radii } from '../../theme/tokens';
+import { radii } from '../../theme/tokens';
 import { runtimeLabel } from '../../native/runtime';
 import type { CameraCaptureProps } from './cameraCaptureTypes';
 
@@ -46,7 +46,7 @@ export function FallbackCameraCaptureScreen({ onCaptured, onCancel }: CameraCapt
   if (!permission) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator color={colors.white} size="large" />
+        <ActivityIndicator color="#FFFFFF" size="large" />
       </View>
     );
   }
@@ -94,7 +94,7 @@ export function FallbackCameraCaptureScreen({ onCaptured, onCancel }: CameraCapt
 
       <View style={[styles.bottomBar, { paddingBottom: 20 + insets.bottom }]}>
         {busy ? (
-          <ActivityIndicator color={colors.white} size="large" />
+          <ActivityIndicator color="#FFFFFF" size="large" />
         ) : (
           <Text style={styles.hintText}>Center your face in the frame</Text>
         )}
@@ -110,34 +110,39 @@ export function FallbackCameraCaptureScreen({ onCaptured, onCancel }: CameraCapt
   );
 }
 
+// This screen is a full-screen camera viewfinder overlaid on a live feed, not
+// a themed app surface -- its colors are fixed regardless of the app's
+// light/dark setting, the same way the '#000' backdrop below is. Reading them
+// from useThemeStore would invert the neutral ramp under dark mode and turn
+// this dark overlay pale (the same bug once found on Home's heroInactive).
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: '#000' },
   center: {
-    flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, padding: 24, backgroundColor: colors.textLight,
+    flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, padding: 24, backgroundColor: '#0F172A',
   },
-  permissionText: { color: colors.white, fontSize: 12.5, textAlign: 'center', marginBottom: 8 },
+  permissionText: { color: '#FFFFFF', fontSize: 12.5, textAlign: 'center', marginBottom: 8 },
   viewfinder: { position: 'absolute', left: 32, right: 32 },
-  corner: { position: 'absolute', width: 32, height: 32, borderColor: colors.white },
+  corner: { position: 'absolute', width: 32, height: 32, borderColor: '#FFFFFF' },
   cornerTL: { top: 0, left: 0, borderTopWidth: 3, borderLeftWidth: 3, borderTopLeftRadius: 8 },
   cornerTR: { top: 0, right: 0, borderTopWidth: 3, borderRightWidth: 3, borderTopRightRadius: 8 },
   cornerBL: { bottom: 0, left: 0, borderBottomWidth: 3, borderLeftWidth: 3, borderBottomLeftRadius: 8 },
   cornerBR: { bottom: 0, right: 0, borderBottomWidth: 3, borderRightWidth: 3, borderBottomRightRadius: 8 },
   topBar: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
   topBarText: {
-    color: colors.white, fontSize: 11, fontWeight: '700', backgroundColor: 'rgba(0,0,0,0.4)',
+    color: '#FFFFFF', fontSize: 11, fontWeight: '700', backgroundColor: 'rgba(0,0,0,0.4)',
     paddingHorizontal: 12, paddingVertical: 6, borderRadius: radii.pill, overflow: 'hidden',
   },
   banner: {
-    position: 'absolute', left: 16, right: 16, backgroundColor: colors.warning,
+    position: 'absolute', left: 16, right: 16, backgroundColor: '#F0930C',
     borderRadius: radii.sm, paddingHorizontal: 12, paddingVertical: 8,
   },
   bannerText: {
-    color: colors.slate900, fontSize: 11, fontWeight: '700', textAlign: 'center', lineHeight: 17,
+    color: '#0F172A', fontSize: 11, fontWeight: '700', textAlign: 'center', lineHeight: 17,
   },
   bottomBar: {
     position: 'absolute', bottom: 0, left: 0, right: 0, paddingHorizontal: 20, paddingTop: 24,
     backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', gap: 12,
   },
-  hintText: { color: colors.white, fontSize: 13, fontWeight: '700', textAlign: 'center' },
+  hintText: { color: '#FFFFFF', fontSize: 13, fontWeight: '700', textAlign: 'center' },
   actionWrap: { width: '100%' },
 });
