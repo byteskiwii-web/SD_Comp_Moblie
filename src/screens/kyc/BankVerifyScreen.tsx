@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -14,7 +14,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button, TextField } from '../../components/ui';
-import { colors, radii } from '../../theme/tokens';
+import { ColorScheme, radii } from '../../theme/tokens';
+import { useThemeStore } from '../../stores/themeStore';
 import { useAuthStore } from '../../stores/authStore';
 import {
   lookupIfsc,
@@ -57,6 +58,8 @@ export function BankVerifyScreen() {
   const navigation = useNavigation<any>();
   const employee = useAuthStore((s) => s.employee);
   const queryClient = useQueryClient();
+  const colors = useThemeStore((s) => s.colors);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const [ifsc, setIfsc] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
@@ -297,6 +300,8 @@ function ModeOption({
   detail: string;
   warn?: boolean;
 }) {
+  const colors = useThemeStore((s) => s.colors);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <Pressable
       onPress={onPress}
@@ -307,7 +312,7 @@ function ModeOption({
       <Ionicons
         name={selected ? 'radio-button-on' : 'radio-button-off'}
         size={18}
-        color={selected ? (warn ? '#B45309' : colors.brand[700]) : colors.slate400}
+        color={selected ? (warn ? colors.warningText : colors.brand[700]) : colors.slate400}
       />
       <View style={styles.modeText}>
         <Text style={[styles.modeTitle, selected && warn && styles.modeTitleWarn]}>{title}</Text>
@@ -317,52 +322,54 @@ function ModeOption({
   );
 }
 
-const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: colors.white },
-  scroll: { flexGrow: 1, padding: 24, paddingBottom: 40 },
-  title: { fontSize: 17.5, fontWeight: '800', color: colors.textLight, textAlign: 'center' },
-  subtitle: {
-    fontSize: 11, color: colors.slate500, textAlign: 'center',
-    marginTop: 8, marginBottom: 20, lineHeight: 18,
-  },
+function makeStyles(colors: ColorScheme) {
+  return StyleSheet.create({
+    flex: { flex: 1, backgroundColor: colors.bgLight },
+    scroll: { flexGrow: 1, padding: 24, paddingBottom: 40 },
+    title: { fontSize: 17.5, fontWeight: '800', color: colors.textLight, textAlign: 'center' },
+    subtitle: {
+      fontSize: 11, color: colors.slate500, textAlign: 'center',
+      marginTop: 8, marginBottom: 20, lineHeight: 18,
+    },
 
-  lookupRow: { marginBottom: 12 },
-  branchCard: {
-    flexDirection: 'row', alignItems: 'center', gap: 10,
-    backgroundColor: colors.brand[50], borderRadius: radii.md,
-    padding: 12, marginBottom: 16,
-  },
-  branchText: { flex: 1 },
-  branchBank: { fontSize: 12.5, fontWeight: '800', color: colors.brand[700] },
-  branchBranch: { fontSize: 11, color: colors.slate600, marginTop: 2 },
+    lookupRow: { marginBottom: 12 },
+    branchCard: {
+      flexDirection: 'row', alignItems: 'center', gap: 10,
+      backgroundColor: colors.brand[50], borderRadius: radii.md,
+      padding: 12, marginBottom: 16,
+    },
+    branchText: { flex: 1 },
+    branchBank: { fontSize: 12.5, fontWeight: '800', color: colors.brand[700] },
+    branchBranch: { fontSize: 11, color: colors.slate600, marginTop: 2 },
 
-  fieldLabel: {
-    fontSize: 10.5, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.3,
-    color: colors.slate400, marginTop: 8, marginBottom: 8,
-  },
-  modes: { gap: 10, marginBottom: 16 },
-  mode: {
-    flexDirection: 'row', alignItems: 'flex-start', gap: 10,
-    borderWidth: 1.5, borderColor: colors.slate200, borderRadius: radii.md, padding: 12,
-  },
-  modeOn: { borderColor: colors.brand[700], backgroundColor: colors.brand[50] },
-  modeOnWarn: { borderColor: '#B45309', backgroundColor: colors.warningBg },
-  modeText: { flex: 1 },
-  modeTitle: { fontSize: 12.5, fontWeight: '800', color: colors.textLight },
-  modeTitleWarn: { color: '#B45309' },
-  modeDetail: { fontSize: 11, color: colors.slate500, marginTop: 3, lineHeight: 16 },
+    fieldLabel: {
+      fontSize: 10.5, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.3,
+      color: colors.slate400, marginTop: 8, marginBottom: 8,
+    },
+    modes: { gap: 10, marginBottom: 16 },
+    mode: {
+      flexDirection: 'row', alignItems: 'flex-start', gap: 10,
+      borderWidth: 1.5, borderColor: colors.slate200, borderRadius: radii.md, padding: 12,
+    },
+    modeOn: { borderColor: colors.brand[700], backgroundColor: colors.brand[50] },
+    modeOnWarn: { borderColor: colors.warningText, backgroundColor: colors.warningBg },
+    modeText: { flex: 1 },
+    modeTitle: { fontSize: 12.5, fontWeight: '800', color: colors.textLight },
+    modeTitleWarn: { color: colors.warningText },
+    modeDetail: { fontSize: 11, color: colors.slate500, marginTop: 3, lineHeight: 16 },
 
-  errorText: { color: colors.danger, fontSize: 11, fontWeight: '600', marginBottom: 12, textAlign: 'center' },
+    errorText: { color: colors.dangerText, fontSize: 11, fontWeight: '600', marginBottom: 12, textAlign: 'center' },
 
-  result: { borderRadius: radii.md, padding: 14, marginBottom: 16, gap: 4 },
-  resultOk: { backgroundColor: colors.successBg },
-  resultBad: { backgroundColor: colors.dangerBg },
-  resultTitle: { fontSize: 13, fontWeight: '800' },
-  resultTitleOk: { color: '#047857' },
-  resultTitleBad: { color: '#BE123C' },
-  resultLine: { fontSize: 11.5, color: colors.slate600, lineHeight: 16 },
-  resultNote: { fontSize: 11, color: colors.slate500, marginTop: 4, lineHeight: 16 },
+    result: { borderRadius: radii.md, padding: 14, marginBottom: 16, gap: 4 },
+    resultOk: { backgroundColor: colors.successBg },
+    resultBad: { backgroundColor: colors.dangerBg },
+    resultTitle: { fontSize: 13, fontWeight: '800' },
+    resultTitleOk: { color: colors.successText },
+    resultTitleBad: { color: colors.dangerText },
+    resultLine: { fontSize: 11.5, color: colors.slate600, lineHeight: 16 },
+    resultNote: { fontSize: 11, color: colors.slate500, marginTop: 4, lineHeight: 16 },
 
-  buttonGap: { marginBottom: 12 },
-  ration: { fontSize: 10.5, color: colors.slate400, textAlign: 'center', marginTop: 16, lineHeight: 15 },
-});
+    buttonGap: { marginBottom: 12 },
+    ration: { fontSize: 10.5, color: colors.slate400, textAlign: 'center', marginTop: 16, lineHeight: 15 },
+  });
+}

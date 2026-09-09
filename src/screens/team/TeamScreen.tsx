@@ -5,7 +5,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { Card } from '../../components/ui';
 import { SkeletonList, SkeletonRows } from '../../components/Skeleton';
-import { colors, radii } from '../../theme/tokens';
+import { ColorScheme, radii } from '../../theme/tokens';
+import { useThemeStore } from '../../stores/themeStore';
 import { getApiErrorMessage } from '../../api/client';
 import { useAuthStore } from '../../stores/authStore';
 import { formatTime, newestFirst, toLocalDateKey } from '../../utils/datetime';
@@ -52,6 +53,8 @@ const shortDate = (key: string) => {
 export function TeamScreen() {
   const store = useAuthStore((s) => s.store);
   const [tab, setTab] = useState<Tab>('today');
+  const colors = useThemeStore((s) => s.colors);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   return (
     <SafeAreaView style={styles.flex} edges={['top']}>
@@ -91,6 +94,8 @@ export function TeamScreen() {
 
 /** Who is in, right now. */
 function OnShift() {
+  const colors = useThemeStore((s) => s.colors);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const { data, isLoading, error } = useQuery({
     queryKey: ['team-live'],
     queryFn: getTeamLive,
@@ -147,6 +152,8 @@ function OnShift() {
 
 /** The last 30 days, one row per employee per day. Absences included. */
 function Register() {
+  const colors = useThemeStore((s) => s.colors);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const range = useMemo(() => {
     const now = new Date();
     const from = new Date(now);
@@ -216,6 +223,8 @@ function Register() {
 
 /** What the team has sent for approval, and who has to decide it. */
 function Requests() {
+  const colors = useThemeStore((s) => s.colors);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const { data, isLoading, error } = useQuery({
     queryKey: ['team-regularisations'],
     queryFn: () => getTeamRegularisations(),
@@ -223,18 +232,18 @@ function Requests() {
 
   const rows = useMemo(() => newestFirst(data ?? [], 'markDate', 'createdAt'), [data]);
 
+  const TONE: Record<string, { bg: string; fg: string }> = useMemo(() => ({
+    pending: { bg: colors.warningBg, fg: colors.warningText },
+    approved: { bg: colors.successBg, fg: colors.successText },
+    rejected: { bg: colors.dangerBg, fg: colors.dangerText },
+    cancelled: { bg: colors.slate100, fg: colors.slate500 },
+  }), [colors]);
+
   if (isLoading) return <SkeletonList count={3} lines={1} />;
   if (error) return <Text style={styles.error}>{getApiErrorMessage(error)}</Text>;
   if (rows.length === 0) {
     return <Card><Text style={styles.empty}>No correction requests from your team.</Text></Card>;
   }
-
-  const TONE: Record<string, { bg: string; fg: string }> = {
-    pending: { bg: colors.warningBg, fg: '#B45309' },
-    approved: { bg: colors.successBg, fg: '#047857' },
-    rejected: { bg: colors.dangerBg, fg: '#BE123C' },
-    cancelled: { bg: colors.slate100, fg: colors.slate500 },
-  };
 
   return (
     <>
@@ -267,73 +276,75 @@ function Requests() {
   );
 }
 
-const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: colors.bgLight },
-  header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 20, paddingTop: 12, paddingBottom: 4, gap: 10,
-  },
-  headerText: { flex: 1 },
-  headerTitle: { fontSize: 21, fontWeight: '800', color: colors.textLight, letterSpacing: -0.3 },
-  headerSub: { fontSize: 11, color: colors.slate400, fontWeight: '600', marginTop: 1 },
-  viewOnly: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: colors.slate100, borderRadius: radii.pill,
-    paddingHorizontal: 9, paddingVertical: 5,
-  },
-  viewOnlyText: { fontSize: 10, fontWeight: '800', color: colors.slate500 },
+function makeStyles(colors: ColorScheme) {
+  return StyleSheet.create({
+    flex: { flex: 1, backgroundColor: colors.bgLight },
+    header: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+      paddingHorizontal: 20, paddingTop: 12, paddingBottom: 4, gap: 10,
+    },
+    headerText: { flex: 1 },
+    headerTitle: { fontSize: 21, fontWeight: '800', color: colors.textLight, letterSpacing: -0.3 },
+    headerSub: { fontSize: 11, color: colors.slate400, fontWeight: '600', marginTop: 1 },
+    viewOnly: {
+      flexDirection: 'row', alignItems: 'center', gap: 4,
+      backgroundColor: colors.slate100, borderRadius: radii.pill,
+      paddingHorizontal: 9, paddingVertical: 5,
+    },
+    viewOnlyText: { fontSize: 10, fontWeight: '800', color: colors.slate500 },
 
-  content: { padding: 20, paddingTop: 12, gap: 12, paddingBottom: 28 },
-  segment: { flexDirection: 'row', backgroundColor: colors.slate100, borderRadius: radii.md, padding: 4 },
-  segmentItem: { flex: 1, alignItems: 'center', paddingVertical: 9, borderRadius: radii.sm },
-  segmentItemActive: {
-    backgroundColor: colors.white,
-    shadowColor: colors.slate900, shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08, shadowRadius: 2, elevation: 1,
-  },
-  segmentText: { fontSize: 11, fontWeight: '700', color: colors.slate500 },
-  segmentTextActive: { color: colors.brand[700] },
+    content: { padding: 20, paddingTop: 12, gap: 12, paddingBottom: 28 },
+    segment: { flexDirection: 'row', backgroundColor: colors.slate100, borderRadius: radii.md, padding: 4 },
+    segmentItem: { flex: 1, alignItems: 'center', paddingVertical: 9, borderRadius: radii.sm },
+    segmentItemActive: {
+      backgroundColor: colors.surface,
+      shadowColor: colors.slate900, shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: colors.scheme === 'dark' ? 0 : 0.08, shadowRadius: 2, elevation: colors.scheme === 'dark' ? 0 : 1,
+    },
+    segmentText: { fontSize: 11, fontWeight: '700', color: colors.slate500 },
+    segmentTextActive: { color: colors.brand[700] },
 
-  tiles: { flexDirection: 'row', gap: 10 },
-  tile: {
-    flex: 1, borderWidth: 1, borderColor: colors.slate200, borderRadius: radii.md,
-    paddingVertical: 12, paddingHorizontal: 12,
-  },
-  tileValue: { fontSize: 19, fontWeight: '800', color: colors.textLight, letterSpacing: -0.4 },
-  tileOk: { color: '#047857' },
-  tileLabel: { fontSize: 10.5, color: colors.slate500, fontWeight: '700', marginTop: 3 },
+    tiles: { flexDirection: 'row', gap: 10 },
+    tile: {
+      flex: 1, borderWidth: 1, borderColor: colors.slate200, borderRadius: radii.md,
+      paddingVertical: 12, paddingHorizontal: 12,
+    },
+    tileValue: { fontSize: 19, fontWeight: '800', color: colors.textLight, letterSpacing: -0.4 },
+    tileOk: { color: colors.successText },
+    tileLabel: { fontSize: 10.5, color: colors.slate500, fontWeight: '700', marginTop: 3 },
 
-  listCard: { padding: 0, paddingHorizontal: 14 },
-  row: {
-    flexDirection: 'row', alignItems: 'center', gap: 10,
-    paddingVertical: 11, borderTopWidth: 1, borderTopColor: colors.slate100,
-  },
-  rowFirst: { borderTopWidth: 0 },
-  dot: { width: 8, height: 8, borderRadius: 4 },
-  dotOn: { backgroundColor: colors.success },
-  dotOff: { backgroundColor: colors.slate300 },
-  rowText: { flex: 1 },
-  rowName: { fontSize: 12.5, fontWeight: '700', color: colors.textLight },
-  rowMeta: { fontSize: 10.5, color: colors.slate400, marginTop: 2, fontWeight: '600' },
-  rowState: { fontSize: 10.5, fontWeight: '800', color: colors.slate300 },
-  rowStateOn: { color: '#047857' },
+    listCard: { padding: 0, paddingHorizontal: 14 },
+    row: {
+      flexDirection: 'row', alignItems: 'center', gap: 10,
+      paddingVertical: 11, borderTopWidth: 1, borderTopColor: colors.slate100,
+    },
+    rowFirst: { borderTopWidth: 0 },
+    dot: { width: 8, height: 8, borderRadius: 4 },
+    dotOn: { backgroundColor: colors.success },
+    dotOff: { backgroundColor: colors.slate300 },
+    rowText: { flex: 1 },
+    rowName: { fontSize: 12.5, fontWeight: '700', color: colors.textLight },
+    rowMeta: { fontSize: 10.5, color: colors.slate400, marginTop: 2, fontWeight: '600' },
+    rowState: { fontSize: 10.5, fontWeight: '800', color: colors.slate300 },
+    rowStateOn: { color: colors.successText },
 
-  rangeLine: { fontSize: 11, color: colors.slate400, fontWeight: '600', marginLeft: 2 },
-  rate: { fontSize: 13, fontWeight: '800' },
-  rateOk: { color: '#047857' },
-  rateMid: { color: '#B45309' },
-  rateBad: { color: colors.danger },
+    rangeLine: { fontSize: 11, color: colors.slate400, fontWeight: '600', marginLeft: 2 },
+    rate: { fontSize: 13, fontWeight: '800' },
+    rateOk: { color: colors.successText },
+    rateMid: { color: colors.warningText },
+    rateBad: { color: colors.dangerText },
 
-  reqCard: { padding: 14, gap: 6 },
-  reqHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  reqName: { flex: 1, fontSize: 13, fontWeight: '800', color: colors.textLight },
-  badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: radii.sm },
-  badgeText: { fontSize: 9.5, fontWeight: '800', textTransform: 'capitalize' },
-  reqMeta: { fontSize: 11, color: colors.slate500, fontWeight: '700' },
-  reqReason: { fontSize: 11.5, color: colors.slate600, lineHeight: 16 },
-  reqNote: { fontSize: 11, color: colors.slate500, fontStyle: 'italic' },
+    reqCard: { padding: 14, gap: 6 },
+    reqHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+    reqName: { flex: 1, fontSize: 13, fontWeight: '800', color: colors.textLight },
+    badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: radii.sm },
+    badgeText: { fontSize: 9.5, fontWeight: '800', textTransform: 'capitalize' },
+    reqMeta: { fontSize: 11, color: colors.slate500, fontWeight: '700' },
+    reqReason: { fontSize: 11.5, color: colors.slate600, lineHeight: 16 },
+    reqNote: { fontSize: 11, color: colors.slate500, fontStyle: 'italic' },
 
-  empty: { fontSize: 12, color: colors.slate400, fontWeight: '600' },
-  error: { color: colors.danger, fontSize: 12, fontWeight: '600', paddingVertical: 10 },
-  footnote: { fontSize: 10.5, color: colors.slate400, lineHeight: 15, marginTop: 4, marginHorizontal: 2 },
-});
+    empty: { fontSize: 12, color: colors.slate400, fontWeight: '600' },
+    error: { color: colors.dangerText, fontSize: 12, fontWeight: '600', paddingVertical: 10 },
+    footnote: { fontSize: 10.5, color: colors.slate400, lineHeight: 15, marginTop: 4, marginHorizontal: 2 },
+  });
+}
