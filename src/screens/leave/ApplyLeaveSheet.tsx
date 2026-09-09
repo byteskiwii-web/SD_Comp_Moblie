@@ -12,7 +12,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useMutation } from '@tanstack/react-query';
-import { colors, radii } from '../../theme/tokens';
+import { ColorScheme, radii } from '../../theme/tokens';
+import { useThemeStore } from '../../stores/themeStore';
 import { Button } from '../../components/ui';
 import { DatePickerField } from '../../components/PickerField';
 import { getApiErrorMessage } from '../../api/client';
@@ -50,6 +51,8 @@ export function ApplyLeaveSheet({
   const [halfDay, setHalfDay] = useState(false);
   const [reason, setReason] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const colors = useThemeStore((s) => s.colors);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   // A fresh sheet every time. Reopening it with somebody's last rejected
   // reason still in the box is how a wrong request gets sent twice.
@@ -206,61 +209,63 @@ export function ApplyLeaveSheet({
   );
 }
 
-const styles = StyleSheet.create({
-  backdrop: {
-    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: 'rgba(15,23,42,0.35)',
-  },
-  lift: { flex: 1, justifyContent: 'flex-end' },
-  sheet: {
-    backgroundColor: colors.white,
-    borderTopLeftRadius: radii.xl, borderTopRightRadius: radii.xl,
-    maxHeight: '88%',
-  },
-  bar: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 20, paddingTop: 18, paddingBottom: 12,
-    borderBottomWidth: 1, borderBottomColor: colors.slate100,
-  },
-  title: { fontSize: 14, fontWeight: '800', color: colors.textLight, letterSpacing: -0.2 },
+function makeStyles(colors: ColorScheme) {
+  return StyleSheet.create({
+    backdrop: {
+      position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+      backgroundColor: 'rgba(15,23,42,0.35)',
+    },
+    lift: { flex: 1, justifyContent: 'flex-end' },
+    sheet: {
+      backgroundColor: colors.surface,
+      borderTopLeftRadius: radii.xl, borderTopRightRadius: radii.xl,
+      maxHeight: '88%',
+    },
+    bar: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+      paddingHorizontal: 20, paddingTop: 18, paddingBottom: 12,
+      borderBottomWidth: 1, borderBottomColor: colors.slate100,
+    },
+    title: { fontSize: 14, fontWeight: '800', color: colors.textLight, letterSpacing: -0.2 },
 
-  body: { padding: 20, paddingBottom: 32, gap: 10 },
-  label: {
-    fontSize: 10.5, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.3,
-    color: colors.slate400, marginTop: 4,
-  },
+    body: { padding: 20, paddingBottom: 32, gap: 10 },
+    label: {
+      fontSize: 10.5, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.3,
+      color: colors.slate400, marginTop: 4,
+    },
 
-  types: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  type: {
-    paddingHorizontal: 14, paddingVertical: 9, borderRadius: radii.sm,
-    borderWidth: 1.5, borderColor: colors.slate200, backgroundColor: colors.white,
-  },
-  typeOn: { borderColor: colors.brand[700], backgroundColor: colors.brand[50] },
-  typeText: { fontSize: 11.5, fontWeight: '800', color: colors.slate600 },
-  typeTextOn: { color: colors.brand[700] },
-  pressed: { opacity: 0.75 },
+    types: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    type: {
+      paddingHorizontal: 14, paddingVertical: 9, borderRadius: radii.sm,
+      borderWidth: 1.5, borderColor: colors.slate200, backgroundColor: colors.surface,
+    },
+    typeOn: { borderColor: colors.brand[700], backgroundColor: colors.brand[50] },
+    typeText: { fontSize: 11.5, fontWeight: '800', color: colors.slate600 },
+    typeTextOn: { color: colors.brand[700] },
+    pressed: { opacity: 0.75 },
 
-  dates: { flexDirection: 'row', gap: 12, marginTop: 4 },
-  dateCol: { flex: 1 },
+    dates: { flexDirection: 'row', gap: 12, marginTop: 4 },
+    dateCol: { flex: 1 },
 
-  halfRow: { flexDirection: 'row', alignItems: 'center', gap: 9, paddingVertical: 4 },
-  halfText: { fontSize: 12, fontWeight: '700', color: colors.slate600 },
+    halfRow: { flexDirection: 'row', alignItems: 'center', gap: 9, paddingVertical: 4 },
+    halfText: { fontSize: 12, fontWeight: '700', color: colors.slate600 },
 
-  totalRow: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: colors.slate50, borderRadius: radii.md,
-    paddingHorizontal: 14, paddingVertical: 11,
-  },
-  totalLabel: { fontSize: 11, fontWeight: '700', color: colors.slate500 },
-  totalValue: { fontSize: 13, fontWeight: '800', color: colors.textLight },
+    totalRow: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+      backgroundColor: colors.slate50, borderRadius: radii.md,
+      paddingHorizontal: 14, paddingVertical: 11,
+    },
+    totalLabel: { fontSize: 11, fontWeight: '700', color: colors.slate500 },
+    totalValue: { fontSize: 13, fontWeight: '800', color: colors.textLight },
 
-  input: {
-    borderWidth: 1, borderColor: colors.slate200, borderRadius: radii.md,
-    paddingHorizontal: 14, paddingVertical: 12, minHeight: 86,
-    fontSize: 12.5, color: colors.textLight, backgroundColor: colors.white,
-  },
+    input: {
+      borderWidth: 1, borderColor: colors.slate200, borderRadius: radii.md,
+      paddingHorizontal: 14, paddingVertical: 12, minHeight: 86,
+      fontSize: 12.5, color: colors.textLight, backgroundColor: colors.surface,
+    },
 
-  error: { color: colors.danger, fontSize: 11.5, fontWeight: '600' },
-  hint: { color: colors.slate400, fontSize: 11, fontWeight: '600' },
-  actions: { marginTop: 6 },
-});
+    error: { color: colors.dangerText, fontSize: 11.5, fontWeight: '600' },
+    hint: { color: colors.slate400, fontSize: 11, fontWeight: '600' },
+    actions: { marginTop: 6 },
+  });
+}
