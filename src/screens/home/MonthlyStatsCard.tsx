@@ -2,7 +2,8 @@ import React, { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { Card } from '../../components/ui';
-import { colors, radii } from '../../theme/tokens';
+import { ColorScheme, radii } from '../../theme/tokens';
+import { useThemeStore } from '../../stores/themeStore';
 import { useAuthStore } from '../../stores/authStore';
 import { getAttendanceHistory } from '../../api/attendance.api';
 import { formatDuration, summariseDays } from '../../utils/attendanceDay';
@@ -25,6 +26,8 @@ const MONTHS = ['January','February','March','April','May','June','July','August
  */
 export function MonthlyStatsCard() {
   const employee = useAuthStore((s) => s.employee);
+  const colors = useThemeStore((s) => s.colors);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const range = useMemo(() => {
     const now = new Date();
@@ -80,6 +83,8 @@ export function MonthlyStatsCard() {
 }
 
 function Tile({ value, label, tone }: { value: string; label: string; tone: 'ok' | 'warn' | 'plain' }) {
+  const colors = useThemeStore((s) => s.colors);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <View style={styles.tile}>
       <Text
@@ -96,24 +101,26 @@ function Tile({ value, label, tone }: { value: string; label: string; tone: 'ok'
   );
 }
 
-const styles = StyleSheet.create({
-  header: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 },
-  title: {
-    fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4,
-    color: colors.slate500,
-  },
-  sub: { fontSize: 11, color: colors.slate400, fontWeight: '600' },
-  spacer: { marginVertical: 12 },
+function makeStyles(colors: ColorScheme) {
+  return StyleSheet.create({
+    header: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 },
+    title: {
+      fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4,
+      color: colors.slate500,
+    },
+    sub: { fontSize: 11, color: colors.slate400, fontWeight: '600' },
+    spacer: { marginVertical: 12 },
 
-  row: { flexDirection: 'row', gap: 10 },
-  tile: {
-    flex: 1, borderWidth: 1, borderColor: colors.slate200, borderRadius: radii.md,
-    paddingVertical: 12, paddingHorizontal: 10, alignItems: 'flex-start',
-  },
-  tileValue: { fontSize: 17.5, fontWeight: '800', color: colors.textLight, letterSpacing: -0.4 },
-  tileOk: { color: '#047857' },
-  tileWarn: { color: '#B45309' },
-  tileLabel: { fontSize: 11, color: colors.slate500, fontWeight: '700', marginTop: 3 },
+    row: { flexDirection: 'row', gap: 10 },
+    tile: {
+      flex: 1, borderWidth: 1, borderColor: colors.slate200, borderRadius: radii.md,
+      paddingVertical: 12, paddingHorizontal: 10, alignItems: 'flex-start',
+    },
+    tileValue: { fontSize: 17.5, fontWeight: '800', color: colors.textLight, letterSpacing: -0.4 },
+    tileOk: { color: colors.successText },
+    tileWarn: { color: colors.warningText },
+    tileLabel: { fontSize: 11, color: colors.slate500, fontWeight: '700', marginTop: 3 },
 
-  footnote: { fontSize: 11, color: colors.slate400, marginTop: 10, lineHeight: 15 },
-});
+    footnote: { fontSize: 11, color: colors.slate400, marginTop: 10, lineHeight: 15 },
+  });
+}
