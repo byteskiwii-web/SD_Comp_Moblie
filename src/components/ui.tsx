@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -9,7 +9,8 @@ import {
   View,
 } from 'react-native';
 import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
-import { colors, radii } from '../theme/tokens';
+import { ColorScheme, radii } from '../theme/tokens';
+import { useThemeStore } from '../stores/themeStore';
 import { Icon, IconName } from './Icon';
 
 type ButtonProps = {
@@ -21,6 +22,8 @@ type ButtonProps = {
 };
 
 export function Button({ title, onPress, disabled, loading, variant = 'primary' }: ButtonProps) {
+  const colors = useThemeStore((s) => s.colors);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const isOutline = variant === 'outline';
   const isDanger = variant === 'danger';
   const spinnerColor = isDanger ? colors.danger : isOutline ? colors.brand[700] : colors.white;
@@ -52,6 +55,8 @@ export function Button({ title, onPress, disabled, loading, variant = 'primary' 
 }
 
 export function TextField(props: TextInputProps & { label: string; error?: string }) {
+  const colors = useThemeStore((s) => s.colors);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const { label, error, style, ...rest } = props;
   return (
     <View style={styles.fieldWrap}>
@@ -67,6 +72,8 @@ export function TextField(props: TextInputProps & { label: string; error?: strin
 }
 
 export function Card({ children, style }: { children: React.ReactNode; style?: object }) {
+  const colors = useThemeStore((s) => s.colors);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return <View style={[styles.card, style]}>{children}</View>;
 }
 
@@ -93,15 +100,21 @@ function initialsOf(name: string): string {
 }
 
 export function Avatar({ name, employeeId, size = 56 }: { name: string; employeeId?: string; size?: number }) {
+  const colors = useThemeStore((s) => s.colors);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const hue = hueFrom(employeeId || name || '?');
   const gradientId = `avatarGradient-${hue}`;
+  // A touch deeper in dark mode -- the same lightness/saturation that reads
+  // as a rich accent against a white card reads as pastel-washed-out against
+  // a near-black one.
+  const [l1, l2] = colors.scheme === 'dark' ? [45, 34] : [50, 40];
   return (
     <View style={{ width: size, height: size }}>
       <Svg width={size} height={size}>
         <Defs>
           <LinearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
-            <Stop offset="0" stopColor={`hsl(${hue},65%,50%)`} />
-            <Stop offset="1" stopColor={`hsl(${(hue + 30) % 360},60%,40%)`} />
+            <Stop offset="0" stopColor={`hsl(${hue},65%,${l1}%)`} />
+            <Stop offset="1" stopColor={`hsl(${(hue + 30) % 360},60%,${l2}%)`} />
           </LinearGradient>
         </Defs>
         <Circle cx={size / 2} cy={size / 2} r={size / 2} fill={`url(#${gradientId})`} />
@@ -120,16 +133,20 @@ export function Avatar({ name, employeeId, size = 56 }: { name: string; employee
 
 type BadgeTone = 'slate' | 'brand' | 'success' | 'warning' | 'danger';
 
-const BADGE_TONE: Record<BadgeTone, { bg: string; fg: string }> = {
-  slate: { bg: colors.slate100, fg: colors.slate600 },
-  brand: { bg: colors.brand[50], fg: colors.brand[700] },
-  success: { bg: colors.successBg, fg: colors.success },
-  warning: { bg: colors.warningBg, fg: colors.warning },
-  danger: { bg: colors.dangerBg, fg: colors.danger },
-};
+function badgeTone(colors: ColorScheme): Record<BadgeTone, { bg: string; fg: string }> {
+  return {
+    slate: { bg: colors.slate100, fg: colors.slate600 },
+    brand: { bg: colors.brand[50], fg: colors.brand[700] },
+    success: { bg: colors.successBg, fg: colors.successText },
+    warning: { bg: colors.warningBg, fg: colors.warningText },
+    danger: { bg: colors.dangerBg, fg: colors.dangerText },
+  };
+}
 
 export function Badge({ tone = 'slate', children }: { tone?: BadgeTone; children: React.ReactNode }) {
-  const t = BADGE_TONE[tone];
+  const colors = useThemeStore((s) => s.colors);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const t = useMemo(() => badgeTone(colors)[tone], [colors, tone]);
   return (
     <View style={[styles.badge, { backgroundColor: t.bg }]}>
       <Text style={[styles.badgeText, { color: t.fg }]}>{children}</Text>
@@ -148,6 +165,8 @@ export function InfoRow({
   value: string;
   last?: boolean;
 }) {
+  const colors = useThemeStore((s) => s.colors);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <View style={[styles.infoRow, last && styles.infoRowLast]}>
       {icon ? <Icon name={icon} size={16} color={colors.slate400} /> : null}
@@ -159,7 +178,12 @@ export function InfoRow({
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(colors: ColorScheme) {
+  const cardShadow = colors.scheme === 'dark'
+    ? { shadowOpacity: 0, elevation: 0, borderWidth: 1, borderColor: colors.slate200 }
+    : { shadowOpacity: 0.06, elevation: 2, borderWidth: 0 };
+
+  return StyleSheet.create({
   button: {
     height: 50,
     borderRadius: radii.md,
@@ -180,20 +204,20 @@ const styles = StyleSheet.create({
   },
   buttonPrimary: {
     backgroundColor: colors.brand[700],
-    shadowColor: colors.brand[900],
+    shadowColor: colors.black,
     shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
+    shadowOpacity: colors.scheme === 'dark' ? 0 : 0.2,
     shadowRadius: 6,
-    elevation: 3,
+    elevation: colors.scheme === 'dark' ? 0 : 3,
   },
-  buttonOutline: { backgroundColor: colors.white, borderWidth: 1.5, borderColor: colors.slate200 },
-  buttonDanger: { backgroundColor: colors.dangerBg, borderWidth: 1.5, borderColor: 'rgba(244,63,94,0.35)' },
+  buttonOutline: { backgroundColor: colors.surface, borderWidth: 1.5, borderColor: colors.slate200 },
+  buttonDanger: { backgroundColor: colors.dangerBg, borderWidth: 1.5, borderColor: colors.danger + '59' },
   buttonDisabled: { opacity: 0.45, shadowOpacity: 0 },
   buttonPressed: { opacity: 0.85 },
   buttonText: { fontSize: 13, fontWeight: '700', letterSpacing: 0.1 },
   buttonTextPrimary: { color: colors.white },
   buttonTextOutline: { color: colors.slate700 },
-  buttonTextDanger: { color: colors.danger },
+  buttonTextDanger: { color: colors.dangerText },
 
   fieldWrap: { marginBottom: 14 },
   fieldLabel: {
@@ -213,20 +237,18 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: colors.textLight,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
   },
   inputError: { borderColor: colors.danger },
-  errorText: { color: colors.danger, fontSize: 11, fontWeight: '600', marginTop: 6 },
+  errorText: { color: colors.dangerText, fontSize: 11, fontWeight: '600', marginTop: 6 },
 
   card: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: radii.lg,
     padding: 16,
-    shadowColor: colors.slate900,
+    shadowColor: colors.black,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
+    ...cardShadow,
   },
 
   avatarInitials: {
@@ -259,4 +281,5 @@ const styles = StyleSheet.create({
     color: colors.slate500,
   },
   infoRowValue: { fontSize: 11, fontWeight: '700', color: colors.textLight, marginTop: 2 },
-});
+  });
+}

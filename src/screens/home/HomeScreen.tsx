@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigation } from '@react-navigation/native';
 import { Card } from '../../components/ui';
-import { colors, radii } from '../../theme/tokens';
+import { ColorScheme, radii } from '../../theme/tokens';
+import { useThemeStore } from '../../stores/themeStore';
+import { ThemeToggle } from '../../components/ThemeToggle';
 import { useAuthStore } from '../../stores/authStore';
 import { getAttendanceHistory } from '../../api/attendance.api';
 import { getLatestMarkOfTypes, SHIFT_TYPES } from '../../utils/attendanceStatus';
@@ -30,6 +32,8 @@ export function HomeScreen() {
   const navigation = useNavigation<any>();
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const startTour = useTourStore((s) => s.start);
+  const colors = useThemeStore((s) => s.colors);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   // The badge number. Polled rather than pushed: expo-notifications remote push
   // does not work in Expo Go at all, so a periodic read is the only way the
@@ -75,6 +79,7 @@ export function HomeScreen() {
               {employee?.first_name ?? 'there'}
             </Text>
           </View>
+          <ThemeToggle />
           <Pressable
             style={styles.iconButton}
             hitSlop={8}
@@ -198,7 +203,13 @@ export function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+// Styles are a function of the active ColorScheme, computed in the component
+// via useMemo (see above) rather than once at module load -- a StyleSheet
+// built at import time would freeze on whichever scheme happened to be
+// active the first time this file loaded and never update when the theme
+// toggle is pressed.
+function makeStyles(colors: ColorScheme) {
+  return StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.bgLight },
   content: { padding: 20, paddingTop: 8, gap: 16 },
 
@@ -212,10 +223,10 @@ const styles = StyleSheet.create({
   },
   avatarInitial: { color: colors.white, fontSize: 13, fontWeight: '800', letterSpacing: 0.3 },
   iconButton: {
-    width: 38, height: 38, borderRadius: 19, backgroundColor: colors.white,
+    width: 38, height: 38, borderRadius: 19, backgroundColor: colors.slate100,
     alignItems: 'center', justifyContent: 'center',
-    shadowColor: colors.slate900, shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06, shadowRadius: 4, elevation: 1,
+    shadowColor: colors.black, shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: colors.scheme === 'dark' ? 0 : 0.06, shadowRadius: 4, elevation: colors.scheme === 'dark' ? 0 : 1,
   },
 
   badge: {
@@ -226,9 +237,11 @@ const styles = StyleSheet.create({
   badgeText: { color: colors.white, fontSize: 10, fontWeight: '800' },
 
   hero: { borderRadius: radii.xl, padding: 20, overflow: 'hidden' },
-  // Green while on shift, matching the reference build — the state is readable
-  // from the colour alone, across the room, without reading the label.
-  heroActive: { backgroundColor: '#0F9D58' },
+  // The active state's own colour, not a plain hex -- readable at a glance
+  // whether the mode is light or dark, and matches the theme's own accent
+  // rather than always being the same hard-coded green in both. See
+  // ColorScheme's comment on why the same key can differ this much by scheme.
+  heroActive: { backgroundColor: colors.heroActive },
   heroInactive: { backgroundColor: colors.slate800 },
   heroDecoration: {
     position: 'absolute', top: -40, right: -40, width: 140, height: 140, borderRadius: 70,
@@ -250,9 +263,10 @@ const styles = StyleSheet.create({
 
   cta: {
     flexDirection: 'row', alignItems: 'center', gap: 14,
-    backgroundColor: colors.white, borderRadius: radii.lg, padding: 14,
-    shadowColor: colors.slate900, shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06, shadowRadius: 8, elevation: 2,
+    backgroundColor: colors.surface, borderRadius: radii.lg, padding: 14,
+    borderWidth: colors.scheme === 'dark' ? 1 : 0, borderColor: colors.slate200,
+    shadowColor: colors.black, shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: colors.scheme === 'dark' ? 0 : 0.06, shadowRadius: 8, elevation: colors.scheme === 'dark' ? 0 : 2,
   },
   ctaPressed: { opacity: 0.9 },
   ctaIcon: {
@@ -276,4 +290,5 @@ const styles = StyleSheet.create({
   timelineIconBad: { backgroundColor: colors.dangerBg },
   timelineType: { flex: 1, fontSize: 11.5, fontWeight: '600', color: colors.textLight, textTransform: 'capitalize' },
   timelineTime: { fontSize: 11, color: colors.slate500, fontWeight: '600' },
-});
+  });
+}

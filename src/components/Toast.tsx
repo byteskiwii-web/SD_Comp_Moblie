@@ -1,8 +1,9 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { Animated, Dimensions, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, radii } from '../theme/tokens';
+import { ColorScheme, radii } from '../theme/tokens';
+import { useThemeStore } from '../stores/themeStore';
 
 // The toast's own row (icon + text) shrink-wraps to its content -- nothing
 // in its ancestor chain (Modal's root, the centring host View) gives it a
@@ -20,10 +21,12 @@ export type ToastState = { tone: ToastTone; text: string } | null;
 const AUTO_HIDE_MS = 2600;
 const ANIM_MS = 180;
 
-const TONE = {
-  success: { bg: colors.success, icon: 'checkmark-circle' as const },
-  warning: { bg: colors.warning, icon: 'alert-circle' as const },
-};
+function toneOf(colors: ColorScheme) {
+  return {
+    success: { bg: colors.success, icon: 'checkmark-circle' as const },
+    warning: { bg: colors.warning, icon: 'alert-circle' as const },
+  };
+}
 
 /**
  * A brief, screen-anchored confirmation — not another Card in the caller's
@@ -49,6 +52,10 @@ const TONE = {
  * each other.
  */
 export function Toast({ state, onHide }: { state: ToastState; onHide: () => void }) {
+  // Above the early return below: every hook here must run every render,
+  // regardless of whether `state` turns out to be null this time.
+  const colors = useThemeStore((s) => s.colors);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(12)).current;
@@ -78,7 +85,7 @@ export function Toast({ state, onHide }: { state: ToastState; onHide: () => void
   }, [state?.tone, state?.text]);
 
   if (!state) return null;
-  const tone = TONE[state.tone];
+  const tone = toneOf(colors)[state.tone];
 
   return (
     <Modal visible transparent animationType="none" statusBarTranslucent onRequestClose={dismiss}>
@@ -96,7 +103,8 @@ export function Toast({ state, onHide }: { state: ToastState; onHide: () => void
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(colors: ColorScheme) {
+  return StyleSheet.create({
   host: {
     flex: 1,
     justifyContent: 'flex-end',
@@ -115,7 +123,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.md,
     paddingVertical: 13,
     paddingHorizontal: 16,
-    shadowColor: colors.slate900,
+    shadowColor: colors.black,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 10,
@@ -129,5 +137,9 @@ const styles = StyleSheet.create({
   // the text -- the row's one flexible child -- rendered at 0px and vanished
   // outright. flexShrink only asks it to give way once toastWrap's maxWidth
   // is actually reached, which is the one thing this needed.
+  // Always white, in both schemes -- this sits on the tone's own saturated
+  // pill (success/warning), not on the theme's background, so it never
+  // needs to be the theme's own text colour.
   text: { flexShrink: 1, color: colors.white, fontSize: 12.5, fontWeight: '700', lineHeight: 17 },
-});
+  });
+}

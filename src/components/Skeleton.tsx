@@ -1,6 +1,7 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { Animated, StyleSheet, View, type ViewStyle } from 'react-native';
-import { colors, radii } from '../theme/tokens';
+import { ColorScheme, radii } from '../theme/tokens';
+import { useThemeStore } from '../stores/themeStore';
 
 /**
  * Loading placeholders shaped like the content that is coming.
@@ -19,6 +20,8 @@ export function Skeleton({ width, height = 12, radius = 6, style }: {
   radius?: number;
   style?: ViewStyle;
 }) {
+  const colors = useThemeStore((s) => s.colors);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const pulse = useRef(new Animated.Value(0.45)).current;
 
   useEffect(() => {
@@ -46,6 +49,8 @@ export function Skeleton({ width, height = 12, radius = 6, style }: {
 
 /** One card-shaped placeholder: a heading, two values, a footer line. */
 export function SkeletonCard({ lines = 2 }: { lines?: number }) {
+  const colors = useThemeStore((s) => s.colors);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <View style={styles.card}>
       <Skeleton width="45%" height={13} />
@@ -62,6 +67,8 @@ export function SkeletonCard({ lines = 2 }: { lines?: number }) {
 
 /** A stack of them, for a list that is still loading. */
 export function SkeletonList({ count = 3, lines = 2 }: { count?: number; lines?: number }) {
+  const colors = useThemeStore((s) => s.colors);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <View style={styles.list}>
       {Array.from({ length: count }).map((_, i) => (
@@ -73,6 +80,8 @@ export function SkeletonList({ count = 3, lines = 2 }: { count?: number; lines?:
 
 /** Rows inside an existing card, where a whole card placeholder would nest badly. */
 export function SkeletonRows({ count = 3 }: { count?: number }) {
+  const colors = useThemeStore((s) => s.colors);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <View style={styles.rows}>
       {Array.from({ length: count }).map((_, i) => (
@@ -86,12 +95,13 @@ export function SkeletonRows({ count = 3 }: { count?: number }) {
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(colors: ColorScheme) {
+  return StyleSheet.create({
   block: { backgroundColor: colors.slate200 },
   grow: { alignSelf: 'stretch' },
   list: { gap: 12 },
   card: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: radii.lg,
     padding: 14,
     gap: 10,
@@ -99,4 +109,5 @@ const styles = StyleSheet.create({
   cardRow: { flexDirection: 'row', justifyContent: 'space-between' },
   rows: { gap: 14, paddingVertical: 8 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-});
+  });
+}

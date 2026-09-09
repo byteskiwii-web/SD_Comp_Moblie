@@ -1,6 +1,7 @@
-import React, { useRef } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
-import { colors, radii } from '../theme/tokens';
+import { ColorScheme, radii } from '../theme/tokens';
+import { useThemeStore } from '../stores/themeStore';
 import { OTP_LENGTH } from '../constants/config';
 
 // Visible boxes + a single hidden TextInput driving them — ported from the
@@ -12,6 +13,8 @@ type Props = {
 };
 
 export function OtpBoxes({ value, onChange, autoFocus }: Props) {
+  const colors = useThemeStore((s) => s.colors);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const inputRef = useRef<TextInput>(null);
   const digits = Array.from({ length: OTP_LENGTH }, (_, i) => value[i] ?? '');
 
@@ -48,7 +51,8 @@ export function OtpBoxes({ value, onChange, autoFocus }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(colors: ColorScheme) {
+  return StyleSheet.create({
   wrap: { flexDirection: 'row', justifyContent: 'center', gap: 8 },
   box: {
     width: 40,
@@ -65,4 +69,5 @@ const styles = StyleSheet.create({
   boxTextEmpty: { color: colors.slate300 },
   boxTextFilled: { color: colors.brand[800] },
   hiddenInput: { position: 'absolute', opacity: 0, height: 48, width: '100%' },
-});
+  });
+}
