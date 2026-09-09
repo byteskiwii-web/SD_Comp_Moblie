@@ -37,6 +37,14 @@ export type ColorScheme = {
    *  everything else here is. */
   accentViolet: string; accentVioletBg: string;
   heroActive: string;
+  /** The hero card's OFF state -- always a dark navy card carrying white
+   *  text, in both schemes, the same way heroActive is always a colour
+   *  carrying white text. It used to borrow `slate800`, which happened to be
+   *  dark navy in light mode -- until the neutral ramp inverted for dark
+   *  mode and slate800 became near-white, putting white hero text on a
+   *  near-white card. A themed neutral was never the right source for a
+   *  card that is not neutral; it needed its own token. */
+  heroInactive: string;
   bgLight: string; bgDark: string;
   textLight: string; textDark: string;
   slate50: string; slate100: string; slate200: string; slate300: string; slate400: string;
@@ -67,12 +75,20 @@ const brandLight: Brand = {
   500: '#4F63E6', 600: '#3B4FD9', 700: '#1E40AF', 800: '#1E3A8A', 900: '#172554',
 };
 
-// Same ramp, shifted brighter/more saturated so the values most-used as "the"
-// accent (700, and 500/600 for pressed/active states) hold up against a
-// near-black surface instead of reading as a dark smear on a darker one.
+// NOT the same ramp shifted brighter -- an earlier version of this was, and
+// it put white button text on #A5B4FC (a pale lavender, ~2:1 contrast,
+// visibly unreadable). [700] is the one value nearly every solid-fill
+// button, active tab and icon-on-tint in the app draws from
+// (buttonPrimary in ui.tsx), so it is fixed FIRST, checked against WCAG AA
+// for white text (4.5:1), and the rest of the ramp built around it:
+//   #4F63E6 (brandLight's own [500], so the dark scheme's primary is the
+//   same hue family, not an unrelated blue) computes to ~5.05:1 against
+//   white -- comfortably over the 4.5:1 line -- while still reading as a
+//   vivid, saturated accent against a near-black screen rather than the
+//   deep navy [700] is in light mode, which would go muddy there.
 const brandDark: Brand = {
-  50: '#1B2452', 100: '#202B63', 200: '#2B3A82', 300: '#3B4FD9', 400: '#5B6EEF',
-  500: '#7C8CF5', 600: '#8FA0FF', 700: '#A5B4FC', 800: '#C7D2FE', 900: '#E0E7FF',
+  50: '#12172E', 100: '#181F3F', 200: '#202A56', 300: '#293674', 400: '#334494',
+  500: '#3B4FD9', 600: '#4459E0', 700: '#4F63E6', 800: '#818CF8', 900: '#C7D2FE',
 };
 
 export const lightColors: ColorScheme = {
@@ -82,6 +98,7 @@ export const lightColors: ColorScheme = {
   warning: '#F0930C', warningBg: '#FFF3DF', warningText: '#B45309',
   accentViolet: '#7C3AED', accentVioletBg: '#F1E9FE',
   heroActive: '#0F9D58',
+  heroInactive: '#1E293B',
   bgLight: '#F3F4FA',
   bgDark: '#0B0F1A',
   textLight: '#0F172A',
@@ -101,6 +118,11 @@ export const darkColors: ColorScheme = {
   warning: '#FBBF24', warningBg: '#3A2A0C', warningText: '#FCD34D',
   accentViolet: '#A78BFA', accentVioletBg: '#2C2153',
   heroActive: '#1FB874',
+  // Same navy as the light scheme, deliberately -- see ColorScheme's comment
+  // on heroInactive. It is lighter than this scheme's own screen background
+  // (bgLight, below, is near-black), which is what makes it still read as a
+  // raised card rather than disappearing into the screen behind it.
+  heroInactive: '#1E293B',
   // The role, not the literal shade: "the screen background" is near-black.
   bgLight: '#0B0F1A',
   bgDark: '#141A2A',

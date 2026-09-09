@@ -242,7 +242,7 @@ function makeStyles(colors: ColorScheme) {
   // rather than always being the same hard-coded green in both. See
   // ColorScheme's comment on why the same key can differ this much by scheme.
   heroActive: { backgroundColor: colors.heroActive },
-  heroInactive: { backgroundColor: colors.slate800 },
+  heroInactive: { backgroundColor: colors.heroInactive },
   heroDecoration: {
     position: 'absolute', top: -40, right: -40, width: 140, height: 140, borderRadius: 70,
     backgroundColor: 'rgba(255,255,255,0.08)',
