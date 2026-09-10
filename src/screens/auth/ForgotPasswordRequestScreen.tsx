@@ -10,6 +10,7 @@ import { useThemeStore } from '../../stores/themeStore';
 import { requestPasswordResetOtp } from '../../api/auth.api';
 import { getApiErrorMessage } from '../../api/client';
 import { forgotPasswordRequestSchema } from '../../schemas/auth.schema';
+import { useT } from '../../i18n';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'ForgotPasswordRequest'>;
 
@@ -19,6 +20,7 @@ export function ForgotPasswordRequestScreen({ navigation, route }: Props) {
   const fromFirstLogin = route.params?.fromFirstLogin;
   const colors = useThemeStore((s) => s.colors);
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const t = useT();
 
   const mutation = useMutation({
     mutationFn: () => requestPasswordResetOtp(employeeId.trim()),
@@ -35,7 +37,7 @@ export function ForgotPasswordRequestScreen({ navigation, route }: Props) {
     setError('');
     const parsed = forgotPasswordRequestSchema.safeParse({ employee_id: employeeId });
     if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? 'Enter your employee ID.');
+      setError(parsed.error.issues[0]?.message ?? t('auth.needEmployeeId'));
       return;
     }
     mutation.mutate();
@@ -45,15 +47,15 @@ export function ForgotPasswordRequestScreen({ navigation, route }: Props) {
     <SafeAreaView style={styles.flex}>
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>{fromFirstLogin ? "Let's set your password" : 'Forgot password'}</Text>
+        <Text style={styles.title}>
+          {fromFirstLogin ? t('auth.setPasswordTitle') : t('auth.forgotTitle')}
+        </Text>
         <Text style={styles.subtitle}>
-          {fromFirstLogin
-            ? "You haven't set a password yet. We'll email you a one-time code to set one."
-            : "We'll email a one-time code to your registered email address."}
+          {fromFirstLogin ? t('auth.firstLoginBody') : t('auth.forgotBody')}
         </Text>
 
         <TextField
-          label="Employee ID"
+          label={t('auth.employeeId')}
           placeholder="EMP-00001"
           autoCapitalize="characters"
           autoCorrect={false}
@@ -64,9 +66,13 @@ export function ForgotPasswordRequestScreen({ navigation, route }: Props) {
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
         <View style={styles.buttonGap}>
-          <Button title="Send code" onPress={submit} loading={mutation.isPending} />
+          <Button title={t('auth.sendCode')} onPress={submit} loading={mutation.isPending} />
         </View>
-        <Button title="Back to sign in" variant="outline" onPress={() => navigation.navigate('Login')} />
+        <Button
+          title={t('auth.backToSignIn')}
+          variant="outline"
+          onPress={() => navigation.navigate('Login')}
+        />
       </ScrollView>
     </KeyboardAvoidingView>
     </SafeAreaView>

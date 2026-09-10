@@ -10,6 +10,7 @@ import { useThemeStore } from '../../stores/themeStore';
 import { resetPassword } from '../../api/auth.api';
 import { getApiErrorMessage } from '../../api/client';
 import { resetPasswordSchema } from '../../schemas/auth.schema';
+import { useT } from '../../i18n';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'ResetPassword'>;
 
@@ -20,6 +21,7 @@ export function ResetPasswordScreen({ navigation, route }: Props) {
   const [error, setError] = useState('');
   const colors = useThemeStore((s) => s.colors);
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const t = useT();
 
   const mutation = useMutation({
     mutationFn: () => resetPassword(resetToken, password),
@@ -37,7 +39,7 @@ export function ResetPasswordScreen({ navigation, route }: Props) {
       confirm_password: confirm,
     });
     if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? 'Check your details and try again.');
+      setError(parsed.error.issues[0]?.message ?? t('auth.checkDetails'));
       return;
     }
     mutation.mutate();
@@ -47,19 +49,19 @@ export function ResetPasswordScreen({ navigation, route }: Props) {
     <SafeAreaView style={styles.flex}>
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>Set a new password</Text>
-        <Text style={styles.subtitle}>Choose a password you haven't used before.</Text>
+        <Text style={styles.title}>{t('auth.newPasswordTitle')}</Text>
+        <Text style={styles.subtitle}>{t('auth.newPasswordBody')}</Text>
 
         <TextField
-          label="New password"
-          placeholder="At least 8 characters"
+          label={t('auth.newPassword')}
+          placeholder={t('auth.minChars')}
           secureTextEntry
           value={password}
           onChangeText={(t) => { setPassword(t); setError(''); }}
         />
         <TextField
-          label="Confirm password"
-          placeholder="Re-enter your new password"
+          label={t('auth.confirmPassword')}
+          placeholder={t('auth.reenter')}
           secureTextEntry
           value={confirm}
           onChangeText={(t) => { setConfirm(t); setError(''); }}
@@ -67,7 +69,7 @@ export function ResetPasswordScreen({ navigation, route }: Props) {
 
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-        <Button title="Update password" onPress={submit} loading={mutation.isPending} />
+        <Button title={t('auth.updatePassword')} onPress={submit} loading={mutation.isPending} />
       </ScrollView>
     </KeyboardAvoidingView>
     </SafeAreaView>

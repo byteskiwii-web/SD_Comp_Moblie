@@ -1,3 +1,5 @@
+import { t } from '../../../i18n';
+
 // The liveness check that runs inside a WebView, as one self-contained HTML
 // document.
 //
@@ -24,6 +26,13 @@
 // exposes the profile a flat print cannot show. The ORDER OF THE TURNS IS
 // RANDOM, which is the part that matters against a replayed video -- a recording
 // cannot know which side will be asked for first.
+//
+// TRANSLATION crosses a boundary here. The page is a document, not a
+// component, so it cannot call useT -- and when EXPO_PUBLIC_LIVENESS_URL is
+// set it is not even this string, it is a file on a server. So the host
+// INJECTS the strings before the document loads, and every lookup falls back
+// to the English written inline. A hosted copy that predates a new key keeps
+// working; it just shows English for that one line.
 //
 // NOTE: this document must contain no backticks and no dollar-brace, because it
 // lives in a template literal. Hence string concatenation throughout the script.
@@ -152,6 +161,40 @@ var TIMEOUT_MS    = 45000;
 
 var RN = window.ReactNativeWebView;
 function send(o) { try { if (RN) RN.postMessage(JSON.stringify(o)); } catch (e) {} }
+
+// Injected by the host before this document loads. The English argument is
+// the fallback, so a missing key is a plain sentence rather than a blank.
+var STRINGS = window.__LIVENESS_STRINGS || {};
+function S(key, fallback, vars) {
+  var text = STRINGS[key] || fallback;
+  if (vars) {
+    for (var k in vars) {
+      if (Object.prototype.hasOwnProperty.call(vars, k)) {
+        text = text.split("{" + k + "}").join(String(vars[k]));
+      }
+    }
+  }
+  return text;
+}
+
+// The static markup is written in English and relabelled once, here, rather
+// than being built as a string -- so the document still reads as HTML.
+function applyStaticStrings() {
+  var set = function (id, key, fallback) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = S(key, fallback);
+  };
+  set("prompt", "live.starting", "Starting camera\u2026");
+  set("errTitle", "live.cameraUnavailable", "Camera unavailable");
+  set("hudFallback", "live.continueWithout", "Continue without liveness");
+  set("fallback", "live.continueWithout", "Continue without liveness");
+  set("cancel", "common.cancel", "Cancel");
+  set("cancel2", "common.cancel", "Cancel");
+  set("retry", "common.retry", "Try again");
+  var badgeText = document.querySelector("#badge .txt");
+  if (badgeText) badgeText.textContent = S("live.badge", "Liveness Verified");
+}
+applyStaticStrings();
 
 var video    = document.getElementById("video");
 var overlay  = document.getElementById("overlay");
@@ -348,7 +391,7 @@ function pass() {
   // passed.
   ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
   drawBrackets("#10B981");
-  promptEl.textContent = "Liveness verified";
+  promptEl.textContent = S("live.verified", "Liveness verified");
   subEl.textContent = "";
   blinksEl.classList.add("hide");
   badge.classList.add("show");
@@ -372,8 +415,8 @@ function loop() {
       // silently burning the full timeout.
       if (detectFails === 1) send({ type: "error", kind: "detect", message: String(e && e.message ? e.message : e) });
       if (detectFails > 30) {
-        fail("Face check will not run on this phone",
-             "The camera works, but this device cannot run the face model. Continue without the liveness check, or use a newer phone.",
+        fail(S("live.noModelTitle", "Face check will not run on this phone"),
+             S("live.noModelBody", "The camera works, but this device cannot run the face model. Continue without the liveness check, or use a newer phone."),
              "detect", String(e && e.message ? e.message : e));
         return;
       }
@@ -388,13 +431,17 @@ function loop() {
     // nothing, or a half-lit dot suggesting a blink was just counted.
     showArrow(null);
     var waiting = performance.now() - startedAt;
-    promptEl.textContent = "Position your face in the frame";
+    promptEl.textContent = S("live.position", "Position your face in the frame");
     // Say something more useful the longer nothing is found, and after ten
     // seconds stop pretending that waiting is the answer.
     subEl.textContent =
       waiting < 4000 ? ""
-      : waiting < 10000 ? (everSawFace ? "Move back into the frame" : "Hold the phone at arm's length, face towards the light")
-      : "Still looking. This phone runs the check slowly - give it a moment, or continue without it.";
+      : waiting < 10000
+        ? (everSawFace
+            ? S("live.lookingBack", "Move back into the frame")
+            : S("live.lookingLight", "Hold the phone at arm's length, face towards the light"))
+        : S("live.lookingSlow",
+            "Still looking. This phone runs the check slowly - give it a moment, or continue without it.");
     if (waiting > 10000) document.getElementById("hudFallback").hidden = false;
   } else {
     if (!everSawFace) { everSawFace = true; send({ type: "status", phase: "face-detected" }); }
@@ -409,13 +456,13 @@ function loop() {
       var ok = frac > MIN_FACE && frac < MAX_FACE && offX < CENTRE_TOL && offY < CENTRE_TOL;
       if (!ok) {
         alignedAt = 0;
-        promptEl.textContent = frac <= MIN_FACE ? "Move a little closer"
-                             : frac >= MAX_FACE ? "Move a little further away"
-                             : "Centre your face in the frame";
+        promptEl.textContent = frac <= MIN_FACE ? S("live.moveCloser", "Move a little closer")
+                             : frac >= MAX_FACE ? S("live.moveBack", "Move a little further away")
+                             : S("live.centre", "Centre your face in the frame");
         subEl.textContent = "";
       } else {
         if (!alignedAt) alignedAt = performance.now();
-        promptEl.textContent = "Hold still";
+        promptEl.textContent = S("live.holdStill", "Hold still");
         subEl.textContent = "";
         var mtx = lastRes.facialTransformationMatrixes && lastRes.facialTransformationMatrixes[0];
         if (performance.now() - alignedAt > HOLD_MS && mtx) {
@@ -448,14 +495,15 @@ function loop() {
           send({ type: "status", phase: "turn" });
         }
       }
-      promptEl.textContent = "Blink " + BLINKS_NEEDED + " times";
-      subEl.textContent = blinks + " of " + BLINKS_NEEDED;
+      promptEl.textContent = S("live.blink", "Blink {count} times", { count: BLINKS_NEEDED });
+      subEl.textContent = S("live.blinkProgress", "{done} of {count}", { done: blinks, count: BLINKS_NEEDED });
 
     } else if (phase === "turn") {
       var want = turnOrder[turnIndex];
       showArrow(want);
-      promptEl.textContent = want === "left" ? "Turn your head to the left"
-                                             : "Turn your head to the right";
+      promptEl.textContent = want === "left"
+        ? S("live.turnLeft", "Turn your head to the left")
+        : S("live.turnRight", "Turn your head to the right");
 
       var m2 = lastRes.facialTransformationMatrixes && lastRes.facialTransformationMatrixes[0];
       if (m2) {
@@ -469,7 +517,7 @@ function loop() {
           // Between the two turns the head must come back through the middle.
           // Without this, a single sweep from far left to far right satisfies
           // both directions on the way past.
-          subEl.textContent = "Face forward again";
+          subEl.textContent = S("live.faceForward", "Face forward again");
           if (turned < RECENTRE_DEG && !side) recentred = true;
         } else if (turned > TURN_DEG && side === want) {
           turnIndex++;
@@ -477,15 +525,15 @@ function loop() {
           subEl.textContent = "";
           if (turnIndex >= turnOrder.length) { pass(); return; }
         } else {
-          subEl.textContent = turnIndex === 0 ? "1 of 2" : "2 of 2";
+          subEl.textContent = S("live.step", "{done} of {count}", { done: turnIndex + 1, count: 2 });
         }
       }
     }
   }
 
   if (performance.now() - startedAt > TIMEOUT_MS) {
-    fail("Couldn't verify",
-         "The check timed out. Make sure your face is well lit and fully visible, then try again.",
+    fail(S("live.timeoutTitle", "Could not verify"),
+         S("live.timeoutBody", "The check timed out. Make sure your face is well lit and fully visible, then try again."),
          "timeout", "timeout");
     return;
   }
@@ -502,7 +550,8 @@ async function boot() {
     await video.play();
     send({ type: "status", phase: "camera-ready" });
   } catch (e) {
-    fail("Camera blocked", "Allow camera access to verify your identity, then try again.",
+    fail(S("live.cameraBlockedTitle", "Camera blocked"),
+         S("live.cameraBlockedBody", "Allow camera access to verify your identity, then try again."),
          "camera", (e && e.name ? e.name + ": " : "") + (e && e.message ? e.message : e));
     return;
   }
@@ -537,8 +586,8 @@ async function boot() {
       landmarker = await buildLandmarker("CPU");
     }
   } catch (e) {
-    fail("Face check unavailable",
-         "The liveness model could not be loaded. Check your connection and try again.",
+    fail(S("live.modelFailTitle", "Face check unavailable"),
+         S("live.modelFailBody", "The liveness model could not be loaded. Check your connection and try again."),
          "model", e && e.message ? e.message : e);
     return;
   }
@@ -553,3 +602,36 @@ boot();
 </body>
 </html>
 `;
+
+/**
+ * The script the WebView runs BEFORE the document loads.
+ *
+ * Injected rather than interpolated into the HTML, because the page is also
+ * served from a URL when EXPO_PUBLIC_LIVENESS_URL is set -- and that copy is
+ * not this string, so there would be nothing to interpolate into. This works
+ * for both.
+ *
+ * Must end with `true;` -- a WebView warns loudly if the injected script's
+ * last expression is not a primitive.
+ */
+export function livenessStringsScript(): string {
+  const keys = [
+    'live.starting', 'live.cameraUnavailable', 'live.continueWithout', 'live.badge',
+    'live.position', 'live.lookingBack', 'live.lookingLight', 'live.lookingSlow',
+    'live.moveCloser', 'live.moveBack', 'live.centre', 'live.holdStill',
+    'live.blink', 'live.blinkProgress', 'live.turnLeft', 'live.turnRight',
+    'live.faceForward', 'live.verified', 'live.step',
+    'live.noModelTitle', 'live.noModelBody',
+    'live.cameraBlockedTitle', 'live.cameraBlockedBody',
+    'live.modelFailTitle', 'live.modelFailBody',
+    'live.timeoutTitle', 'live.timeoutBody',
+    'common.cancel', 'common.retry',
+  ] as const;
+
+  const bundle: Record<string, string> = {};
+  for (const key of keys) bundle[key] = t(key);
+
+  // JSON.stringify twice: once for the object, once so the result can sit
+  // inside a JS string literal without a quote in a translation ending it.
+  return 'window.__LIVENESS_STRINGS = JSON.parse(' + JSON.stringify(JSON.stringify(bundle)) + '); true;';
+}

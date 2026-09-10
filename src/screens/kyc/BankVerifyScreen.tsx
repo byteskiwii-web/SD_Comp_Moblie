@@ -28,6 +28,7 @@ import {
 import { getApiErrorMessage } from '../../api/client';
 import { kycGateQueryKey } from '../../hooks/useKycGate';
 import { bankVerifySchema } from '../../schemas/kyc.schema';
+import { useT } from '../../i18n';
 
 /**
  * Bank account verification.
@@ -61,6 +62,7 @@ export function BankVerifyScreen() {
   const queryClient = useQueryClient();
   const colors = useThemeStore((s) => s.colors);
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const t = useT();
 
   const [ifsc, setIfsc] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
@@ -118,7 +120,7 @@ export function BankVerifyScreen() {
       mobile,
     });
     if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? 'Check the details and try again.');
+      setError(parsed.error.issues[0]?.message ?? t('bank.checkDetails'));
       return;
     }
 
@@ -126,13 +128,19 @@ export function BankVerifyScreen() {
       // Named amount, named destination. A confirmation that says only "are
       // you sure" is one people learn to tap through.
       Alert.alert(
-        'Send a test deposit?',
-        `${PENNY_DROP_AMOUNT} will be deposited into account ending ${accountNumber.trim().slice(-4)} at ` +
-          `${branch?.bank ?? ifsc.trim().toUpperCase()} to prove it can receive money. ` +
-          'This cannot be undone and must not be repeated.',
+        t('bank.pennyTitle'),
+        t('bank.pennyConfirmBody', {
+          amount: PENNY_DROP_AMOUNT,
+          last4: accountNumber.trim().slice(-4),
+          bank: branch?.bank ?? ifsc.trim().toUpperCase(),
+        }),
         [
-          { text: 'Cancel', style: 'cancel' },
-          { text: `Send ${PENNY_DROP_AMOUNT}`, style: 'default', onPress: () => verify.mutate() },
+          { text: t('common.cancel'), style: 'cancel' },
+          {
+            text: t('bank.pennySend', { amount: PENNY_DROP_AMOUNT }),
+            style: 'default',
+            onPress: () => verify.mutate(),
+          },
         ]
       );
       return;
@@ -145,15 +153,15 @@ export function BankVerifyScreen() {
 
   return (
     <SafeAreaView style={styles.flex} edges={['top']}>
-      <ScreenHeader title="Bank account" />
+      <ScreenHeader title={t('bank.title')} />
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <Text style={styles.subtitle}>
-            This is the account your salary is paid into. It must be in your own name.
+            {t('bank.intro')}
           </Text>
 
           <TextField
-            label="IFSC"
+            label={t('bank.ifsc')}
             value={ifsc}
             onChangeText={(t) => {
               setIfsc(t.toUpperCase());
@@ -167,7 +175,7 @@ export function BankVerifyScreen() {
 
           <View style={styles.lookupRow}>
             <Button
-              title={branchLookup.isPending ? 'Checking…' : 'Find branch'}
+              title={branchLookup.isPending ? t('common.checking') : t('bank.findBranch')}
               variant="outline"
               onPress={() => branchLookup.mutate()}
               disabled={ifsc.trim().length !== 11 || branchLookup.isPending}
@@ -187,7 +195,7 @@ export function BankVerifyScreen() {
           )}
 
           <TextField
-            label="Account number"
+            label={t('bank.account')}
             value={accountNumber}
             onChangeText={(t) => {
               setAccountNumber(t.replace(/\D/g, ''));
@@ -195,11 +203,11 @@ export function BankVerifyScreen() {
             }}
             keyboardType="number-pad"
             maxLength={18}
-            placeholder="6 to 18 digits"
+            placeholder={t('bank.digitsRange')}
           />
 
           <TextField
-            label="Confirm account number"
+            label={t('bank.confirmAccount')}
             value={confirmAccount}
             onChangeText={(t) => {
               setConfirmAccount(t.replace(/\D/g, ''));
@@ -207,38 +215,38 @@ export function BankVerifyScreen() {
             }}
             keyboardType="number-pad"
             maxLength={18}
-            placeholder="Type it again"
+            placeholder={t('bank.typeAgain')}
           />
 
           <TextField
-            label="Name as per bank (optional)"
+            label={t('bank.nameOptional')}
             value={name}
             onChangeText={setName}
-            placeholder="Helps the bank match the account"
+            placeholder={t('bank.nameHint')}
           />
 
           <TextField
-            label="Mobile registered with the bank (optional)"
+            label={t('bank.mobileOptional')}
             value={mobile}
             onChangeText={(t) => setMobile(t.replace(/\D/g, ''))}
             keyboardType="number-pad"
             maxLength={10}
-            placeholder="10 digits"
+            placeholder={t('bank.tenDigits')}
           />
 
-          <Text style={styles.fieldLabel}>How to verify</Text>
+          <Text style={styles.fieldLabel}>{t('bank.howToVerify')}</Text>
           <View style={styles.modes}>
             <ModeOption
               selected={mode === 'penniless'}
               onPress={() => setMode('penniless')}
-              title="Standard check"
-              detail="Confirms the account without moving any money. Recommended."
+              title={t('bank.standard')}
+              detail={t('bank.standardNote')}
             />
             <ModeOption
               selected={mode === 'pennydrop'}
               onPress={() => setMode('pennydrop')}
-              title={`Test deposit (${PENNY_DROP_AMOUNT})`}
-              detail={`Deposits ${PENNY_DROP_AMOUNT} to prove the account can actually receive money. Cannot be undone.`}
+              title={t('bank.pennyMode', { amount: PENNY_DROP_AMOUNT })}
+              detail={t('bank.pennyModeNote', { amount: PENNY_DROP_AMOUNT })}
               warn
             />
           </View>
@@ -248,21 +256,26 @@ export function BankVerifyScreen() {
           {result && (
             <View style={[styles.result, result.verified ? styles.resultOk : styles.resultBad]}>
               <Text style={[styles.resultTitle, result.verified ? styles.resultTitleOk : styles.resultTitleBad]}>
-                {result.verified ? 'Account verified' : 'Not usable for salary'}
+                {result.verified ? t('bank.verified') : t('bank.unusable')}
               </Text>
               <Text style={styles.resultLine}>{result.message}</Text>
               {result.account.nameAtBank ? (
-                <Text style={styles.resultLine}>Name at bank: {result.account.nameAtBank}</Text>
+                <Text style={styles.resultLine}>
+                  {t('bank.nameAtBank', { name: result.account.nameAtBank })}
+                </Text>
               ) : null}
               {/* Proof, on the one mode that produces any. */}
               {result.transfer?.utr ? (
                 <Text style={styles.resultLine}>
-                  Deposited ₹{result.transfer.amountDeposited ?? 1} · UTR {result.transfer.utr}
+                  {t('bank.deposited', {
+                    amount: result.transfer.amountDeposited ?? 1,
+                    utr: result.transfer.utr,
+                  })}
                 </Text>
               ) : null}
               {!result.verified && result.accountExists ? (
                 <Text style={styles.resultNote}>
-                  The account exists but cannot receive salary — it may be blocked, frozen or an NRE account.
+                  {t('bank.unusableNote')}
                 </Text>
               ) : null}
             </View>
@@ -270,17 +283,24 @@ export function BankVerifyScreen() {
 
           <View style={styles.buttonGap}>
             <Button
-              title={mode === 'pennydrop' ? `Verify with ${PENNY_DROP_AMOUNT} deposit` : 'Verify account'}
+              title={
+                mode === 'pennydrop'
+                  ? t('bank.verifyWithDeposit', { amount: PENNY_DROP_AMOUNT })
+                  : t('bank.verify')
+              }
               onPress={run}
               loading={busy}
               disabled={busy || result?.verified === true}
             />
           </View>
-          <Button title={result?.verified ? 'Done' : 'Back'} variant="outline" onPress={() => navigation.goBack()} />
+          <Button
+            title={result?.verified ? t('common.done') : t('common.back')}
+            variant="outline"
+            onPress={() => navigation.goBack()}
+          />
 
           <Text style={styles.ration}>
-            You can change your bank details a limited number of times. After that an administrator has to
-            update them for you.
+            {t('bank.ration')}
           </Text>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -303,6 +323,7 @@ function ModeOption({
 }) {
   const colors = useThemeStore((s) => s.colors);
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const t = useT();
   return (
     <Pressable
       onPress={onPress}

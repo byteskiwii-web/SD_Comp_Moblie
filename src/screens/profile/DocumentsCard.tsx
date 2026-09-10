@@ -10,7 +10,7 @@ import { useThemeStore } from '../../stores/themeStore';
 import { getApiErrorMessage } from '../../api/client';
 import { getHealthDeps } from '../../api/verification.api';
 import {
-  DOC_TYPE_LABEL,
+  DOC_TYPE_KEY,
   deleteDocument,
   getMyDocuments,
   uploadDocument,
@@ -20,6 +20,7 @@ import {
   type PickedFile,
 } from '../../api/documents.api';
 import { formatDate } from '../../utils/datetime';
+import { useT, type TKey } from '../../i18n';
 
 /**
  * Supporting documents.
@@ -44,16 +45,16 @@ const OFFERED: DocType[] = [
   'other',
 ];
 
-const HINT: Partial<Record<DocType, string>> = {
-  cancelled_cheque: 'Shows your account number and IFSC as the bank prints them',
-  bank_passbook: 'The page with your name and account number',
+const HINT_KEY: Partial<Record<DocType, TKey>> = {
+  cancelled_cheque: 'docs.cheque',
+  bank_passbook: 'docs.aadhaar',
 };
 
-function statusTone(colors: ColorScheme): Record<DocumentStatus, { bg: string; fg: string; label: string }> {
+function statusTone(colors: ColorScheme): Record<DocumentStatus, { bg: string; fg: string; key: TKey }> {
   return {
-    pending: { bg: colors.warningBg, fg: colors.warningText, label: 'In review' },
-    verified: { bg: colors.successBg, fg: colors.successText, label: 'Verified' },
-    rejected: { bg: colors.dangerBg, fg: colors.dangerText, label: 'Rejected' },
+    pending: { bg: colors.warningBg, fg: colors.warningText, key: 'status.inReview' },
+    verified: { bg: colors.successBg, fg: colors.successText, key: 'status.verified' },
+    rejected: { bg: colors.dangerBg, fg: colors.dangerText, key: 'status.rejected' },
   };
 }
 
@@ -63,6 +64,7 @@ export function DocumentsCard() {
   const [error, setError] = useState<string | null>(null);
   const colors = useThemeStore((s) => s.colors);
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const t = useT();
   const STATUS_TONE = useMemo(() => statusTone(colors), [colors]);
 
   const deps = useQuery({ queryKey: ['health-deps'], queryFn: getHealthDeps, retry: false });
@@ -105,7 +107,7 @@ export function DocumentsCard() {
   if (deps.isLoading) {
     return (
       <Card>
-        <Text style={styles.cardTitle}>Documents</Text>
+        <Text style={styles.cardTitle}>{t('docs.title')}</Text>
         <SkeletonRows count={3} />
       </Card>
     );
@@ -114,9 +116,9 @@ export function DocumentsCard() {
   if (!enabled) {
     return (
       <Card>
-        <Text style={styles.cardTitle}>Documents</Text>
+        <Text style={styles.cardTitle}>{t('docs.title')}</Text>
         <Text style={styles.off}>
-          Document upload isn't switched on yet. Your HR team will ask for these directly for now.
+          {t('docs.disabled')}
         </Text>
       </Card>
     );
@@ -124,7 +126,7 @@ export function DocumentsCard() {
 
   return (
     <Card>
-      <Text style={styles.cardTitle}>Documents</Text>
+      <Text style={styles.cardTitle}>{t('docs.title')}</Text>
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
@@ -139,14 +141,14 @@ export function DocumentsCard() {
           return (
             <View key={type} style={[styles.row, i === OFFERED.length - 1 && styles.rowLast]}>
               <View style={styles.rowText}>
-                <Text style={styles.rowLabel}>{DOC_TYPE_LABEL[type]}</Text>
+                <Text style={styles.rowLabel}>{t(DOC_TYPE_KEY[type])}</Text>
                 {doc ? (
                   <Text style={styles.rowMeta} numberOfLines={1}>
-                    {doc.fileName ?? 'Attached'} · {formatDate(doc.uploadedAt)}
+                    {doc.fileName ?? t('docs.attached')} · {formatDate(doc.uploadedAt)}
                   </Text>
-                ) : HINT[type] ? (
+                ) : HINT_KEY[type] ? (
                   <Text style={styles.rowHint} numberOfLines={2}>
-                    {HINT[type]}
+                    {t(HINT_KEY[type] as TKey)}
                   </Text>
                 ) : null}
                 {doc?.status === 'rejected' && doc.rejectionReason ? (
@@ -156,7 +158,7 @@ export function DocumentsCard() {
 
               {tone ? (
                 <View style={[styles.chip, { backgroundColor: tone.bg }]}>
-                  <Text style={[styles.chipText, { color: tone.fg }]}>{tone.label}</Text>
+                  <Text style={[styles.chipText, { color: tone.fg }]}>{t(tone.key)}</Text>
                 </View>
               ) : null}
 
@@ -171,14 +173,19 @@ export function DocumentsCard() {
                   disabled={busy}
                   style={({ pressed }) => [styles.action, pressed && styles.actionPressed]}
                   accessibilityRole="button"
-                  accessibilityLabel={`${doc ? 'Replace' : 'Upload'} ${DOC_TYPE_LABEL[type]}`}
+                  accessibilityLabel={t('docs.actionLabel', {
+                    action: doc ? t('docs.replace') : t('docs.upload'),
+                    name: t(DOC_TYPE_KEY[type]),
+                  })}
                 >
                   <Ionicons
                     name={busy ? 'cloud-upload-outline' : doc ? 'refresh-outline' : 'add-circle-outline'}
                     size={17}
                     color={colors.brand[700]}
                   />
-                  <Text style={styles.actionText}>{busy ? 'Sending…' : doc ? 'Replace' : 'Upload'}</Text>
+                  <Text style={styles.actionText}>
+                    {busy ? t('common.sending') : doc ? t('docs.replace') : t('docs.upload')}
+                  </Text>
                 </Pressable>
               )}
 
@@ -188,7 +195,7 @@ export function DocumentsCard() {
                   hitSlop={8}
                   style={styles.removeBtn}
                   accessibilityRole="button"
-                  accessibilityLabel={`Remove ${DOC_TYPE_LABEL[type]}`}
+                  accessibilityLabel={t('docs.remove', { name: t(DOC_TYPE_KEY[type]) })}
                 >
                   <Ionicons name="trash-outline" size={15} color={colors.slate400} />
                 </Pressable>
@@ -199,13 +206,16 @@ export function DocumentsCard() {
       )}
 
       <Text style={styles.consent}>
-        Uploading shares the document with your HR team for verification. The number on it is masked before
-        it is stored.
+        {t('docs.consent')}
       </Text>
 
       <FilePickerSheet
         visible={picking !== null}
-        title={picking ? `Attach ${DOC_TYPE_LABEL[picking].toLowerCase()}` : 'Attach a document'}
+        title={
+          picking
+            ? t('docs.attachNamed', { name: t(DOC_TYPE_KEY[picking]) })
+            : t('file.attach')
+        }
         onClose={() => setPicking(null)}
         onPicked={(file) => {
           const type = picking;

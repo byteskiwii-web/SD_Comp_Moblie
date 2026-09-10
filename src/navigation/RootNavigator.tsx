@@ -12,6 +12,7 @@ import { useBreakReminderEffect } from '../hooks/useBreakReminderEffect';
 import { useShiftIntegrityWatcher } from '../hooks/useShiftIntegrityWatcher';
 import { useKycGate } from '../hooks/useKycGate';
 import { useThemeStore } from '../stores/themeStore';
+import { useI18nReady } from '../i18n';
 
 function FullScreenSpinner() {
   const colors = useThemeStore((s) => s.colors);
@@ -37,6 +38,10 @@ function AuthenticatedApp() {
 export function RootNavigator() {
   const token = useAuthStore((s) => s.token);
   const hydrated = useAuthStore((s) => s.hydrated);
+  // The chosen language is read back from storage asynchronously, so the
+  // first frame after a cold start would otherwise be English -- a flash of
+  // the wrong language on every launch for anyone who is not using it.
+  const languageReady = useI18nReady();
   const colors = useThemeStore((s) => s.colors);
 
   // Base off react-navigation's own themes rather than building one from
@@ -59,7 +64,7 @@ export function RootNavigator() {
     };
   }, [colors]);
 
-  if (!hydrated) {
+  if (!hydrated || !languageReady) {
     return <FullScreenSpinner />;
   }
 

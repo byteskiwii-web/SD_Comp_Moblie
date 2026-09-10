@@ -11,6 +11,7 @@ import { login } from '../../api/auth.api';
 import { getApiErrorCode, getApiErrorMessage } from '../../api/client';
 import { useAuthStore } from '../../stores/authStore';
 import { loginSchema } from '../../schemas/auth.schema';
+import { useT } from '../../i18n';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
@@ -21,6 +22,7 @@ export function LoginScreen({ navigation }: Props) {
   const setAuth = useAuthStore((s) => s.setAuth);
   const colors = useThemeStore((s) => s.colors);
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const t = useT();
 
   const mutation = useMutation({
     mutationFn: () => login(employeeId.trim(), password),
@@ -41,7 +43,7 @@ export function LoginScreen({ navigation }: Props) {
     setError('');
     const parsed = loginSchema.safeParse({ employee_id: employeeId, password });
     if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? 'Check your details and try again.');
+      setError(parsed.error.issues[0]?.message ?? t('auth.checkDetails'));
       return;
     }
     mutation.mutate();
@@ -58,13 +60,13 @@ export function LoginScreen({ navigation }: Props) {
           <View style={styles.logoDot}>
             <Text style={styles.logoDotText}>Z</Text>
           </View>
-          <Text style={styles.brandLabel}>ZIP HRMS · FIELD APP</Text>
-          <Text style={styles.title}>Sign in</Text>
-          <Text style={styles.subtitle}>Use the employee ID and password given by your HR team.</Text>
+          <Text style={styles.brandLabel}>{t('auth.brand')}</Text>
+          <Text style={styles.title}>{t('auth.signIn')}</Text>
+          <Text style={styles.subtitle}>{t('auth.intro')}</Text>
         </View>
 
         <TextField
-          label="Employee ID"
+          label={t('auth.employeeId')}
           placeholder="EMP-00001"
           autoCapitalize="characters"
           autoCorrect={false}
@@ -72,7 +74,7 @@ export function LoginScreen({ navigation }: Props) {
           onChangeText={(t) => { setEmployeeId(t); setError(''); }}
         />
         <TextField
-          label="Password"
+          label={t('auth.password')}
           placeholder="••••••••"
           secureTextEntry
           value={password}
@@ -82,11 +84,11 @@ export function LoginScreen({ navigation }: Props) {
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
         <View style={styles.buttonGap}>
-          <Button title="Sign in" onPress={submit} loading={mutation.isPending} />
+          <Button title={t('auth.signIn')} onPress={submit} loading={mutation.isPending} />
         </View>
 
         <Button
-          title="Forgot password?"
+          title={t('auth.forgot')}
           variant="outline"
           onPress={() => navigation.navigate('ForgotPasswordRequest')}
         />

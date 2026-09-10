@@ -15,11 +15,13 @@ import {
   markWorkedDuringLeave,
   getLeaveSummary,
   getMyLeave,
-  LEAVE_TYPE_LABEL,
+  LEAVE_TYPE_LABEL_KEY,
+  LEAVE_TYPES,
   type LeaveRequest,
   type LeaveStatus,
 } from '../../api/leave.api';
 import { ApplyLeaveSheet } from './ApplyLeaveSheet';
+import { t as tr, useT, type TKey } from '../../i18n';
 
 /**
  * Leave.
@@ -35,34 +37,31 @@ import { ApplyLeaveSheet } from './ApplyLeaveSheet';
  * decide whether they can afford to be off.
  */
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const monthShort = (m: number) => tr(('monthShort.' + (m + 1)) as TKey);
 
 const shortDate = (key: string) => {
   const d = new Date(`${String(key).slice(0, 10)}T00:00:00`);
-  return `${d.getDate()} ${MONTHS[d.getMonth()]}`;
+  return `${d.getDate()} ${monthShort(d.getMonth())}`;
 };
 
 /** "12 Sep" for one day, "12 – 15 Sep" for a range. */
 function rangeLabel(r: LeaveRequest) {
   const from = String(r.startDate).slice(0, 10);
   const to = String(r.endDate).slice(0, 10);
-  if (from === to) return `${shortDate(from)}${r.halfDay ? ' · half day' : ''}`;
+  if (from === to) return `${shortDate(from)}${r.halfDay ? tr('leave.halfDaySuffix') : ''}`;
   return `${shortDate(from)} – ${shortDate(to)}`;
 }
 
-function statusTone(colors: ColorScheme): Record<LeaveStatus, { bg: string; fg: string; label: string }> {
+function statusTone(colors: ColorScheme): Record<LeaveStatus, { bg: string; fg: string; key: TKey }> {
   return {
-    pending: { bg: colors.warningBg, fg: colors.warningText, label: 'Pending' },
-    approved: { bg: colors.successBg, fg: colors.successText, label: 'Approved' },
-    rejected: { bg: colors.dangerBg, fg: colors.dangerText, label: 'Rejected' },
-    cancelled: { bg: colors.slate100, fg: colors.slate500, label: 'Withdrawn' },
+    pending: { bg: colors.warningBg, fg: colors.warningText, key: 'status.pending' as TKey },
+    approved: { bg: colors.successBg, fg: colors.successText, key: 'status.approved' as TKey },
+    rejected: { bg: colors.dangerBg, fg: colors.dangerText, key: 'status.rejected' as TKey },
+    cancelled: { bg: colors.slate100, fg: colors.slate500, key: 'status.withdrawn' as TKey },
   };
 }
 
-const MONTH_NAMES = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
-];
+const monthLong = (m: number) => tr(('month.' + (m + 1)) as TKey);
 
 const thisMonth = () => {
   const d = new Date();
@@ -71,7 +70,7 @@ const thisMonth = () => {
 
 const monthLabel = (key: string) => {
   const [y, m] = key.split('-').map(Number);
-  return `${MONTH_NAMES[(m || 1) - 1]} ${y}`;
+  return `${monthLong((m || 1) - 1)} ${y}`;
 };
 
 /** Steps a YYYY-MM key, rolling the year over rather than producing month 13. */
@@ -102,6 +101,7 @@ export function LeaveScreen() {
   const colors = useThemeStore((s) => s.colors);
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const STATUS_TONE = useMemo(() => statusTone(colors), [colors]);
+  const t = useT();
 
   const listQuery = useQuery({ queryKey: ['leave'], queryFn: () => getMyLeave() });
   // Which month the card is showing. Leave is discussed by the month, so the
@@ -154,7 +154,7 @@ export function LeaveScreen() {
   return (
     <SafeAreaView style={styles.flex} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Leave</Text>
+        <Text style={styles.headerTitle}>{t('leave.title')}</Text>
         <TourTarget id="leave-apply">
           <Pressable
             onPress={() => setApplyOpen(true)}
@@ -162,7 +162,7 @@ export function LeaveScreen() {
             accessibilityRole="button"
           >
             <Ionicons name="add" size={17} color={colors.white} />
-            <Text style={styles.applyBtnText}>Apply</Text>
+            <Text style={styles.applyBtnText}>{t('leave.apply')}</Text>
           </Pressable>
         </TourTarget>
       </View>
@@ -172,7 +172,7 @@ export function LeaveScreen() {
           {/* The month leads, and can be stepped through. A bare figure with no
               month attached is the thing people misread. */}
           <View style={styles.monthBar}>
-            <Pressable onPress={() => setMonth(shiftMonth(month, -1))} hitSlop={10} accessibilityLabel="Previous month">
+            <Pressable onPress={() => setMonth(shiftMonth(month, -1))} hitSlop={10} accessibilityLabel={t('leave.prevMonth')}>
               <Ionicons name="chevron-back" size={18} color={colors.brand[700]} />
             </Pressable>
             <Text style={styles.monthLabel}>{monthLabel(month)}</Text>
@@ -180,7 +180,7 @@ export function LeaveScreen() {
               onPress={() => setMonth(shiftMonth(month, 1))}
               hitSlop={10}
               disabled={month >= thisMonth()}
-              accessibilityLabel="Next month"
+              accessibilityLabel={t('leave.nextMonth')}
             >
               <Ionicons
                 name="chevron-forward"
@@ -197,28 +197,28 @@ export function LeaveScreen() {
               <View style={styles.tiles}>
                 <View style={styles.tile}>
                   <Text style={styles.tileValue}>{summaryQuery.data?.takenTotal ?? 0}</Text>
-                  <Text style={styles.tileLabel}>Days taken</Text>
+                  <Text style={styles.tileLabel}>{t('leave.daysTaken')}</Text>
                 </View>
                 <View style={styles.tile}>
                   <Text style={[styles.tileValue, styles.tilePending]}>
                     {summaryQuery.data?.pendingTotal ?? 0}
                   </Text>
-                  <Text style={styles.tileLabel}>Awaiting approval</Text>
+                  <Text style={styles.tileLabel}>{t('leave.awaiting')}</Text>
                 </View>
               </View>
 
               <View style={styles.byType}>
-                {(Object.keys(LEAVE_TYPE_LABEL) as (keyof typeof LEAVE_TYPE_LABEL)[]).map((t) => (
-                  <View key={t} style={styles.typeChip}>
-                    <Text style={styles.typeChipLabel}>{LEAVE_TYPE_LABEL[t]}</Text>
-                    <Text style={styles.typeChipValue}>{summaryQuery.data?.taken[t] ?? 0}</Text>
+                {LEAVE_TYPES.map((kind) => (
+                  <View key={kind} style={styles.typeChip}>
+                    <Text style={styles.typeChipLabel}>{t(LEAVE_TYPE_LABEL_KEY[kind])}</Text>
+                    <Text style={styles.typeChipValue}>{summaryQuery.data?.taken[kind] ?? 0}</Text>
                   </View>
                 ))}
                 {/* Owed, not used. Kept visually apart from the two above for
                     that reason -- it is the opposite direction of travel. */}
                 {(summaryQuery.data?.compOffOutstanding ?? 0) > 0 && (
                   <View style={[styles.typeChip, styles.compChip]}>
-                    <Text style={[styles.typeChipLabel, styles.compChipLabel]}>Comp off owed</Text>
+                    <Text style={[styles.typeChipLabel, styles.compChipLabel]}>{t('leave.compOff')}</Text>
                     <Text style={[styles.typeChipValue, styles.compChipLabel]}>
                       {summaryQuery.data?.compOffOutstanding}
                     </Text>
@@ -239,7 +239,10 @@ export function LeaveScreen() {
                         key={m.month}
                         style={styles.stripCol}
                         onPress={() => setMonth(m.month)}
-                        accessibilityLabel={`${monthLabel(m.month)}: ${m.takenTotal} days`}
+                        accessibilityLabel={t('leave.monthTaken', {
+                          month: monthLabel(m.month),
+                          count: m.takenTotal,
+                        })}
                       >
                         <View
                           style={[
@@ -259,13 +262,13 @@ export function LeaveScreen() {
 
               {/* Said plainly rather than implied by the absence of a balance. */}
               <Text style={styles.footnote}>
-                Days approved in this month. Your entitlement isn't held in this app — HR has it.
+                {t('leave.takenNote')}
               </Text>
             </>
           )}
         </Card>
 
-        <Text style={styles.sectionTitle}>My requests</Text>
+        <Text style={styles.sectionTitle}>{t('leave.myRequests')}</Text>
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
@@ -275,7 +278,7 @@ export function LeaveScreen() {
           <Text style={styles.error}>{getApiErrorMessage(listQuery.error)}</Text>
         ) : requests.length === 0 ? (
           <Card>
-            <Text style={styles.empty}>You haven't applied for any leave yet.</Text>
+            <Text style={styles.empty}>{t('leave.none')}</Text>
           </Card>
         ) : (
           requests.map((r) => {
@@ -285,13 +288,13 @@ export function LeaveScreen() {
                 <View style={styles.reqHead}>
                   <Text style={styles.reqDates}>{rangeLabel(r)}</Text>
                   <View style={[styles.badge, { backgroundColor: tone.bg }]}>
-                    <Text style={[styles.badgeText, { color: tone.fg }]}>{tone.label}</Text>
+                    <Text style={[styles.badgeText, { color: tone.fg }]}>{t(tone.key)}</Text>
                   </View>
                 </View>
 
                 <Text style={styles.reqMeta}>
-                  {LEAVE_TYPE_LABEL[r.leaveType]} · {r.totalDays ?? '—'}{' '}
-                  {r.totalDays === 1 ? 'day' : 'days'}
+                  {t(LEAVE_TYPE_LABEL_KEY[r.leaveType])} ·{' '}
+                  {t('apply.days', { count: r.totalDays ?? 0 })}
                 </Text>
 
                 <Text style={styles.reqReason} numberOfLines={2}>
@@ -307,7 +310,7 @@ export function LeaveScreen() {
                     style={({ pressed }) => [styles.withdraw, pressed && styles.pressed]}
                     accessibilityRole="button"
                   >
-                    <Text style={styles.withdrawText}>Withdraw</Text>
+                    <Text style={styles.withdrawText}>{t('leave.withdraw')}</Text>
                   </Pressable>
                 )}
 
@@ -316,8 +319,10 @@ export function LeaveScreen() {
                   <View style={styles.compRow}>
                     <Ionicons name="swap-horizontal-outline" size={13} color={'#047857'} />
                     <Text style={styles.compText}>
-                      Worked {r.workedOn ? shortDate(r.workedOn) : 'a day'} · {r.compOffEarned} day
-                      {r.compOffEarned === 1 ? '' : 's'} owed back
+                      {t('leave.workedClaim', {
+                        day: r.workedOn ? shortDate(r.workedOn) : t('leave.aDay'),
+                        count: r.compOffEarned,
+                      })}
                     </Text>
                   </View>
                 ) : r.status === 'approved' && r.leaveType === 'unpaid' ? (
@@ -328,7 +333,7 @@ export function LeaveScreen() {
                     accessibilityRole="button"
                   >
                     <Ionicons name="briefcase-outline" size={13} color={colors.brand[700]} />
-                    <Text style={styles.claimText}>I worked one of these days</Text>
+                    <Text style={styles.claimText}>{t('leave.claimCompOff')}</Text>
                   </Pressable>
                 ) : null}
               </Card>
@@ -344,8 +349,8 @@ export function LeaveScreen() {
         <Pressable style={styles.backdrop} onPress={() => setClaiming(null)} />
         <View style={styles.sheet}>
           <View style={styles.sheetBar}>
-            <Text style={styles.sheetTitle}>Which day did you work?</Text>
-            <Pressable onPress={() => setClaiming(null)} hitSlop={12} accessibilityLabel="Close">
+            <Text style={styles.sheetTitle}>{t('leave.whichDay')}</Text>
+            <Pressable onPress={() => setClaiming(null)} hitSlop={12} accessibilityLabel={t('common.close')}>
               <Ionicons name="close" size={22} color={colors.slate500} />
             </Pressable>
           </View>
@@ -366,7 +371,7 @@ export function LeaveScreen() {
               ))
             : null}
           <Text style={styles.sheetNote}>
-            Working an unpaid day earns it back as a day off. Your manager sees the claim.
+            {t('leave.compOffNote')}
           </Text>
         </View>
       </Modal>

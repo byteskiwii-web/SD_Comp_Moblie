@@ -9,8 +9,9 @@ import { getAttendanceHistory } from '../../api/attendance.api';
 import { formatDuration, summariseDays } from '../../utils/attendanceDay';
 import { toLocalDateKey } from '../../utils/datetime';
 import { Skeleton } from '../../components/Skeleton';
+import { t as tr, useT, type TKey } from '../../i18n';
 
-const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const monthLong = (m: number) => tr(('month.' + (m + 1)) as TKey);
 
 /**
  * This month at a glance.
@@ -28,6 +29,7 @@ export function MonthlyStatsCard() {
   const employee = useAuthStore((s) => s.employee);
   const colors = useThemeStore((s) => s.colors);
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const t = useT();
 
   const range = useMemo(() => {
     const now = new Date();
@@ -35,7 +37,7 @@ export function MonthlyStatsCard() {
     return {
       from: toLocalDateKey(first),
       to: toLocalDateKey(now),
-      label: MONTHS[now.getMonth()],
+      label: monthLong(now.getMonth()),
       elapsed: now.getDate(),
     };
   }, []);
@@ -57,7 +59,7 @@ export function MonthlyStatsCard() {
     <Card>
       <View style={styles.header}>
         <Text style={styles.title}>{range.label}</Text>
-        <Text style={styles.sub}>through day {range.elapsed}</Text>
+        <Text style={styles.sub}>{t('stats.throughDay', { day: range.elapsed })}</Text>
       </View>
 
       {isLoading ? (
@@ -69,9 +71,9 @@ export function MonthlyStatsCard() {
       ) : (
         <>
           <View style={styles.row}>
-            <Tile value={String(stats.present)} label="Present" tone="ok" />
-            <Tile value={String(stats.notMarked)} label="Not marked" tone="warn" />
-            <Tile value={formatDuration(stats.minutes)} label="Hours" tone="plain" />
+            <Tile value={String(stats.present)} label={t('stats.present')} tone="ok" />
+            <Tile value={String(stats.notMarked)} label={t('stats.notMarked')} tone="warn" />
+            <Tile value={formatDuration(stats.minutes)} label={t('stats.hours')} tone="plain" />
           </View>
           <Text style={styles.footnote}>
             Days off aren't distinguished yet, so "not marked" includes your weekly offs.
@@ -85,6 +87,7 @@ export function MonthlyStatsCard() {
 function Tile({ value, label, tone }: { value: string; label: string; tone: 'ok' | 'warn' | 'plain' }) {
   const colors = useThemeStore((s) => s.colors);
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const t = useT();
   return (
     <View style={styles.tile}>
       <Text

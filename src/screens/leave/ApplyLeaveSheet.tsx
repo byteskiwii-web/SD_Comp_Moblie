@@ -18,11 +18,11 @@ import { Button } from '../../components/ui';
 import { DatePickerField } from '../../components/PickerField';
 import { getApiErrorMessage } from '../../api/client';
 import { toLocalDateKey } from '../../utils/datetime';
+import { useT } from '../../i18n';
 import {
   applyForLeave,
   LEAVE_TYPES,
-  LEAVE_TYPE_HINT,
-  LEAVE_TYPE_LABEL,
+  LEAVE_TYPE_LABEL_KEY,
   type LeaveType,
 } from '../../api/leave.api';
 
@@ -58,6 +58,7 @@ export function ApplyLeaveSheet({
   const [reason, setReason] = useState('');
   const [error, setError] = useState<string | null>(null);
   const colors = useThemeStore((s) => s.colors);
+  const t = useT();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
   // A fresh sheet every time. Reopening it with somebody's last rejected
@@ -123,26 +124,26 @@ export function ApplyLeaveSheet({
       >
         <View style={styles.sheet}>
           <View style={styles.bar}>
-            <Text style={styles.title}>Apply for leave</Text>
-            <Pressable onPress={onClose} hitSlop={12} accessibilityRole="button" accessibilityLabel="Close">
+            <Text style={styles.title}>{t('apply.title')}</Text>
+            <Pressable onPress={onClose} hitSlop={12} accessibilityRole="button" accessibilityLabel={t('common.close')}>
               <Ionicons name="close" size={22} color={colors.slate500} />
             </Pressable>
           </View>
 
           <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-            <Text style={styles.label}>Type</Text>
+            <Text style={styles.label}>{t('apply.type')}</Text>
             <View style={styles.types}>
-              {LEAVE_TYPES.map((t) => {
-                const on = leaveType === t;
+              {LEAVE_TYPES.map((kind) => {
+                const on = leaveType === kind;
                 return (
                   <Pressable
-                    key={t}
-                    onPress={() => setLeaveType(t)}
+                    key={kind}
+                    onPress={() => setLeaveType(kind)}
                     style={({ pressed }) => [styles.type, on && styles.typeOn, pressed && styles.pressed]}
                     accessibilityRole="button"
                     accessibilityState={{ selected: on }}
                   >
-                    <Text style={[styles.typeText, on && styles.typeTextOn]}>{LEAVE_TYPE_LABEL[t]}</Text>
+                    <Text style={[styles.typeText, on && styles.typeTextOn]}>{t(LEAVE_TYPE_LABEL_KEY[kind])}</Text>
                   </Pressable>
                 );
               })}
@@ -150,11 +151,11 @@ export function ApplyLeaveSheet({
 
             <View style={styles.dates}>
               <View style={styles.dateCol}>
-                <DatePickerField label="From" value={startDate} onChange={setStartDate} />
+                <DatePickerField label={t('apply.from')} value={startDate} onChange={setStartDate} />
               </View>
               <View style={styles.dateCol}>
                 <DatePickerField
-                  label="To"
+                  label={t('apply.to')}
                   value={endDate}
                   onChange={setEndDate}
                   minimumDate={new Date(`${startDate}T00:00:00`)}
@@ -174,23 +175,23 @@ export function ApplyLeaveSheet({
                   size={20}
                   color={halfDay ? colors.brand[700] : colors.slate400}
                 />
-                <Text style={styles.halfText}>Half day</Text>
+                <Text style={styles.halfText}>{t('apply.halfDay')}</Text>
               </Pressable>
             )}
 
             <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>Total</Text>
+              <Text style={styles.totalLabel}>{t('common.total')}</Text>
               <Text style={styles.totalValue}>
-                {days} {days === 1 ? 'day' : 'days'}
+                {t('apply.days', { count: days })}
               </Text>
             </View>
 
-            <Text style={styles.label}>Reason</Text>
+            <Text style={styles.label}>{t('apply.reason')}</Text>
             <TextInput
               style={styles.input}
               value={reason}
               onChangeText={setReason}
-              placeholder="Why you need the time off — your manager reads this."
+              placeholder={t('apply.reasonHint')}
               placeholderTextColor={colors.slate400}
               multiline
               numberOfLines={3}
@@ -202,7 +203,7 @@ export function ApplyLeaveSheet({
 
             <View style={styles.actions}>
               <Button
-                title="Send request"
+                title={t('apply.send')}
                 onPress={() => submit.mutate()}
                 disabled={!!problem}
                 loading={submit.isPending}

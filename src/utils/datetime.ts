@@ -1,4 +1,5 @@
 import { currentClockFormat } from '../stores/preferencesStore';
+import { t } from '../i18n';
 
 /**
  * Date and time formatting, computed rather than delegated to Intl.
@@ -14,8 +15,21 @@ import { currentClockFormat } from '../stores/preferencesStore';
  * and plainly formatted beats one that is localisable and twelve hours wrong.
  */
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+/**
+ * Month and weekday names come from the catalogue, not from a constant here.
+ *
+ * They are content, and a Malayalam screen showing "Tue, 8 Sep" is only half
+ * translated. Looked up per call rather than cached in a module constant,
+ * because the language can change while the app is running and a captured
+ * array would keep painting the language the app started in.
+ *
+ * Still not Intl: Hermes renders the noon hour as AM, which is the bug this
+ * whole file exists to route around. A formatter that cannot be trusted with
+ * hours is not one to trust with month names either.
+ */
+const monthShort = (m: number) => t(('monthShort.' + (m + 1)) as 'monthShort.1');
+const dayShort = (d: number) => t(('weekdayShort.' + d) as 'weekdayShort.0');
+const dayLong = (d: number) => t(('weekday.' + d) as 'weekday.0');
 
 function toDate(value: string | number | Date): Date | null {
   const d = value instanceof Date ? value : new Date(value);
@@ -54,19 +68,18 @@ export function formatTimeWithSeconds(value: string | number | Date, fallback = 
   return `${hour12}:${pad(d.getMinutes())}:${pad(d.getSeconds())} ${period}`;
 }
 
-/** `Tue, 8 Sep`. */
+/** `Tue, 8 Sep`, in the employee's language. */
 export function formatDate(value: string | number | Date, fallback = '—'): string {
   const d = toDate(value);
   if (!d) return fallback;
-  return `${DAYS[d.getDay()]}, ${d.getDate()} ${MONTHS[d.getMonth()]}`;
+  return `${dayShort(d.getDay())}, ${d.getDate()} ${monthShort(d.getMonth())}`;
 }
 
 /** `Tuesday, 8 Sep` — the long form used on the home card. */
 export function formatDateLong(value: string | number | Date, fallback = '—'): string {
   const d = toDate(value);
   if (!d) return fallback;
-  const long = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  return `${long[d.getDay()]}, ${d.getDate()} ${MONTHS[d.getMonth()]}`;
+  return `${dayLong(d.getDay())}, ${d.getDate()} ${monthShort(d.getMonth())}`;
 }
 
 /**

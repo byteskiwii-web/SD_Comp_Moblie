@@ -4,7 +4,7 @@ import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 import { File, Paths } from 'expo-file-system';
 import { radii } from '../../theme/tokens';
 import { API_BASE_URL } from '../../constants/config';
-import { LIVENESS_HTML } from './liveness/livenessPage';
+import { LIVENESS_HTML, livenessStringsScript } from './liveness/livenessPage';
 import { FallbackCameraCaptureScreen } from './CameraCaptureScreen.fallback';
 import type { CameraCaptureProps } from './cameraCaptureTypes';
 
@@ -117,6 +117,11 @@ export function WebViewCameraCaptureScreen({ onCaptured, onCancel }: CameraCaptu
       <WebView
         style={styles.flex}
         source={LIVENESS_URL ? { uri: LIVENESS_URL } : { html: LIVENESS_HTML, baseUrl: SECURE_BASE_URL }}
+        // The employee's language, handed to the document BEFORE it loads.
+        // The page cannot call a React hook, and when LIVENESS_URL points at a
+        // hosted copy there is no string here to interpolate into either -- so
+        // injection is the one route that works for both sources.
+        injectedJavaScriptBeforeContentLoaded={livenessStringsScript()}
         originWhitelist={['*']}
         javaScriptEnabled
         domStorageEnabled

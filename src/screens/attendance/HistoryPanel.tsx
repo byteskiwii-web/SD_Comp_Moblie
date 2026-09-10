@@ -17,6 +17,7 @@ import { SkeletonRows } from '../../components/Skeleton';
 import { useTicker } from '../../hooks/useTicker';
 import { TourTarget } from '../../components/tour/TourTarget';
 import type { AttendanceStackParamList } from '../../navigation/types';
+import { t as tr, useT, type TKey } from '../../i18n';
 
 /**
  * Logs and shifts.
@@ -34,11 +35,10 @@ import type { AttendanceStackParamList } from '../../navigation/types';
  */
 
 type Nav = NativeStackNavigationProp<AttendanceStackParamList, 'AttendanceHome'>;
-type Range = { key: string; label: string; from: string; to: string };
+type Range = { key: string; labelKey: TKey; from: string; to: string };
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const MONTHS_LONG = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const monthShort = (m: number) => tr(('monthShort.' + (m + 1)) as TKey);
+const weekdayShort = (d: number) => tr(('weekdayShort.' + d) as TKey);
 
 function buildRanges(): Range[] {
   const now = new Date();
@@ -48,7 +48,7 @@ function buildRanges(): Range[] {
   thirty.setDate(thirty.getDate() - 29);
   ranges.push({
     key: 'last30',
-    label: 'Last 30 Days',
+    labelKey: 'history.last30',
     from: toLocalDateKey(thirty),
     to: toLocalDateKey(now),
   });
@@ -58,7 +58,7 @@ function buildRanges(): Range[] {
     const last = new Date(now.getFullYear(), now.getMonth() - back + 1, 0);
     ranges.push({
       key: `m${back}`,
-      label: MONTHS_LONG[first.getMonth()],
+      labelKey: ('month.' + (first.getMonth() + 1)) as TKey,
       from: toLocalDateKey(first),
       to: toLocalDateKey(last),
     });
@@ -68,7 +68,7 @@ function buildRanges(): Range[] {
 
 const shortDate = (key: string) => {
   const d = new Date(`${key}T00:00:00`);
-  return `${d.getDate()} ${MONTHS[d.getMonth()]}`;
+  return `${d.getDate()} ${monthShort(d.getMonth())}`;
 };
 
 export function HistoryPanel() {
@@ -76,6 +76,7 @@ export function HistoryPanel() {
   // Subscribed purely so a change to the 12/24-hour setting re-renders the
   // times on this screen; the formatters read the store outside React.
   usePreferencesStore((s) => s.clock);
+  const t = useT();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const navigation = useNavigation<Nav>();
   const employee = useAuthStore((s) => s.employee);
@@ -108,7 +109,7 @@ export function HistoryPanel() {
     <View style={styles.wrap}>
       <Pressable style={styles.rangeRow} onPress={() => setPickerOpen(true)} accessibilityRole="button">
         <View>
-          <Text style={styles.rangeLabel}>{range.label}</Text>
+          <Text style={styles.rangeLabel}>{t(range.labelKey)}</Text>
           <Text style={styles.rangeDates}>
             {shortDate(range.from)} – {shortDate(range.to)}
           </Text>
@@ -126,7 +127,7 @@ export function HistoryPanel() {
         <Text style={styles.error}>{getApiErrorMessage(error)}</Text>
       ) : days.length === 0 ? (
         <Card style={styles.listCard}>
-          <Text style={styles.empty}>No punches recorded in this period.</Text>
+          <Text style={styles.empty}>{t('history.empty')}</Text>
         </Card>
       ) : (
         <TourTarget id="history-list">
@@ -148,7 +149,7 @@ export function HistoryPanel() {
         <Pressable style={styles.backdrop} onPress={() => setPickerOpen(false)} />
         <View style={styles.sheet}>
           <View style={styles.sheetBar}>
-            <Text style={styles.sheetTitle}>Select attendance timeframe</Text>
+            <Text style={styles.sheetTitle}>{t('history.pickRange')}</Text>
             <Pressable onPress={() => setPickerOpen(false)} hitSlop={10}>
               <Ionicons name="close" size={22} color={colors.slate500} />
             </Pressable>
@@ -162,7 +163,7 @@ export function HistoryPanel() {
                 setPickerOpen(false);
               }}
             >
-              <Text style={styles.sheetRowText}>{r.label}</Text>
+              <Text style={styles.sheetRowText}>{t(r.labelKey)}</Text>
               {r.key === range.key && <Ionicons name="checkmark" size={19} color={colors.brand[700]} />}
             </Pressable>
           ))}
@@ -213,7 +214,7 @@ function DayRow({
     >
       <View style={styles.dateBlock}>
         <Text style={styles.dateDay}>{d.getDate()}</Text>
-        <Text style={styles.dateWeekday}>{WEEKDAYS[d.getDay()]}</Text>
+        <Text style={styles.dateWeekday}>{weekdayShort(d.getDay())}</Text>
       </View>
 
       <View style={styles.middle}>
@@ -231,11 +232,11 @@ function DayRow({
             read carefully. */}
         <View style={styles.subRow}>
           <Text style={styles.sub}>
-            {MONTHS[d.getMonth()]} {d.getFullYear()}
+            {monthShort(d.getMonth())} {d.getFullYear()}
           </Text>
           {day.openEnded && (
             <Text style={styles.flag} numberOfLines={1}>
-              · No clock-out
+              · {tr('history.noClockOut')}
             </Text>
           )}
         </View>

@@ -6,6 +6,7 @@ import { ColorScheme, radii } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
 import { useAuthStore } from '../../stores/authStore';
 import type { Colleague } from '../../api/auth.api';
+import { t as tr, useT } from '../../i18n';
 
 /**
  * The reporting line, in both directions.
@@ -30,6 +31,7 @@ export function ReportingCard() {
   const profile = useAuthStore((s) => s.profile);
   const colors = useThemeStore((s) => s.colors);
   const styles = React.useMemo(() => makeStyles(colors), [colors]);
+  const t = useT();
 
   const manager = profile?.reportingManager ?? null;
   const reports = profile?.directReports ?? [];
@@ -38,11 +40,11 @@ export function ReportingCard() {
 
   return (
     <Card>
-      <Text style={styles.title}>Reporting</Text>
+      <Text style={styles.title}>{t('reporting.title')}</Text>
 
       {manager ? (
         <View style={styles.block}>
-          <Text style={styles.label}>Reports to</Text>
+          <Text style={styles.label}>{t('reporting.reportsTo')}</Text>
           <Person person={manager} colors={colors} styles={styles} />
         </View>
       ) : null}
@@ -51,7 +53,7 @@ export function ReportingCard() {
         <View style={[styles.block, manager ? styles.blockAfter : null]}>
           {/* Counted, because "my team" is a number somebody checks. */}
           <Text style={styles.label}>
-            {reports.length === 1 ? '1 direct report' : reports.length + ' direct reports'}
+            {t('reporting.directReports', { count: reports.length })}
           </Text>
           {reports.map((r) => (
             <Person key={r.id} person={r} colors={colors} styles={styles} />
@@ -95,7 +97,7 @@ function Person({
       disabled={!call}
       style={({ pressed }) => [styles.person, pressed && call ? styles.pressed : null]}
       accessibilityRole={call ? 'button' : 'text'}
-      accessibilityLabel={call ? 'Call ' + person.name : person.name}
+      accessibilityLabel={call ? tr('reporting.call', { name: person.name }) : person.name}
     >
       <View style={styles.avatar}>
         <Text style={styles.avatarText}>{initials || '?'}</Text>
@@ -115,9 +117,18 @@ function Person({
   );
 }
 
-/** `site-manager` is a database value, not something to show a person. */
+/**
+ * `site-manager` is a database value, not something to show a person.
+ *
+ * Translated where the catalogue knows the role, and title-cased otherwise --
+ * a role added on the server later still reads as words rather than as a
+ * missing-key placeholder.
+ */
 function roleLabel(role: string | null): string | null {
   if (!role) return null;
+  const key = ('role.' + role) as 'role.site-manager';
+  const translated = tr(key);
+  if (translated !== key) return translated;
   return role
     .split('-')
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))

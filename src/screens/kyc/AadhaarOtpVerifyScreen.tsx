@@ -15,6 +15,7 @@ import { getApiErrorMessage } from '../../api/client';
 import { kycGateQueryKey } from '../../hooks/useKycGate';
 import { aadhaarOtpVerifySchema } from '../../schemas/kyc.schema';
 import { KycStackParamList } from '../../navigation/types';
+import { useT } from '../../i18n';
 
 type Props = NativeStackScreenProps<KycStackParamList, 'AadhaarOtpVerify'>;
 
@@ -24,6 +25,7 @@ export function AadhaarOtpVerifyScreen({ navigation, route }: Props) {
   const queryClient = useQueryClient();
   const colors = useThemeStore((s) => s.colors);
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const t = useT();
 
   const [otp, setOtp] = useState('');
   const [error, setError] = useState('');
@@ -42,7 +44,7 @@ export function AadhaarOtpVerifyScreen({ navigation, route }: Props) {
       } else if (result.pending) {
         // Provider asks to retry the same reference shortly -- no new OTP
         // needed, so the filled boxes are left as-is for resubmission.
-        setError('Still processing — try again in a moment.');
+        setError(t('aadhaar.stillProcessing'));
       } else {
         setError(result.message);
       }
@@ -54,7 +56,7 @@ export function AadhaarOtpVerifyScreen({ navigation, route }: Props) {
     setError('');
     const parsed = aadhaarOtpVerifySchema.safeParse({ otp });
     if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? `Enter the ${OTP_LENGTH}-digit code.`);
+      setError(parsed.error.issues[0]?.message ?? t('auth.needCode', { length: OTP_LENGTH }));
       return;
     }
     mutation.mutate();
@@ -62,11 +64,11 @@ export function AadhaarOtpVerifyScreen({ navigation, route }: Props) {
 
   return (
     <SafeAreaView style={styles.flex}>
-      <ScreenHeader title="Verify OTP" />
+      <ScreenHeader title={t('kyc.verifyOtp')} />
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-          <Text style={styles.title}>Enter the code</Text>
-          <Text style={styles.subtitle}>We sent a {OTP_LENGTH}-digit code to your Aadhaar-linked mobile number.</Text>
+          <Text style={styles.title}>{t('aadhaar.codeTitle')}</Text>
+          <Text style={styles.subtitle}>{t('aadhaar.codeBody', { length: OTP_LENGTH })}</Text>
 
           <View style={styles.otpWrap}>
             <OtpBoxes
@@ -83,9 +85,13 @@ export function AadhaarOtpVerifyScreen({ navigation, route }: Props) {
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
           <View style={styles.buttonGap}>
-            <Button title="Verify" onPress={submit} loading={mutation.isPending} />
+            <Button title={t('auth.verify')} onPress={submit} loading={mutation.isPending} />
           </View>
-          <Button title="Resend OTP" variant="outline" onPress={() => navigation.navigate('AadhaarOtpRequest')} />
+          <Button
+            title={t('aadhaar.resendOtp')}
+            variant="outline"
+            onPress={() => navigation.navigate('AadhaarOtpRequest')}
+          />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

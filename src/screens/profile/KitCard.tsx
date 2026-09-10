@@ -9,6 +9,7 @@ import { getApiErrorMessage } from '../../api/client';
 import { useAuthStore } from '../../stores/authStore';
 import { SHIRT_SIZES, updateMyProfile, type ShirtSize } from '../../api/auth.api';
 import { formatDate } from '../../utils/datetime';
+import { useT } from '../../i18n';
 
 /**
  * Joining kit.
@@ -34,6 +35,7 @@ export function KitCard() {
   const [error, setError] = useState<string | null>(null);
   const colors = useThemeStore((s) => s.colors);
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const t = useT();
 
   const save = useMutation({
     mutationFn: (size: ShirtSize) => updateMyProfile({ shirt_size: size }),
@@ -58,20 +60,20 @@ export function KitCard() {
    */
   const choose = (size: ShirtSize) => {
     Alert.alert(
-      'Confirm shirt size ' + size,
-      'You can only choose your shirt size once. After this, HR has to make any change.',
+      t('kit.confirmTitle', { size }),
+      t('kit.confirmBody'),
       [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Confirm ' + size, onPress: () => save.mutate(size) },
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('kit.confirmAction', { size }), onPress: () => save.mutate(size) },
       ]
     );
   };
 
   return (
     <Card>
-      <Text style={styles.title}>Welcome kit</Text>
+      <Text style={styles.title}>{t('kit.title')}</Text>
 
-      <Text style={styles.label}>Shirt size</Text>
+      <Text style={styles.label}>{t('kit.shirtSize')}</Text>
 
       {locked ? (
         /* Answered. The size is shown as a fact rather than as a control that
@@ -83,11 +85,11 @@ export function KitCard() {
             </View>
             <View style={styles.lockedBadge}>
               <Ionicons name="lock-closed" size={11} color={colors.slate500} />
-              <Text style={styles.lockedBadgeText}>Submitted</Text>
+              <Text style={styles.lockedBadgeText}>{t('kit.submitted')}</Text>
             </View>
           </View>
           <Text style={styles.hint}>
-            Your shirt size has already been submitted. Contact HR if it needs to change.
+            {t('kit.locked')}
           </Text>
         </View>
       ) : (
@@ -114,7 +116,7 @@ export function KitCard() {
             })}
           </View>
           <Text style={styles.hint}>
-            Pick your size so HR can prepare your kit. You can only choose once.
+            {t('kit.pickOnce')}
           </Text>
         </>
       )}
@@ -129,8 +131,10 @@ export function KitCard() {
         />
         <Text style={styles.statusText}>
           {profile?.welcomeKitIssued
-            ? `Kit issued${profile.welcomeKitIssuedAt ? ' on ' + formatDate(profile.welcomeKitIssuedAt) : ''}`
-            : 'Kit not issued yet'}
+            ? profile.welcomeKitIssuedAt
+              ? t('kit.issuedOn', { date: formatDate(profile.welcomeKitIssuedAt) })
+              : t('kit.issued')
+            : t('kit.notIssued')}
         </Text>
       </View>
     </Card>

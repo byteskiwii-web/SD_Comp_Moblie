@@ -13,6 +13,7 @@ import { useThemeStore } from '../stores/themeStore';
 import { AppTour, hasSeenTour } from '../components/AppTour';
 import { TourTargetProvider } from '../components/tour/TourTarget';
 import { useTourStore } from '../stores/tourStore';
+import { useT } from '../i18n';
 
 export type AppTabsParamList = {
   Home: undefined;
@@ -50,6 +51,8 @@ export function AppTabs() {
   const isTeamLead = role === 'team-lead';
   const colors = useThemeStore((s) => s.colors);
 
+  const t = useT();
+
   const tourOpen = useTourStore((s) => s.open);
   const startTour = useTourStore((s) => s.start);
   const stopTour = useTourStore((s) => s.stop);
@@ -85,23 +88,33 @@ export function AppTabs() {
       <Tab.Screen
         name="Home"
         component={HomeStack}
-        options={{ tabBarIcon: ({ color, size }) => <Icon name="home" color={color} size={size} /> }}
+        options={{
+          tabBarLabel: t('tabs.home'),
+          tabBarIcon: ({ color, size }) => <Icon name="home" color={color} size={size} />,
+        }}
       />
       <Tab.Screen
         name="Attendance"
         component={AttendanceStack}
-        options={{ tabBarIcon: ({ color, size }) => <Icon name="target" color={color} size={size} /> }}
+        options={{
+          tabBarLabel: t('tabs.attendance'),
+          tabBarIcon: ({ color, size }) => <Icon name="target" color={color} size={size} />,
+        }}
       />
       <Tab.Screen
         name="Leave"
         component={LeaveScreen}
-        options={{ tabBarIcon: ({ color, size }) => <Icon name="calendar" color={color} size={size} /> }}
+        options={{
+          tabBarLabel: t('tabs.leave'),
+          tabBarIcon: ({ color, size }) => <Icon name="calendar" color={color} size={size} />,
+        }}
       />
       {isTeamLead && (
         <Tab.Screen
           name="Team"
           component={TeamScreen}
           options={{
+            tabBarLabel: t('tabs.team'),
             tabBarIcon: ({ color, size }) => <Ionicons name="people-outline" size={size} color={color} />,
           }}
         />
@@ -109,7 +122,10 @@ export function AppTabs() {
       <Tab.Screen
         name="Profile"
         component={ProfileStack}
-        options={{ tabBarIcon: ({ color, size }) => <Icon name="user" color={color} size={size} /> }}
+        options={{
+          tabBarLabel: t('tabs.profile'),
+          tabBarIcon: ({ color, size }) => <Icon name="user" color={color} size={size} />,
+        }}
       />
     </Tab.Navigator>
 

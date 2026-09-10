@@ -14,6 +14,7 @@ import { getApiErrorMessage } from '../../api/client';
 import { kycGateQueryKey } from '../../hooks/useKycGate';
 import { panVerifySchema } from '../../schemas/kyc.schema';
 import { KycStackParamList } from '../../navigation/types';
+import { useT } from '../../i18n';
 
 type Nav = NativeStackNavigationProp<KycStackParamList, 'PanVerify'>;
 
@@ -23,6 +24,7 @@ export function PanVerifyScreen() {
   const queryClient = useQueryClient();
   const colors = useThemeStore((s) => s.colors);
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const t = useT();
 
   const [pan, setPan] = useState('');
   const [nameAsPerPan, setNameAsPerPan] = useState('');
@@ -60,7 +62,7 @@ export function PanVerifyScreen() {
       consentAccepted,
     });
     if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? 'Enter a valid PAN.');
+      setError(parsed.error.issues[0]?.message ?? t('pan.invalid'));
       return;
     }
     mutation.mutate();
@@ -68,13 +70,13 @@ export function PanVerifyScreen() {
 
   return (
     <SafeAreaView style={styles.flex}>
-      <ScreenHeader title="PAN" />
+      <ScreenHeader title={t('kyc.panShort')} />
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-          <Text style={styles.subtitle}>Enter your PAN exactly as it appears on your card.</Text>
+          <Text style={styles.subtitle}>{t('pan.intro')}</Text>
 
           <TextField
-            label="PAN Number"
+            label={t('pan.number')}
             value={pan}
             onChangeText={(t) => {
               setPan(t.toUpperCase());
@@ -86,18 +88,18 @@ export function PanVerifyScreen() {
           />
 
           <TextField
-            label="Name as per PAN"
+            label={t('pan.name')}
             value={nameAsPerPan}
             onChangeText={(t) => {
               setNameAsPerPan(t);
               setError('');
             }}
             autoCapitalize="words"
-            placeholder="As printed on your PAN card"
+            placeholder={t('pan.nameHint')}
           />
 
           <TextField
-            label="Date of Birth"
+            label={t('pan.dob')}
             value={dateOfBirth}
             onChangeText={(t) => {
               setDateOfBirth(formatDob(t));
@@ -113,7 +115,7 @@ export function PanVerifyScreen() {
               {consentAccepted ? <Text style={styles.checkmark}>✓</Text> : null}
             </View>
             <Text style={styles.consentText}>
-              I consent to verifying my PAN with the government database for employment KYC.
+              {t('pan.consent')}
             </Text>
           </Pressable>
 
@@ -121,9 +123,14 @@ export function PanVerifyScreen() {
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
           <View style={styles.buttonGap}>
-            <Button title="Verify PAN" onPress={submit} loading={mutation.isPending} disabled={!consentAccepted} />
+            <Button
+              title={t('pan.verify')}
+              onPress={submit}
+              loading={mutation.isPending}
+              disabled={!consentAccepted}
+            />
           </View>
-          <Button title="Back" variant="outline" onPress={() => navigation.goBack()} />
+          <Button title={t('common.back')} variant="outline" onPress={() => navigation.goBack()} />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

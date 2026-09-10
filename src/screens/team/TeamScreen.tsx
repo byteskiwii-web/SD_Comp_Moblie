@@ -12,6 +12,7 @@ import { getApiErrorMessage } from '../../api/client';
 import { useAuthStore } from '../../stores/authStore';
 import { formatTime, newestFirst, toLocalDateKey } from '../../utils/datetime';
 import { formatDuration } from '../../utils/attendanceDay';
+import { t as tr, useT, type TKey } from '../../i18n';
 import {
   getTeamLive,
   getTeamRegister,
@@ -39,16 +40,16 @@ import {
 
 type Tab = 'today' | 'register' | 'requests';
 
-const TAB_LABEL: Record<Tab, string> = {
-  today: 'On shift',
-  register: 'Register',
-  requests: 'Requests',
+const TAB_KEY: Record<Tab, TKey> = {
+  today: 'shift.onShift',
+  register: 'team.register',
+  requests: 'team.requests',
 };
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const monthShort = (m: number) => tr(('monthShort.' + (m + 1)) as TKey);
 const shortDate = (key: string) => {
   const d = new Date(`${String(key).slice(0, 10)}T00:00:00`);
-  return `${d.getDate()} ${MONTHS[d.getMonth()]}`;
+  return `${d.getDate()} ${monthShort(d.getMonth())}`;
 };
 
 export function TeamScreen() {
@@ -59,32 +60,33 @@ export function TeamScreen() {
   // times on this screen; the formatters read the store outside React.
   usePreferencesStore((s) => s.clock);
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const t = useT();
 
   return (
     <SafeAreaView style={styles.flex} edges={['top']}>
       <View style={styles.header}>
         <View style={styles.headerText}>
-          <Text style={styles.headerTitle}>Team</Text>
+          <Text style={styles.headerTitle}>{t('team.title')}</Text>
           <Text style={styles.headerSub} numberOfLines={1}>
-            {store?.name ?? 'Your site'}
+            {store?.name ?? t('team.yourSite')}
           </Text>
         </View>
         <View style={styles.viewOnly}>
           <Ionicons name="eye-outline" size={12} color={colors.slate500} />
-          <Text style={styles.viewOnlyText}>View only</Text>
+          <Text style={styles.viewOnlyText}>{t('team.viewOnly')}</Text>
         </View>
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.segment}>
-          {(['today', 'register', 'requests'] as Tab[]).map((t) => (
+          {(['today', 'register', 'requests'] as Tab[]).map((id) => (
             <Pressable
-              key={t}
-              onPress={() => setTab(t)}
-              style={[styles.segmentItem, tab === t && styles.segmentItemActive]}
+              key={id}
+              onPress={() => setTab(id)}
+              style={[styles.segmentItem, tab === id && styles.segmentItemActive]}
             >
-              <Text style={[styles.segmentText, tab === t && styles.segmentTextActive]}>
-                {TAB_LABEL[t]}
+              <Text style={[styles.segmentText, tab === id && styles.segmentTextActive]}>
+                {t(TAB_KEY[id])}
               </Text>
             </Pressable>
           ))}
@@ -100,6 +102,7 @@ export function TeamScreen() {
 function OnShift() {
   const colors = useThemeStore((s) => s.colors);
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const t = useT();
   const { data, isLoading, error } = useQuery({
     queryKey: ['team-live'],
     queryFn: getTeamLive,
@@ -119,17 +122,17 @@ function OnShift() {
         <View style={styles.tiles}>
           <View style={styles.tile}>
             <Text style={[styles.tileValue, styles.tileOk]}>{on.length}</Text>
-            <Text style={styles.tileLabel}>On shift</Text>
+            <Text style={styles.tileLabel}>{t('shift.onShift')}</Text>
           </View>
           <View style={styles.tile}>
             <Text style={styles.tileValue}>{off.length}</Text>
-            <Text style={styles.tileLabel}>Not clocked in</Text>
+            <Text style={styles.tileLabel}>{t('shift.notClockedIn')}</Text>
           </View>
         </View>
       </Card>
 
       {people.length === 0 ? (
-        <Card><Text style={styles.empty}>Nobody is assigned to this site yet.</Text></Card>
+        <Card><Text style={styles.empty}>{t('team.nobody')}</Text></Card>
       ) : (
         <Card style={styles.listCard}>
           {[...on, ...off].map((p, i) => (
@@ -139,8 +142,10 @@ function OnShift() {
                 <Text style={styles.rowName} numberOfLines={1}>{p.name}</Text>
                 <Text style={styles.rowMeta} numberOfLines={1}>
                   {p.lastMarkAt
-                    ? `${p.lastMarkType === 'clock-in' ? 'In' : 'Out'} at ${formatTime(p.lastMarkAt)}`
-                    : 'No punch today'}
+                    ? t(p.lastMarkType === 'clock-in' ? 'team.inAt' : 'team.outAt', {
+                        time: formatTime(p.lastMarkAt),
+                      })
+                    : t('team.noPunchToday')}
                 </Text>
               </View>
               <Text style={[styles.rowState, p.onShift && styles.rowStateOn]}>
@@ -158,6 +163,7 @@ function OnShift() {
 function Register() {
   const colors = useThemeStore((s) => s.colors);
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const t = useT();
   const range = useMemo(() => {
     const now = new Date();
     const from = new Date(now);
@@ -191,13 +197,13 @@ function Register() {
   if (isLoading) return <Card><SkeletonRows count={5} /></Card>;
   if (error) return <Text style={styles.error}>{getApiErrorMessage(error)}</Text>;
   if (perPerson.length === 0) {
-    return <Card><Text style={styles.empty}>No attendance recorded in this period.</Text></Card>;
+    return <Card><Text style={styles.empty}>{t('team.noAttendance')}</Text></Card>;
   }
 
   return (
     <>
       <Text style={styles.rangeLine}>
-        {shortDate(range.from)} – {shortDate(range.to)} · lowest attendance first
+        {t('team.rangeLine', { from: shortDate(range.from), to: shortDate(range.to) })}
       </Text>
       <Card style={styles.listCard}>
         {perPerson.map((p, i) => (
@@ -205,8 +211,8 @@ function Register() {
             <View style={styles.rowText}>
               <Text style={styles.rowName} numberOfLines={1}>{p.name}</Text>
               <Text style={styles.rowMeta}>
-                {p.present}/{p.days} days
-                {p.late > 0 ? ` · ${p.late} late` : ''}
+                {t('team.presentDays', { present: p.present, days: p.days })}
+                {p.late > 0 ? t('team.lateSuffix', { count: p.late }) : ''}
                 {p.minutes > 0 ? ` · ${formatDuration(p.minutes)}` : ''}
               </Text>
             </View>
@@ -229,6 +235,7 @@ function Register() {
 function Requests() {
   const colors = useThemeStore((s) => s.colors);
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const t = useT();
   const { data, isLoading, error } = useQuery({
     queryKey: ['team-regularisations'],
     queryFn: () => getTeamRegularisations(),
@@ -246,7 +253,7 @@ function Requests() {
   if (isLoading) return <SkeletonList count={3} lines={1} />;
   if (error) return <Text style={styles.error}>{getApiErrorMessage(error)}</Text>;
   if (rows.length === 0) {
-    return <Card><Text style={styles.empty}>No correction requests from your team.</Text></Card>;
+    return <Card><Text style={styles.empty}>{t('team.noRequests')}</Text></Card>;
   }
 
   return (
@@ -260,11 +267,14 @@ function Requests() {
                 {(r as { employeeName?: string }).employeeName ?? r.employeeId}
               </Text>
               <View style={[styles.badge, { backgroundColor: tone.bg }]}>
-                <Text style={[styles.badgeText, { color: tone.fg }]}>{r.status}</Text>
+                <Text style={[styles.badgeText, { color: tone.fg }]}>
+                  {t(('status.' + r.status) as TKey)}
+                </Text>
               </View>
             </View>
             <Text style={styles.reqMeta}>
-              {shortDate(r.markDate)} · {r.requestType === 'adjust' ? 'Time correction' : 'On duty / WFH'}
+              {shortDate(r.markDate)} ·{' '}
+              {r.requestType === 'adjust' ? t('team.timeCorrection') : t('team.onDuty')}
             </Text>
             <Text style={styles.reqReason} numberOfLines={2}>{r.reason}</Text>
             {r.decisionNote ? <Text style={styles.reqNote}>“{r.decisionNote}”</Text> : null}
@@ -274,7 +284,7 @@ function Requests() {
       {/* Says who acts, since this panel cannot. A lead asked to chase a
           request needs to know where it is sitting. */}
       <Text style={styles.footnote}>
-        Requests are approved by the site manager or HR. You can see them here but not decide them.
+        {t('team.readOnlyNote')}
       </Text>
     </>
   );

@@ -8,6 +8,7 @@ import { useThemeStore } from '../../stores/themeStore';
 import { getApiErrorMessage } from '../../api/client';
 import { useAuthStore } from '../../stores/authStore';
 import { updateMyProfile } from '../../api/auth.api';
+import { useT } from '../../i18n';
 
 /**
  * Who to call.
@@ -29,6 +30,7 @@ export function DeptManagerCard() {
   const refreshProfile = useAuthStore((s) => s.refreshProfile);
   const colors = useThemeStore((s) => s.colors);
   const styles = React.useMemo(() => makeStyles(colors), [colors]);
+  const t = useT();
 
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState('');
@@ -69,45 +71,45 @@ export function DeptManagerCard() {
   // after a round trip. Both patterns match the server's exactly.
   const problem =
     phone.trim() && !/^[6-9][0-9]{9}$/.test(phone.trim())
-      ? 'Phone must be a 10-digit Indian mobile number.'
+      ? t('deptMgr.badPhone')
       : email.trim() && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim())
-        ? 'That email address does not look right.'
+        ? t('deptMgr.badEmail')
         : null;
 
   return (
     <Card>
       <View style={styles.head}>
-        <Text style={styles.cardTitle}>Department manager</Text>
+        <Text style={styles.cardTitle}>{t('deptMgr.title')}</Text>
         {!editing && (
           <Pressable onPress={() => setEditing(true)} hitSlop={10} accessibilityRole="button">
-            <Text style={styles.action}>{manager ? 'Edit' : 'Add'}</Text>
+            <Text style={styles.action}>{manager ? t('common.edit') : t('common.add')}</Text>
           </Pressable>
         )}
       </View>
 
       {editing ? (
         <>
-          <Text style={styles.label}>Name</Text>
+          <Text style={styles.label}>{t('common.name')}</Text>
           <TextInput
             style={styles.input}
             value={name}
             onChangeText={setName}
-            placeholder="Their full name"
+            placeholder={t('deptMgr.namePlaceholder')}
             placeholderTextColor={colors.slate400}
           />
 
-          <Text style={styles.label}>Phone</Text>
+          <Text style={styles.label}>{t('common.phone')}</Text>
           <TextInput
             style={styles.input}
             value={phone}
             onChangeText={(t) => setPhone(t.replace(/\D/g, ''))}
-            placeholder="10 digits"
+            placeholder={t('deptMgr.tenDigits')}
             placeholderTextColor={colors.slate400}
             keyboardType="number-pad"
             maxLength={10}
           />
 
-          <Text style={styles.label}>Email</Text>
+          <Text style={styles.label}>{t('common.email')}</Text>
           <TextInput
             style={styles.input}
             value={email}
@@ -127,7 +129,7 @@ export function DeptManagerCard() {
               style={({ pressed }) => [styles.btn, styles.btnGhost, pressed && styles.pressed]}
               accessibilityRole="button"
             >
-              <Text style={styles.btnGhostText}>Cancel</Text>
+              <Text style={styles.btnGhostText}>{t('common.cancel')}</Text>
             </Pressable>
             <Pressable
               onPress={() => save.mutate()}
@@ -140,17 +142,19 @@ export function DeptManagerCard() {
               ]}
               accessibilityRole="button"
             >
-              <Text style={styles.btnPrimaryText}>{save.isPending ? 'Saving…' : 'Save'}</Text>
+              <Text style={styles.btnPrimaryText}>
+                {save.isPending ? t('common.saving') : t('common.save')}
+              </Text>
             </Pressable>
           </View>
 
           <Text style={styles.note}>
-            Managers change from time to time — keep this current so the right person is reachable.
+            {t('deptMgr.hint')}
           </Text>
         </>
       ) : manager ? (
         <>
-          <Text style={styles.name}>{manager.name ?? 'Not named'}</Text>
+          <Text style={styles.name}>{manager.name ?? t('deptMgr.unnamed')}</Text>
           <View style={styles.contacts}>
             {manager.phone ? (
               <Pressable
@@ -178,7 +182,7 @@ export function DeptManagerCard() {
         </>
       ) : (
         <Text style={styles.empty}>
-          Nobody recorded yet. Add your manager's details so they are to hand when you need them.
+          {t('deptMgr.empty')}
         </Text>
       )}
     </Card>

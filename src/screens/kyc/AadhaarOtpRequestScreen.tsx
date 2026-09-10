@@ -14,6 +14,7 @@ import { getApiErrorMessage } from '../../api/client';
 import { kycGateQueryKey } from '../../hooks/useKycGate';
 import { aadhaarOtpRequestSchema } from '../../schemas/kyc.schema';
 import { KycStackParamList } from '../../navigation/types';
+import { useT } from '../../i18n';
 
 type Nav = NativeStackNavigationProp<KycStackParamList, 'AadhaarOtpRequest'>;
 
@@ -23,6 +24,7 @@ export function AadhaarOtpRequestScreen() {
   const queryClient = useQueryClient();
   const colors = useThemeStore((s) => s.colors);
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const t = useT();
 
   const [aadhaarNumber, setAadhaarNumber] = useState('');
   const [consentAccepted, setConsentAccepted] = useState(false);
@@ -49,7 +51,7 @@ export function AadhaarOtpRequestScreen() {
     setError('');
     const parsed = aadhaarOtpRequestSchema.safeParse({ aadhaar_number: aadhaarNumber, consentAccepted });
     if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? 'Enter a valid Aadhaar number.');
+      setError(parsed.error.issues[0]?.message ?? t('aadhaar.invalid'));
       return;
     }
     mutation.mutate();
@@ -57,14 +59,14 @@ export function AadhaarOtpRequestScreen() {
 
   return (
     <SafeAreaView style={styles.flex}>
-      <ScreenHeader title="Aadhaar" />
+      <ScreenHeader title={t('kyc.aadhaarShort')} />
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-          <Text style={styles.title}>Verify your Aadhaar</Text>
-          <Text style={styles.subtitle}>We'll send a one-time code to your Aadhaar-linked mobile number.</Text>
+          <Text style={styles.title}>{t('aadhaar.title')}</Text>
+          <Text style={styles.subtitle}>{t('aadhaar.body')}</Text>
 
           <TextField
-            label="Aadhaar Number"
+            label={t('aadhaar.number')}
             value={aadhaarNumber}
             onChangeText={(t) => {
               setAadhaarNumber(t.replace(/\D/g, '').slice(0, 12));
@@ -80,16 +82,21 @@ export function AadhaarOtpRequestScreen() {
               {consentAccepted ? <Text style={styles.checkmark}>✓</Text> : null}
             </View>
             <Text style={styles.consentText}>
-              I consent to verifying my Aadhaar via OTP for employment KYC.
+              {t('aadhaar.consent')}
             </Text>
           </Pressable>
 
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
           <View style={styles.buttonGap}>
-            <Button title="Send OTP" onPress={submit} loading={mutation.isPending} disabled={!consentAccepted} />
+            <Button
+              title={t('aadhaar.sendOtp')}
+              onPress={submit}
+              loading={mutation.isPending}
+              disabled={!consentAccepted}
+            />
           </View>
-          <Button title="Back" variant="outline" onPress={() => navigation.goBack()} />
+          <Button title={t('common.back')} variant="outline" onPress={() => navigation.goBack()} />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

@@ -6,6 +6,7 @@ import { useNavigation } from '@react-navigation/native';
 import { ColorScheme, radii } from '../theme/tokens';
 import { useThemeStore } from '../stores/themeStore';
 import { useTourRegistry, type Rect } from './tour/TourTarget';
+import { useT, type TKey } from '../i18n';
 
 /**
  * The first-run tour.
@@ -42,8 +43,8 @@ type Destination =
 
 type Step = {
   icon: keyof typeof Ionicons.glyphMap;
-  title: string;
-  body: string;
+  titleKey: TKey;
+  bodyKey: TKey;
   to: Destination;
   /** The `TourTarget` id to spotlight. Absent, or absent from the tree, centres the card. */
   target?: string;
@@ -52,50 +53,50 @@ type Step = {
 const STEPS: Step[] = [
   {
     icon: 'phone-portrait-outline',
-    title: 'Your day, here',
-    body: 'Whether you are on shift, the hours you have put in this month, and anything waiting for you.',
+    titleKey: 'tour.dayHere',
+    bodyKey: 'tour.dayHereBody',
     to: { tab: 'Home' },
     target: 'home-hero',
   },
   {
     icon: 'camera-outline',
-    title: 'Start your shift',
-    body: 'This takes a live selfie and your location. Gallery photos are not accepted, and the same button ends the shift.',
+    titleKey: 'tour.startShift',
+    bodyKey: 'tour.startShiftBody',
     to: { tab: 'Attendance', panel: 'clock' },
     target: 'clock-action',
   },
   {
     icon: 'navigate-outline',
-    title: 'Inside the geo-fence',
-    body: 'You are checked against your assigned store. Punching from outside still works — it just goes to HR for approval.',
+    titleKey: 'tour.insideFence',
+    bodyKey: 'tour.insideFenceBody',
     to: { tab: 'Attendance', panel: 'clock' },
     target: 'clock-location',
   },
   {
     icon: 'time-outline',
-    title: 'Your hours',
-    body: 'Every day with your effective hours, and a dot for whether you were on time. Tap a day for the full shift and every stamp behind it.',
+    titleKey: 'tour.yourHours',
+    bodyKey: 'tour.yourHoursBody',
     to: { tab: 'Attendance', panel: 'history' },
     target: 'history-list',
   },
   {
     icon: 'create-outline',
-    title: 'Missed a punch?',
-    body: 'Pick the day, correct the times that are wrong, add a note. Your manager approves it — the original punch is never overwritten.',
+    titleKey: 'tour.missedPunch',
+    bodyKey: 'tour.missedPunchBody',
     to: { tab: 'Attendance', panel: 'regularise' },
     target: 'regularise-form',
   },
   {
     icon: 'calendar-outline',
-    title: 'Time off',
-    body: 'Apply here. Pick the dates, say why, send it. You can withdraw a request while it is still pending.',
+    titleKey: 'tour.timeOff',
+    bodyKey: 'tour.timeOffBody',
     to: { tab: 'Leave' },
     target: 'leave-apply',
   },
   {
     icon: 'person-circle-outline',
-    title: 'Everything else',
-    body: 'Your KYC, documents, shift, shirt size and company policies live here — along with this tour, if you want it again.',
+    titleKey: 'tour.everythingElse',
+    bodyKey: 'tour.everythingElseBody',
     to: { tab: 'Profile' },
     target: 'profile-top',
   },
@@ -126,6 +127,7 @@ export function AppTour({ visible, onClose }: { visible: boolean; onClose: () =>
   const registry = useTourRegistry();
   const colors = useThemeStore((s) => s.colors);
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const t = useT();
   const [index, setIndex] = useState(0);
   const [spot, setSpot] = useState<Rect | null>(null);
   const cancelled = useRef(false);
@@ -249,12 +251,12 @@ export function AppTour({ visible, onClose }: { visible: boolean; onClose: () =>
               <Text style={styles.stepCount}>
                 STEP {index + 1} OF {STEPS.length}
               </Text>
-              <Text style={styles.title}>{step.title}</Text>
+              <Text style={styles.title}>{t(step.titleKey)}</Text>
             </View>
           </View>
 
           <View style={styles.body}>
-            <Text style={styles.bodyText}>{step.body}</Text>
+            <Text style={styles.bodyText}>{t(step.bodyKey)}</Text>
 
             <View style={styles.dots}>
               {STEPS.map((_, i) => (
@@ -264,7 +266,7 @@ export function AppTour({ visible, onClose }: { visible: boolean; onClose: () =>
 
             <View style={styles.actions}>
               <Pressable onPress={finish} hitSlop={8} accessibilityRole="button">
-                <Text style={styles.skip}>Skip</Text>
+                <Text style={styles.skip}>{t('common.skip')}</Text>
               </Pressable>
 
               <View style={styles.navButtons}>
@@ -274,7 +276,7 @@ export function AppTour({ visible, onClose }: { visible: boolean; onClose: () =>
                     style={[styles.navButton, styles.navBack]}
                     accessibilityRole="button"
                   >
-                    <Text style={styles.navBackText}>Back</Text>
+                    <Text style={styles.navBackText}>{t('common.back')}</Text>
                   </Pressable>
                 )}
                 <Pressable
@@ -282,7 +284,7 @@ export function AppTour({ visible, onClose }: { visible: boolean; onClose: () =>
                   style={[styles.navButton, styles.navNext]}
                   accessibilityRole="button"
                 >
-                  <Text style={styles.navNextText}>{last ? 'Done' : 'Next'}</Text>
+                  <Text style={styles.navNextText}>{last ? t('common.done') : t('common.next')}</Text>
                   <Ionicons name="chevron-forward" size={15} color={colors.white} />
                 </Pressable>
               </View>

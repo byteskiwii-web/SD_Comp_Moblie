@@ -6,6 +6,7 @@ import { Button } from '../../components/ui';
 import { radii } from '../../theme/tokens';
 import { runtimeLabel } from '../../native/runtime';
 import type { CameraCaptureProps } from './cameraCaptureTypes';
+import { useT } from '../../i18n';
 
 // Plain expo-camera capture for runtimes that have no VisionCamera: Expo Go
 // and web. expo-camera is bundled with the Expo Go binary, so importing it
@@ -17,6 +18,7 @@ import type { CameraCaptureProps } from './cameraCaptureTypes';
 // a review/demo path, not something to attend real shifts with.
 export function FallbackCameraCaptureScreen({ onCaptured, onCancel }: CameraCaptureProps) {
   const insets = useSafeAreaInsets();
+  const t = useT();
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
   // Ref, not state: a double-tap lands both handlers before React re-renders,
@@ -55,14 +57,12 @@ export function FallbackCameraCaptureScreen({ onCaptured, onCancel }: CameraCapt
     return (
       <View style={styles.center}>
         <Text style={styles.permissionText}>
-          {permission.canAskAgain
-            ? 'Camera access is needed to verify your identity.'
-            : 'Camera access was denied. Enable it for this app in your device settings, then try again.'}
+          {permission.canAskAgain ? t('camera.needed') : t('camera.denied')}
         </Text>
         {permission.canAskAgain && (
-          <Button title="Grant camera access" onPress={requestPermission} />
+          <Button title={t('camera.grant')} onPress={requestPermission} />
         )}
-        <Button title="Cancel" variant="outline" onPress={onCancel} />
+        <Button title={t('common.cancel')} variant="outline" onPress={onCancel} />
       </View>
     );
   }
@@ -96,14 +96,14 @@ export function FallbackCameraCaptureScreen({ onCaptured, onCancel }: CameraCapt
         {busy ? (
           <ActivityIndicator color="#FFFFFF" size="large" />
         ) : (
-          <Text style={styles.hintText}>Center your face in the frame</Text>
+          <Text style={styles.hintText}>{t('camera.centreFace')}</Text>
         )}
 
         <View style={styles.actionWrap}>
-          <Button title="Take photo" onPress={takePhoto} disabled={busy} loading={busy} />
+          <Button title={t('camera.takePhoto')} onPress={takePhoto} disabled={busy} loading={busy} />
         </View>
         <View style={styles.actionWrap}>
-          <Button title="Cancel" variant="outline" onPress={onCancel} />
+          <Button title={t('common.cancel')} variant="outline" onPress={onCancel} />
         </View>
       </View>
     </View>

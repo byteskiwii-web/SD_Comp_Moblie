@@ -10,17 +10,25 @@ export type LeaveStatus = 'pending' | 'approved' | 'rejected' | 'cancelled';
 
 export const LEAVE_TYPES: LeaveType[] = ['paid', 'unpaid'];
 
-/** What each type is for, in the words an employee would use. */
-export const LEAVE_TYPE_LABEL: Record<LeaveType, string> = {
-  paid: 'Paid',
-  unpaid: 'Unpaid',
-};
+/**
+ * Catalogue KEYS rather than English.
+ *
+ * These sat here as finished strings, which read as part of the wire contract
+ * when they are really display text. A key keeps the mapping next to the type
+ * it describes while leaving the WORDS to the language layer -- and a
+ * module-level constant holding text would freeze whichever language loaded
+ * first, which is the bug this avoids.
+ */
+export const LEAVE_TYPE_LABEL_KEY = {
+  paid: 'leaveType.paid',
+  unpaid: 'leaveType.unpaid',
+} as const;
 
 /** What each one means for the day, said plainly on the form. */
-export const LEAVE_TYPE_HINT: Record<LeaveType, string> = {
-  paid: 'A normal paid day off.',
-  unpaid: 'Not paid. If you end up working, you can claim the day back.',
-};
+export const LEAVE_TYPE_HINT_KEY = {
+  paid: 'leaveType.paidHint',
+  unpaid: 'leaveType.unpaidHint',
+} as const;
 
 export type LeaveRequest = {
   id: string;

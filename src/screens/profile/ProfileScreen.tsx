@@ -5,7 +5,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
 import { getPolicies } from '../../api/policies.api';
-import { getKycStatus, KYC_STATUS_LABEL, KycCheckStatus, kycStatusTone } from '../../api/verification.api';
+import { getKycStatus, KYC_STATUS_KEY, KycCheckStatus, kycStatusTone } from '../../api/verification.api';
 import { useNavigation } from '@react-navigation/native';
 import { formatDate, newestFirst } from '../../utils/datetime';
 import { TourTarget } from '../../components/tour/TourTarget';
@@ -20,14 +20,15 @@ import { Button, Card } from '../../components/ui';
 import { ColorScheme, radii } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
 import { useAuthStore } from '../../stores/authStore';
+import { useT, type TKey } from '../../i18n';
 
 const ROLE_LABEL: Record<string, string> = {
-  'field-employee': 'Field Employee',
-  'team-lead': 'Team Lead',
-  'site-manager': 'Site Manager',
-  'cluster-manager': 'Cluster Manager',
-  'hr-manager': 'HR Manager',
-  'super-admin': 'Super Admin',
+  'field-employee': 'role.field-employee',
+  'team-lead': 'role.team-lead',
+  'site-manager': 'role.site-manager',
+  'cluster-manager': 'role.cluster-manager',
+  'hr-manager': 'role.hr-manager',
+  'super-admin': 'role.super-admin',
 };
 
 export function ProfileScreen() {
@@ -40,6 +41,7 @@ export function ProfileScreen() {
   const startTour = useTourStore((s) => s.start);
   const colors = useThemeStore((s) => s.colors);
   const styles = React.useMemo(() => makeStyles(colors), [colors]);
+  const t = useT();
 
   // Pull to refresh: the automatic read happens at boot, and somebody whose
   // details were changed while the app was open needs a way to ask again
@@ -53,7 +55,7 @@ export function ProfileScreen() {
   return (
     <SafeAreaView style={styles.flex} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Profile</Text>
+        <Text style={styles.headerTitle}>{t('profile.title')}</Text>
       </View>
       <ScrollView
         contentContainerStyle={styles.content}
@@ -73,35 +75,47 @@ export function ProfileScreen() {
             </View>
             <View style={[styles.pill, styles.pillBrand]}>
               <Text style={[styles.pillText, styles.pillTextBrand]}>
-                {employee?.role ? (ROLE_LABEL[employee.role] ?? employee.role) : '—'}
+                {employee?.role
+                  ? ROLE_LABEL[employee.role]
+                    ? t(ROLE_LABEL[employee.role] as TKey)
+                    : employee.role
+                  : '—'}
               </Text>
             </View>
           </View>
         </TourTarget>
 
         <Card>
-          <Text style={styles.cardTitle}>Contact & assignment</Text>
-          <Row icon="call-outline" label="Phone" value={employee?.phone ?? '—'} />
-          <Row icon="mail-outline" label="Email" value={employee?.email ?? '—'} />
-          <Row icon="business-outline" label="Assigned site" value={store?.name ?? '—'} />
-          <Row icon="pricetag-outline" label="Site code" value={store?.store_code ?? employee?.store_code ?? '—'} />
+          <Text style={styles.cardTitle}>{t('profile.contact')}</Text>
+          <Row icon="call-outline" label={t('common.phone')} value={employee?.phone ?? '—'} />
+          <Row icon="mail-outline" label={t('common.email')} value={employee?.email ?? '—'} />
+          <Row icon="business-outline" label={t('profile.assignedSite')} value={store?.name ?? '—'} />
+          <Row
+            icon="pricetag-outline"
+            label={t('profile.siteCode')}
+            value={store?.store_code ?? employee?.store_code ?? '—'}
+          />
           <Row
             icon="navigate-outline"
-            label="Geo-fence"
-            value={store?.geofence_radius_m ? store.geofence_radius_m + ' m radius' : '—'}
+            label={t('profile.geofence')}
+            value={
+              store?.geofence_radius_m
+                ? t('profile.geofenceRadius', { metres: store.geofence_radius_m })
+                : '—'
+            }
           />
           {/* The rostered shift, named. '10:00 - 19:00' alone does not say
               which shift somebody is on, and the break allowance is the part
               that decides whether a long lunch costs them anything. */}
           <Row
             icon="albums-outline"
-            label="Shift"
+            label={t('profile.shift')}
             value={profile?.shift?.name ?? (profile?.shiftStart && profile?.shiftEnd ? profile.shiftStart + ' – ' + profile.shiftEnd : '—')}
           />
           {profile?.shift?.breakAllowanceMinutes != null && (
             <Row
               icon="cafe-outline"
-              label="Break allowance"
+              label={t('profile.breakAllowance')}
               value={`${profile.shift.breakAllowanceMinutes} min (${profile.shift.shortBreakCount}×${profile.shift.shortBreakMinutes} + ${profile.shift.lunchBreakMinutes} lunch)`}
             />
           )}
@@ -109,7 +123,7 @@ export function ProfileScreen() {
               show it and nothing could set it. */}
           <Row
             icon="calendar-outline"
-            label="Joined"
+            label={t('profile.joined')}
             value={profile?.dateOfJoining ? formatDate(profile.dateOfJoining) : '—'}
             last
           />
@@ -134,8 +148,8 @@ export function ProfileScreen() {
 
         <PolicyLibrary />
 
-        <Button title="Replay app tour" variant="outline" onPress={startTour} />
-                <Button title="Sign out" variant="outline" onPress={() => signOut()} />
+        <Button title={t('home.replayTour')} variant="outline" onPress={startTour} />
+                <Button title={t('common.signOut')} variant="outline" onPress={() => signOut()} />
         
       </ScrollView>
     </SafeAreaView>
@@ -155,6 +169,7 @@ function Row({
 }) {
   const colors = useThemeStore((s) => s.colors);
   const styles = React.useMemo(() => makeStyles(colors), [colors]);
+  const t = useT();
   return (
     <View style={[styles.row, last && styles.rowLast]}>
       <Ionicons name={icon} size={15} color={colors.slate400} style={styles.rowIcon} />
@@ -199,6 +214,7 @@ function KycCard() {
   const navigation = useNavigation<any>();
   const colors = useThemeStore((s) => s.colors);
   const styles = React.useMemo(() => makeStyles(colors), [colors]);
+  const t = useT();
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['profile-kyc-status', employee?.id],
@@ -223,11 +239,11 @@ function KycCard() {
 
   return (
     <Card>
-      <Text style={styles.cardTitle}>Identity verification</Text>
+      <Text style={styles.cardTitle}>{t('kyc.title')}</Text>
       {isLoading && !kyc ? (
-        <Text style={styles.kycMuted}>Loading…</Text>
+        <Text style={styles.kycMuted}>{t('common.loading')}</Text>
       ) : isError ? (
-        <Text style={styles.kycMuted}>Could not load verification status.</Text>
+        <Text style={styles.kycMuted}>{t('kyc.statusFailed')}</Text>
       ) : kyc ? (
         <>
           {/* Every check that is not yet verified offers a way to finish it.
@@ -236,7 +252,7 @@ function KycCard() {
               the only route in is gone by the time anyone reaches Profile. */}
           <KycRow
             icon="card-outline"
-            label="PAN"
+            label={t('kyc.panShort')}
             status={kyc.pan.status}
             detail={kyc.pan.masked}
             onPress={kyc.pan.status === 'verified' ? undefined : () => navigation.navigate('PanVerify')}
@@ -244,7 +260,7 @@ function KycCard() {
 
           <KycRow
             icon="finger-print-outline"
-            label="Aadhaar"
+            label={t('kyc.aadhaarShort')}
             status={kyc.aadhaar.status}
             onPress={
               kyc.aadhaar.status === 'verified'
@@ -267,7 +283,7 @@ function KycCard() {
           />
           <KycRow
             icon="wallet-outline"
-            label="Bank account"
+            label={t('bank.title')}
             status={kyc.bank.status}
             detail={kyc.bank.masked}
             last
@@ -279,7 +295,7 @@ function KycCard() {
           />
         </>
       ) : (
-        <Text style={styles.kycMuted}>No verification on record yet.</Text>
+        <Text style={styles.kycMuted}>{t('kyc.none')}</Text>
       )}
     </Card>
   );
@@ -305,6 +321,7 @@ function KycRow({
 }) {
   const colors = useThemeStore((s) => s.colors);
   const styles = React.useMemo(() => makeStyles(colors), [colors]);
+  const t = useT();
   const tone = kycStatusTone(status, colors);
   const body = (
     <>
@@ -312,7 +329,7 @@ function KycRow({
       <Text style={styles.rowLabel}>{label}</Text>
       {detail ? <Text style={styles.kycDetail}>{detail}</Text> : null}
       <View style={[styles.kycChip, { backgroundColor: tone.bg }]}>
-        <Text style={[styles.kycChipText, { color: tone.fg }]}>{KYC_STATUS_LABEL[status]}</Text>
+        <Text style={[styles.kycChipText, { color: tone.fg }]}>{t(KYC_STATUS_KEY[status])}</Text>
       </View>
       {/* An actionable row says what to do as well as what is wrong. The chip
           stays -- "Failed" and "Pending" mean different things and both are
@@ -320,7 +337,7 @@ function KycRow({
           people tap a Pending badge hoping something happens. */}
       {onPress ? (
         <View style={styles.kycAction}>
-          <Text style={styles.kycActionText}>Verify now</Text>
+          <Text style={styles.kycActionText}>{t('kyc.verifyNow')}</Text>
           <Ionicons name="chevron-forward" size={13} color={colors.brand[700]} />
         </View>
       ) : null}
@@ -355,24 +372,25 @@ function KycRow({
 function LinkRow({ linked, onCheck }: { linked: boolean | null; onCheck?: () => void }) {
   const colors = useThemeStore((s) => s.colors);
   const styles = React.useMemo(() => makeStyles(colors), [colors]);
+  const t = useT();
 
   const state =
     linked === true
-      ? { icon: 'link' as const, tint: colors.successText, label: 'Linked', bg: colors.successBg }
+      ? { icon: 'link' as const, tint: colors.successText, label: t('kyc.linked'), bg: colors.successBg }
       : linked === false
-        ? { icon: 'unlink' as const, tint: colors.warningText, label: 'Not linked', bg: colors.warningBg }
-        : { icon: 'link-outline' as const, tint: colors.slate400, label: 'Not checked', bg: colors.slate100 };
+        ? { icon: 'unlink' as const, tint: colors.warningText, label: t('kyc.notLinked'), bg: colors.warningBg }
+        : { icon: 'link-outline' as const, tint: colors.slate400, label: t('kyc.notChecked'), bg: colors.slate100 };
 
   const body = (
     <>
       <Ionicons name={state.icon} size={15} color={colors.slate400} style={styles.rowIcon} />
-      <Text style={styles.rowLabel}>PAN–Aadhaar link</Text>
+      <Text style={styles.rowLabel}>{t('kyc.panAadhaarLink')}</Text>
       <View style={[styles.kycChip, { backgroundColor: state.bg }]}>
         <Text style={[styles.kycChipText, { color: state.tint }]}>{state.label}</Text>
       </View>
       {onCheck ? (
         <View style={styles.kycAction}>
-          <Text style={styles.kycActionText}>Check now</Text>
+          <Text style={styles.kycActionText}>{t('kyc.checkNow')}</Text>
           <Ionicons name="chevron-forward" size={13} color={colors.brand[700]} />
         </View>
       ) : null}
@@ -385,7 +403,7 @@ function LinkRow({ linked, onCheck }: { linked: boolean | null; onCheck?: () => 
       style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
       onPress={onCheck}
       accessibilityRole="button"
-      accessibilityLabel={`Aadhaar link: ${state.label}. Check now.`}
+      accessibilityLabel={t('kyc.linkRowLabel', { state: state.label })}
     >
       {body}
     </Pressable>
@@ -396,15 +414,16 @@ function PolicyLibrary() {
   const { data } = useQuery({ queryKey: ['policies-library'], queryFn: () => getPolicies(50) });
   const colors = useThemeStore((s) => s.colors);
   const styles = React.useMemo(() => makeStyles(colors), [colors]);
+  const t = useT();
   const items = newestFirst(data?.items ?? [], 'publishedAt', 'updatedAt', 'createdAt');
   if (items.length === 0) return null;
 
   const signed = items.filter((p) => p.acknowledgedByMe).length;
   return (
     <Card>
-      <Text style={styles.cardTitle}>Company policies</Text>
+      <Text style={styles.cardTitle}>{t('profile.policies')}</Text>
       <Text style={styles.policySummary}>
-        {items.length} assigned to you · {signed} acknowledged
+        {t('policy.summary', { total: items.length, signed })}
       </Text>
       {items.slice(0, 6).map((p, i) => (
         <View key={p.id} style={[styles.row, i === Math.min(items.length, 6) - 1 && styles.rowLast]}>

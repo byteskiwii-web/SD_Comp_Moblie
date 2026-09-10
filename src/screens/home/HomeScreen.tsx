@@ -22,6 +22,7 @@ import { FestivalCard } from './FestivalCard';
 import { TourTarget } from '../../components/tour/TourTarget';
 import { useTourStore } from '../../stores/tourStore';
 import { SkeletonRows } from '../../components/Skeleton';
+import { useT } from '../../i18n';
 
 const today = () => toLocalDateKey();
 
@@ -38,6 +39,7 @@ export function HomeScreen() {
   // Subscribed purely so a change to the 12/24-hour setting re-renders the
   // times on this screen; the formatters read the store outside React.
   usePreferencesStore((s) => s.clock);
+  const t = useT();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
   // The badge number. Polled rather than pushed: expo-notifications remote push
@@ -79,7 +81,7 @@ export function HomeScreen() {
             </Text>
           </View>
           <View style={styles.headerText}>
-            <Text style={styles.welcome}>Welcome back</Text>
+            <Text style={styles.welcome}>{t('home.welcome')}</Text>
             <Text style={styles.name} numberOfLines={1}>
               {employee?.first_name ?? 'there'}
             </Text>
@@ -89,7 +91,7 @@ export function HomeScreen() {
             style={styles.iconButton}
             hitSlop={8}
             accessibilityRole="button"
-            accessibilityLabel="Replay app tour"
+            accessibilityLabel={t('home.replayTour')}
             onPress={startTour}
           >
             <Ionicons name="help-circle-outline" size={20} color={colors.slate600} />
@@ -99,7 +101,7 @@ export function HomeScreen() {
             style={styles.iconButton}
             hitSlop={8}
             accessibilityRole="button"
-            accessibilityLabel="Notifications"
+            accessibilityLabel={t('home.notifications')}
             onPress={() => setNotificationsOpen(true)}
           >
             <Ionicons name="notifications-outline" size={20} color={colors.slate600} />
@@ -119,19 +121,21 @@ export function HomeScreen() {
               {formatDateLong(new Date())}
             </Text>
           </View>
-          <Text style={styles.heroTitle}>{isOnShift ? 'On shift' : 'Not clocked in'}</Text>
+          <Text style={styles.heroTitle}>
+            {isOnShift ? t('shift.onShift') : t('shift.notClockedIn')}
+          </Text>
           <Text style={styles.heroSubtitle}>{store?.name ?? '—'}</Text>
           <View style={styles.heroDivider} />
           <View style={styles.heroStatsRow}>
             <View style={styles.heroStat}>
-              <Text style={styles.heroStatLabel}>Shift start</Text>
+              <Text style={styles.heroStatLabel}>{t('home.shiftStart')}</Text>
               <Text style={styles.heroStatValue}>
                 {formatTime(lastClockIn?.timestamp ?? '')}
               </Text>
             </View>
             <View style={styles.heroStatSeparator} />
             <View style={styles.heroStat}>
-              <Text style={styles.heroStatLabel}>Shift end</Text>
+              <Text style={styles.heroStatLabel}>{t('home.shiftEnd')}</Text>
               <Text style={styles.heroStatValue}>
                 {formatTime(lastClockOut?.timestamp ?? '')}
               </Text>
@@ -161,9 +165,9 @@ export function HomeScreen() {
           </View>
           <View style={styles.ctaText}>
             <Text style={styles.ctaTitle}>
-              {isOnShift ? 'End shift with live photo' : 'Start shift with live photo'}
+              {isOnShift ? t('home.endShift') : t('home.startShift')}
             </Text>
-            <Text style={styles.ctaSubtitle}>Geo-fenced · location auto-captured</Text>
+            <Text style={styles.ctaSubtitle}>{t('home.geofenced')}</Text>
           </View>
           <Ionicons name="chevron-forward" size={18} color={colors.slate400} />
         </Pressable>
@@ -175,11 +179,11 @@ export function HomeScreen() {
         <PoliciesCard />
 
         <Card>
-          <Text style={styles.cardTitle}>Today's timeline</Text>
+          <Text style={styles.cardTitle}>{t('home.timeline')}</Text>
           {isLoading ? (
             <SkeletonRows count={3} />
           ) : marks.length === 0 ? (
-            <Text style={styles.emptyText}>No activity yet — start your shift to begin.</Text>
+            <Text style={styles.emptyText}>{t('home.timelineEmpty')}</Text>
           ) : (
             timelineMarks.map((m, i) => {
               const outside = m.inside_geofence === false;
@@ -192,7 +196,9 @@ export function HomeScreen() {
                       color={outside ? colors.danger : colors.success}
                     />
                   </View>
-                  <Text style={styles.timelineType}>{m.mark_type.replace('-', ' ')}</Text>
+                  <Text style={styles.timelineType}>
+                    {t(('mark.' + m.mark_type) as 'mark.clock-in')}
+                  </Text>
                   <Text style={styles.timelineTime}>
                     {formatTime(m.timestamp)}
                   </Text>

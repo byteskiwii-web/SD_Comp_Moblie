@@ -19,15 +19,16 @@ export type DocType =
   | 'address_proof'
   | 'other';
 
-export const DOC_TYPE_LABEL: Record<DocType, string> = {
-  aadhaar: 'Aadhaar card',
-  pan: 'PAN card',
-  bank_passbook: 'Bank passbook',
-  cancelled_cheque: 'Cancelled cheque',
-  photo: 'Photograph',
-  address_proof: 'Address proof',
-  other: 'Other',
-};
+/** Catalogue keys, not text -- a module constant would freeze the language. */
+export const DOC_TYPE_KEY = {
+  aadhaar: 'docType.aadhaar',
+  pan: 'docType.pan',
+  bank_passbook: 'docType.bank_passbook',
+  cancelled_cheque: 'docType.cancelled_cheque',
+  photo: 'docType.photo',
+  address_proof: 'docType.address_proof',
+  other: 'docType.other',
+} as const;
 
 export type DocumentStatus = 'pending' | 'verified' | 'rejected';
 

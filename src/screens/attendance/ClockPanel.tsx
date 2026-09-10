@@ -19,6 +19,7 @@ import { runtimeLabel, supportsBackgroundLocation } from '../../native/runtime';
 import { getApiErrorMessage } from '../../api/client';
 import { getLatestMarkOfTypes, SHIFT_TYPES, BREAK_TYPES } from '../../utils/attendanceStatus';
 import { formatTime, formatTimeWithSeconds, toLocalDateKey } from '../../utils/datetime';
+import { t as tr, useT } from '../../i18n';
 
 const today = () => toLocalDateKey();
 
@@ -51,6 +52,7 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
   // Subscribed purely so a change to the 12/24-hour setting re-renders the
   // times on this screen; the formatters read the store outside React.
   usePreferencesStore((s) => s.clock);
+  const t = useT();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const employee = useAuthStore((s) => s.employee);
   const store = useAuthStore((s) => s.store);
@@ -140,9 +142,7 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
     // people hunting for an entry that is not there yet.
     if (!(await Location.hasServicesEnabledAsync())) {
       setPermission('services-off');
-      setLocationError(
-        'Location Services is switched off for this phone. Open Settings › Privacy & Security › Location Services and turn it on, then tap Try again.'
-      );
+      setLocationError(tr('clock.servicesOff'));
       return;
     }
 
@@ -151,12 +151,12 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
       setPermission(perm.canAskAgain ? 'askable' : 'blocked');
       setLocationError(
         perm.canAskAgain
-          ? 'Location permission is needed to start or end your shift.'
+          ? tr('clock.locationDenied')
           : // Open Settings lands on this app's own page, so the path starts
             // there. Naming the option matters: iOS offers four on that screen
             // and only this one works. In Expo Go the page is Expo Go's -- there
             // is no zip-hrms row to find -- but the steps read the same either way.
-            'Tap Open Settings, choose Location, then ‘While Using the App’. Come back and tap Try again.'
+            tr('clock.blockedSteps')
       );
       return;
     }
@@ -190,7 +190,7 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
       // Only an error if the cached fix above never landed either -- a
       // screen that is already unblocked should not be knocked back into an
       // error state because the background refresh happened to fail.
-      if (!hasFix) setLocationError('Could not get your location. Try again.');
+      if (!hasFix) setLocationError(tr('clock.locationFailed'));
     }
   }, []);
 
@@ -257,15 +257,15 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
       // someone to infer later from an attendance report with holes in it.
       const unverified = supportsBackgroundLocation
         ? ''
-        : ` No mid-shift location checks on ${runtimeLabel}.`;
+        : ' ' + tr('clock.noMidShift', { runtime: runtimeLabel });
       setBanner({
         tone: isPending || !supportsBackgroundLocation ? 'warning' : 'success',
         text:
           (isPending
-            ? 'Recorded — you were outside the store radius, so this is pending HR approval.'
+            ? tr('clock.outsidePending')
             : pendingAction === 'clock-in'
-              ? 'Shift started successfully.'
-              : 'Shift ended successfully.') + unverified,
+              ? tr('clock.shiftStarted')
+              : tr('clock.shiftEnded')) + unverified,
       });
       setPendingAction(null);
     },
@@ -304,10 +304,10 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
       setBanner({
         tone: isPending ? 'warning' : 'success',
         text: isPending
-          ? 'Recorded — you were outside the store radius, so this is pending HR approval.'
+          ? tr('clock.outsidePending')
           : action === 'break-start'
-            ? 'Break started.'
-            : 'Break ended.',
+            ? tr('clock.breakStarted')
+            : tr('clock.breakEnded'),
       });
     },
     onError: (err) => {
@@ -345,14 +345,10 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
     // denial, and the employee is sent to Settings to fix it.
     if (!granted && supportsBackgroundLocation) {
       setPendingAction(null);
-      Alert.alert(
-        'Background location required',
-        'To start or end your shift, you must allow location access "All the time" (not just "While using the app"), so we can periodically confirm you\'re still at the store during your shift.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Open Settings', onPress: () => Linking.openSettings() },
-        ]
-      );
+      Alert.alert(tr('clock.bgTitle'), tr('clock.bgBodyFull'), [
+        { text: tr('common.cancel'), style: 'cancel' },
+        { text: tr('common.openSettings'), onPress: () => Linking.openSettings() },
+      ]);
       return;
     }
     punchMutation.mutate(filePath);
@@ -376,17 +372,23 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
         <View style={styles.heroTop}>
           <View style={[styles.heroDot, isCurrentlyClockedIn ? styles.heroDotOn : styles.heroDotOff]} />
           <Text style={[styles.heroState, isCurrentlyClockedIn && styles.heroStateOn]}>
-            {isCurrentlyOnBreak ? 'On break' : isCurrentlyClockedIn ? 'On shift' : 'Not clocked in'}
+            {isCurrentlyOnBreak
+              ? t('shift.onBreak')
+              : isCurrentlyClockedIn
+                ? t('shift.onShift')
+                : t('shift.notClockedIn')}
           </Text>
         </View>
         <Text style={styles.heroShift}>
           {profile?.shift?.name ??
             (profile?.shiftStart && profile?.shiftEnd
               ? `${String(profile.shiftStart).slice(0, 5)} – ${String(profile.shiftEnd).slice(0, 5)}`
-              : 'No rostered shift')}
+              : t('shift.noRoster'))}
         </Text>
         {lastClockIn && isCurrentlyClockedIn ? (
-          <Text style={styles.heroSince}>Since {formatTime(lastClockIn.timestamp)}</Text>
+          <Text style={styles.heroSince}>
+            {t('clock.since', { time: formatTime(lastClockIn.timestamp) })}
+          </Text>
         ) : null}
       </View>
 
@@ -396,7 +398,7 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
           <>
             <Ionicons name="warning-outline" size={17} color={colors.danger} />
             <View style={styles.geoText}>
-              <Text style={styles.geoTitleBad}>Location unavailable</Text>
+              <Text style={styles.geoTitleBad}>{t('clock.locationUnavailable')}</Text>
               <Text style={styles.geoSub}>{locationError}</Text>
             </View>
             <View style={styles.geoFix}>
@@ -426,13 +428,16 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
             />
             <View style={styles.geoText}>
               <Text style={insideFence ? styles.geoTitleOk : styles.geoTitleWarn}>
-                {insideFence ? 'Inside geo-fence' : 'Outside geo-fence'}
+                {insideFence ? t('clock.insideFence') : t('clock.outsideFence')}
               </Text>
               {/* Formatted, because "438636m from" is a number nobody can read
                   at a glance and the distance is the whole point of the row. */}
               <Text style={styles.geoSub} numberOfLines={1}>
-                {formatDistance(distanceMetres)} from {store?.name ?? 'your site'}
-                {insideFence ? '' : ' · goes to HR for approval'}
+                {t('clock.distanceFrom', {
+                  distance: formatDistance(distanceMetres),
+                  site: store?.name ?? t('clock.yourSite'),
+                })}
+                {insideFence ? '' : ' · ' + t('clock.goesToHr')}
               </Text>
             </View>
           </>
@@ -446,17 +451,19 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
       {breakUsage && breakUsage.used > 0 && (
         <View style={[styles.breakCard, breakUsage.overrun > 0 && styles.breakCardOver]}>
           <View style={styles.breakCardRow}>
-            <Text style={styles.breakCardLabel}>Break used</Text>
+            <Text style={styles.breakCardLabel}>{t('clock.breakUsed')}</Text>
             <Text style={styles.breakCardValue}>
-              {breakUsage.used} of {breakUsage.allowance} min
+              {t('clock.breakUsedOf', { used: breakUsage.used, allowance: breakUsage.allowance })}
             </Text>
           </View>
           {breakUsage.overrun > 0 ? (
             <Text style={styles.breakCardOverText}>
-              {breakUsage.overrun} min over — your shift now ends at {breakUsage.endsAt}
+              {t('clock.breakOver', { overrun: breakUsage.overrun, endsAt: breakUsage.endsAt ?? '—' })}
             </Text>
           ) : (
-            <Text style={styles.breakCardLeft}>{breakUsage.remaining} min left today</Text>
+            <Text style={styles.breakCardLeft}>
+              {t('clock.breakLeft', { remaining: breakUsage.remaining })}
+            </Text>
           )}
         </View>
       )}
@@ -467,7 +474,7 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
       <TourTarget id="clock-action">
       <View style={styles.actionsRow}>
         <Button
-          title={isCurrentlyClockedIn ? 'End Shift' : 'Start Shift'}
+          title={isCurrentlyClockedIn ? t('clock.endShift') : t('clock.startShift')}
           onPress={() => setPendingAction(isCurrentlyClockedIn ? 'clock-out' : 'clock-in')}
           disabled={!coords || (isCurrentlyClockedIn && isCurrentlyOnBreak)}
         />
@@ -477,7 +484,7 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
       {isCurrentlyClockedIn && (
         <View style={styles.actionsRow}>
           <Button
-            title={isCurrentlyOnBreak ? 'End Break' : 'Start Break'}
+            title={isCurrentlyOnBreak ? t('clock.endBreak') : t('clock.startBreak')}
             variant="outline"
             onPress={() => breakMutation.mutate(isCurrentlyOnBreak ? 'break-end' : 'break-start')}
             disabled={!coords || breakMutation.isPending}
@@ -486,29 +493,29 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
       )}
 
       {isCurrentlyOnBreak && (
-        <Text style={styles.geoWarning}>End your break before ending your shift.</Text>
+        <Text style={styles.geoWarning}>{t('clock.endBreakFirst')}</Text>
       )}
 
       {(lastClockIn || lastClockOut || lastBreakStart || lastBreakEnd) && (
         <Card>
           {lastClockIn && (
             <Text style={styles.lastPunchText}>
-              Last shift start: {formatTimeWithSeconds(lastClockIn.timestamp)}
+              {t('clock.lastShiftStart', { time: formatTimeWithSeconds(lastClockIn.timestamp) })}
             </Text>
           )}
           {lastClockOut && (
             <Text style={styles.lastPunchText}>
-              Last shift end: {formatTimeWithSeconds(lastClockOut.timestamp)}
+              {t('clock.lastShiftEnd', { time: formatTimeWithSeconds(lastClockOut.timestamp) })}
             </Text>
           )}
           {lastBreakStart && (
             <Text style={styles.lastPunchText}>
-              Last break start: {formatTimeWithSeconds(lastBreakStart.timestamp)}
+              {t('clock.lastBreakStart', { time: formatTimeWithSeconds(lastBreakStart.timestamp) })}
             </Text>
           )}
           {lastBreakEnd && (
             <Text style={styles.lastPunchText}>
-              Last break end: {formatTimeWithSeconds(lastBreakEnd.timestamp)}
+              {t('clock.lastBreakEnd', { time: formatTimeWithSeconds(lastBreakEnd.timestamp) })}
             </Text>
           )}
         </Card>

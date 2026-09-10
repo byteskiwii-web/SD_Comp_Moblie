@@ -4,6 +4,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { ColorScheme, radii } from '../theme/tokens';
 import { useThemeStore } from '../stores/themeStore';
 import type { PickedFile } from '../api/documents.api';
+import { t as tr, useT } from '../i18n';
 
 /**
  * Three ways to attach the same thing: camera, photo library, files.
@@ -35,7 +36,7 @@ async function pickFromCamera(): Promise<PickedFile | null> {
   const ImagePicker = require('expo-image-picker');
   const perm = await ImagePicker.requestCameraPermissionsAsync();
   if (!perm.granted) {
-    Alert.alert('Camera needed', 'Allow camera access to photograph the document.');
+    Alert.alert(tr('file.cameraNeeded'), tr('file.cameraNeededBody'));
     return null;
   }
   const res = await ImagePicker.launchCameraAsync({ quality: 0.7, allowsEditing: false });
@@ -52,7 +53,7 @@ async function pickFromLibrary(): Promise<PickedFile | null> {
   const ImagePicker = require('expo-image-picker');
   const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
   if (!perm.granted) {
-    Alert.alert('Photos needed', 'Allow photo access to attach an existing picture.');
+    Alert.alert(tr('file.photosNeeded'), tr('file.photosNeededBody'));
     return null;
   }
   const res = await ImagePicker.launchImageLibraryAsync({ quality: 0.7, allowsEditing: false });
@@ -84,7 +85,7 @@ export function FilePickerSheet({
   visible,
   onClose,
   onPicked,
-  title = 'Attach a document',
+  title = tr('file.attach'),
 }: {
   visible: boolean;
   onClose: () => void;
@@ -93,6 +94,7 @@ export function FilePickerSheet({
 }) {
   const colors = useThemeStore((s) => s.colors);
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const t = useT();
 
   const choose = async (source: Source) => {
     try {
@@ -112,8 +114,8 @@ export function FilePickerSheet({
       const size = await sizeOf(picked.uri);
       if (size !== null && size > MAX_BYTES) {
         Alert.alert(
-          'File too large',
-          `That file is ${(size / 1024 / 1024).toFixed(1)} MB. Attach something under 8 MB — a photo taken in the app is usually well under.`
+          tr('file.tooLarge'),
+          tr('file.tooLargeBody', { size: (size / 1024 / 1024).toFixed(1) })
         );
         return;
       }
@@ -121,7 +123,7 @@ export function FilePickerSheet({
       onClose();
       onPicked(picked);
     } catch (err) {
-      Alert.alert('Could not attach that', err instanceof Error ? err.message : 'Please try again.');
+      Alert.alert(tr('file.failed'), err instanceof Error ? err.message : tr('common.tryAgain'));
     }
   };
 
@@ -131,22 +133,27 @@ export function FilePickerSheet({
       <View style={styles.sheet}>
         <View style={styles.bar}>
           <Text style={styles.title}>{title}</Text>
-          <Pressable onPress={onClose} hitSlop={12} accessibilityRole="button" accessibilityLabel="Close">
+          <Pressable onPress={onClose} hitSlop={12} accessibilityRole="button" accessibilityLabel={t('common.close')}>
             <Ionicons name="close" size={22} color={colors.slate500} />
           </Pressable>
         </View>
 
-        <Option icon="camera-outline" label="Take a photo" hint="Use the camera now" onPress={() => choose('camera')} />
+        <Option
+          icon="camera-outline"
+          label={t('file.takePhoto')}
+          hint={t('file.takePhotoHint')}
+          onPress={() => choose('camera')}
+        />
         <Option
           icon="images-outline"
-          label="Choose from photos"
-          hint="Pick an existing picture"
+          label={t('file.fromPhotos')}
+          hint={t('file.fromPhotosHint')}
           onPress={() => choose('library')}
         />
         <Option
           icon="document-outline"
-          label="Choose a file"
-          hint="Images or PDF"
+          label={t('file.chooseFile')}
+          hint={t('file.chooseFileHint')}
           onPress={() => choose('file')}
           last
         />

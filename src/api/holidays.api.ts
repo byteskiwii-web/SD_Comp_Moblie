@@ -11,12 +11,13 @@ const BASE = '/holidays';
 
 export type HolidayKind = 'festival' | 'public' | 'optional' | 'company';
 
-export const HOLIDAY_KIND_LABEL: Record<HolidayKind, string> = {
-  festival: 'Festival',
-  public: 'Public holiday',
-  optional: 'Optional',
-  company: 'Company',
-};
+/** Catalogue keys, not text -- a module constant would freeze the language. */
+export const HOLIDAY_KIND_KEY = {
+  festival: 'holidayKind.festival',
+  public: 'holidayKind.public',
+  optional: 'holidayKind.optional',
+  company: 'holidayKind.company',
+} as const;
 
 export type Holiday = {
   id: string;

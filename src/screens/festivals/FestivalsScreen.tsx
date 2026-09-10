@@ -10,7 +10,8 @@ import { useThemeStore } from '../../stores/themeStore';
 import { getApiErrorMessage } from '../../api/client';
 import { toLocalDateKey } from '../../utils/datetime';
 import { festivalIcon } from '../../utils/festivalIcon';
-import { getHolidays, HOLIDAY_KIND_LABEL, type Holiday } from '../../api/holidays.api';
+import { getHolidays, HOLIDAY_KIND_KEY, type Holiday } from '../../api/holidays.api';
+import { t as tr, useT, type TKey } from '../../i18n';
 
 /**
  * The year's festivals, grouped by month.
@@ -23,15 +24,13 @@ import { getHolidays, HOLIDAY_KIND_LABEL, type Holiday } from '../../api/holiday
  * two thirds of the list is history, and the useful part is what is coming.
  */
 
-const MONTHS = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
-];
-const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const monthLong = (m: number) => tr(('month.' + (m + 1)) as TKey);
+const weekdayShort = (d: number) => tr(('weekdayShort.' + d) as TKey);
 
 export function FestivalsScreen() {
   const colors = useThemeStore((s) => s.colors);
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const t = useT();
   const today = toLocalDateKey();
 
   const { data, isLoading, error } = useQuery({
@@ -52,7 +51,7 @@ export function FestivalsScreen() {
       .sort((a, b) => a[0].localeCompare(b[0]))
       .map(([key, items]) => ({
         key,
-        title: MONTHS[Number(key.slice(5, 7)) - 1],
+        title: monthLong(Number(key.slice(5, 7)) - 1),
         data: items,
       }));
   }, [data]);
@@ -93,7 +92,7 @@ export function FestivalsScreen() {
 
   return (
     <SafeAreaView style={styles.flex} edges={['top']}>
-      <ScreenHeader title="Festivals" subtitle={today.slice(0, 4)} />
+      <ScreenHeader title={t('festivals.title')} subtitle={today.slice(0, 4)} />
 
       {isLoading ? (
         <View style={styles.pad}><SkeletonRows count={8} /></View>
@@ -102,7 +101,7 @@ export function FestivalsScreen() {
       ) : sections.length === 0 ? (
         <View style={styles.pad}>
           <Text style={styles.empty}>
-            No festivals on the calendar yet. Your HR team loads these; check back shortly.
+            {t('festivals.empty')}
           </Text>
         </View>
       ) : (
@@ -116,7 +115,7 @@ export function FestivalsScreen() {
             <View style={styles.monthBar}>
               <Text style={styles.monthText}>{section.title}</Text>
               <Text style={styles.monthCount}>
-                {section.data.length} {section.data.length === 1 ? 'day' : 'days'}
+                {tr('festivals.dayCount', { count: section.data.length })}
               </Text>
             </View>
           )}
@@ -148,7 +147,7 @@ function Row({
     <View style={[styles.row, isToday && styles.rowToday, isPast && styles.rowPast]}>
       <View style={styles.dateBlock}>
         <Text style={[styles.day, isToday && styles.todayText]}>{d.getDate()}</Text>
-        <Text style={styles.weekday}>{WEEKDAYS[d.getDay()]}</Text>
+        <Text style={styles.weekday}>{weekdayShort(d.getDay())}</Text>
       </View>
 
       {/* The festival's own tint, not the theme's. Ionicons is monochrome, so
@@ -164,7 +163,7 @@ function Row({
         <View style={styles.meta}>
           {/* Only worth saying when it is not the ordinary case. */}
           {holiday.kind !== 'festival' && (
-            <Text style={styles.kind}>{HOLIDAY_KIND_LABEL[holiday.kind]}</Text>
+            <Text style={styles.kind}>{tr(HOLIDAY_KIND_KEY[holiday.kind])}</Text>
           )}
           {holiday.region ? <Text style={styles.kind}>{holiday.region}</Text> : null}
         </View>

@@ -6,7 +6,8 @@ import { ColorScheme, radii } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
 import { getApiErrorMessage } from '../../api/client';
 import { useAuthStore } from '../../stores/authStore';
-import { GENDERS, GENDER_LABEL, updateMyProfile, type Gender } from '../../api/auth.api';
+import { GENDERS, updateMyProfile, type Gender } from '../../api/auth.api';
+import { useT, type TKey } from '../../i18n';
 
 /**
  * Personal details the employee maintains about themselves.
@@ -26,6 +27,7 @@ export function PersonalCard() {
   const refreshProfile = useAuthStore((s) => s.refreshProfile);
   const colors = useThemeStore((s) => s.colors);
   const styles = React.useMemo(() => makeStyles(colors), [colors]);
+  const t = useT();
   const [error, setError] = useState<string | null>(null);
 
   const save = useMutation({
@@ -42,9 +44,9 @@ export function PersonalCard() {
 
   return (
     <Card>
-      <Text style={styles.cardTitle}>Personal</Text>
+      <Text style={styles.cardTitle}>{t('personal.title')}</Text>
 
-      <Text style={styles.label}>Gender</Text>
+      <Text style={styles.label}>{t('personal.gender')}</Text>
       <View style={styles.options}>
         {GENDERS.map((g) => {
           const selected = current === g;
@@ -62,7 +64,7 @@ export function PersonalCard() {
               accessibilityState={{ selected }}
             >
               <Text style={[styles.optionText, selected && styles.optionTextOn]}>
-                {GENDER_LABEL[g]}
+                {t(('gender.' + g) as TKey)}
               </Text>
             </Pressable>
           );
@@ -72,7 +74,7 @@ export function PersonalCard() {
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
       <Text style={styles.hint}>
-        {current ? 'Tap another option to change it.' : 'Used for statutory reporting by HR.'}
+        {current ? t('personal.changeHint') : t('personal.genderNote')}
       </Text>
     </Card>
   );

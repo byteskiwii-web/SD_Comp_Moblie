@@ -14,6 +14,7 @@ import {
   type NotificationType,
 } from '../../api/notifications.api';
 import { SkeletonRows } from '../../components/Skeleton';
+import { useT } from '../../i18n';
 
 /** Per-kind icon and tint. `system` is the fallback for anything unrecognised. */
 function kindTone(colors: ColorScheme): Record<NotificationType, { icon: keyof typeof Ionicons.glyphMap; tint: string; bg: string }> {
@@ -66,6 +67,7 @@ export function NotificationsSheet({ visible, onClose }: { visible: boolean; onC
 
   const readOne = useMutation({ mutationFn: markNotificationRead, onSuccess: invalidate });
   const readAll = useMutation({ mutationFn: markAllNotificationsRead, onSuccess: invalidate });
+  const t = useT();
 
   const items = data?.notifications ?? [];
   const unread = items.filter((n) => !n.isRead).length;
@@ -75,14 +77,14 @@ export function NotificationsSheet({ visible, onClose }: { visible: boolean; onC
       <Pressable style={styles.backdrop} onPress={onClose} />
       <View style={[styles.sheet, { paddingBottom: insets.bottom + 12 }]}>
         <View style={styles.header}>
-          <Text style={styles.title}>Notifications</Text>
+          <Text style={styles.title}>{t('notif.title')}</Text>
           <View style={styles.headerActions}>
             {unread > 0 && (
               <Pressable onPress={() => readAll.mutate()} hitSlop={6} disabled={readAll.isPending}>
-                <Text style={styles.markAll}>Mark all read</Text>
+                <Text style={styles.markAll}>{t('notif.markAllRead')}</Text>
               </Pressable>
             )}
-            <Pressable onPress={onClose} hitSlop={10} accessibilityRole="button" accessibilityLabel="Close">
+            <Pressable onPress={onClose} hitSlop={10} accessibilityRole="button" accessibilityLabel={t('common.close')}>
               <Ionicons name="close" size={22} color={colors.slate500} />
             </Pressable>
           </View>
@@ -96,9 +98,9 @@ export function NotificationsSheet({ visible, onClose }: { visible: boolean; onC
           ) : items.length === 0 ? (
             <View style={styles.empty}>
               <Ionicons name="notifications-off-outline" size={26} color={colors.slate300} />
-              <Text style={styles.emptyTitle}>Nothing yet</Text>
+              <Text style={styles.emptyTitle}>{t('notif.empty')}</Text>
               <Text style={styles.emptyBody}>
-                You'll be told here when a manager decides one of your attendance corrections.
+                {t('notif.emptyBody')}
               </Text>
             </View>
           ) : (

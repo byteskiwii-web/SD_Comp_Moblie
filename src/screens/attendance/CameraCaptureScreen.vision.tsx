@@ -7,18 +7,20 @@ import { Button } from '../../components/ui';
 import { radii } from '../../theme/tokens';
 import { useLiveness } from '../../hooks/useLiveness';
 import type { CameraCaptureProps } from './cameraCaptureTypes';
+import { useT, type TKey } from '../../i18n';
 
 type Props = CameraCaptureProps;
 
-const CHALLENGE_LABEL: Record<string, string> = {
-  'looking-for-face': 'Center your face in the frame',
-  'challenge-blink': 'Blink to continue',
-  'challenge-turn': 'Slowly turn your head',
-  timeout: "Couldn't verify — try again",
+const CHALLENGE_KEY: Record<string, TKey> = {
+  'looking-for-face': 'camera.centreFace',
+  'challenge-blink': 'camera.blinkToContinue',
+  'challenge-turn': 'camera.turnHead',
+  timeout: 'camera.timedOut',
 };
 
 export function VisionCameraCaptureScreen({ onCaptured, onCancel }: Props) {
   const insets = useSafeAreaInsets();
+  const t = useT();
   const device = useCameraDevice('front');
   const { hasPermission, requestPermission } = useCameraPermission();
   const photoOutput = usePhotoOutput({ quality: 0.8 });
@@ -63,9 +65,9 @@ export function VisionCameraCaptureScreen({ onCaptured, onCancel }: Props) {
   if (!hasPermission) {
     return (
       <View style={styles.center}>
-        <Text style={styles.permissionText}>Camera access is needed to verify your identity.</Text>
-        <Button title="Grant camera access" onPress={requestPermission} />
-        <Button title="Cancel" variant="outline" onPress={onCancel} />
+        <Text style={styles.permissionText}>{t('camera.needed')}</Text>
+        <Button title={t('camera.grant')} onPress={requestPermission} />
+        <Button title={t('common.cancel')} variant="outline" onPress={onCancel} />
       </View>
     );
   }
@@ -73,8 +75,8 @@ export function VisionCameraCaptureScreen({ onCaptured, onCancel }: Props) {
   if (!device) {
     return (
       <View style={styles.center}>
-        <Text style={styles.permissionText}>No front camera found on this device.</Text>
-        <Button title="Cancel" variant="outline" onPress={onCancel} />
+        <Text style={styles.permissionText}>{t('camera.noFront')}</Text>
+        <Button title={t('common.cancel')} variant="outline" onPress={onCancel} />
       </View>
     );
   }
@@ -107,15 +109,15 @@ export function VisionCameraCaptureScreen({ onCaptured, onCancel }: Props) {
         {captured ? (
           <ActivityIndicator color="#FFFFFF" size="large" />
         ) : (
-          <Text style={styles.challengeText}>{CHALLENGE_LABEL[state]}</Text>
+          <Text style={styles.challengeText}>{t(CHALLENGE_KEY[state])}</Text>
         )}
 
         {state === 'timeout' && !captured && (
-          <Button title="Try again" onPress={reset} />
+          <Button title={t('common.retry')} onPress={reset} />
         )}
 
         <View style={styles.cancelWrap}>
-          <Button title="Cancel" variant="outline" onPress={onCancel} />
+          <Button title={t('common.cancel')} variant="outline" onPress={onCancel} />
         </View>
       </View>
     </View>

@@ -12,6 +12,7 @@ import { OTP_LENGTH } from '../../constants/config';
 import { verifyPasswordResetOtp } from '../../api/auth.api';
 import { getApiErrorMessage } from '../../api/client';
 import { forgotPasswordVerifySchema } from '../../schemas/auth.schema';
+import { useT } from '../../i18n';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'ForgotPasswordVerify'>;
 
@@ -21,6 +22,7 @@ export function ForgotPasswordVerifyScreen({ navigation, route }: Props) {
   const [error, setError] = useState('');
   const colors = useThemeStore((s) => s.colors);
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const t = useT();
 
   const mutation = useMutation({
     mutationFn: () => verifyPasswordResetOtp(employeeId, otp),
@@ -34,7 +36,7 @@ export function ForgotPasswordVerifyScreen({ navigation, route }: Props) {
     setError('');
     const parsed = forgotPasswordVerifySchema.safeParse({ employee_id: employeeId, otp });
     if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? `Enter the ${OTP_LENGTH}-digit code.`);
+      setError(parsed.error.issues[0]?.message ?? t('auth.needCode', { length: OTP_LENGTH }));
       return;
     }
     mutation.mutate();
@@ -44,9 +46,10 @@ export function ForgotPasswordVerifyScreen({ navigation, route }: Props) {
     <SafeAreaView style={styles.flex}>
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>Verify your email</Text>
+        <Text style={styles.title}>{t('auth.verifyEmailTitle')}</Text>
         <Text style={styles.subtitle}>
-          We sent a {OTP_LENGTH}-digit code to <Text style={styles.bold}>{maskedEmail}</Text>
+          {t('auth.codeSentTo', { length: OTP_LENGTH })}{' '}
+          <Text style={styles.bold}>{maskedEmail}</Text>
         </Text>
 
         <View style={styles.otpWrap}>
@@ -56,9 +59,13 @@ export function ForgotPasswordVerifyScreen({ navigation, route }: Props) {
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
         <View style={styles.buttonGap}>
-          <Button title="Verify" onPress={submit} loading={mutation.isPending} />
+          <Button title={t('auth.verify')} onPress={submit} loading={mutation.isPending} />
         </View>
-        <Button title="Change employee ID" variant="outline" onPress={() => navigation.goBack()} />
+        <Button
+          title={t('auth.changeEmployeeId')}
+          variant="outline"
+          onPress={() => navigation.goBack()}
+        />
       </ScrollView>
     </KeyboardAvoidingView>
     </SafeAreaView>

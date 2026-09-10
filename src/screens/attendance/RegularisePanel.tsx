@@ -15,6 +15,7 @@ import { formatDuration, summariseDay } from '../../utils/attendanceDay';
 import { formatTime, newestFirst, toLocalDateKey } from '../../utils/datetime';
 import type { Regularisation, RegularisationRequestType, RegularisationStatus } from '../../types/attendance';
 import { SkeletonRows } from '../../components/Skeleton';
+import { t as tr, useT, type TKey } from '../../i18n';
 
 const today = () => toLocalDateKey();
 
@@ -24,11 +25,11 @@ const STATUS_TONE: Record<RegularisationStatus, 'warning' | 'success' | 'danger'
   rejected: 'danger',
   cancelled: 'slate',
 };
-const STATUS_LABEL: Record<RegularisationStatus, string> = {
-  pending: 'Pending',
-  approved: 'Approved',
-  rejected: 'Rejected',
-  cancelled: 'Cancelled',
+const STATUS_KEY: Record<RegularisationStatus, TKey> = {
+  pending: 'status.pending',
+  approved: 'status.approved',
+  rejected: 'status.rejected',
+  cancelled: 'status.cancelled',
 };
 
 function fmtDate(dateStr: string) {
@@ -67,6 +68,7 @@ const newKey = () => `r${++rowSeq}`;
 export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) {
   const colors = useThemeStore((s) => s.colors);
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const t = useT();
   const employee = useAuthStore((s) => s.employee);
   const store = useAuthStore((s) => s.store);
   const profile = useAuthStore((s) => s.profile);
@@ -157,7 +159,7 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['regularisation-mine', employee?.id] });
       queryClient.invalidateQueries({ queryKey: ['attendance-day', employee?.id, markDate] });
-      setToast({ tone: 'success', text: 'Regularisation request submitted successfully.' });
+      setToast({ tone: 'success', text: tr('reg.submitted') });
       setJustSubmitted(true);
       setReason('');
     },
@@ -166,11 +168,11 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
 
   function validate(): boolean {
     const next: typeof errors = {};
-    if (!reason.trim()) next.reason = 'Please add a note';
+    if (!reason.trim()) next.reason = tr('reg.needNote');
     if (requestType === 'adjust') {
-      if (!submitted.inTime && !submitted.outTime) next.time = 'Set at least one time';
+      if (!submitted.inTime && !submitted.outTime) next.time = tr('reg.needTime');
       else if (submitted.inTime && submitted.outTime && submitted.outTime <= submitted.inTime) {
-        next.time = 'Clock-out must be after clock-in';
+        next.time = tr('reg.outBeforeIn');
       }
     }
     setErrors(next);
@@ -205,11 +207,11 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
         <View style={styles.hoursRow}>
           <View style={styles.hoursTile}>
             <Text style={styles.hoursValue}>{formatDuration(day.grossMinutes)}</Text>
-            <Text style={styles.hoursLabel}>Gross hours</Text>
+            <Text style={styles.hoursLabel}>{t('day.grossHours')}</Text>
           </View>
           <View style={styles.hoursTile}>
             <Text style={styles.hoursValue}>{formatDuration(day.effectiveMinutes)}</Text>
-            <Text style={styles.hoursLabel}>Effective hours</Text>
+            <Text style={styles.hoursLabel}>{t('day.effectiveHours')}</Text>
           </View>
         </View>
 
@@ -219,23 +221,23 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
             with the future -- offering it here would only produce an error
             after the form was filled in. */}
         <DatePickerField
-          label="Date"
+          label={t('common.date')}
           value={markDate}
           onChange={setMarkDate}
           maximumDate={new Date(Date.now() - 24 * 60 * 60 * 1000)}
         />
         </TourTarget>
 
-        <Text style={styles.fieldLabel}>Request type</Text>
+        <Text style={styles.fieldLabel}>{t('reg.requestType')}</Text>
         <View style={styles.segment}>
-          {(['other', 'adjust'] as RegularisationRequestType[]).map((t) => (
+          {(['other', 'adjust'] as RegularisationRequestType[]).map((kind) => (
             <Pressable
-              key={t}
-              onPress={() => setRequestType(t)}
-              style={[styles.segmentItem, requestType === t && styles.segmentItemActive]}
+              key={kind}
+              onPress={() => setRequestType(kind)}
+              style={[styles.segmentItem, requestType === kind && styles.segmentItemActive]}
             >
-              <Text style={[styles.segmentText, requestType === t && styles.segmentTextActive]}>
-                {t === 'adjust' ? 'Missing/wrong punch' : 'Other (on-duty, WFH)'}
+              <Text style={[styles.segmentText, requestType === kind && styles.segmentTextActive]}>
+                {kind === 'adjust' ? t('reg.typeMissingPunch') : t('reg.typeOnDuty')}
               </Text>
             </Pressable>
           ))}
@@ -243,13 +245,13 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
 
         {requestType === 'adjust' && (
           <>
-            <Text style={styles.fieldLabel}>Attendance adjustment</Text>
+            <Text style={styles.fieldLabel}>{t('reg.title')}</Text>
             <Text style={styles.help}>
               {dayQuery.isLoading
-                ? 'Loading what was recorded that day…'
+                ? t('reg.loadingDay')
                 : day.pairs.length > 0
-                  ? 'Times below are what was recorded. Tap any of them to change it.'
-                  : 'Nothing was recorded that day, so these start from your rostered shift.'}
+                  ? t('reg.recordedHint')
+                  : t('reg.nothingRecordedHint')}
             </Text>
 
             <View style={styles.stampBox}>
@@ -277,7 +279,7 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
                     disabled={rows.length === 1}
                     hitSlop={8}
                     accessibilityRole="button"
-                    accessibilityLabel="Remove this pair"
+                    accessibilityLabel={t('reg.removePair')}
                   >
                     <Ionicons
                       name="remove-circle-outline"
@@ -297,8 +299,10 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
               <View style={styles.submitNote}>
                 <Ionicons name="information-circle-outline" size={15} color={colors.slate500} />
                 <Text style={styles.submitNoteText}>
-                  Sent as one correction for the day: {formatTime(new Date(`${markDate}T${submitted.inTime}:00`))} to{' '}
-                  {formatTime(new Date(`${markDate}T${submitted.outTime}:00`))}
+                  {t('reg.sentAsOne', {
+                    from: formatTime(new Date(`${markDate}T${submitted.inTime}:00`)),
+                    to: formatTime(new Date(`${markDate}T${submitted.outTime}:00`)),
+                  })}
                 </Text>
               </View>
             )}
@@ -308,10 +312,10 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
         )}
 
         <TextField
-          label="Note (mandatory)"
+          label={t('reg.note')}
           value={reason}
           onChangeText={setReason}
-          placeholder="Missed clock-out, network issue…"
+          placeholder={t('reg.notePlaceholder')}
           multiline
           error={errors.reason}
         />
@@ -319,7 +323,7 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
         <View style={styles.actions}>
           <View style={styles.actionHalf}>
             <Button
-              title="Cancel"
+              title={t('common.cancel')}
               variant="outline"
               onPress={() => {
                 setToast(null);
@@ -339,7 +343,7 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
               // it re-enables the moment the toast clears (see onHide above),
               // by which point "Request" reads as the next request, not this
               // one repeated.
-              title={justSubmitted ? 'Request sent' : 'Request'}
+              title={justSubmitted ? t('reg.sent') : t('reg.submit')}
               onPress={() => {
                 setToast(null);
                 if (validate()) submitMutation.mutate();
@@ -352,11 +356,11 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
       </Card>
 
       <Card style={styles.listCard}>
-        <Text style={styles.listTitle}>Your requests</Text>
+        <Text style={styles.listTitle}>{t('reg.yourRequests')}</Text>
         {listQuery.isLoading ? (
           <SkeletonRows count={3} />
         ) : myRequests.length === 0 ? (
-          <Text style={styles.empty}>No corrections raised yet.</Text>
+          <Text style={styles.empty}>{t('reg.none')}</Text>
         ) : (
           myRequests.map((r: Regularisation, i: number) => (
             <View
@@ -370,7 +374,7 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
                 </Text>
                 {r.decisionNote ? <Text style={styles.reqNote}>“{r.decisionNote}”</Text> : null}
               </View>
-              <Badge tone={STATUS_TONE[r.status]}>{STATUS_LABEL[r.status]}</Badge>
+              <Badge tone={STATUS_TONE[r.status]}>{t(STATUS_KEY[r.status])}</Badge>
             </View>
           ))
         )}

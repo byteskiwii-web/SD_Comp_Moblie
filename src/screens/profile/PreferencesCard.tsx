@@ -5,6 +5,7 @@ import { Card } from '../../components/ui';
 import { ColorScheme, radii } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
 import { LANGUAGES, usePreferencesStore, type ClockFormat, type LanguageCode } from '../../stores/preferencesStore';
+import { useT } from '../../i18n';
 
 /**
  * Display preferences: language and clock.
@@ -13,16 +14,17 @@ import { LANGUAGES, usePreferencesStore, type ClockFormat, type LanguageCode } f
  * fact about the employee that HR or payroll has any use for — they are how
  * this person wants to read this app on this phone.
  *
- * LANGUAGE IS HONEST ABOUT WHAT IT DOES TODAY. The backend serves six locales
- * and this sends the choice with every request, so server messages — validation
- * errors, refusals, notification text — come back translated. The app's own
- * labels are still English, because the mobile app has no i18n layer yet. The
- * card says so rather than letting somebody pick Tamil and conclude the
- * feature is broken.
+ * LANGUAGE CHANGES THE WHOLE APP. Every label goes through the catalogues in
+ * src/i18n, and the choice also travels as an Accept-Language header, so
+ * server messages — validation errors, refusals, notification text — arrive in
+ * the same language. This card used to carry a note admitting the app's own
+ * labels were still English; that note is gone because the thing it apologised
+ * for is fixed.
  */
 export function PreferencesCard() {
   const colors = useThemeStore((s) => s.colors);
   const styles = React.useMemo(() => makeStyles(colors), [colors]);
+  const t = useT();
 
   const language = usePreferencesStore((s) => s.language);
   const setLanguage = usePreferencesStore((s) => s.setLanguage);
@@ -31,9 +33,9 @@ export function PreferencesCard() {
 
   return (
     <Card>
-      <Text style={styles.cardTitle}>Preferences</Text>
+      <Text style={styles.cardTitle}>{t('prefs.title')}</Text>
 
-      <Text style={styles.label}>Language</Text>
+      <Text style={styles.label}>{t('prefs.language')}</Text>
       <View style={styles.langs}>
         {LANGUAGES.map((l) => {
           const on = language === l.code;
@@ -58,14 +60,13 @@ export function PreferencesCard() {
       <View style={styles.note}>
         <Ionicons name="information-circle-outline" size={13} color={colors.slate400} />
         <Text style={styles.noteText}>
-          Messages from the server use this language now. The app's own labels are still being
-          translated.
+          {t('prefs.languageNote')}
         </Text>
       </View>
 
       <View style={styles.divider} />
 
-      <Text style={styles.label}>Time format</Text>
+      <Text style={styles.label}>{t('prefs.timeFormat')}</Text>
       <View style={styles.segment}>
         {(['12h', '24h'] as ClockFormat[]).map((c) => {
           const on = clock === c;
@@ -78,7 +79,7 @@ export function PreferencesCard() {
               accessibilityState={{ selected: on }}
             >
               <Text style={[styles.segmentText, on && styles.segmentTextOn]}>
-                {c === '12h' ? '12-hour' : '24-hour'}
+                {c === '12h' ? t('prefs.clock12') : t('prefs.clock24')}
               </Text>
               {/* A worked example, because "12-hour" and "24-hour" are jargon
                   and the sample is the thing people actually recognise. */}

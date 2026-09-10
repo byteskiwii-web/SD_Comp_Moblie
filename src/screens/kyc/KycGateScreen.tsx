@@ -8,20 +8,22 @@ import { ColorScheme, radii } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
 import { useAuthStore } from '../../stores/authStore';
 import { useKycGate } from '../../hooks/useKycGate';
-import { KycCheckStatus, KYC_STATUS_LABEL as STATUS_LABEL, kycStatusTone as statusTone } from '../../api/verification.api';
+import { KycCheckStatus, KYC_STATUS_KEY as STATUS_KEY, kycStatusTone as statusTone } from '../../api/verification.api';
 import { KycStackParamList } from '../../navigation/types';
+import { useT } from '../../i18n';
 
 type Nav = NativeStackNavigationProp<KycStackParamList>;
 
 function StatusRow({ label, status }: { label: string; status: KycCheckStatus }) {
   const colors = useThemeStore((s) => s.colors);
   const styles = React.useMemo(() => makeStyles(colors), [colors]);
+  const t = useT();
   const tone = statusTone(status, colors);
   return (
     <View style={styles.statusRow}>
       <Text style={styles.statusLabel}>{label}</Text>
       <View style={[styles.chip, { backgroundColor: tone.bg }]}>
-        <Text style={[styles.chipText, { color: tone.fg }]}>{STATUS_LABEL[status]}</Text>
+        <Text style={[styles.chipText, { color: tone.fg }]}>{t(STATUS_KEY[status])}</Text>
       </View>
     </View>
   );
@@ -33,46 +35,46 @@ export function KycGateScreen() {
   const { kyc, isError, isFetching, refetch } = useKycGate();
   const colors = useThemeStore((s) => s.colors);
   const styles = React.useMemo(() => makeStyles(colors), [colors]);
+  const t = useT();
 
   const panDone = kyc?.pan.status === 'verified';
 
   return (
     <SafeAreaView style={styles.flex}>
       <View style={styles.content}>
-        <Text style={styles.title}>Complete your KYC</Text>
+        <Text style={styles.title}>{t('kyc.gate')}</Text>
         <Text style={styles.subtitle}>
-          To keep attendance records secure and compliant, we need to verify your PAN and Aadhaar before you
-          can clock in. This takes about 2 minutes.
+          {t('kyc.gateBody')}
         </Text>
 
         {isError ? (
           <Card style={styles.errorCard}>
             <Text style={styles.errorText}>
-              We couldn't confirm your verification status. Check your connection and try again.
+              {t('kyc.loadFailed')}
             </Text>
             <View style={styles.retryGap}>
-              <Button title="Retry" onPress={() => refetch()} loading={isFetching} />
+              <Button title={t('common.retry')} onPress={() => refetch()} loading={isFetching} />
             </View>
           </Card>
         ) : (
           <>
             <Card style={styles.statusCard}>
-              <StatusRow label="PAN Verification" status={kyc?.pan.status ?? 'pending'} />
+              <StatusRow label={t('kyc.pan')} status={kyc?.pan.status ?? 'pending'} />
               <View style={styles.divider} />
-              <StatusRow label="Aadhaar Verification" status={kyc?.aadhaar.status ?? 'pending'} />
+              <StatusRow label={t('kyc.aadhaar')} status={kyc?.aadhaar.status ?? 'pending'} />
             </Card>
 
-            {isFetching ? <Text style={styles.refreshing}>Refreshing…</Text> : null}
+            {isFetching ? <Text style={styles.refreshing}>{t('common.refreshing')}</Text> : null}
 
             <View style={styles.ctaGap}>
               {!panDone ? (
                 <Button
-                  title={kyc?.pan.status === 'failed' ? 'Retry PAN Verification' : 'Start PAN Verification'}
+                  title={kyc?.pan.status === 'failed' ? t('kyc.retryPan') : t('kyc.startPan')}
                   onPress={() => navigation.navigate('PanVerify')}
                 />
               ) : (
                 <Button
-                  title={kyc?.aadhaar.status === 'failed' ? 'Retry Aadhaar Verification' : 'Verify Aadhaar'}
+                  title={kyc?.aadhaar.status === 'failed' ? t('kyc.retryAadhaar') : t('kyc.verifyAadhaar')}
                   onPress={() => navigation.navigate('AadhaarOtpRequest')}
                 />
               )}
@@ -81,7 +83,7 @@ export function KycGateScreen() {
         )}
 
         <View style={styles.signOutGap}>
-          <Button variant="outline" title="Sign out" onPress={() => signOut()} />
+          <Button variant="outline" title={t('common.signOut')} onPress={() => signOut()} />
         </View>
       </View>
     </SafeAreaView>

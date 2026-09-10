@@ -31,11 +31,12 @@ export function isKycComplete(kyc: KycStatus): boolean {
 // Shared label/tone for a KYC check's status -- one source of truth, consumed
 // identically by the mandatory KYC gate screen and the Profile screen's KYC
 // section, so a "Verified" chip looks and reads the same everywhere.
-export const KYC_STATUS_LABEL: Record<KycCheckStatus, string> = {
-  verified: 'Verified',
-  pending: 'Pending',
-  failed: 'Failed',
-};
+/** Catalogue keys, not text -- a module constant would freeze the language. */
+export const KYC_STATUS_KEY = {
+  verified: 'status.verified',
+  pending: 'status.pending',
+  failed: 'status.failed',
+} as const;
 
 export function kycStatusTone(status: KycCheckStatus, colors: ColorScheme): { bg: string; fg: string } {
   if (status === 'verified') return { bg: colors.successBg, fg: colors.successText };

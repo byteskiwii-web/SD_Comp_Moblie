@@ -17,6 +17,7 @@ import { formatTime, formatTimeWithSeconds, toLocalDateKey } from '../../utils/d
 import { formatDuration, punctuality, summariseDay } from '../../utils/attendanceDay';
 import { useTicker } from '../../hooks/useTicker';
 import type { AttendanceStackParamList } from '../../navigation/types';
+import { t as tr, useT, type TKey } from '../../i18n';
 
 /**
  * One day, in full.
@@ -36,12 +37,15 @@ import type { AttendanceStackParamList } from '../../navigation/types';
 type Nav = NativeStackNavigationProp<AttendanceStackParamList, 'AttendanceDay'>;
 type DayRoute = RouteProp<AttendanceStackParamList, 'AttendanceDay'>;
 
-const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+// Looked up per call rather than held in a module constant: a constant is
+// evaluated once, so it would keep painting whichever language the app was
+// started in even after somebody changed it.
+const dayLong = (d: number) => tr(('weekday.' + d) as TKey);
+const monthShort = (m: number) => tr(('monthShort.' + (m + 1)) as TKey);
 
 const longDate = (key: string) => {
   const d = new Date(`${key}T00:00:00`);
-  return `${DAYS[d.getDay()]}, ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+  return `${dayLong(d.getDay())}, ${d.getDate()} ${monthShort(d.getMonth())} ${d.getFullYear()}`;
 };
 
 /** "09:30 AM" from the "HH:MM:SS" the profile carries. */
@@ -59,6 +63,7 @@ export function DayDetailScreen() {
   // Subscribed purely so a change to the 12/24-hour setting re-renders the
   // times on this screen; the formatters read the store outside React.
   usePreferencesStore((s) => s.clock);
+  const t = useT();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const navigation = useNavigation<Nav>();
   const { date } = useRoute<DayRoute>().params;
@@ -92,10 +97,12 @@ export function DayDetailScreen() {
   return (
     <SafeAreaView style={styles.flex} edges={['top']}>
       <View style={styles.nav}>
-        <Pressable onPress={() => navigation.goBack()} hitSlop={12} accessibilityRole="button" accessibilityLabel="Back">
+        <Pressable onPress={() => navigation.goBack()} hitSlop={12} accessibilityRole="button" accessibilityLabel={t('common.back')}>
           <Ionicons name="chevron-back" size={26} color={colors.textLight} />
         </Pressable>
-        <Text style={styles.navTitle}>{isToday ? 'Attendance · Today' : 'Attendance'}</Text>
+        <Text style={styles.navTitle}>
+          {isToday ? t('day.todaySuffix') : t('day.title')}
+        </Text>
         {/* Balances the back chevron so the title sits centred. */}
         <View style={styles.navSpacer} />
       </View>
@@ -109,18 +116,18 @@ export function DayDetailScreen() {
           <Text style={styles.error}>{getApiErrorMessage(error)}</Text>
         ) : day.marks.length === 0 ? (
           <View style={styles.card}>
-            <Text style={styles.empty}>Nothing was recorded on this day.</Text>
+            <Text style={styles.empty}>{t('day.empty')}</Text>
           </View>
         ) : (
           <View style={styles.card}>
             <View style={styles.windowRow}>
               <Text style={styles.window} numberOfLines={1}>
-                {window ?? 'No rostered shift'}
+                {window ?? t('shift.noRoster')}
               </Text>
               {status && (
                 <View style={[styles.pill, status === 'on-time' ? styles.pillOk : styles.pillLate]}>
                   <Text style={[styles.pillText, status === 'on-time' ? styles.pillTextOk : styles.pillTextLate]}>
-                    {status === 'on-time' ? 'ON TIME' : 'LATE'}
+                    {status === 'on-time' ? t('day.onTime') : t('day.late')}
                   </Text>
                 </View>
               )}
@@ -128,14 +135,14 @@ export function DayDetailScreen() {
 
             <View style={styles.punchRow}>
               <View style={styles.punchCol}>
-                <Text style={styles.punchLabel}>Clock In</Text>
+                <Text style={styles.punchLabel}>{t('day.clockIn')}</Text>
                 <View style={styles.punchValue}>
                   <Ionicons name="arrow-down-outline" size={15} color={colors.success} />
                   <Text style={styles.punchTime}>{day.firstIn ? formatTime(day.firstIn.timestamp) : '—'}</Text>
                 </View>
               </View>
               <View style={[styles.punchCol, styles.punchColRight]}>
-                <Text style={styles.punchLabel}>Clock Out</Text>
+                <Text style={styles.punchLabel}>{t('day.clockOut')}</Text>
                 <View style={styles.punchValue}>
                   <Ionicons name="arrow-up-outline" size={15} color={colors.danger} />
                   <Text style={styles.punchTime}>{day.lastOut ? formatTime(day.lastOut.timestamp) : '—'}</Text>
@@ -147,18 +154,18 @@ export function DayDetailScreen() {
 
             <View style={styles.hoursRow}>
               <View>
-                <Text style={styles.hoursLabel}>Effective hours</Text>
+                <Text style={styles.hoursLabel}>{t('day.effectiveHours')}</Text>
                 <Text style={styles.hoursValue}>{formatDuration(day.effectiveMinutes)}</Text>
               </View>
               <View style={styles.hoursRight}>
-                <Text style={styles.hoursLabel}>Gross hours</Text>
+                <Text style={styles.hoursLabel}>{t('day.grossHours')}</Text>
                 <Text style={styles.hoursValue}>{formatDuration(day.grossMinutes)}</Text>
               </View>
             </View>
 
             <View style={styles.divider} />
 
-            <Text style={styles.logsTitle}>Time Logs</Text>
+            <Text style={styles.logsTitle}>{t('day.timeLogs')}</Text>
             {day.storeName && (
               <View style={styles.storeChip}>
                 <Text style={styles.storeChipText}>{day.storeName}</Text>
@@ -177,7 +184,7 @@ export function DayDetailScreen() {
                     />
                     <Text style={styles.logTime}>{formatTimeWithSeconds(m.timestamp)}</Text>
                     <Text style={styles.logType} numberOfLines={1}>
-                      {m.mark_type.replace('-', ' ')}
+                      {t(('mark.' + m.mark_type) as 'mark.clock-in')}
                     </Text>
                     {/* This is the screen the geo-fence flag belongs on, so it
                         is allowed to be loud here. It marks the individual
@@ -185,7 +192,7 @@ export function DayDetailScreen() {
                         could never answer. */}
                     {outside && (
                       <View style={styles.outsideChip}>
-                        <Text style={styles.outsideChipText}>OUTSIDE</Text>
+                        <Text style={styles.outsideChipText}>{t('day.outside')}</Text>
                       </View>
                     )}
                   </View>
@@ -197,7 +204,7 @@ export function DayDetailScreen() {
               {day.openEnded && (
                 <View style={[styles.logRow, styles.logRowMissing]}>
                   <Ionicons name="arrow-up-outline" size={15} color={colors.danger} />
-                  <Text style={[styles.logTime, styles.logTimeMissing]}>OUT missing</Text>
+                  <Text style={[styles.logTime, styles.logTimeMissing]}>{t('day.outMissing')}</Text>
                   <Text style={styles.logType} />
                 </View>
               )}
@@ -208,7 +215,7 @@ export function DayDetailScreen() {
 
       <View style={styles.footer}>
         <Button
-          title="Raise Request"
+          title={t('day.raiseRequest')}
           onPress={() => navigation.navigate('AttendanceHome', { tab: 'regularise', date })}
         />
       </View>

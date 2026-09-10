@@ -8,21 +8,27 @@ import { useThemeStore } from '../../stores/themeStore';
 import { ClockPanel } from './ClockPanel';
 import { HistoryPanel } from './HistoryPanel';
 import { RegularisePanel } from './RegularisePanel';
+import { useT } from '../../i18n';
 
 type Tab = 'clock' | 'history' | 'regularise';
 
 // Labels mirror the reference build. The first tab still covers breaks as well
 // as the shift punches -- breaks are a real part of this product even though
 // the reference mock-up predates them.
-const TAB_LABEL: Record<Tab, string> = {
-  clock: 'Clock in/out',
-  history: 'History',
-  regularise: 'Regularise',
-};
+//
+// Catalogue KEYS, not text: a module-level constant is evaluated once, so the
+// strings it held would be whichever language the app started in and would not
+// move when somebody changed it.
+const TAB_KEY = {
+  clock: 'attendance.clock',
+  history: 'attendance.history',
+  regularise: 'attendance.regularise',
+} as const;
 
 export function AttendanceScreen() {
   const colors = useThemeStore((s) => s.colors);
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const t = useT();
   const params = useRoute<RouteProp<AttendanceStackParamList, 'AttendanceHome'>>().params;
   const [tab, setTab] = useState<Tab>(params?.tab ?? 'clock');
 
@@ -47,18 +53,18 @@ export function AttendanceScreen() {
   return (
     <SafeAreaView style={styles.flex} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Attendance</Text>
+        <Text style={styles.headerTitle}>{t('attendance.title')}</Text>
       </View>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.segment}>
-          {(['clock', 'history', 'regularise'] as Tab[]).map((t) => (
+          {(['clock', 'history', 'regularise'] as Tab[]).map((id) => (
             <Pressable
-              key={t}
-              onPress={() => setTab(t)}
-              style={[styles.segmentItem, tab === t && styles.segmentItemActive]}
+              key={id}
+              onPress={() => setTab(id)}
+              style={[styles.segmentItem, tab === id && styles.segmentItemActive]}
             >
-              <Text style={[styles.segmentText, tab === t && styles.segmentTextActive]}>
-                {TAB_LABEL[t]}
+              <Text style={[styles.segmentText, tab === id && styles.segmentTextActive]}>
+                {t(TAB_KEY[id])}
               </Text>
             </Pressable>
           ))}

@@ -4,6 +4,7 @@ import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/d
 import { Icon, IconName } from './Icon';
 import { ColorScheme, radii } from '../theme/tokens';
 import { useThemeStore } from '../stores/themeStore';
+import { t as tr } from '../i18n';
 
 // Two platforms, two interaction models, one contract.
 //
@@ -191,7 +192,7 @@ export function DatePickerField({ label, value, onChange, maximumDate, minimumDa
       <FieldShell
         label={label}
         error={error}
-        placeholder="Select date"
+        placeholder={tr('picker.selectDate')}
         displayValue={value ? formatDateDisplay(value) : null}
         icon="calendar"
         onPress={open}
@@ -245,7 +246,7 @@ export function TimePickerField({ label, value, onChange, error }: TimePickerFie
       <FieldShell
         label={label}
         error={error}
-        placeholder="Select time"
+        placeholder={tr('picker.selectTime')}
         displayValue={value ? formatTimeDisplay(value) : null}
         icon="clock"
         onPress={open}

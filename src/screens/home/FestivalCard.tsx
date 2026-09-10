@@ -8,6 +8,7 @@ import { useThemeStore } from '../../stores/themeStore';
 import { Skeleton } from '../../components/Skeleton';
 import { festivalIcon } from '../../utils/festivalIcon';
 import { getTodayHolidays, type Holiday } from '../../api/holidays.api';
+import { t as tr, useT, type TKey } from '../../i18n';
 
 /**
  * Today's festival on the home screen.
@@ -29,6 +30,7 @@ export function FestivalCard() {
   const navigation = useNavigation<any>();
   const colors = useThemeStore((s) => s.colors);
   const styles = React.useMemo(() => makeStyles(colors), [colors]);
+  const t = useT();
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['holidays-today'],
@@ -72,12 +74,12 @@ export function FestivalCard() {
       accessibilityRole="button"
       accessibilityLabel={
         isToday
-          ? `Today: ${todays.map((h) => h.name).join(', ')}. View all festivals.`
-          : `Coming up: ${next!.name}. View all festivals.`
+          ? t('festivals.todayLabel', { names: todays.map((h) => h.name).join(', ') })
+          : t('festivals.comingLabel', { name: next!.name })
       }
     >
       <Text style={[styles.eyebrow, isToday && styles.eyebrowToday]}>
-        {isToday ? 'Festival today' : 'Coming up'}
+        {isToday ? t('festivals.today') : t('festivals.upcoming')}
       </Text>
 
       {shown.map((h, i) => {
@@ -98,21 +100,23 @@ export function FestivalCard() {
       })}
 
       <View style={styles.footer}>
-        <Text style={styles.viewAll}>View all festivals</Text>
+        <Text style={styles.viewAll}>{t('festivals.viewAll')}</Text>
         <Ionicons name="chevron-forward" size={14} color={colors.brand[700]} />
       </View>
     </Pressable>
   );
 }
 
-const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const monthLong = (m: number) => tr(('month.' + (m + 1)) as TKey);
+const monthShort = (m: number) => tr(('monthShort.' + (m + 1)) as TKey);
+const dayLong = (d: number) => tr(('weekday.' + d) as TKey);
+const dayShort = (d: number) => tr(('weekdayShort.' + d) as TKey);
 
 const parse = (date: string) => new Date(`${String(date).slice(0, 10)}T00:00:00`);
 
 const longDate = (date: string) => {
   const d = parse(date);
-  return `${DAYS[d.getDay()]}, ${d.getDate()} ${MONTHS[d.getMonth()]}`;
+  return `${dayLong(d.getDay())}, ${d.getDate()} ${monthLong(d.getMonth())}`;
 };
 
 /** "in 4 days" beats a date the reader has to subtract from today. */
@@ -122,9 +126,16 @@ function friendly(date: string): string {
   today.setHours(0, 0, 0, 0);
   const days = Math.round((d.getTime() - today.getTime()) / 86400000);
 
-  if (days === 1) return 'Tomorrow';
-  if (days > 1 && days <= 14) return `In ${days} days · ${d.getDate()} ${MONTHS[d.getMonth()].slice(0, 3)}`;
-  return `${DAYS[d.getDay()].slice(0, 3)}, ${d.getDate()} ${MONTHS[d.getMonth()]}`;
+  if (days === 1) return tr('common.tomorrow');
+  if (days > 1 && days <= 14) {
+    // The short month comes from the catalogue rather than slice(0, 3): three
+    // characters off the front of a Malayalam word is not an abbreviation.
+    return tr('festivals.inDays', {
+      count: days,
+      date: `${d.getDate()} ${monthShort(d.getMonth())}`,
+    });
+  }
+  return `${dayShort(d.getDay())}, ${d.getDate()} ${monthLong(d.getMonth())}`;
 }
 
 const makeStyles = (colors: ColorScheme) =>

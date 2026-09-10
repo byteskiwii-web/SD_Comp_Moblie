@@ -4,6 +4,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import { ColorScheme, radii } from '../theme/tokens';
 import { useThemeStore } from '../stores/themeStore';
+import { useT } from '../i18n';
 
 /**
  * The bar every pushed screen wears.
@@ -34,6 +35,7 @@ export function ScreenHeader({
   const navigation = useNavigation<any>();
   const colors = useThemeStore((s) => s.colors);
   const styles = React.useMemo(() => makeStyles(colors), [colors]);
+  const t = useT();
 
   const canGoBack = typeof navigation?.canGoBack === 'function' ? navigation.canGoBack() : false;
   const showBack = Boolean(onBack) || canGoBack;
@@ -48,10 +50,10 @@ export function ScreenHeader({
           hitSlop={{ top: 12, bottom: 12, left: 16, right: 16 }}
           style={({ pressed }) => [styles.back, pressed && styles.pressed]}
           accessibilityRole="button"
-          accessibilityLabel="Go back"
+          accessibilityLabel={t('common.goBack')}
         >
           <Ionicons name="chevron-back" size={22} color={colors.brand[700]} />
-          <Text style={styles.backText}>Back</Text>
+          <Text style={styles.backText}>{t('common.back')}</Text>
         </Pressable>
       ) : (
         <View style={styles.spacer} />
