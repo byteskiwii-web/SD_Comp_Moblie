@@ -73,7 +73,17 @@ export type ShirtSize = (typeof SHIRT_SIZES)[number];
  * field employee is refused there before any handler runs -- which is exactly
  * how this first shipped, and it returned 403 to the only people who need it.
  */
-export async function updateMyProfile(input: { shirt_size: ShirtSize | null }) {
+/**
+ * Partial by design -- only what is sent is written, so setting a shirt size
+ * does not blank the department manager. Explicit null CLEARS a field; omitting
+ * it leaves it alone.
+ */
+export async function updateMyProfile(input: {
+  shirt_size?: ShirtSize | null;
+  dept_manager_name?: string | null;
+  dept_manager_email?: string | null;
+  dept_manager_phone?: string | null;
+}) {
   const res = await apiClient.patch<{ success: true; data: unknown }>('/auth/me', input);
   return res.data.data;
 }

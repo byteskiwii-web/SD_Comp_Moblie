@@ -12,6 +12,7 @@ import { TourTarget } from '../../components/tour/TourTarget';
 import { useTourStore } from '../../stores/tourStore';
 import { KitCard } from './KitCard';
 import { DocumentsCard } from './DocumentsCard';
+import { DeptManagerCard } from './DeptManagerCard';
 import { Button, Card } from '../../components/ui';
 import { ColorScheme, radii } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
@@ -101,15 +102,8 @@ export function ProfileScreen() {
               value={`${profile.shift.breakAllowanceMinutes} min (${profile.shift.shortBreakCount}×${profile.shift.shortBreakMinutes} + ${profile.shift.lunchBreakMinutes} lunch)`}
             />
           )}
-          {/* Contact details rather than a link -- this person often has no
-              account here, and they change from time to time. */}
-          <Row icon="person-outline" label="Dept. manager" value={profile?.deptManager?.name ?? '—'} />
-          {profile?.deptManager?.phone ? (
-            <Row icon="call-outline" label="Manager phone" value={profile.deptManager.phone} />
-          ) : null}
-          {profile?.deptManager?.email ? (
-            <Row icon="mail-outline" label="Manager email" value={profile.deptManager.email} />
-          ) : null}
+          {/* The manager moved to its own card -- three read-only rows could
+              show it and nothing could set it. */}
           <Row
             icon="calendar-outline"
             label="Joined"
@@ -117,6 +111,8 @@ export function ProfileScreen() {
             last
           />
         </Card>
+
+        <DeptManagerCard />
 
         <KycCard />
 
