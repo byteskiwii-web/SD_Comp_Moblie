@@ -17,6 +17,7 @@ import { NotificationsSheet } from '../notifications/NotificationsSheet';
 import { AppreciationCard } from './AppreciationCard';
 import { PoliciesCard } from './PoliciesCard';
 import { MonthlyStatsCard } from './MonthlyStatsCard';
+import { FestivalCard } from './FestivalCard';
 import { TourTarget } from '../../components/tour/TourTarget';
 import { useTourStore } from '../../stores/tourStore';
 import { SkeletonRows } from '../../components/Skeleton';
@@ -162,6 +163,8 @@ export function HomeScreen() {
           </View>
           <Ionicons name="chevron-forward" size={18} color={colors.slate400} />
         </Pressable>
+
+        <FestivalCard />
 
         <MonthlyStatsCard />
 

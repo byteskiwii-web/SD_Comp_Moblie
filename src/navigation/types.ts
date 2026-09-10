@@ -38,6 +38,11 @@ export type AttendanceStackParamList = {
  * Profile is a stack for one reason: bank verification has to hang off
  * something inside the tabs. See ProfileStack.
  */
+export type HomeStackParamList = {
+  HomeMain: undefined;
+  Festivals: undefined;
+};
+
 export type ProfileStackParamList = {
   ProfileHome: undefined;
   BankVerify: undefined;

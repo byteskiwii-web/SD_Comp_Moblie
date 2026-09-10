@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { HomeScreen } from '../screens/home/HomeScreen';
+import { HomeStack } from './HomeStack';
 import { AttendanceStack } from './AttendanceStack';
 import { LeaveScreen } from '../screens/leave/LeaveScreen';
 import { TeamScreen } from '../screens/team/TeamScreen';
@@ -84,7 +84,7 @@ export function AppTabs() {
     >
       <Tab.Screen
         name="Home"
-        component={HomeScreen}
+        component={HomeStack}
         options={{ tabBarIcon: ({ color, size }) => <Icon name="home" color={color} size={size} /> }}
       />
       <Tab.Screen
