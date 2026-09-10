@@ -1,13 +1,15 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Linking, Modal, StyleSheet, Text, View } from 'react-native';
+import { Alert, Linking, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import * as Location from 'expo-location';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button, Card } from '../../components/ui';
 import { TourTarget } from '../../components/tour/TourTarget';
 import { ColorScheme, radii } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../stores/authStore';
 import { summariseDay } from '../../utils/attendanceDay';
+import { Skeleton } from '../../components/Skeleton';
 import { useShiftStore } from '../../stores/shiftStore';
 import { haversineDistance } from '../../utils/haversine';
 import { clockIn, clockOut, endBreak, getAttendanceHistory, startBreak } from '../../api/attendance.api';
@@ -15,7 +17,7 @@ import { CameraCaptureScreen } from './CameraCaptureScreen';
 import { runtimeLabel, supportsBackgroundLocation } from '../../native/runtime';
 import { getApiErrorMessage } from '../../api/client';
 import { getLatestMarkOfTypes, SHIFT_TYPES, BREAK_TYPES } from '../../utils/attendanceStatus';
-import { formatTimeWithSeconds, toLocalDateKey } from '../../utils/datetime';
+import { formatTime, formatTimeWithSeconds, toLocalDateKey } from '../../utils/datetime';
 
 const today = () => toLocalDateKey();
 
@@ -35,6 +37,13 @@ type Props = {
   // auto-punch again.
   onAutoPunchStarted?: () => void;
 };
+
+/** Metres are unreadable past a few hundred; 438636m is 439 km. */
+function formatDistance(metres: number): string {
+  if (metres < 1000) return `${Math.round(metres)} m`;
+  const km = metres / 1000;
+  return `${km < 10 ? km.toFixed(1) : Math.round(km)} km`;
+}
 
 export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
   const colors = useThemeStore((s) => s.colors);
@@ -355,62 +364,81 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
         </View>
       )}
 
+      {/* WHERE YOU STAND, before what you can do.
+          The page opened on four buttons of which three were always dead, and
+          nothing said which shift was being worked or whether it had started.
+          State first, then the single action that follows from it. */}
+      <View style={[styles.hero, isCurrentlyClockedIn && styles.heroOn]}>
+        <View style={styles.heroTop}>
+          <View style={[styles.heroDot, isCurrentlyClockedIn ? styles.heroDotOn : styles.heroDotOff]} />
+          <Text style={[styles.heroState, isCurrentlyClockedIn && styles.heroStateOn]}>
+            {isCurrentlyOnBreak ? 'On break' : isCurrentlyClockedIn ? 'On shift' : 'Not clocked in'}
+          </Text>
+        </View>
+        <Text style={styles.heroShift}>
+          {profile?.shift?.name ??
+            (profile?.shiftStart && profile?.shiftEnd
+              ? `${String(profile.shiftStart).slice(0, 5)} – ${String(profile.shiftEnd).slice(0, 5)}`
+              : 'No rostered shift')}
+        </Text>
+        {lastClockIn && isCurrentlyClockedIn ? (
+          <Text style={styles.heroSince}>Since {formatTime(lastClockIn.timestamp)}</Text>
+        ) : null}
+      </View>
+
       <TourTarget id="clock-location">
-      <Card style={styles.geoCard}>
+      <View style={styles.geoRow}>
         {locationError ? (
           <>
-            <Text style={styles.geoError}>{locationError}</Text>
-            <View style={styles.geoActions}>
-              <Button title="Try again" onPress={() => void acquireLocation()} variant="outline" />
+            <Ionicons name="warning-outline" size={17} color={colors.danger} />
+            <View style={styles.geoText}>
+              <Text style={styles.geoTitleBad}>Location unavailable</Text>
+              <Text style={styles.geoSub}>{locationError}</Text>
+            </View>
+            <View style={styles.geoFix}>
+              <Pressable onPress={() => void acquireLocation()} hitSlop={8}>
+                <Text style={styles.geoFixText}>Retry</Text>
+              </Pressable>
               {permission === 'blocked' && (
-                <Button title="Open Settings" onPress={() => Linking.openSettings()} variant="outline" />
+                <Pressable onPress={() => Linking.openSettings()} hitSlop={8}>
+                  <Text style={styles.geoFixText}>Settings</Text>
+                </Pressable>
               )}
             </View>
           </>
         ) : distanceMetres == null ? (
-          <Text style={styles.geoLoading}>Getting your location…</Text>
+          // Skeleton rather than a line of text, so the row does not resize
+          // under the thumb the moment a fix arrives.
+          <View style={styles.geoText}>
+            <Skeleton width="55%" height={11} />
+            <Skeleton width="80%" height={9} style={{ marginTop: 6 }} />
+          </View>
         ) : (
           <>
-            <Text style={[styles.geoStatus, insideFence ? styles.geoInside : styles.geoOutside]}>
-              {insideFence ? 'Inside geo-fence' : 'Outside geo-fence'}
-            </Text>
-            <Text style={styles.geoDetail}>
-              {distanceMetres}m from {store.name}
-            </Text>
-            {!insideFence && (
-              <Text style={styles.geoWarning}>
-                Punching outside the fence will be sent for HR approval.
+            <Ionicons
+              name={insideFence ? 'location' : 'location-outline'}
+              size={17}
+              color={insideFence ? colors.success : colors.warning}
+            />
+            <View style={styles.geoText}>
+              <Text style={insideFence ? styles.geoTitleOk : styles.geoTitleWarn}>
+                {insideFence ? 'Inside geo-fence' : 'Outside geo-fence'}
               </Text>
-            )}
+              {/* Formatted, because "438636m from" is a number nobody can read
+                  at a glance and the distance is the whole point of the row. */}
+              <Text style={styles.geoSub} numberOfLines={1}>
+                {formatDistance(distanceMetres)} from {store?.name ?? 'your site'}
+                {insideFence ? '' : ' · goes to HR for approval'}
+              </Text>
+            </View>
           </>
         )}
-      </Card>
-      </TourTarget>
-
-      <TourTarget id="clock-action">
-      <View style={styles.actionsRow}>
-        <Button
-          title="Start Shift"
-          onPress={() => setPendingAction('clock-in')}
-          disabled={isCurrentlyClockedIn || !coords}
-        />
-      </View>
-      <View style={styles.actionsRow}>
-        <Button
-          title="End Shift"
-          variant="outline"
-          onPress={() => setPendingAction('clock-out')}
-          disabled={!isCurrentlyClockedIn || !coords || isCurrentlyOnBreak}
-        />
       </View>
       </TourTarget>
-      {isCurrentlyOnBreak && (
-        <Text style={styles.geoWarning}>End your break before ending your shift.</Text>
-      )}
 
-      {/* What the break has cost so far. Shown only where a policy exists,
-          and only once a break has been taken -- an untouched allowance is not
-          news, and a card saying "0 of 60 used" on every shift is furniture. */}
+      {/* What the break has cost so far. Shown only where a policy exists and
+          only once a break has been taken -- an untouched allowance is not
+          news, and "0 of 60 used" on every shift is furniture. */}
       {breakUsage && breakUsage.used > 0 && (
         <View style={[styles.breakCard, breakUsage.overrun > 0 && styles.breakCardOver]}>
           <View style={styles.breakCardRow}>
@@ -421,8 +449,7 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
           </View>
           {breakUsage.overrun > 0 ? (
             <Text style={styles.breakCardOverText}>
-              {breakUsage.overrun} min over
-              {breakUsage.endsAt ? ` — your shift now ends at ${breakUsage.endsAt}` : ''}
+              {breakUsage.overrun} min over — your shift now ends at {breakUsage.endsAt}
             </Text>
           ) : (
             <Text style={styles.breakCardLeft}>{breakUsage.remaining} min left today</Text>
@@ -430,24 +457,33 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
         </View>
       )}
 
-      <View style={styles.breakRow}>
-        <View style={styles.breakButton}>
-          <Button
-            title="Start Break"
-            variant="outline"
-            onPress={() => breakMutation.mutate('break-start')}
-            disabled={!isCurrentlyClockedIn || isCurrentlyOnBreak || !coords || breakMutation.isPending}
-          />
-        </View>
-        <View style={styles.breakButton}>
-          <Button
-            title="End Break"
-            variant="outline"
-            onPress={() => breakMutation.mutate('break-end')}
-            disabled={!isCurrentlyOnBreak || !coords || breakMutation.isPending}
-          />
-        </View>
+      {/* ONE primary action. Start and End are the same decision in two
+          states, so showing both means one is always dead -- which is what
+          made this page read as mostly unavailable. */}
+      <TourTarget id="clock-action">
+      <View style={styles.actionsRow}>
+        <Button
+          title={isCurrentlyClockedIn ? 'End Shift' : 'Start Shift'}
+          onPress={() => setPendingAction(isCurrentlyClockedIn ? 'clock-out' : 'clock-in')}
+          disabled={!coords || (isCurrentlyClockedIn && isCurrentlyOnBreak)}
+        />
       </View>
+      </TourTarget>
+
+      {isCurrentlyClockedIn && (
+        <View style={styles.actionsRow}>
+          <Button
+            title={isCurrentlyOnBreak ? 'End Break' : 'Start Break'}
+            variant="outline"
+            onPress={() => breakMutation.mutate(isCurrentlyOnBreak ? 'break-end' : 'break-start')}
+            disabled={!coords || breakMutation.isPending}
+          />
+        </View>
+      )}
+
+      {isCurrentlyOnBreak && (
+        <Text style={styles.geoWarning}>End your break before ending your shift.</Text>
+      )}
 
       {(lastClockIn || lastClockOut || lastBreakStart || lastBreakEnd) && (
         <Card>
@@ -502,6 +538,34 @@ function makeStyles(colors: ColorScheme) {
   geoWarning: { fontSize: 11, color: colors.warningText, marginTop: 8, textAlign: 'center', fontWeight: '600' },
   actionsRow: { width: '100%' },
   breakRow: { flexDirection: 'row', gap: 12 },
+  hero: {
+    borderRadius: radii.lg, padding: 16, marginBottom: 12,
+    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.slate200,
+  },
+  heroOn: { borderColor: colors.success, backgroundColor: colors.successBg },
+  heroTop: { flexDirection: 'row', alignItems: 'center', gap: 7 },
+  heroDot: { width: 8, height: 8, borderRadius: 4 },
+  heroDotOn: { backgroundColor: colors.success },
+  heroDotOff: { backgroundColor: colors.slate300 },
+  heroState: { fontSize: 11, fontWeight: '800', color: colors.slate500, textTransform: 'uppercase', letterSpacing: 0.4 },
+  heroStateOn: { color: '#047857' },
+  heroShift: { fontSize: 17, fontWeight: '800', color: colors.textLight, marginTop: 6, letterSpacing: -0.3 },
+  heroSince: { fontSize: 11.5, color: colors.slate500, fontWeight: '600', marginTop: 3 },
+
+  geoRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    backgroundColor: colors.surface, borderRadius: radii.md,
+    borderWidth: 1, borderColor: colors.slate200,
+    paddingHorizontal: 12, paddingVertical: 11, marginBottom: 12,
+  },
+  geoText: { flex: 1 },
+  geoTitleOk: { fontSize: 12.5, fontWeight: '800', color: '#047857' },
+  geoTitleWarn: { fontSize: 12.5, fontWeight: '800', color: '#B45309' },
+  geoTitleBad: { fontSize: 12.5, fontWeight: '800', color: colors.danger },
+  geoSub: { fontSize: 10.5, color: colors.slate500, fontWeight: '600', marginTop: 2 },
+  geoFix: { flexDirection: 'row', gap: 12 },
+  geoFixText: { fontSize: 11.5, fontWeight: '800', color: colors.brand[700] },
+
   breakCard: {
     borderWidth: 1, borderColor: colors.slate200, borderRadius: radii.md,
     padding: 12, marginBottom: 10, gap: 4,

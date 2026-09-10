@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { ScreenHeader } from '../../components/ScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -144,9 +145,9 @@ export function BankVerifyScreen() {
 
   return (
     <SafeAreaView style={styles.flex} edges={['top']}>
+      <ScreenHeader title="Bank account" />
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-          <Text style={styles.title}>Verify your bank account</Text>
           <Text style={styles.subtitle}>
             This is the account your salary is paid into. It must be in your own name.
           </Text>

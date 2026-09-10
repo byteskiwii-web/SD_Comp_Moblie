@@ -86,11 +86,6 @@ export function ProfileScreen() {
             label="Geo-fence"
             value={store?.geofence_radius_m ? store.geofence_radius_m + ' m radius' : '—'}
           />
-          <Row
-            icon="time-outline"
-            label="Shift"
-            value={profile?.shiftStart && profile?.shiftEnd ? profile.shiftStart + ' – ' + profile.shiftEnd : '—'}
-          />
           {/* The rostered shift, named. '10:00 - 19:00' alone does not say
               which shift somebody is on, and the break allowance is the part
               that decides whether a long lunch costs them anything. */}
