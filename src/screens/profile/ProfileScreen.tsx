@@ -228,30 +228,6 @@ function KycCard() {
             status={kyc.pan.status}
             detail={kyc.pan.masked}
             onPress={kyc.pan.status === 'verified' ? undefined : () => navigation.navigate('PanVerify')}
-            // The linkage line below belongs to PAN. A rule between them reads
-            // as a boundary and hands the line to Aadhaar instead.
-            noDivider
-          />
-          {/* PAN-Aadhaar linkage.
-
-              Shown in all three states, because "never checked" is itself
-              something worth acting on. The unknown is never rendered as "not
-              linked": the provider's enum is undocumented past y | n, and a
-              false claim about somebody's tax compliance on their own profile
-              is worse than an honest gap.
-
-              PRESSABLE ONLY WHEN THERE IS SOMETHING TO ESTABLISH, which is the
-              same rule the PAN row above follows. Establishing linkage means
-              re-running the PAN check -- the answer rides in on that response,
-              so there is no separate call -- and that check is billable and
-              charges the wallet. A confirmed-linked row with no visible
-              affordance that silently navigated into a paid verification was
-              both a hidden tap target and a way to spend quota by accident. */}
-          <LinkRow
-            linked={kyc.pan.aadhaarLinked ?? null}
-            onCheck={
-              kyc.pan.aadhaarLinked === true ? undefined : () => navigation.navigate('PanVerify')
-            }
           />
 
           <KycRow
@@ -262,6 +238,19 @@ function KycCard() {
               kyc.aadhaar.status === 'verified'
                 ? undefined
                 : () => navigation.navigate('AadhaarOtpRequest')
+            }
+          />
+          {/* A row of its own, at the same level as the checks around it.
+              It was previously indented underneath PAN, which stacked a second
+              line of chips and actions inside one row and made the card look
+              cramped and nested for what is really just a fourth status.
+
+              Placed after Aadhaar rather than after PAN because it is a fact
+              about BOTH of them, so it reads as following from the pair. */}
+          <LinkRow
+            linked={kyc.pan.aadhaarLinked ?? null}
+            onCheck={
+              kyc.pan.aadhaarLinked === true ? undefined : () => navigation.navigate('PanVerify')
             }
           />
           <KycRow
@@ -341,15 +330,10 @@ function KycRow({
 /**
  * The PAN-Aadhaar linkage line.
  *
- * Belongs to the PAN row above it and is drawn as a continuation of it, which
- * is why PAN suppresses its own rule and this carries one instead.
- *
- * It speaks the CARD'S vocabulary rather than its own. The rows around it say
- * their state in a coloured chip -- Verified, Pending -- and this used to say
- * its state in a grey sentence with a question-mark icon, which read as a
- * footnote about PAN rather than as a third thing with a status of its own.
- * Same chip, same three tones, so the whole card can be scanned down one
- * column instead of parsed line by line.
+ * A row of its own, drawn exactly like the checks around it -- same icon
+ * size, same label weight, same chip, same action. It used to sit indented
+ * under PAN, which stacked a second line of chips and actions inside one row
+ * and read as cramped and nested for what is really just a fourth status.
  *
  * The three states stay genuinely three. NOT CHECKED is grey and is not a
  * failure -- it means nobody has asked yet -- while "not linked" is amber and
@@ -369,24 +353,24 @@ function LinkRow({ linked, onCheck }: { linked: boolean | null; onCheck?: () => 
 
   const body = (
     <>
-      <Ionicons name={state.icon} size={13} color={state.tint} style={styles.linkIcon} />
-      <Text style={styles.linkLabel}>Aadhaar link</Text>
-      <View style={[styles.linkChip, { backgroundColor: state.bg }]}>
-        <Text style={[styles.linkChipText, { color: state.tint }]}>{state.label}</Text>
+      <Ionicons name={state.icon} size={15} color={colors.slate400} style={styles.rowIcon} />
+      <Text style={styles.rowLabel}>PAN–Aadhaar link</Text>
+      <View style={[styles.kycChip, { backgroundColor: state.bg }]}>
+        <Text style={[styles.kycChipText, { color: state.tint }]}>{state.label}</Text>
       </View>
       {onCheck ? (
-        <View style={styles.linkActionRow}>
-          <Text style={styles.linkAction}>Check now</Text>
+        <View style={styles.kycAction}>
+          <Text style={styles.kycActionText}>Check now</Text>
           <Ionicons name="chevron-forward" size={13} color={colors.brand[700]} />
         </View>
       ) : null}
     </>
   );
 
-  if (!onCheck) return <View style={styles.linkRow}>{body}</View>;
+  if (!onCheck) return <View style={styles.row}>{body}</View>;
   return (
     <Pressable
-      style={({ pressed }) => [styles.linkRow, pressed && styles.rowPressed]}
+      style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
       onPress={onCheck}
       accessibilityRole="button"
       accessibilityLabel={`Aadhaar link: ${state.label}. Check now.`}
@@ -458,19 +442,6 @@ function makeStyles(colors: ColorScheme) {
     rowChevron: { marginLeft: 6 },
     kycAction: { flexDirection: 'row', alignItems: 'center', gap: 1, marginLeft: 8 },
     kycActionText: { fontSize: 11, fontWeight: '800', color: colors.brand[700] },
-    linkRow: {
-      flexDirection: 'row', alignItems: 'center', gap: 6,
-      paddingLeft: 25, paddingBottom: 10, marginTop: -2,
-      borderBottomWidth: 1, borderBottomColor: colors.slate100,
-    },
-    linkIcon: { marginRight: 7 },
-    // Same weight and colour as the labels above it, so the eye reads a
-    // fourth row rather than a caption hanging off the third.
-    linkLabel: { flex: 1, fontSize: 11, fontWeight: '600', color: colors.slate500 },
-    linkChip: { paddingHorizontal: 8, paddingVertical: 2.5, borderRadius: radii.pill },
-    linkChipText: { fontSize: 10, fontWeight: '800' },
-    linkActionRow: { flexDirection: 'row', alignItems: 'center', gap: 1, marginLeft: 'auto' },
-    linkAction: { fontSize: 10.5, fontWeight: '800', color: colors.brand[700] },
     rowPressed: { opacity: 0.6 },
     rowLabel: { flex: 1, fontSize: 11, fontWeight: '600', color: colors.slate500 },
     policySummary: { fontSize: 11, color: colors.slate400, fontWeight: '600', marginBottom: 6 },
