@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { HomeScreen } from '../screens/home/HomeScreen';
 import { AttendanceStack } from './AttendanceStack';
 import { LeaveScreen } from '../screens/leave/LeaveScreen';

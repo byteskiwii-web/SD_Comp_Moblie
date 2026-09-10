@@ -6,7 +6,7 @@ import { Button, Card } from '../../components/ui';
 import { TourTarget } from '../../components/tour/TourTarget';
 import { ColorScheme, radii } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useAuthStore } from '../../stores/authStore';
 import { summariseDay } from '../../utils/attendanceDay';
 import { Skeleton } from '../../components/Skeleton';
