@@ -7,6 +7,7 @@ import { TourTarget } from '../../components/tour/TourTarget';
 import { ColorScheme, radii } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
 import { useAuthStore } from '../../stores/authStore';
+import { summariseDay } from '../../utils/attendanceDay';
 import { useShiftStore } from '../../stores/shiftStore';
 import { haversineDistance } from '../../utils/haversine';
 import { clockIn, clockOut, endBreak, getAttendanceHistory, startBreak } from '../../api/attendance.api';
@@ -40,6 +41,7 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const employee = useAuthStore((s) => s.employee);
   const store = useAuthStore((s) => s.store);
+  const profile = useAuthStore((s) => s.profile);
   const setClockedIn = useShiftStore((s) => s.setClockedIn);
   const setOnBreak = useShiftStore((s) => s.setOnBreak);
   const setOffBreak = useShiftStore((s) => s.setOffBreak);
@@ -67,6 +69,36 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
   // is derived from its OWN type-filtered latest mark, not the overall
   // most-recent mark (which could be a break event either way).
   const marks = historyQuery.data ?? [];
+
+  /**
+   * Break used against the allowance, and what that costs.
+   *
+   * The rule is the server's (shared/shiftPolicy.js) and this mirrors its
+   * arithmetic rather than inventing a second one: overrun is owed back minute
+   * for minute, never rounded up to a block.
+   *
+   * profile.shift is null for an employee on no template, and so is the
+   * allowance. That means NO POLICY, not zero minutes -- the whole card stays
+   * hidden rather than telling somebody unrostered that they owe back their
+   * lunch.
+   */
+  const breakUsage = useMemo(() => {
+    const allowance = profile?.shift?.breakAllowanceMinutes ?? null;
+    if (allowance === null || allowance === undefined) return null;
+
+    // Closed breaks only. The one running now is not spent yet.
+    const today = summariseDay(toLocalDateKey(), marks);
+    const used = today.breakMinutes ?? 0;
+    const overrun = Math.max(0, used - allowance);
+
+    let endsAt: string | null = profile?.shiftEnd ? String(profile.shiftEnd).slice(0, 5) : null;
+    if (endsAt && overrun > 0) {
+      const [h, m] = endsAt.split(':').map(Number);
+      const total = (h * 60 + m + overrun) % 1440;
+      endsAt = `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+    }
+    return { allowance, used, overrun, endsAt, remaining: Math.max(0, allowance - used) };
+  }, [marks, profile?.shift?.breakAllowanceMinutes, profile?.shiftEnd]);
   const latestShiftMark = getLatestMarkOfTypes(marks, SHIFT_TYPES);
   const latestBreakMark = getLatestMarkOfTypes(marks, BREAK_TYPES);
   const isCurrentlyClockedIn = latestShiftMark?.mark_type === 'clock-in';
@@ -376,6 +408,28 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
         <Text style={styles.geoWarning}>End your break before ending your shift.</Text>
       )}
 
+      {/* What the break has cost so far. Shown only where a policy exists,
+          and only once a break has been taken -- an untouched allowance is not
+          news, and a card saying "0 of 60 used" on every shift is furniture. */}
+      {breakUsage && breakUsage.used > 0 && (
+        <View style={[styles.breakCard, breakUsage.overrun > 0 && styles.breakCardOver]}>
+          <View style={styles.breakCardRow}>
+            <Text style={styles.breakCardLabel}>Break used</Text>
+            <Text style={styles.breakCardValue}>
+              {breakUsage.used} of {breakUsage.allowance} min
+            </Text>
+          </View>
+          {breakUsage.overrun > 0 ? (
+            <Text style={styles.breakCardOverText}>
+              {breakUsage.overrun} min over
+              {breakUsage.endsAt ? ` — your shift now ends at ${breakUsage.endsAt}` : ''}
+            </Text>
+          ) : (
+            <Text style={styles.breakCardLeft}>{breakUsage.remaining} min left today</Text>
+          )}
+        </View>
+      )}
+
       <View style={styles.breakRow}>
         <View style={styles.breakButton}>
           <Button
@@ -448,6 +502,16 @@ function makeStyles(colors: ColorScheme) {
   geoWarning: { fontSize: 11, color: colors.warningText, marginTop: 8, textAlign: 'center', fontWeight: '600' },
   actionsRow: { width: '100%' },
   breakRow: { flexDirection: 'row', gap: 12 },
+  breakCard: {
+    borderWidth: 1, borderColor: colors.slate200, borderRadius: radii.md,
+    padding: 12, marginBottom: 10, gap: 4,
+  },
+  breakCardOver: { borderColor: '#B45309', backgroundColor: colors.warningBg },
+  breakCardRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  breakCardLabel: { fontSize: 11, fontWeight: '700', color: colors.slate500 },
+  breakCardValue: { fontSize: 13, fontWeight: '800', color: colors.textLight },
+  breakCardLeft: { fontSize: 11, color: colors.slate400, fontWeight: '600' },
+  breakCardOverText: { fontSize: 11.5, color: '#B45309', fontWeight: '800' },
   breakButton: { flex: 1 },
   lastPunchText: { fontSize: 11, color: colors.slate500, fontWeight: '600' },
   });

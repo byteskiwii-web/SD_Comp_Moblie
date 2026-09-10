@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -12,6 +12,7 @@ import { getApiErrorMessage } from '../../api/client';
 import { newestFirst } from '../../utils/datetime';
 import {
   cancelLeave,
+  markWorkedDuringLeave,
   getLeaveSummary,
   getMyLeave,
   LEAVE_TYPE_LABEL,
@@ -74,6 +75,18 @@ const monthLabel = (key: string) => {
 };
 
 /** Steps a YYYY-MM key, rolling the year over rather than producing month 13. */
+/** Every date a request covers, so the claim can only name one of them. */
+function daysBetween(from: string, to: string): string[] {
+  const out: string[] = [];
+  const start = new Date(String(from).slice(0, 10) + 'T00:00:00Z');
+  const end = new Date(String(to).slice(0, 10) + 'T00:00:00Z');
+  // Bounded: the server caps a request at 30 days, so this cannot run away.
+  for (let d = start; d <= end && out.length < 40; d = new Date(d.getTime() + 86400000)) {
+    out.push(d.toISOString().slice(0, 10));
+  }
+  return out;
+}
+
 function shiftMonth(key: string, by: number) {
   const [y, m] = key.split('-').map(Number);
   const d = new Date(Date.UTC(y, m - 1 + by, 1));
@@ -84,6 +97,8 @@ export function LeaveScreen() {
   const queryClient = useQueryClient();
   const [applyOpen, setApplyOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Which request is having a worked day claimed against it.
+  const [claiming, setClaiming] = useState<LeaveRequest | null>(null);
   const colors = useThemeStore((s) => s.colors);
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const STATUS_TONE = useMemo(() => statusTone(colors), [colors]);
@@ -100,6 +115,23 @@ export function LeaveScreen() {
   const summaryQuery = useQuery({
     queryKey: ['leave-summary', month],
     queryFn: () => getLeaveSummary(month),
+  });
+
+  /**
+   * "I was on unpaid leave but I came in."
+   *
+   * Only offered on APPROVED UNPAID leave that has not already been claimed,
+   * because those are the only requests the server will accept it for --
+   * showing the action anywhere else would be an offer that always fails.
+   */
+  const claimWorked = useMutation({
+    mutationFn: (input: { id: string; day: string }) => markWorkedDuringLeave(input.id, input.day),
+    onSuccess: () => {
+      setError(null);
+      queryClient.invalidateQueries({ queryKey: ['leave'] });
+      queryClient.invalidateQueries({ queryKey: ['leave-summary'] });
+    },
+    onError: (err) => setError(getApiErrorMessage(err)),
   });
 
   const withdraw = useMutation({
@@ -278,11 +310,66 @@ export function LeaveScreen() {
                     <Text style={styles.withdrawText}>Withdraw</Text>
                   </Pressable>
                 )}
+
+                {/* Already claimed: state it rather than offering it twice. */}
+                {r.compOffEarned > 0 ? (
+                  <View style={styles.compRow}>
+                    <Ionicons name="swap-horizontal-outline" size={13} color={'#047857'} />
+                    <Text style={styles.compText}>
+                      Worked {r.workedOn ? shortDate(r.workedOn) : 'a day'} · {r.compOffEarned} day
+                      {r.compOffEarned === 1 ? '' : 's'} owed back
+                    </Text>
+                  </View>
+                ) : r.status === 'approved' && r.leaveType === 'unpaid' ? (
+                  <Pressable
+                    onPress={() => setClaiming(r)}
+                    disabled={claimWorked.isPending}
+                    style={({ pressed }) => [styles.claim, pressed && styles.pressed]}
+                    accessibilityRole="button"
+                  >
+                    <Ionicons name="briefcase-outline" size={13} color={colors.brand[700]} />
+                    <Text style={styles.claimText}>I worked one of these days</Text>
+                  </Pressable>
+                ) : null}
               </Card>
             );
           })
         )}
       </ScrollView>
+
+      {/* Which day, chosen from the ones the leave actually covers -- the
+          server refuses anything outside the range, so offering a free date
+          field would invite an error it can already prevent. */}
+      <Modal visible={claiming !== null} transparent animationType="slide" onRequestClose={() => setClaiming(null)}>
+        <Pressable style={styles.backdrop} onPress={() => setClaiming(null)} />
+        <View style={styles.sheet}>
+          <View style={styles.sheetBar}>
+            <Text style={styles.sheetTitle}>Which day did you work?</Text>
+            <Pressable onPress={() => setClaiming(null)} hitSlop={12} accessibilityLabel="Close">
+              <Ionicons name="close" size={22} color={colors.slate500} />
+            </Pressable>
+          </View>
+          {claiming
+            ? daysBetween(claiming.startDate, claiming.endDate).map((d) => (
+                <Pressable
+                  key={d}
+                  style={styles.sheetRow}
+                  onPress={() => {
+                    const id = claiming.id;
+                    setClaiming(null);
+                    claimWorked.mutate({ id, day: d });
+                  }}
+                >
+                  <Text style={styles.sheetRowText}>{shortDate(d)}</Text>
+                  <Ionicons name="chevron-forward" size={16} color={colors.slate300} />
+                </Pressable>
+              ))
+            : null}
+          <Text style={styles.sheetNote}>
+            Working an unpaid day earns it back as a day off. Your manager sees the claim.
+          </Text>
+        </View>
+      </Modal>
 
       <ApplyLeaveSheet
         visible={applyOpen}
@@ -375,6 +462,35 @@ function makeStyles(colors: ColorScheme) {
     reqReason: { fontSize: 11.5, color: colors.slate600, lineHeight: 17 },
     reqNote: { fontSize: 11, color: colors.slate500, fontStyle: 'italic' },
     withdraw: { alignSelf: 'flex-start', paddingVertical: 4 },
+    claim: { flexDirection: 'row', alignItems: 'center', gap: 5, alignSelf: 'flex-start', paddingVertical: 4 },
+    claimText: { fontSize: 11.5, fontWeight: '800', color: colors.brand[700] },
+    compRow: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 4 },
+    compText: { fontSize: 11, fontWeight: '700', color: '#047857' },
+
+    backdrop: {
+      position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+      backgroundColor: 'rgba(15,23,42,0.35)',
+    },
+    sheet: {
+      position: 'absolute', left: 0, right: 0, bottom: 0,
+      backgroundColor: colors.surface,
+      borderTopLeftRadius: radii.xl, borderTopRightRadius: radii.xl,
+      paddingBottom: 28,
+    },
+    sheetBar: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+      paddingHorizontal: 20, paddingTop: 18, paddingBottom: 12,
+      borderBottomWidth: 1, borderBottomColor: colors.slate100,
+    },
+    sheetTitle: { fontSize: 14, fontWeight: '800', color: colors.textLight },
+    sheetRow: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+      paddingHorizontal: 20, paddingVertical: 14,
+      borderBottomWidth: 1, borderBottomColor: colors.slate100,
+    },
+    sheetRowText: { fontSize: 13.5, fontWeight: '600', color: colors.textLight },
+    sheetNote: { fontSize: 10.5, color: colors.slate400, paddingHorizontal: 20, paddingTop: 12, lineHeight: 15 },
+
     withdrawText: { fontSize: 11.5, fontWeight: '800', color: colors.dangerText },
   });
 }
