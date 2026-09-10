@@ -20,6 +20,11 @@ import { getApiErrorMessage } from '../../api/client';
 import { getLatestMarkOfTypes, SHIFT_TYPES, BREAK_TYPES } from '../../utils/attendanceStatus';
 import { formatTime, formatTimeWithSeconds, toLocalDateKey } from '../../utils/datetime';
 import { t as tr, useT } from '../../i18n';
+import { StatusBanner } from '../../components/StatusBanner';
+import { GeofenceMap, bearingBetween } from '../../components/GeofenceMap';
+import { PunchTiles } from './PunchTiles';
+import { InfoNote } from '../../components/InfoNote';
+import { useConnectivityStore } from '../../stores/connectivityStore';
 
 const today = () => toLocalDateKey();
 
@@ -53,6 +58,10 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
   // times on this screen; the formatters read the store outside React.
   usePreferencesStore((s) => s.clock);
   const t = useT();
+  // Whether the server can be reached. Read from what the API client has
+  // actually observed, not from a radio flag -- a phone with full bars behind
+  // a captive portal cannot record a punch.
+  const reachability = useConnectivityStore((s) => s.status);
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const employee = useAuthStore((s) => s.employee);
   const store = useAuthStore((s) => s.store);
@@ -203,6 +212,10 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
       ? haversineDistance(coords.latitude, coords.longitude, parseFloat(store.lat), parseFloat(store.lng))
       : null;
   const insideFence = distanceMetres != null && store ? distanceMetres <= store.geofence_radius_m : null;
+  // The drawing needs a definite inside/outside. Before a fix arrives there
+  // is no answer, and `false` would draw the dot as OUT of the fence -- an
+  // amber ring and a warning tint for a state that is merely unknown.
+  const insideForMap = insideFence === true;
 
   // Home's one-tap shortcut: open the camera the moment it is safe to, rather
   // than landing here and making the employee press Start/End Shift a second
@@ -364,11 +377,33 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
         </View>
       )}
 
-      {/* WHERE YOU STAND, before what you can do.
-          The page opened on four buttons of which three were always dead, and
-          nothing said which shift was being worked or whether it had started.
-          State first, then the single action that follows from it. */}
-      <View style={[styles.hero, isCurrentlyClockedIn && styles.heroOn]}>
+      {/* CAN THIS PUNCH LAND? Two lines, before anything else.
+          The connection and the fence are the two things that decide whether a
+          mark is recorded cleanly, and both are worth knowing before the
+          camera opens rather than after it closes. */}
+      <StatusBanner
+        tone={reachability === 'offline' ? 'bad' : reachability === 'online' ? 'ok' : 'muted'}
+        icon={
+          reachability === 'offline'
+            ? 'cloud-offline-outline'
+            : reachability === 'online'
+              ? 'checkmark-circle'
+              : 'ellipsis-horizontal-circle-outline'
+        }
+        title={
+          reachability === 'offline'
+            ? t('net.offline')
+            : reachability === 'online'
+              ? t('net.online')
+              : t('net.checking')
+        }
+        detail={reachability === 'offline' ? t('net.offlineDetail') : null}
+      />
+
+      {/* Kept, but folded into the shift line below the tiles rather than
+          leading the screen -- which shift you are on is context, not the
+          question you opened the page to answer. */}
+      <View style={[styles.hero, isCurrentlyClockedIn && styles.heroOn, styles.heroCompact]}>
         <View style={styles.heroTop}>
           <View style={[styles.heroDot, isCurrentlyClockedIn ? styles.heroDotOn : styles.heroDotOff]} />
           <Text style={[styles.heroState, isCurrentlyClockedIn && styles.heroStateOn]}>
@@ -393,53 +428,68 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
       </View>
 
       <TourTarget id="clock-location">
-      <View style={styles.geoRow}>
+      <View style={styles.geoBlock}>
         {locationError ? (
           <>
-            <Ionicons name="warning-outline" size={17} color={colors.danger} />
-            <View style={styles.geoText}>
-              <Text style={styles.geoTitleBad}>{t('clock.locationUnavailable')}</Text>
-              <Text style={styles.geoSub}>{locationError}</Text>
-            </View>
+            <StatusBanner
+              tone="bad"
+              icon="warning-outline"
+              title={t('clock.locationUnavailable')}
+              detail={locationError}
+            />
             <View style={styles.geoFix}>
               <Pressable onPress={() => void acquireLocation()} hitSlop={8}>
-                <Text style={styles.geoFixText}>Retry</Text>
+                <Text style={styles.geoFixText}>{t('common.retry')}</Text>
               </Pressable>
               {permission === 'blocked' && (
                 <Pressable onPress={() => Linking.openSettings()} hitSlop={8}>
-                  <Text style={styles.geoFixText}>Settings</Text>
+                  <Text style={styles.geoFixText}>{t('common.settings')}</Text>
                 </Pressable>
               )}
             </View>
           </>
-        ) : distanceMetres == null ? (
-          // Skeleton rather than a line of text, so the row does not resize
-          // under the thumb the moment a fix arrives.
-          <View style={styles.geoText}>
-            <Skeleton width="55%" height={11} />
-            <Skeleton width="80%" height={9} style={{ marginTop: 6 }} />
-          </View>
         ) : (
           <>
-            <Ionicons
-              name={insideFence ? 'location' : 'location-outline'}
-              size={17}
-              color={insideFence ? colors.success : colors.warning}
+            <StatusBanner
+              tone={distanceMetres == null ? 'muted' : insideFence ? 'ok' : 'warn'}
+              icon={
+                distanceMetres == null
+                  ? 'ellipsis-horizontal-circle-outline'
+                  : insideFence
+                    ? 'checkmark-circle'
+                    : 'location-outline'
+              }
+              title={
+                distanceMetres == null
+                  ? t('map.locating')
+                  : insideFence
+                    ? t('clock.insideFence')
+                    : t('clock.outsideFence')
+              }
+              // Formatted, because "438636m from" is a number nobody can read
+              // at a glance and the distance is the whole point of the line.
+              detail={
+                distanceMetres == null
+                  ? null
+                  : t(insideFence ? 'clock.insideDetail' : 'clock.outsideDetail', {
+                      distance: formatDistance(distanceMetres),
+                      site: store?.name ?? t('clock.yourSite'),
+                    })
+              }
             />
-            <View style={styles.geoText}>
-              <Text style={insideFence ? styles.geoTitleOk : styles.geoTitleWarn}>
-                {insideFence ? t('clock.insideFence') : t('clock.outsideFence')}
-              </Text>
-              {/* Formatted, because "438636m from" is a number nobody can read
-                  at a glance and the distance is the whole point of the row. */}
-              <Text style={styles.geoSub} numberOfLines={1}>
-                {t('clock.distanceFrom', {
-                  distance: formatDistance(distanceMetres),
-                  site: store?.name ?? t('clock.yourSite'),
-                })}
-                {insideFence ? '' : ' · ' + t('clock.goesToHr')}
-              </Text>
-            </View>
+
+            {/* The fence, drawn. See GeofenceMap for why this is not a map. */}
+            <GeofenceMap
+              distanceMetres={distanceMetres}
+              radiusMetres={store?.geofence_radius_m ?? 0}
+              bearingDegrees={
+                coords && store?.lat && store?.lng
+                  ? bearingBetween(Number(store.lat), Number(store.lng), coords.latitude, coords.longitude)
+                  : null
+              }
+              inside={insideForMap}
+              siteName={store?.name ?? t('clock.yourSite')}
+            />
           </>
         )}
       </View>
@@ -468,17 +518,26 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
         </View>
       )}
 
-      {/* ONE primary action. Start and End are the same decision in two
-          states, so showing both means one is always dead -- which is what
-          made this page read as mostly unavailable. */}
+      {/* BOTH ENDS OF THE SHIFT, side by side. The finished one keeps its
+          answer on screen instead of disappearing -- see PunchTiles. */}
       <TourTarget id="clock-action">
-      <View style={styles.actionsRow}>
-        <Button
-          title={isCurrentlyClockedIn ? t('clock.endShift') : t('clock.startShift')}
-          onPress={() => setPendingAction(isCurrentlyClockedIn ? 'clock-out' : 'clock-in')}
-          disabled={!coords || (isCurrentlyClockedIn && isCurrentlyOnBreak)}
-        />
-      </View>
+      <PunchTiles
+        clockedIn={isCurrentlyClockedIn}
+        clockInAt={lastClockIn ? formatTime(lastClockIn.timestamp) : null}
+        clockOutAt={lastClockOut ? formatTime(lastClockOut.timestamp) : null}
+        onClockIn={() => setPendingAction('clock-in')}
+        onClockOut={() => setPendingAction('clock-out')}
+        // A break must be ended before the shift can be, and a punch with no
+        // fix would be submitted without the location it is judged on.
+        disabled={!coords || (isCurrentlyClockedIn && isCurrentlyOnBreak)}
+        labels={{
+          clockIn: t('day.clockIn'),
+          clockOut: t('day.clockOut'),
+          doneAt: (time) => t('clock.doneAt', { time }),
+          startHint: t('clock.startHint'),
+          endHint: t('clock.endHint'),
+        }}
+      />
       </TourTarget>
 
       {isCurrentlyClockedIn && (
@@ -495,6 +554,18 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
       {isCurrentlyOnBreak && (
         <Text style={styles.geoWarning}>{t('clock.endBreakFirst')}</Text>
       )}
+
+      {/* WHAT THE RULES ARE, said once, at the bottom.
+          The design's version says "two marks a day — nothing else is required
+          during your shift", which is not true of this product: breaks are
+          punched too, and the shift policy counts them. The lead sentence
+          therefore follows whether this employee actually has a break
+          allowance, rather than repeating a line that would be wrong for
+          anyone on a template. */}
+      <InfoNote
+        lead={breakUsage ? t('clock.noteLeadBreaks') : t('clock.noteLead')}
+        body={t('clock.note', { tab: t('attendance.regularise') })}
+      />
 
       {(lastClockIn || lastClockOut || lastBreakStart || lastBreakEnd) && (
         <Card>
@@ -554,6 +625,9 @@ function makeStyles(colors: ColorScheme) {
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.slate200,
   },
   heroOn: { borderColor: colors.success, backgroundColor: colors.successBg },
+  // Demoted from the lead of the screen to a context row, so it loses the
+  // padding that made it read as the headline.
+  heroCompact: { padding: 13, marginBottom: 0 },
   heroTop: { flexDirection: 'row', alignItems: 'center', gap: 7 },
   heroDot: { width: 8, height: 8, borderRadius: 4 },
   heroDotOn: { backgroundColor: colors.success },
@@ -569,6 +643,9 @@ function makeStyles(colors: ColorScheme) {
     borderWidth: 1, borderColor: colors.slate200,
     paddingHorizontal: 12, paddingVertical: 11, marginBottom: 12,
   },
+  // The fence banner and its drawing are one unit; the gap is between them,
+  // not around each.
+  geoBlock: { gap: 10 },
   geoText: { flex: 1 },
   geoTitleOk: { fontSize: 12.5, fontWeight: '800', color: '#047857' },
   geoTitleWarn: { fontSize: 12.5, fontWeight: '800', color: '#B45309' },

@@ -16,6 +16,7 @@ import { formatTime, newestFirst, toLocalDateKey } from '../../utils/datetime';
 import type { Regularisation, RegularisationRequestType, RegularisationStatus } from '../../types/attendance';
 import { SkeletonRows } from '../../components/Skeleton';
 import { t as tr, useT, type TKey } from '../../i18n';
+import { RadioRow } from '../../components/RadioRow';
 
 const today = () => toLocalDateKey();
 
@@ -119,11 +120,16 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
     setRows(seeded.length > 0 ? seeded : [{ key: newKey(), inTime: dayStart, outTime: dayEnd }]);
   }, [markDate, dayQuery.isLoading, dayQuery.data]);
 
+  // Keyed on the MONTH being corrected, not just the employee: the allowance
+  // that comes back with the list is a per-month figure, so a request filed
+  // against September must not be judged against October's count.
   const listQuery = useQuery({
-    queryKey: ['regularisation-mine', employee?.id],
-    queryFn: getMyRegularisations,
+    queryKey: ['regularisation-mine', employee?.id, markDate.slice(0, 7)],
+    queryFn: () => getMyRegularisations(markDate.slice(0, 7)),
     enabled: !!employee,
   });
+
+  const allowance = listQuery.data?.allowance ?? {};
 
   /**
    * What the server will actually store.
@@ -193,7 +199,7 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
   // markDate leads so the dates on screen descend; createdAt breaks ties for
   // two corrections raised against the same day.
   const myRequests = useMemo(
-    () => newestFirst(listQuery.data ?? [], 'markDate', 'createdAt'),
+    () => newestFirst(listQuery.data?.items ?? [], 'markDate', 'createdAt'),
     [listQuery.data]
   );
 
@@ -228,19 +234,35 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
         />
         </TourTarget>
 
+        {/* WHICH SHIFT THAT DAY WAS. A correction is judged against the
+            rostered window, so the window belongs on the form -- otherwise
+            somebody is guessing at the times they are meant to be correcting
+            towards. */}
+        <View style={styles.shiftRow}>
+          <Text style={styles.shiftLabel} numberOfLines={1}>
+            {profile?.shift?.name ?? t('reg.flexibleShift')}
+          </Text>
+          <Text style={styles.shiftWindow}>
+            {profile?.shiftStart && profile?.shiftEnd
+              ? `${String(profile.shiftStart).slice(0, 5)} – ${String(profile.shiftEnd).slice(0, 5)}`
+              : '—'}
+          </Text>
+        </View>
+
         <Text style={styles.fieldLabel}>{t('reg.requestType')}</Text>
-        <View style={styles.segment}>
-          {(['other', 'adjust'] as RegularisationRequestType[]).map((kind) => (
-            <Pressable
-              key={kind}
-              onPress={() => setRequestType(kind)}
-              style={[styles.segmentItem, requestType === kind && styles.segmentItemActive]}
-            >
-              <Text style={[styles.segmentText, requestType === kind && styles.segmentTextActive]}>
-                {kind === 'adjust' ? t('reg.typeMissingPunch') : t('reg.typeOnDuty')}
-              </Text>
-            </Pressable>
-          ))}
+        {/* Full sentences, because the choice decides what the rest of the
+            form becomes and two words could not say that. See RadioRow. */}
+        <View style={styles.radios}>
+          <RadioRow
+            selected={requestType === 'adjust'}
+            label={t('reg.typeAdjustLong')}
+            onPress={() => setRequestType('adjust')}
+          />
+          <RadioRow
+            selected={requestType === 'other'}
+            label={t('reg.typeOtherLong')}
+            onPress={() => setRequestType('other')}
+          />
         </View>
 
         {requestType === 'adjust' && (
@@ -274,6 +296,14 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
                       onChange={(v) => updateRow(row.key, { outTime: v })}
                     />
                   </View>
+                  {/* The reason most people are on this screen is that ONE
+                      half of a pair never registered. Saying which half is
+                      missing turns a blank box into a diagnosis. */}
+                  {(!row.inTime || !row.outTime) && (
+                    <View style={styles.missingChip}>
+                      <Text style={styles.missingChipText}>{t('reg.missing')}</Text>
+                    </View>
+                  )}
                   <Pressable
                     onPress={() => removeRow(row.key)}
                     disabled={rows.length === 1}
@@ -309,6 +339,44 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
 
             {errors.time ? <Text style={styles.errorText}>{errors.time}</Text> : null}
           </>
+        )}
+
+        {/* THE CAP, BEFORE THE FORM. The server has always refused the
+            request that would exceed this month's limit; until now the
+            employee met that rule as a 409 after typing everything, which is
+            the worst possible moment to learn it. Hidden entirely when the
+            server does not report it, rather than guessed at. */}
+        {typeof allowance.monthlyLimit === 'number' && (
+          <View
+            style={[
+              styles.allowance,
+              allowance.remainingThisMonth === 0 && styles.allowanceSpent,
+            ]}
+          >
+            <Ionicons
+              name={allowance.remainingThisMonth === 0 ? 'alert-circle-outline' : 'information-circle-outline'}
+              size={14}
+              color={allowance.remainingThisMonth === 0 ? colors.dangerText : colors.slate500}
+            />
+            <Text
+              style={[
+                styles.allowanceText,
+                allowance.remainingThisMonth === 0 && styles.allowanceTextSpent,
+              ]}
+            >
+              {allowance.remainingThisMonth === 0
+                ? t('reg.allowanceNone', { limit: allowance.monthlyLimit })
+                : t('reg.allowance') + ': '}
+              {allowance.remainingThisMonth !== 0 && (
+                <Text style={styles.allowanceValue}>
+                  {t('reg.allowanceValue', {
+                    remaining: allowance.remainingThisMonth ?? 0,
+                    limit: allowance.monthlyLimit,
+                  })}
+                </Text>
+              )}
+            </Text>
+          </View>
         )}
 
         <TextField
@@ -395,6 +463,36 @@ function makeStyles(colors: ColorScheme) {
   },
   hoursValue: { fontSize: 15.5, fontWeight: '800', color: colors.textLight },
   hoursLabel: { fontSize: 10.5, color: colors.slate500, fontWeight: '600', marginTop: 2 },
+
+  shiftRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    gap: 10, paddingHorizontal: 12, paddingVertical: 10, marginBottom: 4,
+    borderRadius: radii.sm, backgroundColor: colors.slate50,
+  },
+  shiftLabel: { flex: 1, fontSize: 11.5, fontWeight: '700', color: colors.slate600 },
+  // Tabular figures so 10:00 and 11:30 line up when the roster changes.
+  shiftWindow: { fontSize: 12, fontWeight: '800', color: colors.textLight, fontVariant: ['tabular-nums'] },
+
+  radios: { marginBottom: 6 },
+
+  missingChip: {
+    paddingHorizontal: 7, paddingVertical: 3,
+    borderRadius: radii.sm, backgroundColor: colors.dangerBg,
+  },
+  missingChipText: {
+    fontSize: 9, fontWeight: '900', letterSpacing: 0.4,
+    color: colors.dangerText, textTransform: 'uppercase',
+  },
+
+  allowance: {
+    flexDirection: 'row', alignItems: 'center', gap: 7,
+    paddingHorizontal: 12, paddingVertical: 10, marginBottom: 12,
+    borderRadius: radii.sm, backgroundColor: colors.slate50,
+  },
+  allowanceSpent: { backgroundColor: colors.dangerBg },
+  allowanceText: { flex: 1, fontSize: 11, color: colors.slate500, fontWeight: '600' },
+  allowanceTextSpent: { color: colors.dangerText },
+  allowanceValue: { fontWeight: '900', color: colors.textLight },
 
   fieldLabel: {
     fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.4,

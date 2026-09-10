@@ -14,6 +14,7 @@ import { AppTour, hasSeenTour } from '../components/AppTour';
 import { TourTargetProvider } from '../components/tour/TourTarget';
 import { useTourStore } from '../stores/tourStore';
 import { useT } from '../i18n';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export type AppTabsParamList = {
   Home: undefined;
@@ -50,6 +51,9 @@ export function AppTabs() {
   const role = useAuthStore((s) => s.employee?.role);
   const isTeamLead = role === 'team-lead';
   const colors = useThemeStore((s) => s.colors);
+  // The bar sits over the home indicator on iOS; without the inset the labels
+  // are clipped by it.
+  const insets = useSafeAreaInsets();
 
   const t = useT();
 
@@ -74,7 +78,19 @@ export function AppTabs() {
         headerShown: false,
         tabBarActiveTintColor: colors.brand[700],
         tabBarInactiveTintColor: colors.slate400,
-        tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.slate200 },
+        // The bar the design shows: a taller resting area so the labels are
+        // not crowded against the home indicator, and a label that stays
+        // readable rather than shrinking to fit.
+        tabBarStyle: {
+          backgroundColor: colors.surface,
+          borderTopColor: colors.slate100,
+          borderTopWidth: 1,
+          height: 62 + insets.bottom,
+          paddingTop: 6,
+          paddingBottom: insets.bottom > 0 ? insets.bottom : 8,
+        },
+        tabBarLabelStyle: { fontSize: 10, fontWeight: '700', marginTop: 2 },
+        tabBarItemStyle: { paddingVertical: 2 },
         // Without this every tab falls back to @react-navigation/elements'
         // MissingIcon, which is the literal glyph U+23F7 rendered as text --
         // a solid triangle on iOS, and whatever the system font happens to

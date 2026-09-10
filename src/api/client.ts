@@ -2,6 +2,7 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { API_V1 } from '../constants/config';
 import { useAuthStore } from '../stores/authStore';
 import { currentLanguage } from '../stores/preferencesStore';
+import { useConnectivityStore } from '../stores/connectivityStore';
 
 export const apiClient = axios.create({
   baseURL: API_V1,
@@ -75,9 +76,26 @@ async function performRefresh(): Promise<string | null> {
 // Excluded entirely for /auth/* calls: a wrong password on /auth/login is
 // not an expired session, and /auth/refresh failing must never try to
 // refresh itself.
+/**
+ * Every response is also evidence about reachability.
+ *
+ * A response of ANY status -- including a 401 or a 500 -- means the server
+ * answered, so the phone is online in the only sense that matters here. Only
+ * an error carrying no response at all is a network failure; a request that
+ * was cancelled is neither, and must not be read as one.
+ */
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    useConnectivityStore.getState().markReached();
+    return response;
+  },
   async (error: AxiosError) => {
+    if (error.response) {
+      useConnectivityStore.getState().markReached();
+    } else if (error.code !== 'ERR_CANCELED') {
+      useConnectivityStore.getState().markUnreachable();
+    }
+
     const config = error.config as RetriableConfig | undefined;
     const isAuthRoute = config?.url?.startsWith('/auth/');
     if (error.response?.status !== 401 || !config || config._retriedAfterRefresh || isAuthRoute) {

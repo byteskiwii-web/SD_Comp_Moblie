@@ -564,4 +564,29 @@ export const te: Catalogue = {
   'camera.turnHead': 'నెమ్మదిగా తలను తిప్పండి',
   'camera.timedOut': 'ధృవీకరించలేకపోయాము — మళ్లీ ప్రయత్నించండి',
 
+
+  'map.fenceRadius': '{metres} మీ. హద్దు',
+  'map.locating': 'మీ లొకేషన్ కోసం వెతుకుతోంది…',
+  'net.online': 'ఆన్‌లైన్ · నమోదులు వెంటనే సింక్ అవుతాయి',
+  'net.offline': 'సర్వర్‌తో కనెక్షన్ లేదు',
+  'net.offlineDetail': 'ఇది తిరిగి వచ్చే వరకు ఏ పంచ్ నమోదు కాదు.',
+  'net.checking': 'కనెక్షన్ తనిఖీ చేస్తోంది…',
+  'clock.insideDetail': '{site} నుండి {distance}',
+  'clock.outsideDetail': '{site} నుండి {distance} · హెచ్‌ఆర్ ఆమోదం కావాలి',
+  'clock.doneAt': '{time}కి పూర్తయింది',
+  'clock.startHint': 'మీ షిఫ్ట్ ప్రారంభించండి',
+  'clock.endHint': 'మీ షిఫ్ట్ ముగించండి',
+  'clock.note': 'ప్రతి నమోదు లైవ్ ఫొటో, దానిపై సమయం మరియు మీ లొకేషన్ ముద్రించబడతాయి. గ్యాలరీ ఫొటోలు అంగీకరించబడవు. ఏదైనా తప్పిందా? దాన్ని {tab}లో కోరండి.',
+  'clock.noteLead': 'రోజుకు రెండు నమోదులు.',
+  'clock.noteLeadBreaks': 'రోజుకు రెండు నమోదులు, మీ బ్రేక్‌లతో పాటు.',
+
+
+  'reg.typeAdjustLong': 'హాజరు నమోదును సరిచేయడానికి సమయాలను జోడించండి లేదా మార్చండి.',
+  'reg.typeOtherLong': 'ఇంకేదైనా — సమయ సవరణ కాని ఒక అభ్యర్థన.',
+  'reg.missing': 'నమోదు కాలేదు',
+  'reg.allowance': 'ఈ నెల మిగిలిన సవరణలు',
+  'reg.allowanceValue': '{limit}లో {remaining}',
+  'reg.allowanceNone': 'ఈ నెలకు కేటాయించిన {limit} సవరణలను మీరు వాడేశారు.',
+  'reg.flexibleShift': 'సౌకర్యవంతమైన షిఫ్ట్',
+
 };

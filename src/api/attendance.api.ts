@@ -159,7 +159,28 @@ export async function submitRegularisation(input: RegularisationInput) {
 // field-employee calling it with no filters gets only their own requests,
 // newest-pending-first. `data` is the flat array; paging rides in `meta`
 // (this app doesn't page its own request list, so meta is ignored).
-export async function getMyRegularisations() {
-  const res = await apiClient.get<{ success: true; data: Regularisation[] }>('/regularisation');
-  return res.data.data;
+/**
+ * This month's correction allowance, alongside the requests themselves.
+ *
+ * The cap has always been enforced -- submit() refuses the request that would
+ * exceed it -- but the employee only ever met it as a refusal AFTER filling in
+ * the form. The server now returns the figures in the list envelope, so the
+ * screen can say how many are left before anybody types anything.
+ *
+ * Optional in the type on purpose: an app on a newer build talking to a server
+ * that predates this must show no allowance line, not "undefined of undefined".
+ */
+export type RegularisationAllowance = {
+  monthlyLimit?: number;
+  usedThisMonth?: number;
+  remainingThisMonth?: number;
+};
+
+export async function getMyRegularisations(month?: string) {
+  const res = await apiClient.get<{
+    success: true;
+    data: Regularisation[];
+    meta?: RegularisationAllowance;
+  }>('/regularisation', { params: month ? { month } : undefined });
+  return { items: res.data.data, allowance: res.data.meta ?? {} };
 }

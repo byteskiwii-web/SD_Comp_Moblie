@@ -594,4 +594,29 @@ export const en = {
   'camera.turnHead': 'Slowly turn your head',
   'camera.timedOut': 'Could not verify — try again',
 
+
+  'map.fenceRadius': '{metres} m fence',
+  'map.locating': 'Finding your location…',
+  'net.online': 'Online · marks sync in real time',
+  'net.offline': 'No connection to the server',
+  'net.offlineDetail': 'A punch will not be recorded until this comes back.',
+  'net.checking': 'Checking the connection…',
+  'clock.insideDetail': '{distance} from {site}',
+  'clock.outsideDetail': '{distance} from {site} · needs HR approval',
+  'clock.doneAt': 'Done at {time}',
+  'clock.startHint': 'Begin your shift',
+  'clock.endHint': 'End your shift',
+  'clock.note': 'Every mark is a live capture stamped with the time and your location. Gallery uploads are not accepted. Missed one? Raise it under {tab}.',
+  'clock.noteLead': 'Two marks a day.',
+  'clock.noteLeadBreaks': 'Two marks a day, plus your breaks.',
+
+
+  'reg.typeAdjustLong': 'Add or update time entries to correct the attendance log.',
+  'reg.typeOtherLong': 'Something else — a request that is not a time correction.',
+  'reg.missing': 'MISSING',
+  'reg.allowance': 'Corrections left this month',
+  'reg.allowanceValue': '{remaining} of {limit}',
+  'reg.allowanceNone': 'You have used all {limit} corrections for this month.',
+  'reg.flexibleShift': 'Flexible shift',
+
 } as const;

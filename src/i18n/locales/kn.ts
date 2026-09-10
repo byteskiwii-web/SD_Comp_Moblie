@@ -564,4 +564,29 @@ export const kn: Catalogue = {
   'camera.turnHead': 'ನಿಧಾನವಾಗಿ ತಲೆ ತಿರುಗಿಸಿ',
   'camera.timedOut': 'ಪರಿಶೀಲಿಸಲಾಗಲಿಲ್ಲ — ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ',
 
+
+  'map.fenceRadius': '{metres} ಮೀ ಬೇಲಿ',
+  'map.locating': 'ನಿಮ್ಮ ಸ್ಥಳ ಹುಡುಕಲಾಗುತ್ತಿದೆ…',
+  'net.online': 'ಆನ್‌ಲೈನ್ · ದಾಖಲೆಗಳು ತಕ್ಷಣ ಸಿಂಕ್ ಆಗುತ್ತವೆ',
+  'net.offline': 'ಸರ್ವರ್‌ಗೆ ಸಂಪರ್ಕ ಇಲ್ಲ',
+  'net.offlineDetail': 'ಇದು ಮರಳುವವರೆಗೆ ಯಾವ ಪಂಚ್ ಕೂಡ ದಾಖಲಾಗುವುದಿಲ್ಲ.',
+  'net.checking': 'ಸಂಪರ್ಕ ಪರಿಶೀಲಿಸಲಾಗುತ್ತಿದೆ…',
+  'clock.insideDetail': '{site} ಇಂದ {distance}',
+  'clock.outsideDetail': '{site} ಇಂದ {distance} · ಎಚ್‌ಆರ್ ಅನುಮೋದನೆ ಬೇಕು',
+  'clock.doneAt': '{time} ಕ್ಕೆ ಮುಗಿದಿದೆ',
+  'clock.startHint': 'ನಿಮ್ಮ ಶಿಫ್ಟ್ ಆರಂಭಿಸಿ',
+  'clock.endHint': 'ನಿಮ್ಮ ಶಿಫ್ಟ್ ಮುಗಿಸಿ',
+  'clock.note': 'ಪ್ರತಿ ದಾಖಲೆಯೂ ಲೈವ್ ಫೋಟೋ, ಅದರ ಮೇಲೆ ಸಮಯ ಮತ್ತು ನಿಮ್ಮ ಸ್ಥಳ ಮುದ್ರಿತವಾಗುತ್ತದೆ. ಗ್ಯಾಲರಿ ಫೋಟೋಗಳು ಸ್ವೀಕಾರವಾಗುವುದಿಲ್ಲ. ಒಂದು ತಪ್ಪಿತೇ? ಅದನ್ನು {tab} ನಲ್ಲಿ ಕೇಳಿ.',
+  'clock.noteLead': 'ದಿನಕ್ಕೆ ಎರಡು ದಾಖಲೆಗಳು.',
+  'clock.noteLeadBreaks': 'ದಿನಕ್ಕೆ ಎರಡು ದಾಖಲೆಗಳು, ಜೊತೆಗೆ ನಿಮ್ಮ ವಿರಾಮಗಳು.',
+
+
+  'reg.typeAdjustLong': 'ಹಾಜರಾತಿ ದಾಖಲೆಯನ್ನು ಸರಿಪಡಿಸಲು ಸಮಯಗಳನ್ನು ಸೇರಿಸಿ ಅಥವಾ ಬದಲಾಯಿಸಿ.',
+  'reg.typeOtherLong': 'ಬೇರೇನಾದರೂ — ಸಮಯದ ತಿದ್ದುಪಡಿಯಲ್ಲದ ಒಂದು ವಿನಂತಿ.',
+  'reg.missing': 'ದಾಖಲಾಗಿಲ್ಲ',
+  'reg.allowance': 'ಈ ತಿಂಗಳು ಉಳಿದ ತಿದ್ದುಪಡಿಗಳು',
+  'reg.allowanceValue': '{limit} ರಲ್ಲಿ {remaining}',
+  'reg.allowanceNone': 'ಈ ತಿಂಗಳ ಎಲ್ಲಾ {limit} ತಿದ್ದುಪಡಿಗಳನ್ನು ನೀವು ಬಳಸಿದ್ದೀರಿ.',
+  'reg.flexibleShift': 'ಹೊಂದಿಕೊಳ್ಳುವ ಶಿಫ್ಟ್',
+
 };

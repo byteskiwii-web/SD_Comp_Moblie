@@ -571,4 +571,29 @@ export const hi: Catalogue = {
   'camera.turnHead': 'धीरे-धीरे सिर घुमाएँ',
   'camera.timedOut': 'सत्यापन नहीं हो सका — फिर कोशिश करें',
 
+
+  'map.fenceRadius': '{metres} मी घेरा',
+  'map.locating': 'आपकी लोकेशन खोजी जा रही है…',
+  'net.online': 'ऑनलाइन · मार्क तुरंत सिंक होते हैं',
+  'net.offline': 'सर्वर से कनेक्शन नहीं है',
+  'net.offlineDetail': 'जब तक यह वापस नहीं आता, कोई पंच दर्ज नहीं होगा।',
+  'net.checking': 'कनेक्शन जाँचा जा रहा है…',
+  'clock.insideDetail': '{site} से {distance}',
+  'clock.outsideDetail': '{site} से {distance} · एचआर की मंज़ूरी चाहिए',
+  'clock.doneAt': '{time} पर हो गया',
+  'clock.startHint': 'अपनी शिफ़्ट शुरू करें',
+  'clock.endHint': 'अपनी शिफ़्ट समाप्त करें',
+  'clock.note': 'हर मार्क एक लाइव फ़ोटो है, जिस पर समय और आपकी लोकेशन दर्ज होती है। गैलरी से फ़ोटो नहीं चलेगी। कोई मार्क छूट गया? उसे {tab} में भेजें।',
+  'clock.noteLead': 'दिन में दो मार्क।',
+  'clock.noteLeadBreaks': 'दिन में दो मार्क, साथ में आपके ब्रेक।',
+
+
+  'reg.typeAdjustLong': 'हाज़िरी के रिकॉर्ड को ठीक करने के लिए समय जोड़ें या बदलें।',
+  'reg.typeOtherLong': 'कुछ और — ऐसा अनुरोध जो समय का सुधार नहीं है।',
+  'reg.missing': 'दर्ज नहीं',
+  'reg.allowance': 'इस महीने बचे सुधार',
+  'reg.allowanceValue': '{limit} में से {remaining}',
+  'reg.allowanceNone': 'आपने इस महीने के सभी {limit} सुधार इस्तेमाल कर लिए हैं।',
+  'reg.flexibleShift': 'लचीली शिफ़्ट',
+
 };
