@@ -1,3 +1,5 @@
+import { currentClockFormat } from '../stores/preferencesStore';
+
 /**
  * Date and time formatting, computed rather than delegated to Intl.
  *
@@ -22,11 +24,18 @@ function toDate(value: string | number | Date): Date | null {
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
-/** `9:26 AM`, `12:21 PM`. Midnight is 12 AM, noon is 12 PM. */
+/**
+ * `9:26 AM` / `12:21 PM`, or `09:26` / `21:26` when the employee has asked
+ * for a 24-hour clock. Midnight is 12 AM, noon is 12 PM.
+ *
+ * Still hand-rolled rather than Intl: Hermes renders the noon hour as AM,
+ * which is the bug this function exists to avoid.
+ */
 export function formatTime(value: string | number | Date, fallback = '—'): string {
   const d = toDate(value);
   if (!d) return fallback;
   const h = d.getHours();
+  if (currentClockFormat() === '24h') return `${pad(h)}:${pad(d.getMinutes())}`;
   const period = h < 12 ? 'AM' : 'PM';
   const hour12 = h % 12 === 0 ? 12 : h % 12;
   return `${hour12}:${pad(d.getMinutes())} ${period}`;
@@ -37,6 +46,9 @@ export function formatTimeWithSeconds(value: string | number | Date, fallback = 
   const d = toDate(value);
   if (!d) return fallback;
   const h = d.getHours();
+  if (currentClockFormat() === '24h') {
+    return `${pad(h)}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  }
   const period = h < 12 ? 'AM' : 'PM';
   const hour12 = h % 12 === 0 ? 12 : h % 12;
   return `${hour12}:${pad(d.getMinutes())}:${pad(d.getSeconds())} ${period}`;

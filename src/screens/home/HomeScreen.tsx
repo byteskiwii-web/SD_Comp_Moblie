@@ -7,6 +7,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Card } from '../../components/ui';
 import { ColorScheme, radii } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
+import { usePreferencesStore } from '../../stores/preferencesStore';
 import { ThemeToggle } from '../../components/ThemeToggle';
 import { useAuthStore } from '../../stores/authStore';
 import { getAttendanceHistory } from '../../api/attendance.api';
@@ -34,6 +35,9 @@ export function HomeScreen() {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const startTour = useTourStore((s) => s.start);
   const colors = useThemeStore((s) => s.colors);
+  // Subscribed purely so a change to the 12/24-hour setting re-renders the
+  // times on this screen; the formatters read the store outside React.
+  usePreferencesStore((s) => s.clock);
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
   // The badge number. Polled rather than pushed: expo-notifications remote push

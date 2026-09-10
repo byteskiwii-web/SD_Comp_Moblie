@@ -7,6 +7,7 @@ import { useNavigation, useRoute, type RouteProp } from '@react-navigation/nativ
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ColorScheme, radii } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
+import { usePreferencesStore } from '../../stores/preferencesStore';
 import { Button } from '../../components/ui';
 import { SkeletonCard } from '../../components/Skeleton';
 import { useAuthStore } from '../../stores/authStore';
@@ -55,6 +56,9 @@ function rosterTime(hhmmss: string | null): string | null {
 
 export function DayDetailScreen() {
   const colors = useThemeStore((s) => s.colors);
+  // Subscribed purely so a change to the 12/24-hour setting re-renders the
+  // times on this screen; the formatters read the store outside React.
+  usePreferencesStore((s) => s.clock);
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const navigation = useNavigation<Nav>();
   const { date } = useRoute<DayRoute>().params;

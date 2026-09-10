@@ -58,11 +58,43 @@ export type Me = {
   gender: Gender | null;
   /** Contact details, not a link -- this person often has no account here. */
   deptManager: { name: string | null; email: string | null; phone: string | null } | null;
+
+  /**
+   * The reporting line, which is NOT deptManager.
+   *
+   * deptManager is a contact card for somebody who may have no account here.
+   * These two are links to real employee records, so they carry an id an
+   * escalation can follow, and they routinely name different people.
+   *
+   * directReports is [] rather than null when nobody reports to this person,
+   * so a screen can map it without a guard.
+   */
+  reportingManager: Colleague | null;
+  directReports: Colleague[];
+
   zoneCode: string | null;
   /** Joining kit. shirtSize is the employee's own; the kit fields are HR's. */
   shirtSize: string | null;
+  /**
+   * Whether the size has already been submitted.
+   *
+   * The size is a one-time answer: it drives a purchase order, and changing it
+   * after the shirt is bought only makes the record disagree with the garment.
+   * The server enforces it; this flag exists so the app can show the reason
+   * instead of a selector that would be refused.
+   */
+  shirtSizeLocked: boolean;
   welcomeKitIssued: boolean;
   welcomeKitIssuedAt: string | null;
+};
+
+/** Somebody else on the roster, resolved to a name rather than a bare id. */
+export type Colleague = {
+  id: string;
+  name: string;
+  role: string | null;
+  phone: string | null;
+  email: string | null;
 };
 
 export const SHIRT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'] as const;

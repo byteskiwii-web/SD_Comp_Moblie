@@ -1,6 +1,7 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { API_V1 } from '../constants/config';
 import { useAuthStore } from '../stores/authStore';
+import { currentLanguage } from '../stores/preferencesStore';
 
 export const apiClient = axios.create({
   baseURL: API_V1,
@@ -17,6 +18,17 @@ apiClient.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
+  /**
+   * The employee`s chosen language, on every request.
+   *
+   * The backend serves six locales and picks from this header, so validation
+   * failures, refusals and notification text come back translated without any
+   * endpoint needing a parameter. Set here rather than per call for the same
+   * reason the token is: one place, no call site to forget.
+   */
+  config.headers["Accept-Language"] = currentLanguage();
+
   return config;
 });
 

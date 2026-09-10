@@ -6,6 +6,7 @@ import { Button, Card } from '../../components/ui';
 import { TourTarget } from '../../components/tour/TourTarget';
 import { ColorScheme, radii } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
+import { usePreferencesStore } from '../../stores/preferencesStore';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useAuthStore } from '../../stores/authStore';
 import { summariseDay } from '../../utils/attendanceDay';
@@ -47,6 +48,9 @@ function formatDistance(metres: number): string {
 
 export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
   const colors = useThemeStore((s) => s.colors);
+  // Subscribed purely so a change to the 12/24-hour setting re-renders the
+  // times on this screen; the formatters read the store outside React.
+  usePreferencesStore((s) => s.clock);
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const employee = useAuthStore((s) => s.employee);
   const store = useAuthStore((s) => s.store);

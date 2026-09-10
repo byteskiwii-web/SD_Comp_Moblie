@@ -13,7 +13,9 @@ import { useTourStore } from '../../stores/tourStore';
 import { KitCard } from './KitCard';
 import { DocumentsCard } from './DocumentsCard';
 import { DeptManagerCard } from './DeptManagerCard';
+import { ReportingCard } from './ReportingCard';
 import { PersonalCard } from './PersonalCard';
+import { PreferencesCard } from './PreferencesCard';
 import { Button, Card } from '../../components/ui';
 import { ColorScheme, radii } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
@@ -113,9 +115,16 @@ export function ProfileScreen() {
           />
         </Card>
 
+        <PreferencesCard />
+
         <PersonalCard />
 
         <DeptManagerCard />
+
+        {/* Below the department manager, because they answer adjacent questions
+            and reading them together is what makes the difference between the
+            two obvious. */}
+        <ReportingCard />
 
         <KycCard />
 

@@ -7,6 +7,7 @@ import { Card } from '../../components/ui';
 import { SkeletonList, SkeletonRows } from '../../components/Skeleton';
 import { ColorScheme, radii } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
+import { usePreferencesStore } from '../../stores/preferencesStore';
 import { getApiErrorMessage } from '../../api/client';
 import { useAuthStore } from '../../stores/authStore';
 import { formatTime, newestFirst, toLocalDateKey } from '../../utils/datetime';
@@ -54,6 +55,9 @@ export function TeamScreen() {
   const store = useAuthStore((s) => s.store);
   const [tab, setTab] = useState<Tab>('today');
   const colors = useThemeStore((s) => s.colors);
+  // Subscribed purely so a change to the 12/24-hour setting re-renders the
+  // times on this screen; the formatters read the store outside React.
+  usePreferencesStore((s) => s.clock);
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
   return (
