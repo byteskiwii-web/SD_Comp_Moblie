@@ -1,4 +1,4 @@
-import * as Notifications from 'expo-notifications';
+import { getNotifications } from '../native/notificationsModule';
 import { useAuthStore } from '../stores/authStore';
 import { useShiftStore } from '../stores/shiftStore';
 import { locationCheck } from '../api/attendance.api';
@@ -52,7 +52,11 @@ export async function runShiftTimerTick(): Promise<void> {
           longitude: probe.coords.longitude,
         });
         if (result.alert) {
-          await Notifications.scheduleNotificationAsync({
+          // Resolved per use: this runs in a headless context where the
+          // module may be unavailable, and a missing alert must not
+          // reject the task -- a rejected headless task never calls
+          // notifyTaskFinished, so the wakelock is held indefinitely.
+          await getNotifications()?.scheduleNotificationAsync({
             content: { title: 'Outside your store', body: result.alert, data: { kind: 'geofence-alert' } },
             trigger: null,
           });

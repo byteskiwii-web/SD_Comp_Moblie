@@ -1,4 +1,4 @@
-import * as Notifications from 'expo-notifications';
+import { getNotifications } from '../native/notificationsModule';
 import { BREAK_REMINDER_ID, CLOCK_OUT_REMINDER_ID } from '../constants/config';
 import { useNotificationsStore } from '../stores/notificationsStore';
 
@@ -32,6 +32,9 @@ export async function scheduleClockOutReminder(shiftEnd: string): Promise<void> 
     target = new Date(target.getTime() + 24 * 60 * 60 * 1000);
   }
   if (target.getTime() <= now.getTime()) return; // still in the past -- give up quietly
+
+  const Notifications = getNotifications();
+  if (!Notifications) return;
 
   const perms = await Notifications.getPermissionsAsync();
   if (perms.status !== 'granted') {
@@ -69,6 +72,9 @@ export async function scheduleBreakReminder(dueAt: Date): Promise<void> {
   if (!(dueAt instanceof Date) || Number.isNaN(dueAt.getTime())) return;
   if (dueAt.getTime() <= Date.now()) return;
 
+  const Notifications = getNotifications();
+  if (!Notifications) return;
+
   const perms = await Notifications.getPermissionsAsync();
   if (perms.status !== 'granted') {
     const req = await Notifications.requestPermissionsAsync();
@@ -88,9 +94,13 @@ export async function scheduleBreakReminder(dueAt: Date): Promise<void> {
 }
 
 export async function cancelBreakReminder(): Promise<void> {
+  const Notifications = getNotifications();
+  if (!Notifications) return;
   await Notifications.cancelScheduledNotificationAsync(BREAK_REMINDER_ID).catch(() => {});
 }
 export async function cancelClockOutReminder(): Promise<void> {
+  const Notifications = getNotifications();
+  if (!Notifications) return;
   await Notifications.cancelScheduledNotificationAsync(CLOCK_OUT_REMINDER_ID).catch(() => {});
 }
 
@@ -106,6 +116,9 @@ export async function fireIntegrityAlertNotification(input: {
   body: string;
   escalated: boolean;
 }): Promise<void> {
+  const Notifications = getNotifications();
+  if (!Notifications) return;
+
   const perms = await Notifications.getPermissionsAsync();
   if (perms.status !== 'granted') {
     const req = await Notifications.requestPermissionsAsync();
@@ -135,8 +148,14 @@ export async function fireIntegrityAlertNotification(input: {
  * being dropped, so anything unanticipated still shows up in the panel
  * instead of vanishing.
  */
-export function registerNotificationHistoryListener() {
-  return Notifications.addNotificationReceivedListener((event) => {
+export function registerNotificationHistoryListener(): { remove: () => void } {
+  const Notifications = getNotifications();
+  // A no-op subscription rather than null: App.tsx unconditionally calls
+  // .remove() on teardown, and handing it nothing would trade a missing
+  // history for a crash on unmount.
+  if (!Notifications) return { remove: () => {} };
+
+  return Notifications.addNotificationReceivedListener((event: import('expo-notifications').NotificationResponse['notification']) => {
     const { title, body, data } = event.request.content;
     const kind = (data as { kind?: string } | undefined)?.kind;
     const type =
