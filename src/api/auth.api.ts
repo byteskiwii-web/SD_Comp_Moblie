@@ -54,6 +54,8 @@ export type Me = {
     lunchBreakMinutes: number;
     breakAllowanceMinutes: number | null;
   } | null;
+  /** null means not asked yet; `undisclosed` means asked and declined. */
+  gender: Gender | null;
   /** Contact details, not a link -- this person often has no account here. */
   deptManager: { name: string | null; email: string | null; phone: string | null } | null;
   zoneCode: string | null;
@@ -64,6 +66,22 @@ export type Me = {
 };
 
 export const SHIRT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'] as const;
+/**
+ * `undisclosed` is a CHOICE; null means nobody has asked yet. Keeping them
+ * apart is what stops an unfilled record reading as a statement the employee
+ * never made.
+ */
+export type Gender = 'male' | 'female' | 'other' | 'undisclosed';
+
+export const GENDERS: Gender[] = ['male', 'female', 'other', 'undisclosed'];
+
+export const GENDER_LABEL: Record<Gender, string> = {
+  male: 'Male',
+  female: 'Female',
+  other: 'Other',
+  undisclosed: 'Prefer not to say',
+};
+
 export type ShirtSize = (typeof SHIRT_SIZES)[number];
 
 /**
@@ -83,6 +101,7 @@ export async function updateMyProfile(input: {
   dept_manager_name?: string | null;
   dept_manager_email?: string | null;
   dept_manager_phone?: string | null;
+  gender?: Gender | null;
 }) {
   const res = await apiClient.patch<{ success: true; data: unknown }>('/auth/me', input);
   return res.data.data;

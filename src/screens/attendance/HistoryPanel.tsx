@@ -11,8 +11,9 @@ import { useAuthStore } from '../../stores/authStore';
 import { getAttendanceHistory } from '../../api/attendance.api';
 import { getApiErrorMessage } from '../../api/client';
 import { formatTime, toLocalDateKey } from '../../utils/datetime';
-import { formatDuration, punctuality, summariseDays, type DaySummary } from '../../utils/attendanceDay';
+import { formatDuration, punctuality, summariseDay, summariseDays, type DaySummary } from '../../utils/attendanceDay';
 import { SkeletonRows } from '../../components/Skeleton';
+import { useTicker } from '../../hooks/useTicker';
 import { TourTarget } from '../../components/tour/TourTarget';
 import type { AttendanceStackParamList } from '../../navigation/types';
 
@@ -86,7 +87,18 @@ export function HistoryPanel() {
     enabled: !!employee,
   });
 
-  const days = useMemo(() => summariseDays(data ?? []), [data]);
+  // Re-summarised every five minutes so a shift in progress keeps counting.
+  const now = useTicker();
+  const today = toLocalDateKey(now);
+  const days = useMemo(
+    () =>
+      summariseDays(data ?? []).map((d) =>
+        // Only today. Handing `now` to an older day with no clock-out would
+        // accrue hours forever against a shift that ended weeks ago.
+        d.date === today && d.openEnded ? summariseDay(d.date, d.marks, now) : d
+      ),
+    [data, now, today]
+  );
 
   return (
     <View style={styles.wrap}>
@@ -121,10 +133,6 @@ export function HistoryPanel() {
               day={day}
               shiftStart={profile?.shiftStart ?? null}
               first={i === 0}
-              // The month is only worth printing where it changes. A range can
-              // straddle two of them and the date block shows a bare number, so
-              // "31 MON" needs saying once -- on every row it is just filler.
-              showMonth={i === 0 || day.date.slice(0, 7) !== days[i - 1].date.slice(0, 7)}
               onPress={() => navigation.navigate('AttendanceDay', { date: day.date })}
             />
           ))}
@@ -181,13 +189,11 @@ function DayRow({
   day,
   shiftStart,
   first,
-  showMonth,
   onPress,
 }: {
   day: DaySummary;
   shiftStart: string | null;
   first: boolean;
-  showMonth: boolean;
   onPress: () => void;
 }) {
   const colors = useThemeStore((s) => s.colors);
@@ -215,16 +221,20 @@ function DayRow({
             {day.lastOut ? formatTime(day.lastOut.timestamp) : '—'}
           </Text>
         </View>
-        {day.openEnded && (
-          <Text style={styles.flag} numberOfLines={1}>
-            No clock-out
-          </Text>
-        )}
-        {showMonth && (
+        {/* Month on EVERY row now, with the flag beside it rather than
+            instead of it. Showing it only where it changed meant a flagged
+            day lost its date entirely, which is the row most likely to be
+            read carefully. */}
+        <View style={styles.subRow}>
           <Text style={styles.sub}>
             {MONTHS[d.getMonth()]} {d.getFullYear()}
           </Text>
-        )}
+          {day.openEnded && (
+            <Text style={styles.flag} numberOfLines={1}>
+              · No clock-out
+            </Text>
+          )}
+        </View>
       </View>
 
       <View style={styles.right}>
@@ -272,8 +282,9 @@ function makeStyles(colors: ColorScheme) {
   dotOk: { backgroundColor: colors.success },
   dotLate: { backgroundColor: colors.warning },
   times: { flex: 1, fontSize: 12, fontWeight: '700', color: colors.textLight },
-  sub: { fontSize: 11, color: colors.slate400, fontWeight: '600', marginLeft: 14 },
-  flag: { fontSize: 11, color: colors.warningText, fontWeight: '700', marginLeft: 14 },
+  subRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginLeft: 14 },
+  sub: { fontSize: 11, color: colors.slate400, fontWeight: '600' },
+  flag: { fontSize: 11, color: colors.warningText, fontWeight: '700' },
 
   right: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   hours: { fontSize: 11.5, fontWeight: '800', color: colors.slate600 },

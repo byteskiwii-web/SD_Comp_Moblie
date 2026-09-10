@@ -14,6 +14,7 @@ import { getAttendanceHistory } from '../../api/attendance.api';
 import { getApiErrorMessage } from '../../api/client';
 import { formatTime, formatTimeWithSeconds, toLocalDateKey } from '../../utils/datetime';
 import { formatDuration, punctuality, summariseDay } from '../../utils/attendanceDay';
+import { useTicker } from '../../hooks/useTicker';
 import type { AttendanceStackParamList } from '../../navigation/types';
 
 /**
@@ -69,9 +70,14 @@ export function DayDetailScreen() {
     enabled: !!employee,
   });
 
-  const day = useMemo(() => summariseDay(date, data ?? []), [date, data]);
+  // A running shift keeps counting here too, on the same five-minute beat.
+  const now = useTicker();
+  const isToday = date === toLocalDateKey(now);
+  const day = useMemo(
+    () => summariseDay(date, data ?? [], isToday ? now : undefined),
+    [date, data, isToday, now]
+  );
   const status = punctuality(day.firstIn, profile?.shiftStart ?? null);
-  const isToday = date === toLocalDateKey();
 
   const window = useMemo(() => {
     const from = rosterTime(profile?.shiftStart ?? null);

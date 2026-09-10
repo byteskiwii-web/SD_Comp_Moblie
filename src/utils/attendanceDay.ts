@@ -73,7 +73,19 @@ function pairUp(marks: AttendanceMark[], openType: string, closeType: string): P
   return pairs;
 }
 
-export function summariseDay(date: string, dayMarks: AttendanceMark[]): DaySummary {
+/**
+ * `asOf` makes a RUNNING shift measurable.
+ *
+ * Without it gross needs both a first-in and a last-out, so a day still in
+ * progress reported nothing at all -- somebody four hours into a shift saw a
+ * dash where their hours should be. Passing the current time measures the
+ * open period up to now instead.
+ *
+ * Only ever pass it for TODAY. Handing it to a past day with a missing
+ * clock-out would silently accrue hours forever against a shift that ended
+ * weeks ago, turning a forgotten punch into a growing overtime claim.
+ */
+export function summariseDay(date: string, dayMarks: AttendanceMark[], asOf?: Date): DaySummary {
   const marks = chronological(dayMarks);
   const pairs = pairUp(marks, SHIFT_IN, SHIFT_OUT);
   const breaks = pairUp(marks, BREAK_IN, BREAK_OUT);
@@ -83,12 +95,25 @@ export function summariseDay(date: string, dayMarks: AttendanceMark[]): DaySumma
   const openEnded = pairs.some((p) => p.outAt === null);
 
   const grossMinutes =
-    firstIn && lastOut ? minutesBetween(firstIn.timestamp, lastOut.timestamp) : null;
+    firstIn && lastOut
+      ? minutesBetween(firstIn.timestamp, lastOut.timestamp)
+      : firstIn && openEnded && asOf
+        ? minutesBetween(firstIn.timestamp, asOf.toISOString())
+        : null;
 
   // Only breaks that actually closed are deducted. An unclosed break would
   // otherwise subtract the rest of the day.
   const breakMinutes = breaks.reduce(
-    (total, b) => total + (b.outAt ? minutesBetween(b.inAt, b.outAt) : 0),
+    (total, b) =>
+      total +
+      (b.outAt
+        ? minutesBetween(b.inAt, b.outAt)
+        : // A break still running counts up to now, but only when a clock is
+          // supplied. Otherwise effective hours would keep climbing while
+          // somebody is sitting on their break.
+          asOf
+          ? minutesBetween(b.inAt, asOf.toISOString())
+          : 0),
     0
   );
 

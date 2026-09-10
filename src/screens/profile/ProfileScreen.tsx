@@ -13,6 +13,7 @@ import { useTourStore } from '../../stores/tourStore';
 import { KitCard } from './KitCard';
 import { DocumentsCard } from './DocumentsCard';
 import { DeptManagerCard } from './DeptManagerCard';
+import { PersonalCard } from './PersonalCard';
 import { Button, Card } from '../../components/ui';
 import { ColorScheme, radii } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
@@ -111,6 +112,8 @@ export function ProfileScreen() {
             last
           />
         </Card>
+
+        <PersonalCard />
 
         <DeptManagerCard />
 

@@ -72,7 +72,10 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
   const profile = useAuthStore((s) => s.profile);
   const queryClient = useQueryClient();
 
-  const [markDate, setMarkDate] = useState(initialDate ?? today());
+  // Defaults to YESTERDAY, since today is not correctable yet.
+  const [markDate, setMarkDate] = useState(
+    initialDate ?? new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+  );
   const [requestType, setRequestType] = useState<RegularisationRequestType>('adjust');
   const [rows, setRows] = useState<StampRow[]>([]);
   const [reason, setReason] = useState('');
@@ -211,7 +214,16 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
         </View>
 
         <TourTarget id="regularise-form">
-          <DatePickerField label="Date" value={markDate} onChange={setMarkDate} maximumDate={new Date()} />
+          {/* Yesterday is the latest selectable day. A correction is a claim
+            about a day that has FINISHED, and the server refuses today along
+            with the future -- offering it here would only produce an error
+            after the form was filled in. */}
+        <DatePickerField
+          label="Date"
+          value={markDate}
+          onChange={setMarkDate}
+          maximumDate={new Date(Date.now() - 24 * 60 * 60 * 1000)}
+        />
         </TourTarget>
 
         <Text style={styles.fieldLabel}>Request type</Text>
