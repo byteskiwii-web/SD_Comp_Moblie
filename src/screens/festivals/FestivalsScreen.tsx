@@ -9,6 +9,7 @@ import { ColorScheme, radii } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
 import { getApiErrorMessage } from '../../api/client';
 import { toLocalDateKey } from '../../utils/datetime';
+import { festivalIcon } from '../../utils/festivalIcon';
 import { getHolidays, HOLIDAY_KIND_LABEL, type Holiday } from '../../api/holidays.api';
 
 /**
@@ -141,11 +142,19 @@ function Row({
   const isToday = String(holiday.date).slice(0, 10) === today;
   const isPast = String(holiday.date).slice(0, 10) < today;
 
+  const glyph = festivalIcon(holiday.name);
+
   return (
     <View style={[styles.row, isToday && styles.rowToday, isPast && styles.rowPast]}>
       <View style={styles.dateBlock}>
         <Text style={[styles.day, isToday && styles.todayText]}>{d.getDate()}</Text>
         <Text style={styles.weekday}>{WEEKDAYS[d.getDay()]}</Text>
+      </View>
+
+      {/* The festival's own tint, not the theme's. Ionicons is monochrome, so
+          without it forty festivals are forty identical grey outlines. */}
+      <View style={[styles.badge, { backgroundColor: glyph.tint + '1F' }]}>
+        <Ionicons name={glyph.name} size={17} color={glyph.tint} />
       </View>
 
       <View style={styles.body}>
@@ -160,8 +169,6 @@ function Row({
           {holiday.region ? <Text style={styles.kind}>{holiday.region}</Text> : null}
         </View>
       </View>
-
-      {isToday && <Ionicons name="sparkles" size={16} color={colors.brand[700]} />}
     </View>
   );
 }
@@ -187,8 +194,8 @@ const makeStyles = (colors: ColorScheme) =>
     monthCount: { fontSize: 10.5, fontWeight: '700', color: colors.slate400 },
 
     row: {
-      flexDirection: 'row', alignItems: 'center', gap: 14,
-      paddingHorizontal: 20, paddingVertical: 12,
+      flexDirection: 'row', alignItems: 'center', gap: 11,
+      paddingHorizontal: 18, paddingVertical: 11,
       backgroundColor: colors.surface,
       borderBottomWidth: 1, borderBottomColor: colors.slate100,
     },
@@ -197,7 +204,8 @@ const makeStyles = (colors: ColorScheme) =>
     // year, and removing it would make the list look wrong in December.
     rowPast: { opacity: 0.5 },
 
-    dateBlock: { width: 34, alignItems: 'center' },
+    dateBlock: { width: 30, alignItems: 'center' },
+    badge: { width: 34, height: 34, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
     day: { fontSize: 17, fontWeight: '800', color: colors.textLight, letterSpacing: -0.4 },
     weekday: {
       fontSize: 9.5, fontWeight: '800', color: colors.slate400,
