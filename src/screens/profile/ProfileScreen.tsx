@@ -284,51 +284,6 @@ function KycCard() {
   );
 }
 
-/**
- * The PAN-Aadhaar linkage line.
- *
- * Belongs to the PAN row above it and is drawn as a continuation of it, which
- * is why PAN suppresses its own rule and this carries one instead.
- */
-function LinkRow({ linked, onCheck }: { linked: boolean | null; onCheck?: () => void }) {
-  const colors = useThemeStore((s) => s.colors);
-  const styles = React.useMemo(() => makeStyles(colors), [colors]);
-  const body = (
-    <>
-      <Ionicons
-        name={linked === true ? 'link-outline' : linked === false ? 'unlink-outline' : 'help-circle-outline'}
-        size={13}
-        color={linked === true ? colors.successText : linked === false ? colors.warningText : colors.slate400}
-      />
-      <Text style={styles.linkText}>
-        {linked === true
-          ? 'PAN linked to Aadhaar'
-          : linked === false
-            ? 'PAN not linked to Aadhaar'
-            : 'PAN-Aadhaar link not checked'}
-      </Text>
-      {onCheck ? (
-        <View style={styles.linkActionRow}>
-          <Text style={styles.linkAction}>Check now</Text>
-          <Ionicons name="chevron-forward" size={13} color={colors.brand[700]} />
-        </View>
-      ) : null}
-    </>
-  );
-
-  if (!onCheck) return <View style={styles.linkRow}>{body}</View>;
-  return (
-    <Pressable
-      style={({ pressed }) => [styles.linkRow, pressed && styles.rowPressed]}
-      onPress={onCheck}
-      accessibilityRole="button"
-      accessibilityLabel="Check whether your PAN is linked to Aadhaar"
-    >
-      {body}
-    </Pressable>
-  );
-}
-
 function KycRow({
   icon,
   label,
@@ -384,10 +339,63 @@ function KycRow({
 }
 
 /**
- * The policy library, read-only here. Anything still needing a signature is
- * surfaced on the home screen instead, where it can be acted on -- this is the
- * reference copy, so it says what exists and what has already been signed.
+ * The PAN-Aadhaar linkage line.
+ *
+ * Belongs to the PAN row above it and is drawn as a continuation of it, which
+ * is why PAN suppresses its own rule and this carries one instead.
+ *
+ * It speaks the CARD'S vocabulary rather than its own. The rows around it say
+ * their state in a coloured chip -- Verified, Pending -- and this used to say
+ * its state in a grey sentence with a question-mark icon, which read as a
+ * footnote about PAN rather than as a third thing with a status of its own.
+ * Same chip, same three tones, so the whole card can be scanned down one
+ * column instead of parsed line by line.
+ *
+ * The three states stay genuinely three. NOT CHECKED is grey and is not a
+ * failure -- it means nobody has asked yet -- while "not linked" is amber and
+ * is a real finding. Collapsing them would either invent a problem or hide
+ * one, and the provider's enum is undocumented past yes and no.
  */
+function LinkRow({ linked, onCheck }: { linked: boolean | null; onCheck?: () => void }) {
+  const colors = useThemeStore((s) => s.colors);
+  const styles = React.useMemo(() => makeStyles(colors), [colors]);
+
+  const state =
+    linked === true
+      ? { icon: 'link' as const, tint: colors.successText, label: 'Linked', bg: colors.successBg }
+      : linked === false
+        ? { icon: 'unlink' as const, tint: colors.warningText, label: 'Not linked', bg: colors.warningBg }
+        : { icon: 'link-outline' as const, tint: colors.slate400, label: 'Not checked', bg: colors.slate100 };
+
+  const body = (
+    <>
+      <Ionicons name={state.icon} size={13} color={state.tint} style={styles.linkIcon} />
+      <Text style={styles.linkLabel}>Aadhaar link</Text>
+      <View style={[styles.linkChip, { backgroundColor: state.bg }]}>
+        <Text style={[styles.linkChipText, { color: state.tint }]}>{state.label}</Text>
+      </View>
+      {onCheck ? (
+        <View style={styles.linkActionRow}>
+          <Text style={styles.linkAction}>Check now</Text>
+          <Ionicons name="chevron-forward" size={13} color={colors.brand[700]} />
+        </View>
+      ) : null}
+    </>
+  );
+
+  if (!onCheck) return <View style={styles.linkRow}>{body}</View>;
+  return (
+    <Pressable
+      style={({ pressed }) => [styles.linkRow, pressed && styles.rowPressed]}
+      onPress={onCheck}
+      accessibilityRole="button"
+      accessibilityLabel={`Aadhaar link: ${state.label}. Check now.`}
+    >
+      {body}
+    </Pressable>
+  );
+}
+
 function PolicyLibrary() {
   const { data } = useQuery({ queryKey: ['policies-library'], queryFn: () => getPolicies(50) });
   const colors = useThemeStore((s) => s.colors);
@@ -455,7 +463,12 @@ function makeStyles(colors: ColorScheme) {
       paddingLeft: 25, paddingBottom: 10, marginTop: -2,
       borderBottomWidth: 1, borderBottomColor: colors.slate100,
     },
-    linkText: { fontSize: 10.5, color: colors.slate500, fontWeight: '600' },
+    linkIcon: { marginRight: 7 },
+    // Same weight and colour as the labels above it, so the eye reads a
+    // fourth row rather than a caption hanging off the third.
+    linkLabel: { flex: 1, fontSize: 11, fontWeight: '600', color: colors.slate500 },
+    linkChip: { paddingHorizontal: 8, paddingVertical: 2.5, borderRadius: radii.pill },
+    linkChipText: { fontSize: 10, fontWeight: '800' },
     linkActionRow: { flexDirection: 'row', alignItems: 'center', gap: 1, marginLeft: 'auto' },
     linkAction: { fontSize: 10.5, fontWeight: '800', color: colors.brand[700] },
     rowPressed: { opacity: 0.6 },
