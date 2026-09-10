@@ -91,6 +91,30 @@ export function ProfileScreen() {
             label="Shift"
             value={profile?.shiftStart && profile?.shiftEnd ? profile.shiftStart + ' – ' + profile.shiftEnd : '—'}
           />
+          {/* The rostered shift, named. '10:00 - 19:00' alone does not say
+              which shift somebody is on, and the break allowance is the part
+              that decides whether a long lunch costs them anything. */}
+          <Row
+            icon="albums-outline"
+            label="Shift"
+            value={profile?.shift?.name ?? (profile?.shiftStart && profile?.shiftEnd ? profile.shiftStart + ' – ' + profile.shiftEnd : '—')}
+          />
+          {profile?.shift?.breakAllowanceMinutes != null && (
+            <Row
+              icon="cafe-outline"
+              label="Break allowance"
+              value={`${profile.shift.breakAllowanceMinutes} min (${profile.shift.shortBreakCount}×${profile.shift.shortBreakMinutes} + ${profile.shift.lunchBreakMinutes} lunch)`}
+            />
+          )}
+          {/* Contact details rather than a link -- this person often has no
+              account here, and they change from time to time. */}
+          <Row icon="person-outline" label="Dept. manager" value={profile?.deptManager?.name ?? '—'} />
+          {profile?.deptManager?.phone ? (
+            <Row icon="call-outline" label="Manager phone" value={profile.deptManager.phone} />
+          ) : null}
+          {profile?.deptManager?.email ? (
+            <Row icon="mail-outline" label="Manager email" value={profile.deptManager.email} />
+          ) : null}
           <Row
             icon="calendar-outline"
             label="Joined"

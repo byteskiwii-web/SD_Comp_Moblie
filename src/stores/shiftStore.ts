@@ -17,6 +17,8 @@ type ShiftState = {
   storeCode: string | null;
   clockInAt: string | null;
   isOnBreak: boolean;
+  /** When the CURRENT break began. Null when not on one. */
+  breakStartedAt: string | null;
   setClockedIn: (storeCode: string, clockInAt: string) => void;
   setClockedOut: () => void;
   setOnBreak: () => void;
@@ -30,10 +32,11 @@ export const useShiftStore = create<ShiftState>()(
       storeCode: null,
       clockInAt: null,
       isOnBreak: false,
-      setClockedIn: (storeCode, clockInAt) => set({ isClockedIn: true, storeCode, clockInAt, isOnBreak: false }),
-      setClockedOut: () => set({ isClockedIn: false, storeCode: null, clockInAt: null, isOnBreak: false }),
-      setOnBreak: () => set({ isOnBreak: true }),
-      setOffBreak: () => set({ isOnBreak: false }),
+      breakStartedAt: null,
+      setClockedIn: (storeCode, clockInAt) => set({ isClockedIn: true, storeCode, clockInAt, isOnBreak: false, breakStartedAt: null }),
+      setClockedOut: () => set({ isClockedIn: false, storeCode: null, clockInAt: null, isOnBreak: false, breakStartedAt: null }),
+      setOnBreak: () => set({ isOnBreak: true, breakStartedAt: new Date().toISOString() }),
+      setOffBreak: () => set({ isOnBreak: false, breakStartedAt: null }),
     }),
     {
       name: 'zip_hrms_shift',

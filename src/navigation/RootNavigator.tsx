@@ -8,6 +8,7 @@ import { useAuthStore } from '../stores/authStore';
 import { useShiftSync } from '../hooks/useShiftSync';
 import { useLocationPollingEffect } from '../hooks/useLocationPollingEffect';
 import { useClockOutReminderEffect } from '../hooks/useClockOutReminderEffect';
+import { useBreakReminderEffect } from '../hooks/useBreakReminderEffect';
 import { useShiftIntegrityWatcher } from '../hooks/useShiftIntegrityWatcher';
 import { useKycGate } from '../hooks/useKycGate';
 import { useThemeStore } from '../stores/themeStore';
@@ -25,6 +26,7 @@ function AuthenticatedApp() {
   useShiftSync();
   useLocationPollingEffect();
   useClockOutReminderEffect();
+  useBreakReminderEffect();
   useShiftIntegrityWatcher();
   const { isLoading, gateRequired } = useKycGate();
 

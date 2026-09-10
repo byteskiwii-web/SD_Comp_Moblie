@@ -17,6 +17,8 @@ export const LEGACY_BACKGROUND_LOCATION_TASK = 'zip-hrms-location-check-task';
 // new one always replaces any prior one instead of stacking duplicates --
 // see src/utils/notifications.ts.
 export const CLOCK_OUT_REMINDER_ID = 'zip-hrms-clock-out-reminder';
+/** One pending break reminder at a time; cancel-then-schedule reuses this. */
+export const BREAK_REMINDER_ID = 'break-return-reminder';
 
 // Foreground cadence (app open) -- see useShiftIntegrityWatcher.ts.
 export const INTEGRITY_FOREGROUND_CHECK_INTERVAL_MS = 60 * 1000;

@@ -29,6 +29,8 @@ export type DaySummary = {
   lastOut: AttendanceMark | null;
   grossMinutes: number | null;
   effectiveMinutes: number | null;
+  /** Total minutes spent on CLOSED breaks. An open break counts nothing yet. */
+  breakMinutes: number;
   /** A clock-in with no matching clock-out. Either still on shift, or missed. */
   openEnded: boolean;
   /** Any punch the server flagged as outside the fence. */
@@ -97,6 +99,7 @@ export function summariseDay(date: string, dayMarks: AttendanceMark[]): DaySumma
     firstIn,
     lastOut,
     grossMinutes,
+    breakMinutes,
     effectiveMinutes: grossMinutes === null ? null : Math.max(0, grossMinutes - breakMinutes),
     openEnded,
     hasOutsideFence: marks.some((m) => m.inside_geofence === false),

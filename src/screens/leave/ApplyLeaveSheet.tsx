@@ -18,7 +18,13 @@ import { Button } from '../../components/ui';
 import { DatePickerField } from '../../components/PickerField';
 import { getApiErrorMessage } from '../../api/client';
 import { toLocalDateKey } from '../../utils/datetime';
-import { applyForLeave, LEAVE_TYPES, LEAVE_TYPE_LABEL, type LeaveType } from '../../api/leave.api';
+import {
+  applyForLeave,
+  LEAVE_TYPES,
+  LEAVE_TYPE_HINT,
+  LEAVE_TYPE_LABEL,
+  type LeaveType,
+} from '../../api/leave.api';
 
 /**
  * The leave form.
@@ -45,7 +51,7 @@ export function ApplyLeaveSheet({
   onClose: () => void;
   onApplied: () => void;
 }) {
-  const [leaveType, setLeaveType] = useState<LeaveType>('casual');
+  const [leaveType, setLeaveType] = useState<LeaveType>('paid');
   const [startDate, setStartDate] = useState(toLocalDateKey());
   const [endDate, setEndDate] = useState(toLocalDateKey());
   const [halfDay, setHalfDay] = useState(false);
@@ -58,7 +64,7 @@ export function ApplyLeaveSheet({
   // reason still in the box is how a wrong request gets sent twice.
   useEffect(() => {
     if (!visible) return;
-    setLeaveType('casual');
+    setLeaveType('paid');
     setStartDate(toLocalDateKey());
     setEndDate(toLocalDateKey());
     setHalfDay(false);

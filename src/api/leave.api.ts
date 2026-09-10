@@ -4,17 +4,22 @@ import { apiClient } from './client';
 // server; the app presents it as its own tab.
 const BASE = '/leave';
 
-export type LeaveType = 'casual' | 'sick' | 'earned' | 'unpaid';
+/** Paid or unpaid, and nothing else -- the only distinction payroll acts on. */
+export type LeaveType = 'paid' | 'unpaid';
 export type LeaveStatus = 'pending' | 'approved' | 'rejected' | 'cancelled';
 
-export const LEAVE_TYPES: LeaveType[] = ['casual', 'sick', 'earned', 'unpaid'];
+export const LEAVE_TYPES: LeaveType[] = ['paid', 'unpaid'];
 
 /** What each type is for, in the words an employee would use. */
 export const LEAVE_TYPE_LABEL: Record<LeaveType, string> = {
-  casual: 'Casual',
-  sick: 'Sick',
-  earned: 'Earned',
+  paid: 'Paid',
   unpaid: 'Unpaid',
+};
+
+/** What each one means for the day, said plainly on the form. */
+export const LEAVE_TYPE_HINT: Record<LeaveType, string> = {
+  paid: 'A normal paid day off.',
+  unpaid: 'Not paid. If you end up working, you can claim the day back.',
 };
 
 export type LeaveRequest = {
@@ -32,6 +37,10 @@ export type LeaveRequest = {
   reason: string;
   status: LeaveStatus;
   createdAt: string;
+  /** Set when an unpaid day was actually worked, and what it earned back. */
+  workedOn: string | null;
+  compOffEarned: number;
+  compOffUsedAt: string | null;
   decidedAt: string | null;
   decidedBy: string | null;
   decisionNote: string | null;
@@ -46,19 +55,26 @@ export type NewLeave = {
 };
 
 /**
- * Days taken and pending this calendar year, per type.
+ * Leave taken in ONE MONTH, plus the eleven before it.
  *
- * Deliberately not a balance. Nothing on the server holds an entitlement, so
- * a "days remaining" figure would be invented — the screen says "taken" and
- * means it.
+ * Monthly because that is how leave is discussed and approved -- an annual
+ * running total answers "how many days in August" only by subtraction.
+ * `compOffOutstanding` is counted apart from days taken: it is leave OWED, and
+ * folding it in would make somebody who came in look like somebody who did not.
  */
-export type LeaveSummary = {
-  employeeId: string;
-  year: number;
+export type LeaveMonth = {
+  month: string;
   taken: Record<LeaveType, number>;
   pending: Record<LeaveType, number>;
   takenTotal: number;
   pendingTotal: number;
+};
+
+export type LeaveSummary = LeaveMonth & {
+  employeeId: string;
+  compOffEarned: number;
+  compOffOutstanding: number;
+  byMonth: LeaveMonth[];
 };
 
 /**
@@ -77,9 +93,24 @@ export async function getMyLeave(limit = 50) {
   return res.data.data ?? [];
 }
 
-export async function getLeaveSummary(year?: number) {
+/** `month` is YYYY-MM. Omitted means the current one. */
+export async function getLeaveSummary(month?: string) {
   const res = await apiClient.get<{ success: true; data: LeaveSummary }>(`${BASE}/summary`, {
-    params: year ? { year } : undefined,
+    params: month ? { month } : undefined,
+  });
+  return res.data.data;
+}
+
+/**
+ * Record that a day of UNPAID leave was actually worked, earning it back.
+ *
+ * Unpaid only, and only once the leave is approved -- working a paid day earns
+ * nothing extra because it was already being paid for.
+ */
+export async function markWorkedDuringLeave(id: string, workedOn: string, halfDay = false) {
+  const res = await apiClient.post<{ success: true; data: LeaveRequest }>(`${BASE}/${id}/worked`, {
+    worked_on: workedOn,
+    half_day: halfDay,
   });
   return res.data.data;
 }

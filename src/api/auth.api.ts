@@ -40,6 +40,22 @@ export type Me = {
   dateOfJoining: string | null;
   shiftStart: string | null;
   shiftEnd: string | null;
+  /**
+   * The rostered shift, when the employee is on a template.
+   *
+   * NULL breakAllowanceMinutes means NO POLICY, never zero minutes -- an
+   * employee on no template must not be told every break is an overrun.
+   */
+  shift: {
+    code: string;
+    name: string;
+    shortBreakMinutes: number;
+    shortBreakCount: number;
+    lunchBreakMinutes: number;
+    breakAllowanceMinutes: number | null;
+  } | null;
+  /** Contact details, not a link -- this person often has no account here. */
+  deptManager: { name: string | null; email: string | null; phone: string | null } | null;
   zoneCode: string | null;
   /** Joining kit. shirtSize is the employee's own; the kit fields are HR's. */
   shirtSize: string | null;

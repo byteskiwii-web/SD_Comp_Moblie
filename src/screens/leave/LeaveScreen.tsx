@@ -58,6 +58,28 @@ function statusTone(colors: ColorScheme): Record<LeaveStatus, { bg: string; fg: 
   };
 }
 
+const MONTH_NAMES = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
+
+const thisMonth = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+};
+
+const monthLabel = (key: string) => {
+  const [y, m] = key.split('-').map(Number);
+  return `${MONTH_NAMES[(m || 1) - 1]} ${y}`;
+};
+
+/** Steps a YYYY-MM key, rolling the year over rather than producing month 13. */
+function shiftMonth(key: string, by: number) {
+  const [y, m] = key.split('-').map(Number);
+  const d = new Date(Date.UTC(y, m - 1 + by, 1));
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+}
+
 export function LeaveScreen() {
   const queryClient = useQueryClient();
   const [applyOpen, setApplyOpen] = useState(false);
@@ -67,7 +89,18 @@ export function LeaveScreen() {
   const STATUS_TONE = useMemo(() => statusTone(colors), [colors]);
 
   const listQuery = useQuery({ queryKey: ['leave'], queryFn: () => getMyLeave() });
-  const summaryQuery = useQuery({ queryKey: ['leave-summary'], queryFn: () => getLeaveSummary() });
+  // Which month the card is showing. Leave is discussed by the month, so the
+  // month is the unit -- and being able to step back through it is the history
+  // the figures belong to.
+  const [month, setMonth] = useState(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  });
+
+  const summaryQuery = useQuery({
+    queryKey: ['leave-summary', month],
+    queryFn: () => getLeaveSummary(month),
+  });
 
   const withdraw = useMutation({
     mutationFn: (id: string) => cancelLeave(id),
@@ -104,7 +137,27 @@ export function LeaveScreen() {
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Card>
-          <Text style={styles.cardTitle}>This year</Text>
+          {/* The month leads, and can be stepped through. A bare figure with no
+              month attached is the thing people misread. */}
+          <View style={styles.monthBar}>
+            <Pressable onPress={() => setMonth(shiftMonth(month, -1))} hitSlop={10} accessibilityLabel="Previous month">
+              <Ionicons name="chevron-back" size={18} color={colors.brand[700]} />
+            </Pressable>
+            <Text style={styles.monthLabel}>{monthLabel(month)}</Text>
+            <Pressable
+              onPress={() => setMonth(shiftMonth(month, 1))}
+              hitSlop={10}
+              disabled={month >= thisMonth()}
+              accessibilityLabel="Next month"
+            >
+              <Ionicons
+                name="chevron-forward"
+                size={18}
+                color={month >= thisMonth() ? colors.slate300 : colors.brand[700]}
+              />
+            </Pressable>
+          </View>
+
           {summaryQuery.isLoading ? (
             <SkeletonRows count={2} />
           ) : (
@@ -121,6 +174,7 @@ export function LeaveScreen() {
                   <Text style={styles.tileLabel}>Awaiting approval</Text>
                 </View>
               </View>
+
               <View style={styles.byType}>
                 {(Object.keys(LEAVE_TYPE_LABEL) as (keyof typeof LEAVE_TYPE_LABEL)[]).map((t) => (
                   <View key={t} style={styles.typeChip}>
@@ -128,10 +182,52 @@ export function LeaveScreen() {
                     <Text style={styles.typeChipValue}>{summaryQuery.data?.taken[t] ?? 0}</Text>
                   </View>
                 ))}
+                {/* Owed, not used. Kept visually apart from the two above for
+                    that reason -- it is the opposite direction of travel. */}
+                {(summaryQuery.data?.compOffOutstanding ?? 0) > 0 && (
+                  <View style={[styles.typeChip, styles.compChip]}>
+                    <Text style={[styles.typeChipLabel, styles.compChipLabel]}>Comp off owed</Text>
+                    <Text style={[styles.typeChipValue, styles.compChipLabel]}>
+                      {summaryQuery.data?.compOffOutstanding}
+                    </Text>
+                  </View>
+                )}
               </View>
+
+              {/* The twelve-month history, as a strip rather than a list: the
+                  shape of a year of leave is the useful part, and any bar can
+                  be tapped for its own figures. */}
+              {(summaryQuery.data?.byMonth?.length ?? 0) > 0 && (
+                <View style={styles.strip}>
+                  {summaryQuery.data!.byMonth.map((m) => {
+                    const peak = Math.max(1, ...summaryQuery.data!.byMonth.map((x) => x.takenTotal));
+                    const on = m.month === month;
+                    return (
+                      <Pressable
+                        key={m.month}
+                        style={styles.stripCol}
+                        onPress={() => setMonth(m.month)}
+                        accessibilityLabel={`${monthLabel(m.month)}: ${m.takenTotal} days`}
+                      >
+                        <View
+                          style={[
+                            styles.stripBar,
+                            { height: 4 + Math.round((m.takenTotal / peak) * 26) },
+                            on && styles.stripBarOn,
+                          ]}
+                        />
+                        <Text style={[styles.stripLabel, on && styles.stripLabelOn]}>
+                          {m.month.slice(5)}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              )}
+
               {/* Said plainly rather than implied by the absence of a balance. */}
               <Text style={styles.footnote}>
-                Days approved so far. Your entitlement isn't held in this app — HR has it.
+                Days approved in this month. Your entitlement isn't held in this app — HR has it.
               </Text>
             </>
           )}
@@ -242,6 +338,26 @@ function makeStyles(colors: ColorScheme) {
     typeChipValue: { fontSize: 11.5, color: colors.textLight, fontWeight: '800' },
 
     footnote: { fontSize: 11, color: colors.slate400, marginTop: 10, lineHeight: 15 },
+
+    monthBar: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+      marginBottom: 12,
+    },
+    monthLabel: { fontSize: 13, fontWeight: '800', color: colors.textLight, letterSpacing: -0.2 },
+
+    compChip: { backgroundColor: colors.successBg },
+    compChipLabel: { color: '#047857' },
+
+    strip: {
+      flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between',
+      gap: 3, marginTop: 14, paddingTop: 10,
+      borderTopWidth: 1, borderTopColor: colors.slate100,
+    },
+    stripCol: { flex: 1, alignItems: 'center', gap: 3 },
+    stripBar: { width: '100%', borderRadius: 2, backgroundColor: colors.slate200, minHeight: 4 },
+    stripBarOn: { backgroundColor: colors.brand[700] },
+    stripLabel: { fontSize: 8.5, color: colors.slate400, fontWeight: '700' },
+    stripLabelOn: { color: colors.brand[700] },
 
     sectionTitle: {
       fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4,

@@ -1,5 +1,5 @@
 import * as Notifications from 'expo-notifications';
-import { CLOCK_OUT_REMINDER_ID } from '../constants/config';
+import { BREAK_REMINDER_ID, CLOCK_OUT_REMINDER_ID } from '../constants/config';
 import { useNotificationsStore } from '../stores/notificationsStore';
 
 // The notification handler and Android channel are already registered at
@@ -51,6 +51,45 @@ export async function scheduleClockOutReminder(shiftEnd: string): Promise<void> 
   });
 }
 
+/**
+ * "Come back to your shift."
+ *
+ * Scheduled when the break starts, for the moment it runs out -- which is not
+ * a flat fifteen minutes. The allowance is a DAILY total, so a second tea
+ * break has less room left than the first, and a reminder that always fired
+ * at 15 minutes would be early on one and late on the other. The caller does
+ * that arithmetic and passes the instant.
+ *
+ * A due time already past means the allowance was gone before this break
+ * began. Firing immediately would be true but useless -- they are already
+ * over, and the extended finish time on screen is the thing that matters --
+ * so it gives up quietly, exactly as the clock-out reminder does.
+ */
+export async function scheduleBreakReminder(dueAt: Date): Promise<void> {
+  if (!(dueAt instanceof Date) || Number.isNaN(dueAt.getTime())) return;
+  if (dueAt.getTime() <= Date.now()) return;
+
+  const perms = await Notifications.getPermissionsAsync();
+  if (perms.status !== 'granted') {
+    const req = await Notifications.requestPermissionsAsync();
+    if (req.status !== 'granted') return; // best-effort -- never blocks a break
+  }
+
+  await cancelBreakReminder();
+  await Notifications.scheduleNotificationAsync({
+    identifier: BREAK_REMINDER_ID,
+    content: {
+      title: 'Break is over',
+      body: 'Time to come back to your shift. Going over extends your shift by the same amount.',
+      data: { kind: 'break-reminder' },
+    },
+    trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: dueAt },
+  });
+}
+
+export async function cancelBreakReminder(): Promise<void> {
+  await Notifications.cancelScheduledNotificationAsync(BREAK_REMINDER_ID).catch(() => {});
+}
 export async function cancelClockOutReminder(): Promise<void> {
   await Notifications.cancelScheduledNotificationAsync(CLOCK_OUT_REMINDER_ID).catch(() => {});
 }
