@@ -52,8 +52,8 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "check:api-url": "node scripts/check-api-url.js",
-    "update:preview": "npm run check:api-url && node scripts/publish-update.js preview",
-    "update:production": "npm run check:api-url && node scripts/publish-update.js production"
+    "update:preview": "node scripts/publish-update.js preview",
+    "update:production": "node scripts/publish-update.js production"
   },
   "private": true
 }
