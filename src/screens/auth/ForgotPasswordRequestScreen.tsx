@@ -45,7 +45,7 @@ export function ForgotPasswordRequestScreen({ navigation, route }: Props) {
 
   return (
     <SafeAreaView style={styles.flex}>
-    <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <Text style={styles.title}>
           {fromFirstLogin ? t('auth.setPasswordTitle') : t('auth.forgotTitle')}

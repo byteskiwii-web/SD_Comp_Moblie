@@ -495,26 +495,35 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
       </View>
       </TourTarget>
 
-      {/* What the break has cost so far. Shown only where a policy exists and
-          only once a break has been taken -- an untouched allowance is not
-          news, and "0 of 60 used" on every shift is furniture. */}
-      {breakUsage && breakUsage.used > 0 && (
+      {/* What the break allowance is, and what it has cost so far. Shown
+          whenever a policy exists -- an employee who has not taken a break
+          yet still benefits from knowing the ceiling before they start one,
+          which is the whole reason this moved here from Profile: it is an
+          attendance fact, read where a break is actually taken, not a
+          three-part breakdown (lunch/tea/tea) that reads as furniture on a
+          profile page nobody opens mid-shift. */}
+      {breakUsage && (
         <View style={[styles.breakCard, breakUsage.overrun > 0 && styles.breakCardOver]}>
           <View style={styles.breakCardRow}>
-            <Text style={styles.breakCardLabel}>{t('clock.breakUsed')}</Text>
+            <Text style={styles.breakCardLabel}>
+              {breakUsage.used > 0 ? t('clock.breakUsed') : t('clock.breakMax')}
+            </Text>
             <Text style={styles.breakCardValue}>
-              {t('clock.breakUsedOf', { used: breakUsage.used, allowance: breakUsage.allowance })}
+              {breakUsage.used > 0
+                ? t('clock.breakUsedOf', { used: breakUsage.used, allowance: breakUsage.allowance })
+                : t('clock.breakMaxMinutes', { allowance: breakUsage.allowance })}
             </Text>
           </View>
-          {breakUsage.overrun > 0 ? (
-            <Text style={styles.breakCardOverText}>
-              {t('clock.breakOver', { overrun: breakUsage.overrun, endsAt: breakUsage.endsAt ?? '—' })}
-            </Text>
-          ) : (
-            <Text style={styles.breakCardLeft}>
-              {t('clock.breakLeft', { remaining: breakUsage.remaining })}
-            </Text>
-          )}
+          {breakUsage.used > 0 &&
+            (breakUsage.overrun > 0 ? (
+              <Text style={styles.breakCardOverText}>
+                {t('clock.breakOver', { overrun: breakUsage.overrun, endsAt: breakUsage.endsAt ?? '—' })}
+              </Text>
+            ) : (
+              <Text style={styles.breakCardLeft}>
+                {t('clock.breakLeft', { remaining: breakUsage.remaining })}
+              </Text>
+            ))}
         </View>
       )}
 

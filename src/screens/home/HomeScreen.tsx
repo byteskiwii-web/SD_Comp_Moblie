@@ -75,11 +75,16 @@ export function HomeScreen() {
         {/* Avatar leads the row, matching the reference build: identity first,
             then the greeting, with actions pushed to the trailing edge. */}
         <View style={styles.headerRow}>
-          <View style={styles.avatar}>
+          <Pressable
+            style={({ pressed }) => [styles.avatar, pressed && styles.avatarPressed]}
+            onPress={() => navigation.navigate('Profile')}
+            accessibilityRole="button"
+            accessibilityLabel={t('profile.title')}
+          >
             <Text style={styles.avatarInitial}>
               {initialsOf(employee?.first_name, employee?.last_name)}
             </Text>
-          </View>
+          </Pressable>
           <View style={styles.headerText}>
             <Text style={styles.welcome}>{t('home.welcome')}</Text>
             <Text style={styles.name} numberOfLines={1}>
@@ -234,6 +239,7 @@ function makeStyles(colors: ColorScheme) {
     width: 44, height: 44, borderRadius: 22, backgroundColor: colors.brand[700],
     alignItems: 'center', justifyContent: 'center',
   },
+  avatarPressed: { opacity: 0.75 },
   avatarInitial: { color: colors.white, fontSize: 13, fontWeight: '800', letterSpacing: 0.3 },
   iconButton: {
     width: 38, height: 38, borderRadius: 19, backgroundColor: colors.slate100,

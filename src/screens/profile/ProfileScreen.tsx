@@ -105,20 +105,15 @@ export function ProfileScreen() {
             }
           />
           {/* The rostered shift, named. '10:00 - 19:00' alone does not say
-              which shift somebody is on, and the break allowance is the part
-              that decides whether a long lunch costs them anything. */}
+              which shift somebody is on. Break allowance used to live here
+              too, but it's an attendance fact, not an identity one -- moved
+              to the Attendance screen, next to where a break is actually
+              taken. */}
           <Row
             icon="albums-outline"
             label={t('profile.shift')}
             value={profile?.shift?.name ?? (profile?.shiftStart && profile?.shiftEnd ? profile.shiftStart + ' – ' + profile.shiftEnd : '—')}
           />
-          {profile?.shift?.breakAllowanceMinutes != null && (
-            <Row
-              icon="cafe-outline"
-              label={t('profile.breakAllowance')}
-              value={`${profile.shift.breakAllowanceMinutes} min (${profile.shift.shortBreakCount}×${profile.shift.shortBreakMinutes} + ${profile.shift.lunchBreakMinutes} lunch)`}
-            />
-          )}
           {/* The manager moved to its own card -- three read-only rows could
               show it and nothing could set it. */}
           <Row
@@ -128,6 +123,11 @@ export function ProfileScreen() {
             last
           />
         </Card>
+
+        {/* Moved up from the very bottom of the screen -- six cards below it
+            (Preferences through Kit) meant almost nobody scrolled far enough
+            to see it was there at all. */}
+        <PolicyLibrary />
 
         <PreferencesCard />
 
@@ -146,10 +146,8 @@ export function ProfileScreen() {
 
         <KitCard />
 
-        <PolicyLibrary />
-
         <Button title={t('home.replayTour')} variant="outline" onPress={startTour} />
-                <Button title={t('common.signOut')} variant="outline" onPress={() => signOut()} />
+        <Button title={t('common.signOut')} variant="danger" onPress={() => signOut()} />
         
       </ScrollView>
     </SafeAreaView>

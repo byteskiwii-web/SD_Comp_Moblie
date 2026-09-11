@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -8,6 +8,7 @@ import {
   TextInputProps,
   View,
 } from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { ColorScheme, radii } from '../theme/tokens';
 import { useThemeStore } from '../stores/themeStore';
@@ -57,15 +58,45 @@ export function Button({ title, onPress, disabled, loading, variant = 'primary' 
 export function TextField(props: TextInputProps & { label: string; error?: string }) {
   const colors = useThemeStore((s) => s.colors);
   const styles = useMemo(() => makeStyles(colors), [colors]);
-  const { label, error, style, ...rest } = props;
+  const { label, error, style, secureTextEntry, ...rest } = props;
+  // Only a password field ever gets the reveal toggle -- anything else
+  // passing secureTextEntry (there isn't one today) would be an odd fit for
+  // an eye icon, so the affordance is tied to the prop itself rather than a
+  // separate flag callers would have to remember to also pass.
+  const [revealed, setRevealed] = useState(false);
+  const isPassword = secureTextEntry === true;
+
   return (
     <View style={styles.fieldWrap}>
       <Text style={styles.fieldLabel}>{label}</Text>
-      <TextInput
-        placeholderTextColor={colors.slate400}
-        style={[styles.input, error ? styles.inputError : null, style]}
-        {...rest}
-      />
+      <View style={styles.inputRow}>
+        <TextInput
+          placeholderTextColor={colors.slate400}
+          style={[
+            styles.input,
+            isPassword && styles.inputWithToggle,
+            error ? styles.inputError : null,
+            style,
+          ]}
+          secureTextEntry={isPassword && !revealed}
+          {...rest}
+        />
+        {isPassword ? (
+          <Pressable
+            onPress={() => setRevealed((v) => !v)}
+            hitSlop={10}
+            style={styles.toggleBtn}
+            accessibilityRole="button"
+            accessibilityLabel={revealed ? 'Hide password' : 'Show password'}
+          >
+            <Ionicons
+              name={revealed ? 'eye-off-outline' : 'eye-outline'}
+              size={19}
+              color={colors.slate400}
+            />
+          </Pressable>
+        ) : null}
+      </View>
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
     </View>
   );
@@ -228,6 +259,7 @@ function makeStyles(colors: ColorScheme) {
     color: colors.slate500,
     marginBottom: 6,
   },
+  inputRow: { position: 'relative', justifyContent: 'center' },
   input: {
     height: 50,
     borderRadius: radii.md,
@@ -238,6 +270,11 @@ function makeStyles(colors: ColorScheme) {
     fontWeight: '600',
     color: colors.textLight,
     backgroundColor: colors.surface,
+  },
+  inputWithToggle: { paddingRight: 44 },
+  toggleBtn: {
+    position: 'absolute', right: 4, height: 50, width: 40,
+    alignItems: 'center', justifyContent: 'center',
   },
   inputError: { borderColor: colors.danger },
   errorText: { color: colors.dangerText, fontSize: 11, fontWeight: '600', marginTop: 6 },

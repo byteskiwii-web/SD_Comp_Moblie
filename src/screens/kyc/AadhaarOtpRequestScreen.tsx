@@ -60,7 +60,7 @@ export function AadhaarOtpRequestScreen() {
   return (
     <SafeAreaView style={styles.flex}>
       <ScreenHeader title={t('kyc.aadhaarShort')} />
-      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <Text style={styles.title}>{t('aadhaar.title')}</Text>
           <Text style={styles.subtitle}>{t('aadhaar.body')}</Text>

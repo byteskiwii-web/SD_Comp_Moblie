@@ -21,6 +21,14 @@ import { useT, type TKey } from '../../i18n';
  * `undisclosed`, which is a different fact from the field being empty: empty
  * means nobody has asked yet, and treating an unanswered record as a
  * declination would put words in somebody's mouth.
+ *
+ * Gender is set ONCE and then locked, the same policy shirt size already
+ * follows (see KitCard's shirtSizeLocked) -- it is meant to be captured at
+ * onboarding, not something to browse and re-pick from Profile later. There
+ * is no server-side genderLocked flag yet (unlike shirt size), so this is a
+ * client-only lock for now: once a value has been read back from the server
+ * the picker stops being interactive. A correction still routes through HR,
+ * same as any other onboarding-time fact nobody but HR may overwrite.
  */
 export function PersonalCard() {
   const profile = useAuthStore((s) => s.profile);
@@ -41,6 +49,7 @@ export function PersonalCard() {
   });
 
   const current = profile?.gender ?? null;
+  const locked = current !== null;
 
   return (
     <Card>
@@ -54,14 +63,15 @@ export function PersonalCard() {
             <Pressable
               key={g}
               onPress={() => save.mutate(g)}
-              disabled={save.isPending}
+              disabled={save.isPending || locked}
               style={({ pressed }) => [
                 styles.option,
                 selected && styles.optionOn,
-                pressed && styles.pressed,
+                locked && !selected && styles.optionLocked,
+                pressed && !locked && styles.pressed,
               ]}
               accessibilityRole="button"
-              accessibilityState={{ selected }}
+              accessibilityState={{ selected, disabled: locked }}
             >
               <Text style={[styles.optionText, selected && styles.optionTextOn]}>
                 {t(('gender.' + g) as TKey)}
@@ -74,7 +84,7 @@ export function PersonalCard() {
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
       <Text style={styles.hint}>
-        {current ? t('personal.changeHint') : t('personal.genderNote')}
+        {locked ? t('personal.genderLocked') : t('personal.genderNote')}
       </Text>
     </Card>
   );
@@ -96,6 +106,7 @@ const makeStyles = (colors: ColorScheme) =>
       borderWidth: 1.5, borderColor: colors.slate200, backgroundColor: colors.surface,
     },
     optionOn: { borderColor: colors.brand[700], backgroundColor: colors.brand[50] },
+    optionLocked: { opacity: 0.45 },
     pressed: { opacity: 0.75 },
     optionText: { fontSize: 12.5, fontWeight: '800', color: colors.slate600 },
     optionTextOn: { color: colors.brand[700] },

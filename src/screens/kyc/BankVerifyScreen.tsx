@@ -154,7 +154,7 @@ export function BankVerifyScreen() {
   return (
     <SafeAreaView style={styles.flex} edges={['top']}>
       <ScreenHeader title={t('bank.title')} />
-      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <Text style={styles.subtitle}>
             {t('bank.intro')}

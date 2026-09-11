@@ -44,7 +44,7 @@ export function ForgotPasswordVerifyScreen({ navigation, route }: Props) {
 
   return (
     <SafeAreaView style={styles.flex}>
-    <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <Text style={styles.title}>{t('auth.verifyEmailTitle')}</Text>
         <Text style={styles.subtitle}>

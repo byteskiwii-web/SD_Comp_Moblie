@@ -65,7 +65,7 @@ export function AadhaarOtpVerifyScreen({ navigation, route }: Props) {
   return (
     <SafeAreaView style={styles.flex}>
       <ScreenHeader title={t('kyc.verifyOtp')} />
-      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <Text style={styles.title}>{t('aadhaar.codeTitle')}</Text>
           <Text style={styles.subtitle}>{t('aadhaar.codeBody', { length: OTP_LENGTH })}</Text>
