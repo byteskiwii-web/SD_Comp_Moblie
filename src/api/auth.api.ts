@@ -86,6 +86,24 @@ export type Me = {
   shirtSizeLocked: boolean;
   welcomeKitIssued: boolean;
   welcomeKitIssuedAt: string | null;
+
+  dateOfBirth: string | null;
+  addressLine1: string | null;
+  addressLine2: string | null;
+  city: string | null;
+  state: string | null;
+  zipcode: string | null;
+
+  /**
+   * Whether HR has signed this record off yet.
+   *
+   * null on any account that predates migration 020's backfill (never
+   * happens in practice -- that backfill ran once, immediately, against
+   * every existing row). 'pending-approval' is what the mobile app gates
+   * the "complete your profile" flow on -- see useProfileCompletionGate.ts.
+   */
+  approvalStatus: 'pending-approval' | 'approved' | 'rejected' | null;
+  approvalRejectionReason: string | null;
 };
 
 /** Somebody else on the roster, resolved to a name rather than a bare id. */
@@ -134,6 +152,12 @@ export async function updateMyProfile(input: {
   dept_manager_email?: string | null;
   dept_manager_phone?: string | null;
   gender?: Gender | null;
+  date_of_birth?: string | null;
+  address_line1?: string | null;
+  address_line2?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zipcode?: string | null;
 }) {
   const res = await apiClient.patch<{ success: true; data: unknown }>('/auth/me', input);
   return res.data.data;

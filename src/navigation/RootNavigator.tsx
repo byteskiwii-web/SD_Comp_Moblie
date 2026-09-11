@@ -11,6 +11,8 @@ import { useClockOutReminderEffect } from '../hooks/useClockOutReminderEffect';
 import { useBreakReminderEffect } from '../hooks/useBreakReminderEffect';
 import { useShiftIntegrityWatcher } from '../hooks/useShiftIntegrityWatcher';
 import { useKycGate } from '../hooks/useKycGate';
+import { useProfileCompletionGate } from '../hooks/useProfileCompletionGate';
+import { CompleteProfileScreen } from '../screens/onboarding/CompleteProfileScreen';
 import { useThemeStore } from '../stores/themeStore';
 import { useI18nReady } from '../i18n';
 
@@ -29,10 +31,17 @@ function AuthenticatedApp() {
   useClockOutReminderEffect();
   useBreakReminderEffect();
   useShiftIntegrityWatcher();
-  const { isLoading, gateRequired } = useKycGate();
+  const profileGate = useProfileCompletionGate();
+  const kycGate = useKycGate();
 
-  if (isLoading) return <FullScreenSpinner />;
-  return gateRequired ? <KycStack /> : <AppTabs />;
+  if (profileGate.isLoading || kycGate.isLoading) return <FullScreenSpinner />;
+  // Profile completion comes first, before KYC: date of birth and address
+  // are the more basic facts, filled in earlier in a real onboarding
+  // conversation than a PAN or Aadhaar number would be. Same ordering
+  // LIFECYCLE_STAGES already uses on the backend -- onboarding outranks
+  // approval because identity settles before what depends on it.
+  if (profileGate.gateRequired) return <CompleteProfileScreen />;
+  return kycGate.gateRequired ? <KycStack /> : <AppTabs />;
 }
 
 export function RootNavigator() {
