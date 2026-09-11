@@ -10,14 +10,26 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
  * again after every cold start would make the setting feel broken.
  */
 
-/** The locales the backend actually serves. Asking for one it does not have would silently fall back to English. */
+/**
+ * The locales the backend actually serves. Asking for one it does not have
+ * would silently fall back to English.
+ *
+ * Ordered by (approximate) native speaker count, matching the web app's
+ * language switcher -- the top 10 languages in India by that measure, which
+ * is what "top 10 Indian languages" was taken to mean when this list grew
+ * from six to ten.
+ */
 export const LANGUAGES = [
   { code: 'en', label: 'English', native: 'English' },
   { code: 'hi', label: 'Hindi', native: 'हिन्दी' },
-  { code: 'ta', label: 'Tamil', native: 'தமிழ்' },
+  { code: 'bn', label: 'Bengali', native: 'বাংলা' },
+  { code: 'mr', label: 'Marathi', native: 'मराठी' },
   { code: 'te', label: 'Telugu', native: 'తెలుగు' },
+  { code: 'ta', label: 'Tamil', native: 'தமிழ்' },
+  { code: 'gu', label: 'Gujarati', native: 'ગુજરાતી' },
   { code: 'kn', label: 'Kannada', native: 'ಕನ್ನಡ' },
   { code: 'ml', label: 'Malayalam', native: 'മലയാളം' },
+  { code: 'pa', label: 'Punjabi', native: 'ਪੰਜਾਬੀ' },
 ] as const;
 
 export type LanguageCode = (typeof LANGUAGES)[number]['code'];

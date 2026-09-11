@@ -6,6 +6,10 @@ import { ta } from './locales/ta';
 import { te } from './locales/te';
 import { kn } from './locales/kn';
 import { ml } from './locales/ml';
+import { bn } from './locales/bn';
+import { mr } from './locales/mr';
+import { gu } from './locales/gu';
+import { pa } from './locales/pa';
 
 /**
  * Translation, hand-rolled and dependency-free.
@@ -29,7 +33,7 @@ import { ml } from './locales/ml';
 export type Catalogue = Record<keyof typeof en, string>;
 export type TKey = keyof typeof en;
 
-const CATALOGUES: Record<LanguageCode, Catalogue> = { en, hi, ta, te, kn, ml };
+const CATALOGUES: Record<LanguageCode, Catalogue> = { en, hi, ta, te, kn, ml, bn, mr, gu, pa };
 
 type Vars = Record<string, string | number>;
 
