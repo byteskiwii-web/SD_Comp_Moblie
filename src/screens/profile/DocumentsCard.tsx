@@ -52,7 +52,7 @@ const HINT_KEY: Partial<Record<DocType, TKey>> = {
 
 function statusTone(colors: ColorScheme): Record<DocumentStatus, { bg: string; fg: string; key: TKey }> {
   return {
-    pending: { bg: colors.warningBg, fg: colors.warningText, key: 'status.inReview' },
+    uploaded: { bg: colors.warningBg, fg: colors.warningText, key: 'status.inReview' },
     verified: { bg: colors.successBg, fg: colors.successText, key: 'status.verified' },
     rejected: { bg: colors.dangerBg, fg: colors.dangerText, key: 'status.rejected' },
   };
@@ -135,7 +135,10 @@ export function DocumentsCard() {
       ) : (
         OFFERED.map((type, i) => {
           const doc = latest.get(type);
-          const tone = doc ? STATUS_TONE[doc.status] : null;
+          // A status this build has no tone for is shown without a chip rather
+          // than read off the end of the map: an unknown value added server-side
+          // must not be able to blank the screen.
+          const tone = doc ? STATUS_TONE[doc.status] ?? null : null;
           const busy = upload.isPending && picking === type;
 
           return (

@@ -30,19 +30,27 @@ export const DOC_TYPE_KEY = {
   other: 'docType.other',
 } as const;
 
-export type DocumentStatus = 'pending' | 'verified' | 'rejected';
+/**
+ * Server-side vocabulary, not a prettier local one. A freshly uploaded
+ * document is `uploaded` — it is awaiting review, but the column has never
+ * held the word `pending`, and translating the name here is how the two
+ * drifted apart in the first place.
+ */
+export type DocumentStatus = 'uploaded' | 'verified' | 'rejected';
 
+/** Field-for-field what `toPublicDocument` on the server returns. */
 export type EmployeeDocument = {
   id: string;
+  employeeId?: string;
   docType: DocType;
   fileName: string | null;
-  mimeType: string | null;
+  contentType: string | null;
   sizeBytes: number | null;
   /** Masked at rest — the raw identifier is never persisted. */
-  numberMasked: string | null;
+  maskedNumber: string | null;
   status: DocumentStatus;
   uploadedAt: string;
-  verifiedAt: string | null;
+  reviewedAt: string | null;
   rejectionReason: string | null;
 };
 
@@ -84,10 +92,25 @@ export async function uploadDocument(input: {
   return res.data.data;
 }
 
-/** One's own documents. A reviewer's queue is a different endpoint. */
+/**
+ * One's own documents. A reviewer's queue is a different endpoint.
+ *
+ * The list endpoint answers `data: { employeeId, documents }`, not a bare
+ * array — the employee id matters to a reviewer fetching somebody else's
+ * list. Reading `data` as the array itself handed the caller an object, and
+ * iterating an object throws rather than reading as empty, which took the
+ * whole Profile screen down the day Drive storage was first switched on. The
+ * array form is still accepted so a future envelope change cannot repeat it.
+ */
 export async function getMyDocuments(): Promise<EmployeeDocument[]> {
-  const res = await apiClient.get<{ success: true; data: EmployeeDocument[] }>('/documents');
-  return res.data.data ?? [];
+  const res = await apiClient.get<{
+    success: true;
+    data: { employeeId: string; documents: EmployeeDocument[] } | EmployeeDocument[];
+  }>('/documents');
+  const data = res.data?.data;
+  if (Array.isArray(data)) return data;
+  const documents = data?.documents;
+  return Array.isArray(documents) ? documents : [];
 }
 
 export async function deleteDocument(id: string): Promise<void> {
