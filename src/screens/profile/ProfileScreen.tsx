@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -10,6 +10,7 @@ import { useNavigation } from '@react-navigation/native';
 import { formatDate, newestFirst } from '../../utils/datetime';
 import { TourTarget } from '../../components/tour/TourTarget';
 import { useTourStore } from '../../stores/tourStore';
+import { useShiftStore } from '../../stores/shiftStore';
 import { KitCard } from './KitCard';
 import { DocumentsCard } from './DocumentsCard';
 import { DeptManagerCard } from './DeptManagerCard';
@@ -35,13 +36,44 @@ export function ProfileScreen() {
   const employee = useAuthStore((s) => s.employee);
   const store = useAuthStore((s) => s.store);
   const signOut = useAuthStore((s) => s.signOut);
+  const isClockedIn = useShiftStore((s) => s.isClockedIn);
   const profile = useAuthStore((s) => s.profile);
   const refreshProfile = useAuthStore((s) => s.refreshProfile);
   const [refreshing, setRefreshing] = React.useState(false);
+
   const startTour = useTourStore((s) => s.start);
   const colors = useThemeStore((s) => s.colors);
   const styles = React.useMemo(() => makeStyles(colors), [colors]);
   const t = useT();
+
+  /**
+   * Signing out mid-shift throws the shift away.
+   *
+   * Clock-in is held on the device until the matching clock-out is filed, so
+   * signing out first leaves a shift that was started and never ended — and
+   * the employee finds out on payday rather than here. The warning is
+   * deliberately only shown while a shift is open: a confirmation on every
+   * sign-out is one people learn to dismiss without reading, which is exactly
+   * the habit that makes this one useless.
+   *
+   * Destructive on the sign-out option, cancel-styled on Cancel, so the safe
+   * choice is the one the thumb lands on by default.
+   */
+  const confirmSignOut = React.useCallback(() => {
+    if (!isClockedIn) {
+      void signOut();
+      return;
+    }
+    Alert.alert(
+      t('profile.signOutShiftTitle'),
+      t('profile.signOutShiftBody'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('common.signOut'), style: 'destructive', onPress: () => { void signOut(); } },
+      ],
+      { cancelable: true }
+    );
+  }, [isClockedIn, signOut, t]);
 
   // Pull to refresh: the automatic read happens at boot, and somebody whose
   // details were changed while the app was open needs a way to ask again
@@ -147,7 +179,7 @@ export function ProfileScreen() {
         <KitCard />
 
         <Button title={t('home.replayTour')} variant="outline" onPress={startTour} />
-        <Button title={t('common.signOut')} variant="danger" onPress={() => signOut()} />
+        <Button title={t('common.signOut')} variant="danger" onPress={confirmSignOut} />
         
       </ScrollView>
     </SafeAreaView>

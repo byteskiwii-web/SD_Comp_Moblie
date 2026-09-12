@@ -60,6 +60,9 @@ export const hi: Catalogue = {
 
   'auth.brand': 'ZIP HRMS · फ़ील्ड ऐप',
   'auth.signIn': 'साइन इन',
+  'auth.rememberMe': 'मुझे साइन इन रखें',
+  'auth.rememberMeOff': 'अगली बार ऐप खोलने पर आपको फिर से साइन इन करना होगा।',
+  'auth.signedInElsewhere': 'आपने किसी दूसरे डिवाइस पर साइन इन किया है। यहाँ ऐप चलाने के लिए फिर से साइन इन करें।',
   'auth.intro': 'एचआर से मिली कर्मचारी आईडी और पासवर्ड का उपयोग करें।',
   'auth.employeeId': 'कर्मचारी आईडी',
   'auth.password': 'पासवर्ड',
@@ -187,6 +190,8 @@ export const hi: Catalogue = {
   'apply.days_other': '{count} दिन',
 
   'profile.title': 'प्रोफ़ाइल',
+  'profile.signOutShiftTitle': 'शिफ़्ट समाप्त किए बिना साइन आउट करें?',
+  'profile.signOutShiftBody': 'यदि आप शिफ़्ट समाप्त किए बिना साइन आउट करते हैं तो आपकी उपस्थिति नहीं मानी जाएगी। क्या आप वाकई साइन आउट करना चाहते हैं?',
   'profile.contact': 'संपर्क और तैनाती',
   'profile.assignedSite': 'तैनाती स्थल',
   'profile.siteCode': 'साइट कोड',

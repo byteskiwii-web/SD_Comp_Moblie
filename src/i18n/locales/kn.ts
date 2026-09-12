@@ -53,6 +53,9 @@ export const kn: Catalogue = {
 
   'auth.brand': 'ZIP HRMS · ಫೀಲ್ಡ್ ಆ್ಯಪ್',
   'auth.signIn': 'ಸೈನ್ ಇನ್',
+  'auth.rememberMe': 'ನನ್ನನ್ನು ಸೈನ್ ಇನ್ ಆಗಿ ಇರಿಸಿ',
+  'auth.rememberMeOff': 'ಮುಂದಿನ ಬಾರಿ ಆ್ಯಪ್ ತೆರೆದಾಗ ನೀವು ಮತ್ತೆ ಸೈನ್ ಇನ್ ಮಾಡಬೇಕು.',
+  'auth.signedInElsewhere': 'ನೀವು ಬೇರೆ ಸಾಧನದಲ್ಲಿ ಸೈನ್ ಇನ್ ಮಾಡಿದ್ದೀರಿ. ಇಲ್ಲಿ ಆ್ಯಪ್ ಬಳಸಲು ಮತ್ತೆ ಸೈನ್ ಇನ್ ಮಾಡಿ.',
   'auth.intro': 'ಎಚ್‌ಆರ್ ನೀಡಿದ ಉದ್ಯೋಗಿ ಐಡಿ ಮತ್ತು ಪಾಸ್‌ವರ್ಡ್ ಬಳಸಿ.',
   'auth.employeeId': 'ಉದ್ಯೋಗಿ ಐಡಿ',
   'auth.password': 'ಪಾಸ್‌ವರ್ಡ್',
@@ -180,6 +183,8 @@ export const kn: Catalogue = {
   'apply.days_other': '{count} ದಿನಗಳು',
 
   'profile.title': 'ಪ್ರೊಫೈಲ್',
+  'profile.signOutShiftTitle': 'ಶಿಫ್ಟ್ ಮುಗಿಸದೆ ಸೈನ್ ಔಟ್ ಮಾಡಬೇಕೇ?',
+  'profile.signOutShiftBody': 'ಶಿಫ್ಟ್ ಮುಗಿಸದೆ ಸೈನ್ ಔಟ್ ಮಾಡಿದರೆ ನಿಮ್ಮ ಹಾಜರಾತಿ ಪರಿಗಣಿಸಲಾಗುವುದಿಲ್ಲ. ನೀವು ಖಚಿತವಾಗಿ ಸೈನ್ ಔಟ್ ಮಾಡಲು ಬಯಸುವಿರಾ?',
   'profile.contact': 'ಸಂಪರ್ಕ ಮತ್ತು ನಿಯೋಜನೆ',
   'profile.assignedSite': 'ನಿಯೋಜಿತ ಸೈಟ್',
   'profile.siteCode': 'ಸೈಟ್ ಕೋಡ್',

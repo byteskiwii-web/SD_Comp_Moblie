@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useMutation } from '@tanstack/react-query';
@@ -19,15 +19,37 @@ export function LoginScreen({ navigation }: Props) {
   const [employeeId, setEmployeeId] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  /* Defaults ON, which is what the app has always done. The switch exists so
+     somebody on a borrowed or shared handset can decline, not to make every
+     field employee retype a password at the start of each shift. */
+  const [remember, setRemember] = useState(true);
   const setAuth = useAuthStore((s) => s.setAuth);
+  const endedReason = useAuthStore((s) => s.endedReason);
+  const clearEndedReason = useAuthStore((s) => s.clearEndedReason);
   const colors = useThemeStore((s) => s.colors);
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const t = useT();
 
+  /**
+   * Say why they are back here, when it was not their own doing.
+   *
+   * Landing on an empty login form with no explanation, minutes after signing
+   * in on a new phone, reads as the app having dropped the session at random —
+   * and that is the kind of thing that gets reported as a bug by somebody who
+   * caused it themselves. Consumed once: it describes the last session, not
+   * this attempt, so it must not survive into the next failure message.
+   */
+  useEffect(() => {
+    if (endedReason === 'SIGNED_IN_ELSEWHERE') {
+      setError(t('auth.signedInElsewhere'));
+      clearEndedReason();
+    }
+  }, [endedReason, clearEndedReason, t]);
+
   const mutation = useMutation({
     mutationFn: () => login(employeeId.trim(), password),
     onSuccess: async (data) => {
-      await setAuth(data);
+      await setAuth(data, { remember });
     },
     onError: (err) => {
       const code = getApiErrorCode(err);
@@ -65,11 +87,16 @@ export function LoginScreen({ navigation }: Props) {
           <Text style={styles.subtitle}>{t('auth.intro')}</Text>
         </View>
 
+        {/* Accepts an employee id or the email address on the record. The
+            server matches both exactly; autoCapitalize is off because an
+            address typed in capitals is the commonest way to fail a login that
+            should have worked, and the server lower-cases it anyway. */}
         <TextField
           label={t('auth.employeeId')}
           placeholder="EMP-00001"
-          autoCapitalize="characters"
+          autoCapitalize="none"
           autoCorrect={false}
+          keyboardType="email-address"
           value={employeeId}
           onChangeText={(t) => { setEmployeeId(t); setError(''); }}
         />
@@ -80,6 +107,27 @@ export function LoginScreen({ navigation }: Props) {
           value={password}
           onChangeText={(t) => { setPassword(t); setError(''); }}
         />
+
+        {/* The whole row is the target, not just the switch: a 32px control is
+            a poor thing to aim at on a phone held in one hand at a shopfront. */}
+        <Pressable
+          style={styles.rememberRow}
+          onPress={() => setRemember((v) => !v)}
+          accessibilityRole="switch"
+          accessibilityState={{ checked: remember }}
+          accessibilityLabel={t('auth.rememberMe')}
+        >
+          <View style={styles.rememberText}>
+            <Text style={styles.rememberLabel}>{t('auth.rememberMe')}</Text>
+            {!remember && <Text style={styles.rememberHint}>{t('auth.rememberMeOff')}</Text>}
+          </View>
+          <Switch
+            value={remember}
+            onValueChange={setRemember}
+            trackColor={{ false: colors.slate300, true: colors.brand[600] }}
+            thumbColor={colors.surface}
+          />
+        </Pressable>
 
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
@@ -117,6 +165,13 @@ function makeStyles(colors: ColorScheme) {
       fontSize: 11, color: colors.slate500, textAlign: 'center', marginTop: 6, lineHeight: 18, paddingHorizontal: 12,
     },
     errorText: { color: colors.dangerText, fontSize: 11, fontWeight: '600', marginBottom: 12, textAlign: 'center' },
+    rememberRow: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+      gap: 12, paddingVertical: 10, marginBottom: 4,
+    },
+    rememberText: { flex: 1 },
+    rememberLabel: { fontSize: 12.5, fontWeight: '600', color: colors.textLight },
+    rememberHint: { fontSize: 10.5, color: colors.slate500, marginTop: 2, lineHeight: 15 },
     buttonGap: { marginBottom: 12 },
   });
 }

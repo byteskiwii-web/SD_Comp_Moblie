@@ -53,6 +53,9 @@ export const ml: Catalogue = {
 
   'auth.brand': 'ZIP HRMS · ഫീൽഡ് ആപ്പ്',
   'auth.signIn': 'സൈൻ ഇൻ',
+  'auth.rememberMe': 'എന്നെ സൈൻ ഇൻ ആയി നിലനിർത്തുക',
+  'auth.rememberMeOff': 'അടുത്ത തവണ ആപ്പ് തുറക്കുമ്പോൾ വീണ്ടും സൈൻ ഇൻ ചെയ്യേണ്ടി വരും.',
+  'auth.signedInElsewhere': 'നിങ്ങൾ മറ്റൊരു ഉപകരണത്തിൽ സൈൻ ഇൻ ചെയ്തിട്ടുണ്ട്. ഇവിടെ ആപ്പ് ഉപയോഗിക്കാൻ വീണ്ടും സൈൻ ഇൻ ചെയ്യുക.',
   'auth.intro': 'എച്ച്ആർ നൽകിയ ജീവനക്കാരൻ ഐഡിയും പാസ്‌വേഡും ഉപയോഗിക്കുക.',
   'auth.employeeId': 'ജീവനക്കാരൻ ഐഡി',
   'auth.password': 'പാസ്‌വേഡ്',
@@ -180,6 +183,8 @@ export const ml: Catalogue = {
   'apply.days_other': '{count} ദിവസം',
 
   'profile.title': 'പ്രൊഫൈൽ',
+  'profile.signOutShiftTitle': 'ഷിഫ്റ്റ് പൂർത്തിയാക്കാതെ സൈൻ ഔട്ട് ചെയ്യണോ?',
+  'profile.signOutShiftBody': 'ഷിഫ്റ്റ് പൂർത്തിയാക്കാതെ സൈൻ ഔട്ട് ചെയ്താൽ നിങ്ങളുടെ ഹാജർ പരിഗണിക്കില്ല. തീർച്ചയായും സൈൻ ഔട്ട് ചെയ്യണോ?',
   'profile.contact': 'ബന്ധപ്പെടലും നിയമനവും',
   'profile.assignedSite': 'നിയോഗിച്ച സൈറ്റ്',
   'profile.siteCode': 'സൈറ്റ് കോഡ്',

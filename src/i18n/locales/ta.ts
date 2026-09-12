@@ -53,6 +53,9 @@ export const ta: Catalogue = {
 
   'auth.brand': 'ZIP HRMS · கள செயலி',
   'auth.signIn': 'உள்நுழை',
+  'auth.rememberMe': 'என்னை உள்நுழைந்தபடியே வைத்திரு',
+  'auth.rememberMeOff': 'அடுத்த முறை செயலியைத் திறக்கும்போது மீண்டும் உள்நுழைய வேண்டும்.',
+  'auth.signedInElsewhere': 'நீங்கள் வேறொரு சாதனத்தில் உள்நுழைந்துள்ளீர்கள். இங்கே செயலியைப் பயன்படுத்த மீண்டும் உள்நுழையவும்.',
   'auth.intro': 'மனிதவளத் துறை தந்த ஊழியர் ஐடி மற்றும் கடவுச்சொல்லைப் பயன்படுத்தவும்.',
   'auth.employeeId': 'ஊழியர் ஐடி',
   'auth.password': 'கடவுச்சொல்',
@@ -180,6 +183,8 @@ export const ta: Catalogue = {
   'apply.days_other': '{count} நாட்கள்',
 
   'profile.title': 'சுயவிவரம்',
+  'profile.signOutShiftTitle': 'பணிநேரத்தை முடிக்காமல் வெளியேறவா?',
+  'profile.signOutShiftBody': 'பணிநேரத்தை முடிக்காமல் வெளியேறினால் உங்கள் வருகை கணக்கில் எடுக்கப்படாது. நிச்சயமாக வெளியேற விரும்புகிறீர்களா?',
   'profile.contact': 'தொடர்பு மற்றும் நியமனம்',
   'profile.assignedSite': 'நியமிக்கப்பட்ட தளம்',
   'profile.siteCode': 'தளக் குறியீடு',

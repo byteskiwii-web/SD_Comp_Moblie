@@ -53,6 +53,9 @@ export const te: Catalogue = {
 
   'auth.brand': 'ZIP HRMS · ఫీల్డ్ యాప్',
   'auth.signIn': 'సైన్ ఇన్',
+  'auth.rememberMe': 'నన్ను సైన్ ఇన్‌లో ఉంచండి',
+  'auth.rememberMeOff': 'తదుపరిసారి యాప్ తెరిచినప్పుడు మీరు మళ్లీ సైన్ ఇన్ చేయాలి.',
+  'auth.signedInElsewhere': 'మీరు మరొక పరికరంలో సైన్ ఇన్ చేశారు. ఇక్కడ యాప్ వాడటానికి మళ్లీ సైన్ ఇన్ చేయండి.',
   'auth.intro': 'హెచ్‌ఆర్ ఇచ్చిన ఉద్యోగి ఐడీ మరియు పాస్‌వర్డ్ వాడండి.',
   'auth.employeeId': 'ఉద్యోగి ఐడీ',
   'auth.password': 'పాస్‌వర్డ్',
@@ -180,6 +183,8 @@ export const te: Catalogue = {
   'apply.days_other': '{count} రోజులు',
 
   'profile.title': 'ప్రొఫైల్',
+  'profile.signOutShiftTitle': 'షిఫ్ట్ ముగించకుండా సైన్ అవుట్ చేయాలా?',
+  'profile.signOutShiftBody': 'షిఫ్ట్ ముగించకుండా సైన్ అవుట్ చేస్తే మీ హాజరు పరిగణించబడదు. మీరు ఖచ్చితంగా సైన్ అవుట్ చేయాలనుకుంటున్నారా?',
   'profile.contact': 'సంప్రదింపు మరియు నియామకం',
   'profile.assignedSite': 'కేటాయించిన సైట్',
   'profile.siteCode': 'సైట్ కోడ్',

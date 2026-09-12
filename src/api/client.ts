@@ -50,6 +50,18 @@ type RefreshResponse = {
 // the refresh token themselves.
 let refreshInFlight: Promise<string | null> | null = null;
 
+/**
+ * Why the last refresh failed, if the server said something worth repeating.
+ *
+ * The refresh path deliberately swallows errors — a failed refresh is a
+ * sign-out, not a screenful of red — but "you signed in on another device" is
+ * the one ending an employee needs to be told, or a phone that went quiet
+ * because they logged in on a new handset looks like the app losing their
+ * session at random. Module-scoped rather than thrown, because the caller of
+ * performRefresh is an interceptor whose job is to retry, not to explain.
+ */
+let lastRefreshFailure: string | null = null;
+
 async function performRefresh(): Promise<string | null> {
   const refreshToken = useAuthStore.getState().refreshToken;
   if (!refreshToken) return null;
@@ -64,7 +76,8 @@ async function performRefresh(): Promise<string | null> {
     if (!employee) return null;
     await useAuthStore.getState().setAuth({ token: accessToken, refreshToken: newRefreshToken, employee, store });
     return accessToken;
-  } catch {
+  } catch (err) {
+    lastRefreshFailure = getApiErrorCode(err) ?? null;
     return null;
   }
 }
@@ -111,7 +124,11 @@ apiClient.interceptors.response.use(
     const newToken = await refreshInFlight;
 
     if (!newToken) {
-      await useAuthStore.getState().signOut();
+      const reason = lastRefreshFailure;
+      lastRefreshFailure = null;
+      await useAuthStore.getState().signOut(
+        reason === 'SIGNED_IN_ELSEWHERE' ? { reason } : undefined
+      );
       return Promise.reject(error);
     }
     config.headers.Authorization = `Bearer ${newToken}`;

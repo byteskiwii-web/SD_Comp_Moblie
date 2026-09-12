@@ -60,6 +60,9 @@ export const bn: Catalogue = {
 
   'auth.brand': 'ZIP HRMS · ফিল্ড অ্যাপ',
   'auth.signIn': 'সাইন ইন করুন',
+  'auth.rememberMe': 'আমাকে সাইন ইন রাখুন',
+  'auth.rememberMeOff': 'পরের বার অ্যাপ খুললে আপনাকে আবার সাইন ইন করতে হবে।',
+  'auth.signedInElsewhere': 'আপনি অন্য একটি ডিভাইসে সাইন ইন করেছেন। এখানে অ্যাপ ব্যবহার করতে আবার সাইন ইন করুন।',
   'auth.intro': 'আপনার HR টিমের দেওয়া এমপ্লয়ি আইডি এবং পাসওয়ার্ড ব্যবহার করুন।',
   'auth.employeeId': 'এমপ্লয়ি আইডি',
   'auth.password': 'পাসওয়ার্ড',
@@ -187,6 +190,8 @@ export const bn: Catalogue = {
   'apply.days_other': '{count}টি দিন',
 
   'profile.title': 'প্রোফাইল',
+  'profile.signOutShiftTitle': 'শিফট শেষ না করেই সাইন আউট করবেন?',
+  'profile.signOutShiftBody': 'শিফট শেষ না করে সাইন আউট করলে আপনার উপস্থিতি গণ্য হবে না। আপনি কি নিশ্চিতভাবে সাইন আউট করতে চান?',
   'profile.contact': 'যোগাযোগ ও পদায়ন',
   'profile.assignedSite': 'নির্ধারিত সাইট',
   'profile.siteCode': 'সাইট কোড',

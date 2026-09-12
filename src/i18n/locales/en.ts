@@ -71,6 +71,9 @@ export const en = {
   /* ------------------------------------------------------------------ auth */
   'auth.brand': 'ZIP HRMS · FIELD APP',
   'auth.signIn': 'Sign in',
+  'auth.rememberMe': 'Keep me signed in',
+  'auth.rememberMeOff': 'You will sign in again next time you open the app.',
+  'auth.signedInElsewhere': 'You signed in on another device. Sign in again to use the app here.',
   'auth.intro': 'Use the employee ID and password given by your HR team.',
   'auth.employeeId': 'Employee ID',
   'auth.password': 'Password',
@@ -202,6 +205,8 @@ export const en = {
 
   /* --------------------------------------------------------------- profile */
   'profile.title': 'Profile',
+  'profile.signOutShiftTitle': 'Sign out before ending your shift?',
+  'profile.signOutShiftBody': 'Your attendance will not be considered if you sign out before completing your End Shift. Are you sure you want to sign out?',
   'profile.contact': 'Contact & assignment',
   'profile.assignedSite': 'Assigned site',
   'profile.siteCode': 'Site code',
