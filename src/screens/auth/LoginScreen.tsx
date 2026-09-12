@@ -90,10 +90,14 @@ export function LoginScreen({ navigation }: Props) {
         {/* Accepts an employee id or the email address on the record. The
             server matches both exactly; autoCapitalize is off because an
             address typed in capitals is the commonest way to fail a login that
-            should have worked, and the server lower-cases it anyway. */}
+            should have worked, and the server lower-cases it anyway.
+
+            Its own label, not the shared auth.employeeId: Forgot password
+            posts to an endpoint that still validates the employee ID pattern
+            alone, so the two screens genuinely accept different things. */}
         <TextField
-          label={t('auth.employeeId')}
-          placeholder="EMP-00001"
+          label={t('auth.idOrEmail')}
+          placeholder={t('auth.idOrEmailPlaceholder')}
           autoCapitalize="none"
           autoCorrect={false}
           keyboardType="email-address"
