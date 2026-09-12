@@ -85,7 +85,13 @@ export async function uploadDocument(input: {
   // The server treats consent as a precondition: without it the file never
   // reaches storage. The screen only calls this once its own consent line has
   // been shown and accepted.
-  form.append('consent', 'y');
+  //
+  // It must be the literal string "true". The controller tests for `true` or
+  // "true" and nothing else, so a plausible-looking "y" reads as consent
+  // WITHHELD -- which is refused as a validation failure on the consent field,
+  // not as a missing file, and so surfaced to the employee as "some of the
+  // details provided are not valid" with nothing on screen to correct.
+  form.append('consent', 'true');
   if (input.number) form.append('number', input.number);
 
   const res = await apiClient.post<{ success: true; data: EmployeeDocument }>('/documents', form);

@@ -24,7 +24,11 @@ import { t as tr, useT } from '../i18n';
 
 type Source = 'camera' | 'library' | 'file';
 
-const MAX_BYTES = 8 * 1024 * 1024;
+/* The server's own ceiling, not a rounder number near it. At 8 MB this check
+   waved through files the API then refused with a 413 -- after the phone had
+   already spent the megabytes uploading them, which is the exact cost this
+   check exists to avoid. */
+const MAX_BYTES = 5 * 1024 * 1024;
 
 /** Filename from a uri when the picker does not supply one. */
 function nameFromUri(uri: string, fallbackExt: string) {
