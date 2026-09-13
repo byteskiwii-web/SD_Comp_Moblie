@@ -45,12 +45,17 @@ export function HomeScreen() {
   // The badge number. Polled rather than pushed: expo-notifications remote push
   // does not work in Expo Go at all, so a periodic read is the only way the
   // count moves without the user opening the sheet.
-  const { data: unread = 0 } = useQuery({
+  const { data: counts } = useQuery({
     queryKey: ['notifications-unread'],
     queryFn: getUnreadCount,
     enabled: !!employee,
     refetchInterval: 60_000,
   });
+  const unread = counts?.unread ?? 0;
+  /* Something the employee still owes -- a policy to acknowledge, an
+     onboarding step. It outranks the plain count on the bell: an unread FYI
+     and an unsigned mandatory policy should not look the same. */
+  const needsAction = counts?.needsAction ?? 0;
 
   const { data, isLoading } = useQuery({
     queryKey: ['attendance-today', employee?.id],
@@ -110,9 +115,14 @@ export function HomeScreen() {
             onPress={() => setNotificationsOpen(true)}
           >
             <Ionicons name="notifications-outline" size={20} color={colors.slate600} />
-            {unread > 0 && (
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>{unread > 9 ? '9+' : unread}</Text>
+            {/* Counts unread, but falls back to the outstanding count so an
+                acknowledgement that was read and not signed still shows a
+                number -- rendering a bare "0" was the alternative. */}
+            {(unread > 0 || needsAction > 0) && (
+              <View style={[styles.badge, needsAction > 0 && styles.badgeAction]}>
+                <Text style={styles.badgeText}>
+                  {(() => { const n = unread || needsAction; return n > 9 ? '9+' : n; })()}
+                </Text>
               </View>
             )}
           </Pressable>
@@ -253,6 +263,10 @@ function makeStyles(colors: ColorScheme) {
     backgroundColor: colors.danger, alignItems: 'center', justifyContent: 'center',
     paddingHorizontal: 4, borderWidth: 2, borderColor: colors.bgLight,
   },
+  // Amber, not red, when the badge is standing for something owed rather than
+  // something unseen: one is a task, the other is news, and they should not
+  // read as the same urgency.
+  badgeAction: { backgroundColor: colors.warning },
   badgeText: { color: colors.white, fontSize: 10, fontWeight: '800' },
 
   hero: { borderRadius: radii.xl, padding: 20, overflow: 'hidden' },

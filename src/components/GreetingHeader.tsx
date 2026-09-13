@@ -27,12 +27,14 @@ export function GreetingHeader({ onNotifications }: { onNotifications: () => voi
   const t = useT();
   const employee = useAuthStore((s) => s.employee);
 
-  const { data: unread = 0 } = useQuery({
+  const { data: counts } = useQuery({
     queryKey: ['notifications-unread'],
     queryFn: getUnreadCount,
     enabled: !!employee,
     refetchInterval: 60_000,
   });
+  const unread = counts?.unread ?? 0;
+  const needsAction = counts?.needsAction ?? 0;
 
   const initials =
     `${employee?.first_name?.[0] ?? ''}${employee?.last_name?.[0] ?? ''}`.toUpperCase() || '?';
@@ -62,9 +64,11 @@ export function GreetingHeader({ onNotifications }: { onNotifications: () => voi
         <Ionicons name="notifications-outline" size={19} color={colors.slate600} />
         {/* A dot, not a number, once it is past what a badge can hold legibly
             at this size -- the exact count is in the sheet a tap away. */}
-        {unread > 0 && (
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>{unread > 9 ? '9+' : unread}</Text>
+        {(unread > 0 || needsAction > 0) && (
+          <View style={[styles.badge, needsAction > 0 && styles.badgeAction]}>
+            <Text style={styles.badgeText}>
+              {(() => { const n = unread || needsAction; return n > 9 ? '9+' : n; })()}
+            </Text>
           </View>
         )}
       </Pressable>
@@ -111,5 +115,8 @@ const makeStyles = (colors: ColorScheme) =>
       borderWidth: 1.5,
       borderColor: colors.surface,
     },
+    // Amber when the number stands for something owed rather than something
+    // unseen — a task and a piece of news are not the same urgency.
+    badgeAction: { backgroundColor: colors.warning },
     badgeText: { fontSize: 8.5, fontWeight: '900', color: colors.white },
   });
