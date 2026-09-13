@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -9,9 +9,11 @@ import { useThemeStore } from '../../stores/themeStore';
 import { getApiErrorMessage } from '../../api/client';
 import {
   getNotifications,
+  getUnreadCount,
   markAllNotificationsRead,
   markNotificationRead,
   markNotificationUnread,
+  NOTIFICATION_POLL_MS,
 } from '../../api/notifications.api';
 import { useNotificationsStore } from '../../stores/notificationsStore';
 import { SkeletonRows } from '../../components/Skeleton';
@@ -89,17 +91,37 @@ export function NotificationsSheet({ visible, onClose }: { visible: boolean; onC
   const deviceItems = useNotificationsStore((s) => s.items);
   const setDeviceRead = useNotificationsStore((s) => s.setRead);
 
-  // Kept warm continuously rather than fetched only once the sheet opens.
-  // Home already pays this same round-trip every 60s for the unread badge, so
-  // polling the list on the same cadence costs nothing beyond what the badge
-  // was already spending, and means the sheet usually opens on cached data
-  // instead of a fresh skeleton.
+  /* The badge, read from the SAME query key the header polls -- React Query
+     dedupes, so subscribing here costs no extra request and gives this sheet
+     the one signal that says something changed. */
+  const { data: counts } = useQuery({
+    queryKey: ['notifications-unread'],
+    queryFn: getUnreadCount,
+    refetchInterval: NOTIFICATION_POLL_MS,
+  });
+
+  /* The list is NOT on a poll of its own.
+     It used to refetch every 60s whether or not anything had happened and
+     whether or not the sheet was even open -- this component stays mounted for
+     as long as Home does, so that timer ran all day. Now the cheap count query
+     above is the heartbeat, this refetches when the count moves (see the effect
+     below), and the slow interval here is only a backstop for the one case the
+     count cannot see: something arriving in the same window as something else
+     being read, leaving the total unchanged. */
   const { data, isLoading, error } = useQuery({
     queryKey: ['notifications', limit],
     queryFn: () => getNotifications({ limit }),
-    refetchInterval: 60_000,
-    staleTime: 30_000,
+    refetchInterval: visible ? 60_000 : false,
+    staleTime: 10_000,
   });
+
+  /* Pull the list whenever the badge moves. The count is what changes first --
+     it is polled -- so this is how a new notification reaches an open sheet, and
+     how a read on another device clears here. */
+  const signal = `${counts?.unread ?? 0}:${counts?.needsAction ?? 0}`;
+  useEffect(() => {
+    queryClient.invalidateQueries({ queryKey: ['notifications'] });
+  }, [signal, queryClient]);
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ['notifications'] });

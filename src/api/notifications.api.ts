@@ -51,6 +51,18 @@ export async function getNotifications(params?: {
   return res.data.data;
 }
 
+/**
+ * How often the badge is re-read.
+ *
+ * 20s rather than the 60s this shipped with. The badge is the cheapest query
+ * in the app -- two FILTERed counts over a partial index scoped to one
+ * employee -- and it is the only thing that tells a client anything changed,
+ * so it is the right place to spend request budget. The inbox LIST is no
+ * longer on a timer of its own; it refetches when this number moves, which
+ * is both more responsive and half the traffic the two separate polls cost.
+ */
+export const NOTIFICATION_POLL_MS = 20_000;
+
 export type NotificationCounts = { unread: number; needsAction: number };
 
 /**

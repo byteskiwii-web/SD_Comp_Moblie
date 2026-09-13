@@ -1,13 +1,41 @@
 import React, { useEffect } from 'react';
+import { AppState } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, focusManager } from '@tanstack/react-query';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { useAuthStore } from './src/stores/authStore';
 import { useThemeStore } from './src/stores/themeStore';
 import { registerNotificationHistoryListener } from './src/utils/notifications';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // React Query's own focus tracking is built for the web's `window`
+      // focus event, which React Native does not have -- so without the
+      // AppState bridge below this setting does nothing at all, which is
+      // why several hooks here grew their own AppState listeners.
+      refetchOnWindowFocus: true,
+    },
+  },
+});
+
+/**
+ * Tell React Query when the app is in the foreground.
+ *
+ * Returning to the app is the single moment stale data is most visible: the
+ * employee has been away, something has probably happened, and they are
+ * looking straight at it. Before this, every query waited out the remainder
+ * of its polling interval before correcting itself -- up to a full minute of
+ * showing a badge that was already wrong.
+ *
+ * Registered at module scope, not in a component: it concerns the whole app
+ * for its whole lifetime, and a subscription mounted and unmounted with a
+ * screen would miss exactly the transitions it exists to catch.
+ */
+AppState.addEventListener('change', (status) => {
+  focusManager.setFocused(status === 'active');
+});
 
 export default function App() {
   const hydrate = useAuthStore((s) => s.hydrate);

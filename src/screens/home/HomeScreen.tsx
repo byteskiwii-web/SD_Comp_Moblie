@@ -13,7 +13,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { getAttendanceHistory } from '../../api/attendance.api';
 import { getLatestMarkOfTypes, SHIFT_TYPES } from '../../utils/attendanceStatus';
 import { formatDateLong, formatTime, toLocalDateKey } from '../../utils/datetime';
-import { getUnreadCount } from '../../api/notifications.api';
+import { getUnreadCount, NOTIFICATION_POLL_MS } from '../../api/notifications.api';
 import { NotificationsSheet } from '../notifications/NotificationsSheet';
 import { AppreciationCard } from './AppreciationCard';
 import { PoliciesCard } from './PoliciesCard';
@@ -49,7 +49,7 @@ export function HomeScreen() {
     queryKey: ['notifications-unread'],
     queryFn: getUnreadCount,
     enabled: !!employee,
-    refetchInterval: 60_000,
+    refetchInterval: NOTIFICATION_POLL_MS,
   });
   const unread = counts?.unread ?? 0;
   /* Something the employee still owes -- a policy to acknowledge, an

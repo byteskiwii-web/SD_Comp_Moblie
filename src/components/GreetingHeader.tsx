@@ -6,7 +6,7 @@ import { ColorScheme } from '../theme/tokens';
 import { useThemeStore } from '../stores/themeStore';
 import { useAuthStore } from '../stores/authStore';
 import { ThemeToggle } from './ThemeToggle';
-import { getUnreadCount } from '../api/notifications.api';
+import { getUnreadCount, NOTIFICATION_POLL_MS } from '../api/notifications.api';
 import { useT } from '../i18n';
 
 /**
@@ -17,9 +17,9 @@ import { useT } from '../i18n';
  * between tabs makes the app feel like several apps, and this one carries the
  * two controls people reach for from anywhere — the theme and the bell.
  *
- * The unread count is polled rather than pushed. Remote push does not work in
- * Expo Go at all, so a periodic read is the only way this number moves without
- * the employee opening the sheet themselves.
+ * The unread count is polled rather than pushed -- there is no push
+ * infrastructure in this app yet, so a periodic read is the only way this
+ * number moves without the employee opening the sheet themselves.
  */
 export function GreetingHeader({ onNotifications }: { onNotifications: () => void }) {
   const colors = useThemeStore((s) => s.colors);
@@ -31,7 +31,7 @@ export function GreetingHeader({ onNotifications }: { onNotifications: () => voi
     queryKey: ['notifications-unread'],
     queryFn: getUnreadCount,
     enabled: !!employee,
-    refetchInterval: 60_000,
+    refetchInterval: NOTIFICATION_POLL_MS,
   });
   const unread = counts?.unread ?? 0;
   const needsAction = counts?.needsAction ?? 0;
@@ -62,8 +62,9 @@ export function GreetingHeader({ onNotifications }: { onNotifications: () => voi
         accessibilityLabel={t('home.notifications')}
       >
         <Ionicons name="notifications-outline" size={19} color={colors.slate600} />
-        {/* A dot, not a number, once it is past what a badge can hold legibly
-            at this size -- the exact count is in the sheet a tap away. */}
+        {/* Capped at 9+ -- past that the exact figure is unreadable at 15px
+            and the sheet is one tap away. Amber when what is outstanding is an
+            action rather than unread news. */}
         {(unread > 0 || needsAction > 0) && (
           <View style={[styles.badge, needsAction > 0 && styles.badgeAction]}>
             <Text style={styles.badgeText}>
