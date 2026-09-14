@@ -132,15 +132,33 @@ export function HistoryPanel() {
       ) : (
         <TourTarget id="history-list">
         <Card style={styles.listCard}>
-          {days.map((day, i) => (
-            <DayRow
-              key={day.date}
-              day={day}
-              shiftStart={profile?.shiftStart ?? null}
-              first={i === 0}
-              onPress={() => navigation.navigate('AttendanceDay', { date: day.date })}
-            />
-          ))}
+          {/* A month heading wherever the month changes.
+              Rows show only the day number and weekday, so a list spanning a
+              boundary reads as ambiguous — "3 Mon" could be either month. A
+              divider answers that once per month instead of repeating the month
+              on all thirty rows, and reuses the existing month.N translations
+              rather than needing twelve short forms in ten languages. */}
+          {days.map((day, i) => {
+            const d = new Date(day.date);
+            const prev = i > 0 ? new Date(days[i - 1].date) : null;
+            const newMonth =
+              !prev || prev.getMonth() !== d.getMonth() || prev.getFullYear() !== d.getFullYear();
+            return (
+              <React.Fragment key={day.date}>
+                {newMonth && (
+                  <Text style={styles.monthDivider}>
+                    {tr(('month.' + (d.getMonth() + 1)) as TKey)} {d.getFullYear()}
+                  </Text>
+                )}
+                <DayRow
+                  day={day}
+                  shiftStart={profile?.shiftStart ?? null}
+                  first={i === 0 && newMonth}
+                  onPress={() => navigation.navigate('AttendanceDay', { date: day.date })}
+                />
+              </React.Fragment>
+            );
+          })}
         </Card>
         </TourTarget>
       )}
@@ -274,6 +292,11 @@ function makeStyles(colors: ColorScheme) {
   rowDivided: { borderTopWidth: 1, borderTopColor: colors.slate100 },
   rowPressed: { opacity: 0.6 },
 
+  monthDivider: {
+    fontSize: 10, fontWeight: '800', color: colors.slate400,
+    textTransform: 'uppercase', letterSpacing: 0.8,
+    paddingTop: 14, paddingBottom: 6, paddingHorizontal: 2,
+  },
   dateBlock: { width: 34, alignItems: 'center' },
   dateDay: { fontSize: 15, fontWeight: '800', color: colors.textLight, letterSpacing: -0.4 },
   dateWeekday: {

@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { useT } from '../../i18n';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -19,6 +20,7 @@ import { acknowledgePolicy, getOutstandingPolicies } from '../../api/policies.ap
  * second signature, which is the point of the feature.
  */
 export function PoliciesCard() {
+  const t = useT();
   const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
   const colors = useThemeStore((s) => s.colors);
@@ -46,7 +48,7 @@ export function PoliciesCard() {
   return (
     <Card>
       <View style={styles.header}>
-        <Text style={styles.title}>Policies to acknowledge</Text>
+        <Text style={styles.title}>{t('policy.toAcknowledge')}</Text>
         <View style={styles.pill}>
           <Text style={styles.pillText}>{data?.count ?? policies.length}</Text>
         </View>
@@ -78,7 +80,7 @@ export function PoliciesCard() {
             accessibilityRole="button"
             accessibilityLabel={`Acknowledge ${p.title}`}
           >
-            <Text style={styles.ackText}>Acknowledge</Text>
+            <Text style={styles.ackText}>{t('policy.acknowledge')}</Text>
           </Pressable>
         </View>
       ))}

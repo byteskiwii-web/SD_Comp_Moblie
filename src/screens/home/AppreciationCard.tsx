@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useT } from '../../i18n';
 import { StyleSheet, Text, View } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useQuery } from '@tanstack/react-query';
@@ -17,6 +18,7 @@ import { SkeletonRows } from '../../components/Skeleton';
  * which reads as an accusation.
  */
 export function AppreciationCard() {
+  const t = useT();
   const colors = useThemeStore((s) => s.colors);
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const { data, isLoading, error } = useQuery({
@@ -28,7 +30,7 @@ export function AppreciationCard() {
   if (isLoading) {
     return (
       <Card>
-        <Text style={styles.title}>Appreciation</Text>
+        <Text style={styles.title}>{t('home.appreciation')}</Text>
         <SkeletonRows count={2} />
       </Card>
     );
@@ -40,7 +42,7 @@ export function AppreciationCard() {
   return (
     <Card>
       <View style={styles.header}>
-        <Text style={styles.title}>Appreciation</Text>
+        <Text style={styles.title}>{t('home.appreciation')}</Text>
         {data && data.total > items.length ? (
           <Text style={styles.count}>{data.total}</Text>
         ) : null}

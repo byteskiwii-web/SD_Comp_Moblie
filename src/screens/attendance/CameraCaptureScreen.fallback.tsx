@@ -83,7 +83,7 @@ export function FallbackCameraCaptureScreen({ onCaptured, onCancel }: CameraCapt
       </View>
 
       <View style={[styles.topBar, { top: insets.top + 12 }]}>
-        <Text style={styles.topBarText}>Live selfie</Text>
+        <Text style={styles.topBarText}>{t('clock.liveSelfie')}</Text>
       </View>
 
       <View style={[styles.banner, { top: insets.top + 48 }]} pointerEvents="none">
