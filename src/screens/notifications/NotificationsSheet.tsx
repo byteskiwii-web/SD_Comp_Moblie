@@ -38,13 +38,21 @@ import { FeedBucket, FeedItem, groupByDay, mergeFeed } from './feed';
  *     enforces this; the UI's job is to make it legible rather than look
  *     broken when the badge does not reach zero.
  *
- *  3. NOTHING IS HIDDEN. Read items stay in the list, styled down but fully
- *     legible. An employee looking for when their leave was approved is
- *     looking for a read notification, and a UI that files it away is a UI
- *     they have to fight.
+ *  3. READ MEANS DEALT WITH, SO IT LEAVES. The default 'active' view shows
+ *     only what still wants attention — unread, or an unresolved action — so
+ *     reading a notification clears it from view rather than growing a pile.
+ *     Nothing is deleted here: 'all' keeps the full history until the server
+ *     prunes it, so a leave approval read last week is still findable.
  */
 
-type Filter = 'all' | 'unread' | 'action';
+/**
+ * 'active' is the default and the point of the redesign: a notification you
+ * have read disappears from it, so the inbox shows what still wants attention
+ * rather than a growing pile of things already dealt with. A row still owing an
+ * action stays in 'active' even once read — reading is not doing. 'all' is the
+ * history, kept until the server prunes it.
+ */
+type Filter = 'active' | 'all' | 'action';
 
 /** Per-kind icon and tint, across both sources. `system` is the fallback. */
 function kindTone(colors: ColorScheme): Record<string, { icon: keyof typeof Ionicons.glyphMap; tint: string; bg: string }> {
@@ -84,7 +92,7 @@ export function NotificationsSheet({ visible, onClose }: { visible: boolean; onC
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const t = useT();
 
-  const [filter, setFilter] = useState<Filter>('all');
+  const [filter, setFilter] = useState<Filter>('active');
   /** How many pages deep the employee has asked to go. Reset when reopened. */
   const [limit, setLimit] = useState(PAGE);
 
@@ -151,7 +159,9 @@ export function NotificationsSheet({ visible, onClose }: { visible: boolean; onC
   const actionTotal = feed.filter((n) => n.needsAction).length;
 
   const shown = useMemo(() => {
-    if (filter === 'unread') return feed.filter((n) => !n.isRead);
+    // 'active' hides what has been read and dealt with; an unresolved action
+    // survives being read, because it is not done. 'all' is the full history.
+    if (filter === 'active') return feed.filter((n) => !n.isRead || n.needsAction);
     if (filter === 'action') return feed.filter((n) => n.needsAction);
     return feed;
   }, [feed, filter]);
@@ -195,9 +205,10 @@ export function NotificationsSheet({ visible, onClose }: { visible: boolean; onC
     earlier: t('notif.earlier'),
   };
 
+  const activeTotal = feed.filter((n) => !n.isRead || n.needsAction).length;
   const FILTERS: { key: Filter; label: string; count: number }[] = [
+    { key: 'active', label: t('notif.filterActive'), count: activeTotal },
     { key: 'all', label: t('notif.filterAll'), count: feed.length },
-    { key: 'unread', label: t('notif.filterUnread'), count: unreadTotal },
     { key: 'action', label: t('notif.filterAction'), count: actionTotal },
   ];
 
@@ -250,12 +261,12 @@ export function NotificationsSheet({ visible, onClose }: { visible: boolean; onC
           ) : shown.length === 0 ? (
             <View style={styles.empty}>
               <Ionicons
-                name={filter === 'all' ? 'notifications-off-outline' : 'checkmark-circle-outline'}
+                name={filter === 'active' ? 'checkmark-circle-outline' : 'notifications-off-outline'}
                 size={26}
                 color={colors.slate300}
               />
               <Text style={styles.emptyTitle}>
-                {filter === 'unread' ? t('notif.emptyUnread')
+                {filter === 'active' ? t('notif.emptyActive')
                   : filter === 'action' ? t('notif.emptyAction')
                   : t('notif.empty')}
               </Text>

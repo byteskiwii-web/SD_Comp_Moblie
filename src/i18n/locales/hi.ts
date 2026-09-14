@@ -477,6 +477,15 @@ export const hi: Catalogue = {
 
   'kyc.linkRowLabel': 'आधार लिंक: {state}। अभी जाँचें।',
   'policy.summary': 'आपके लिए {total} · {signed} स्वीकार किए गए',
+  'notif.filterActive': 'सक्रिय',
+  'notif.emptyActive': 'सब कुछ देख लिया गया है',
+  'policy.version': 'संस्करण',
+  'policy.effectiveFrom': 'प्रभावी तिथि',
+  'policy.acknowledged': 'स्वीकृत',
+  'policy.acknowledge': 'स्वीकार करें',
+  'policy.noSummary': 'इस नीति के लिए कोई विवरण नहीं दिया गया है।',
+  'policy.attachment': 'संलग्न दस्तावेज़',
+  'policy.tapToRead': 'यह नीति पढ़ने के लिए टैप करें',
 
   'kyc.aadhaarShort': 'आधार',
 

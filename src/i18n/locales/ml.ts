@@ -470,6 +470,15 @@ export const ml: Catalogue = {
 
   'kyc.linkRowLabel': 'ആധാർ ലിങ്ക്: {state}. ഇപ്പോൾ പരിശോധിക്കുക.',
   'policy.summary': 'നിങ്ങൾക്ക് {total} · {signed} അംഗീകരിച്ചവ',
+  'notif.filterActive': 'സജീവം',
+  'notif.emptyActive': 'എല്ലാം കണ്ടു കഴിഞ്ഞു',
+  'policy.version': 'പതിപ്പ്',
+  'policy.effectiveFrom': 'പ്രാബല്യ തീയതി',
+  'policy.acknowledged': 'സ്വീകരിച്ചു',
+  'policy.acknowledge': 'സ്വീകരിക്കുക',
+  'policy.noSummary': 'ഈ നയത്തിന് വിവരണം നൽകിയിട്ടില്ല.',
+  'policy.attachment': 'അറ്റാച്ച് ചെയ്ത രേഖ',
+  'policy.tapToRead': 'ഈ നയം വായിക്കാൻ ടാപ്പ് ചെയ്യുക',
 
   'kyc.aadhaarShort': 'ആധാർ',
 

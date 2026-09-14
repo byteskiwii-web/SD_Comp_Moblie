@@ -474,6 +474,15 @@ export const gu: Catalogue = {
 
   'kyc.linkRowLabel': 'આધાર લિંક: {state}. હમણાં તપાસો.',
   'policy.summary': '{total} તમને સોંપાયેલ · {signed} સ્વીકારેલ',
+  'notif.filterActive': 'સક્રિય',
+  'notif.emptyActive': 'બધું જોઈ લીધું છે',
+  'policy.version': 'આવૃત્તિ',
+  'policy.effectiveFrom': 'અમલની તારીખ',
+  'policy.acknowledged': 'સ્વીકૃત',
+  'policy.acknowledge': 'સ્વીકારો',
+  'policy.noSummary': 'આ નીતિ માટે કોઈ વર્ણન આપવામાં આવ્યું નથી.',
+  'policy.attachment': 'જોડાયેલ દસ્તાવેજ',
+  'policy.tapToRead': 'આ નીતિ વાંચવા ટૅપ કરો',
 
   'kyc.aadhaarShort': 'આધાર',
 

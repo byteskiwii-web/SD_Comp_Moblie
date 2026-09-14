@@ -4,7 +4,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
-import { getPolicies } from '../../api/policies.api';
+import { getPolicies, type Policy as PolicyType } from '../../api/policies.api';
+import { PolicyReaderSheet } from './PolicyReaderSheet';
 import { getKycStatus, KYC_STATUS_KEY, KycCheckStatus, kycStatusTone } from '../../api/verification.api';
 import { useNavigation } from '@react-navigation/native';
 import { formatDate, newestFirst } from '../../utils/datetime';
@@ -445,6 +446,8 @@ function PolicyLibrary() {
   const colors = useThemeStore((s) => s.colors);
   const styles = React.useMemo(() => makeStyles(colors), [colors]);
   const t = useT();
+  // The policy opened for reading, or null. A tap on a row sets it.
+  const [reading, setReading] = React.useState<PolicyType | null>(null);
   const items = newestFirst(data?.items ?? [], 'publishedAt', 'updatedAt', 'createdAt');
   if (items.length === 0) return null;
 
@@ -456,7 +459,18 @@ function PolicyLibrary() {
         {t('policy.summary', { total: items.length, signed })}
       </Text>
       {items.slice(0, 6).map((p, i) => (
-        <View key={p.id} style={[styles.row, i === Math.min(items.length, 6) - 1 && styles.rowLast]}>
+        <Pressable
+          key={p.id}
+          onPress={() => setReading(p)}
+          accessibilityRole="button"
+          accessibilityLabel={p.title}
+          accessibilityHint={t('policy.tapToRead')}
+          style={({ pressed }) => [
+            styles.row,
+            i === Math.min(items.length, 6) - 1 && styles.rowLast,
+            pressed && { opacity: 0.6 },
+          ]}
+        >
           <Ionicons
             name={p.acknowledgedByMe ? 'checkmark-circle' : 'ellipse-outline'}
             size={16}
@@ -467,8 +481,10 @@ function PolicyLibrary() {
             {p.title}
           </Text>
           <Text style={styles.rowValue}>v{p.version}</Text>
-        </View>
+          <Ionicons name="chevron-forward" size={14} color={colors.slate300} style={{ marginLeft: 6 }} />
+        </Pressable>
       ))}
+      <PolicyReaderSheet policy={reading} onClose={() => setReading(null)} />
     </Card>
   );
 }

@@ -470,6 +470,15 @@ export const kn: Catalogue = {
 
   'kyc.linkRowLabel': 'ಆಧಾರ್ ಲಿಂಕ್: {state}. ಈಗಲೇ ಪರೀಕ್ಷಿಸಿ.',
   'policy.summary': 'ನಿಮಗೆ {total} · {signed} ಒಪ್ಪಿಕೊಂಡವು',
+  'notif.filterActive': 'ಸಕ್ರಿಯ',
+  'notif.emptyActive': 'ಎಲ್ಲವನ್ನೂ ನೋಡಿ ಮುಗಿಸಿದ್ದೀರಿ',
+  'policy.version': 'ಆವೃತ್ತಿ',
+  'policy.effectiveFrom': 'ಜಾರಿ ದಿನಾಂಕ',
+  'policy.acknowledged': 'ಅಂಗೀಕರಿಸಲಾಗಿದೆ',
+  'policy.acknowledge': 'ಅಂಗೀಕರಿಸಿ',
+  'policy.noSummary': 'ಈ ನೀತಿಗೆ ಯಾವುದೇ ವಿವರಣೆ ನೀಡಲಾಗಿಲ್ಲ.',
+  'policy.attachment': 'ಲಗತ್ತಿಸಿದ ದಾಖಲೆ',
+  'policy.tapToRead': 'ಈ ನೀತಿಯನ್ನು ಓದಲು ಟ್ಯಾಪ್ ಮಾಡಿ',
 
   'kyc.aadhaarShort': 'ಆಧಾರ್',
 

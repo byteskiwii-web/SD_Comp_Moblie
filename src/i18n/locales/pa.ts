@@ -474,6 +474,15 @@ export const pa: Catalogue = {
 
   'kyc.linkRowLabel': 'ਆਧਾਰ ਲਿੰਕ: {state}। ਹੁਣੇ ਜਾਂਚੋ।',
   'policy.summary': '{total} ਤੁਹਾਨੂੰ ਸੌਂਪੀਆਂ · {signed} ਮੰਨੀਆਂ ਗਈਆਂ',
+  'notif.filterActive': 'ਸਰਗਰਮ',
+  'notif.emptyActive': 'ਸਭ ਕੁਝ ਵੇਖ ਲਿਆ ਹੈ',
+  'policy.version': 'ਵਰਜਨ',
+  'policy.effectiveFrom': 'ਲਾਗੂ ਮਿਤੀ',
+  'policy.acknowledged': 'ਮੰਨਿਆ ਗਿਆ',
+  'policy.acknowledge': 'ਮੰਨੋ',
+  'policy.noSummary': 'ਇਸ ਨੀਤੀ ਲਈ ਕੋਈ ਵੇਰਵਾ ਨਹੀਂ ਦਿੱਤਾ ਗਿਆ।',
+  'policy.attachment': 'ਨੱਥੀ ਦਸਤਾਵੇਜ਼',
+  'policy.tapToRead': 'ਇਹ ਨੀਤੀ ਪੜ੍ਹਨ ਲਈ ਟੈਪ ਕਰੋ',
 
   'kyc.aadhaarShort': 'ਆਧਾਰ',
 

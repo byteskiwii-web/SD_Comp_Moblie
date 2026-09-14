@@ -500,6 +500,15 @@ export const en = {
 
   'kyc.linkRowLabel': 'Aadhaar link: {state}. Check now.',
   'policy.summary': '{total} assigned to you · {signed} acknowledged',
+  'notif.filterActive': 'Active',
+  'notif.emptyActive': 'You are all caught up',
+  'policy.version': 'Version',
+  'policy.effectiveFrom': 'Effective from',
+  'policy.acknowledged': 'Acknowledged',
+  'policy.acknowledge': 'Acknowledge',
+  'policy.noSummary': 'No description was provided for this policy.',
+  'policy.attachment': 'Attached document',
+  'policy.tapToRead': 'Tap to read this policy',
 
   'kyc.aadhaarShort': 'Aadhaar',
 

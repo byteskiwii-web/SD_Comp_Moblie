@@ -474,6 +474,15 @@ export const bn: Catalogue = {
 
   'kyc.linkRowLabel': 'আধার লিঙ্ক: {state}। এখনই পরীক্ষা করুন।',
   'policy.summary': 'আপনার জন্য {total}টি নির্ধারিত · {signed}টি স্বীকৃত',
+  'notif.filterActive': 'সক্রিয়',
+  'notif.emptyActive': 'সব দেখা হয়ে গেছে',
+  'policy.version': 'সংস্করণ',
+  'policy.effectiveFrom': 'কার্যকর তারিখ',
+  'policy.acknowledged': 'স্বীকৃত',
+  'policy.acknowledge': 'স্বীকার করুন',
+  'policy.noSummary': 'এই নীতির জন্য কোনো বিবরণ দেওয়া হয়নি।',
+  'policy.attachment': 'সংযুক্ত নথি',
+  'policy.tapToRead': 'এই নীতি পড়তে ট্যাপ করুন',
 
   'kyc.aadhaarShort': 'আধার',
 

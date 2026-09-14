@@ -470,6 +470,15 @@ export const te: Catalogue = {
 
   'kyc.linkRowLabel': 'ఆధార్ లింక్: {state}. ఇప్పుడే తనిఖీ చేయండి.',
   'policy.summary': 'మీకు {total} · {signed} ఆమోదించినవి',
+  'notif.filterActive': 'క్రియాశీలం',
+  'notif.emptyActive': 'అన్నీ చూసేశారు',
+  'policy.version': 'వెర్షన్',
+  'policy.effectiveFrom': 'అమలు తేదీ',
+  'policy.acknowledged': 'అంగీకరించారు',
+  'policy.acknowledge': 'అంగీకరించండి',
+  'policy.noSummary': 'ఈ విధానానికి ఎటువంటి వివరణ ఇవ్వలేదు.',
+  'policy.attachment': 'జతచేసిన పత్రం',
+  'policy.tapToRead': 'ఈ విధానాన్ని చదవడానికి నొక్కండి',
 
   'kyc.aadhaarShort': 'ఆధార్',
 

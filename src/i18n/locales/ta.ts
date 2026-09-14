@@ -470,6 +470,15 @@ export const ta: Catalogue = {
 
   'kyc.linkRowLabel': 'ஆதார் இணைப்பு: {state}. இப்போது பரிசோதி.',
   'policy.summary': 'உங்களுக்கு {total} · {signed} ஏற்கப்பட்டவை',
+  'notif.filterActive': 'செயலில்',
+  'notif.emptyActive': 'எல்லாவற்றையும் பார்த்துவிட்டீர்கள்',
+  'policy.version': 'பதிப்பு',
+  'policy.effectiveFrom': 'அமலுக்கு வரும் தேதி',
+  'policy.acknowledged': 'ஏற்றுக்கொள்ளப்பட்டது',
+  'policy.acknowledge': 'ஏற்றுக்கொள்ளுங்கள்',
+  'policy.noSummary': 'இந்தக் கொள்கைக்கு விளக்கம் எதுவும் வழங்கப்படவில்லை.',
+  'policy.attachment': 'இணைக்கப்பட்ட ஆவணம்',
+  'policy.tapToRead': 'இந்தக் கொள்கையைப் படிக்க தட்டவும்',
 
   'kyc.aadhaarShort': 'ஆதார்',
 
