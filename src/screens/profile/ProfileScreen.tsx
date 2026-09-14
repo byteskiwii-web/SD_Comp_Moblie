@@ -6,6 +6,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
 import { getPolicies, type Policy as PolicyType } from '../../api/policies.api';
 import { PolicyReaderSheet } from './PolicyReaderSheet';
+import { ProfilePhoto } from './ProfilePhoto';
 import { LegalLinks } from '../../components/LegalLinks';
 import { getKycStatus, KYC_STATUS_KEY, KycCheckStatus, kycStatusTone } from '../../api/verification.api';
 import { useNavigation } from '@react-navigation/native';
@@ -104,9 +105,7 @@ export function ProfileScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.brand[700]} />}
       >
         <TourTarget id="profile-top" style={styles.heroCard}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarInitial}>{employee?.first_name?.[0] ?? '?'}</Text>
-          </View>
+          <ProfilePhoto />
           <Text style={styles.name}>
             {employee?.first_name} {employee?.last_name}
           </Text>
@@ -514,11 +513,6 @@ function makeStyles(colors: ColorScheme) {
     content: { padding: 20, paddingTop: 12, gap: 16 },
 
     heroCard: { alignItems: 'center', paddingVertical: 8 },
-    avatar: {
-      width: 76, height: 76, borderRadius: 38, backgroundColor: colors.brand[700],
-      alignItems: 'center', justifyContent: 'center', marginBottom: 14,
-    },
-    avatarInitial: { color: colors.white, fontSize: 26, fontWeight: '800' },
     name: { fontSize: 16.5, fontWeight: '800', color: colors.textLight },
     pillRow: { flexDirection: 'row', gap: 8, marginTop: 10 },
     pill: { backgroundColor: colors.slate100, paddingHorizontal: 12, paddingVertical: 5, borderRadius: radii.pill },

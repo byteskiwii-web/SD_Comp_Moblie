@@ -38,6 +38,9 @@ export type Me = {
   role: string;
   storeCode: string | null;
   dateOfJoining: string | null;
+  /** Whether a profile picture exists, and when it last changed (cache bust). */
+  hasPhoto?: boolean;
+  photoUpdatedAt?: string | null;
   shiftStart: string | null;
   shiftEnd: string | null;
   /**
