@@ -27,11 +27,15 @@ import { FeedBucket, FeedItem, groupByDay, mergeFeed } from './feed';
  * Three rules shape this screen, and they are the answers to what was wrong
  * with the version before it:
  *
- *  1. TAPPING GOES SOMEWHERE. Every notification the server writes carries a
- *     linkPath, and this app used to ignore it — a tap marked the row read and
- *     did nothing else, so "read" only ever certified that somebody glanced at
- *     one sentence. Now a tap navigates, which is what makes the read state
- *     mean anything at all.
+ *  1. TAPPING GOES SOMEWHERE, AND CLEARING IS ITS OWN CONTROL. Every
+ *     notification the server writes carries a linkPath, and this app used to
+ *     ignore it — a tap marked the row read and did nothing else, so "read"
+ *     only ever certified that somebody glanced at one sentence. Now a tap
+ *     navigates. Because that also takes you off the list, marking something
+ *     read has its own button on every row: one job, done in place, next to
+ *     "Mark all read" in the header. The long-press that used to be the only
+ *     way to do it was undiscoverable, which made the feature effectively
+ *     absent.
  *
  *  2. READ AND DONE ARE DIFFERENT. A row that owes an action keeps saying so
  *     after it is read, and "Mark all read" refuses to clear it. The server
@@ -309,11 +313,8 @@ function Row({ n, onOpen, onToggleRead }: { n: FeedItem; onOpen: () => void; onT
   return (
     <Pressable
       onPress={onOpen}
-      onLongPress={onToggleRead}
-      delayLongPress={350}
       accessibilityRole="button"
       accessibilityLabel={`${n.title ? `${n.title}. ` : ''}${n.body}`}
-      accessibilityHint={n.isRead ? t('notif.a11yMarkUnread') : t('notif.a11yMarkRead')}
       style={({ pressed }) => [styles.row, !n.isRead && styles.rowUnread, pressed && styles.rowPressed]}
     >
       {/* The unread marker is a solid edge, not a background wash. The wash
@@ -344,7 +345,25 @@ function Row({ n, onOpen, onToggleRead }: { n: FeedItem; onOpen: () => void; onT
         </View>
       </View>
 
-      {!n.isRead && <View style={styles.unreadDot} />}
+      {/* The read control, as a real button rather than a decorative dot.
+          Marking something read used to mean either tapping the row — which
+          also navigated away, so you never saw it clear — or a long-press
+          nobody discovers. This does one job, in place, without leaving the
+          list. Nested Pressables do not bubble in React Native, so this never
+          triggers the row's own onPress. */}
+      <Pressable
+        onPress={onToggleRead}
+        hitSlop={10}
+        accessibilityRole="button"
+        accessibilityLabel={n.isRead ? t('notif.a11yMarkUnread') : t('notif.a11yMarkRead')}
+        style={({ pressed }) => [styles.readBtn, pressed && styles.readBtnPressed]}
+      >
+        <Ionicons
+          name={n.isRead ? 'checkmark-circle-outline' : 'ellipse'}
+          size={n.isRead ? 18 : 11}
+          color={n.isRead ? colors.slate400 : colors.brand[700]}
+        />
+      </Pressable>
     </Pressable>
   );
 }
@@ -365,7 +384,12 @@ function makeStyles(colors: ColorScheme) {
     },
     title: { fontSize: 15, fontWeight: '800', color: colors.textLight, letterSpacing: -0.2 },
     headerActions: { flexDirection: 'row', alignItems: 'center', gap: 16 },
-    markAll: { fontSize: 11.5, fontWeight: '700', color: colors.brand[700] },
+    markAll: {
+      fontSize: 11.5, fontWeight: '700', color: colors.brand[700],
+      paddingHorizontal: 10, paddingVertical: 5,
+      backgroundColor: colors.brand[50], borderRadius: radii.pill,
+      overflow: 'hidden',
+    },
 
     filters: {
       flexDirection: 'row', gap: 8, paddingHorizontal: 20, paddingBottom: 12,
@@ -425,7 +449,13 @@ function makeStyles(colors: ColorScheme) {
     },
     actionPillText: { fontSize: 9.5, fontWeight: '800', color: colors.warningText, letterSpacing: 0.3 },
 
-    unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.brand[700], marginTop: 12 },
+    // A 30px tap target, which is the minimum that can be hit reliably with a
+    // thumb. The icon inside is smaller; the box is what you actually aim at.
+    readBtn: {
+      width: 30, height: 30, borderRadius: 15,
+      alignItems: 'center', justifyContent: 'center', marginTop: 2,
+    },
+    readBtnPressed: { backgroundColor: colors.slate100 },
 
     more: { alignItems: 'center', paddingVertical: 14 },
     moreText: { fontSize: 11.5, fontWeight: '700', color: colors.brand[700] },
