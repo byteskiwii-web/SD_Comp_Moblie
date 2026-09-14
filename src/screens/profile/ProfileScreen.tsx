@@ -41,6 +41,13 @@ export function ProfileScreen() {
   const profile = useAuthStore((s) => s.profile);
   const refreshProfile = useAuthStore((s) => s.refreshProfile);
   const [refreshing, setRefreshing] = React.useState(false);
+  /**
+   * The policy open for reading, or null.
+   *
+   * Held HERE rather than inside PolicyLibrary because the sheet it drives has
+   * to be mounted at the screen root — see the note where it is rendered.
+   */
+  const [readingPolicy, setReadingPolicy] = React.useState<PolicyType | null>(null);
 
   const startTour = useTourStore((s) => s.start);
   const colors = useThemeStore((s) => s.colors);
@@ -160,7 +167,7 @@ export function ProfileScreen() {
         {/* Moved up from the very bottom of the screen -- six cards below it
             (Preferences through Kit) meant almost nobody scrolled far enough
             to see it was there at all. */}
-        <PolicyLibrary />
+        <PolicyLibrary onOpen={setReadingPolicy} />
 
         <PreferencesCard />
 
@@ -183,6 +190,13 @@ export function ProfileScreen() {
         <Button title={t('common.signOut')} variant="danger" onPress={confirmSignOut} />
         
       </ScrollView>
+
+      {/* Outside the ScrollView, deliberately. A React Native Modal nested in
+          scrolling content has its full-screen backdrop laid out inside that
+          content, which on Android paints as a black overlay while you scroll.
+          Every other sheet in this app is mounted here at the screen root for
+          the same reason. */}
+      <PolicyReaderSheet policy={readingPolicy} onClose={() => setReadingPolicy(null)} />
     </SafeAreaView>
   );
 }
@@ -441,13 +455,11 @@ function LinkRow({ linked, onCheck }: { linked: boolean | null; onCheck?: () => 
   );
 }
 
-function PolicyLibrary() {
+function PolicyLibrary({ onOpen }: { onOpen: (p: PolicyType) => void }) {
   const { data } = useQuery({ queryKey: ['policies-library'], queryFn: () => getPolicies(50) });
   const colors = useThemeStore((s) => s.colors);
   const styles = React.useMemo(() => makeStyles(colors), [colors]);
   const t = useT();
-  // The policy opened for reading, or null. A tap on a row sets it.
-  const [reading, setReading] = React.useState<PolicyType | null>(null);
   const items = newestFirst(data?.items ?? [], 'publishedAt', 'updatedAt', 'createdAt');
   if (items.length === 0) return null;
 
@@ -461,7 +473,7 @@ function PolicyLibrary() {
       {items.slice(0, 6).map((p, i) => (
         <Pressable
           key={p.id}
-          onPress={() => setReading(p)}
+          onPress={() => onOpen(p)}
           accessibilityRole="button"
           accessibilityLabel={p.title}
           accessibilityHint={t('policy.tapToRead')}
@@ -484,7 +496,6 @@ function PolicyLibrary() {
           <Ionicons name="chevron-forward" size={14} color={colors.slate300} style={{ marginLeft: 6 }} />
         </Pressable>
       ))}
-      <PolicyReaderSheet policy={reading} onClose={() => setReading(null)} />
     </Card>
   );
 }
