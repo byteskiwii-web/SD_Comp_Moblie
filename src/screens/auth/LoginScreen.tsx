@@ -12,6 +12,7 @@ import { getApiErrorCode, getApiErrorMessage } from '../../api/client';
 import { useAuthStore } from '../../stores/authStore';
 import { loginSchema } from '../../schemas/auth.schema';
 import { useT } from '../../i18n';
+import { LegalLinks } from '../../components/LegalLinks';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
@@ -144,6 +145,7 @@ export function LoginScreen({ navigation }: Props) {
           variant="outline"
           onPress={() => navigation.navigate('ForgotPasswordRequest')}
         />
+        <LegalLinks />
       </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

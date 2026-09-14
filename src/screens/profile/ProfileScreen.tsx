@@ -6,6 +6,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
 import { getPolicies, type Policy as PolicyType } from '../../api/policies.api';
 import { PolicyReaderSheet } from './PolicyReaderSheet';
+import { LegalLinks } from '../../components/LegalLinks';
 import { getKycStatus, KYC_STATUS_KEY, KycCheckStatus, kycStatusTone } from '../../api/verification.api';
 import { useNavigation } from '@react-navigation/native';
 import { formatDate, newestFirst } from '../../utils/datetime';
@@ -188,6 +189,11 @@ export function ProfileScreen() {
 
         <Button title={t('home.replayTour')} variant="outline" onPress={startTour} />
         <Button title={t('common.signOut')} variant="danger" onPress={confirmSignOut} />
+
+        {/* Play requires the privacy policy to be reachable from inside the
+            app for anything handling sensitive data. Profile is where someone
+            looks for it after the fact; the sign-in screen covers first use. */}
+        <LegalLinks />
         
       </ScrollView>
 
