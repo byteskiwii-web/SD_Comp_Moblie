@@ -12,6 +12,7 @@ export const ta: Catalogue = {
   'common.goBack': 'பின் செல்',
   'common.cancel': 'ரத்து',
   'common.close': 'மூடு',
+  'stats.footnote': 'வாராந்திர விடுமுறைகள் இன்னும் தனியாகக் காட்டப்படவில்லை, எனவே “குறிக்கப்படவில்லை” என்பதில் அவையும் அடங்கும்.',
   'clock.liveSelfie': 'நேரடி செல்ஃபி',
   'home.appreciation': 'பாராட்டு',
   'policy.toAcknowledge': 'ஏற்க வேண்டிய கொள்கைகள்',

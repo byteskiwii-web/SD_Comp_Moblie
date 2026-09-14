@@ -12,6 +12,7 @@ export const kn: Catalogue = {
   'common.goBack': 'ಹಿಂದೆ ಹೋಗಿ',
   'common.cancel': 'ರದ್ದು',
   'common.close': 'ಮುಚ್ಚು',
+  'stats.footnote': 'ಸಾಪ್ತಾಹಿಕ ರಜೆಗಳನ್ನು ಇನ್ನೂ ಪ್ರತ್ಯೇಕಿಸಿಲ್ಲ, ಆದ್ದರಿಂದ “ಗುರುತಿಸಿಲ್ಲ” ಎಂಬುದರಲ್ಲಿ ಅವೂ ಸೇರಿವೆ.',
   'clock.liveSelfie': 'ಲೈವ್ ಸೆಲ್ಫಿ',
   'home.appreciation': 'ಪ್ರಶಂಸೆ',
   'policy.toAcknowledge': 'ಅಂಗೀಕರಿಸಬೇಕಾದ ನೀತಿಗಳು',

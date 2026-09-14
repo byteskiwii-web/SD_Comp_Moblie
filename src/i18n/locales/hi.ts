@@ -19,6 +19,7 @@ export const hi: Catalogue = {
   'common.goBack': 'वापस जाएँ',
   'common.cancel': 'रद्द करें',
   'common.close': 'बंद करें',
+  'stats.footnote': 'साप्ताहिक अवकाश अभी अलग नहीं दिखाए जाते, इसलिए “चिह्नित नहीं” में वे भी शामिल हैं।',
   'clock.liveSelfie': 'लाइव सेल्फ़ी',
   'home.appreciation': 'सराहना',
   'policy.toAcknowledge': 'स्वीकार करने योग्य नीतियाँ',

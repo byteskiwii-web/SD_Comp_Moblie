@@ -6,6 +6,7 @@ import { ColorScheme, radii } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
 import { useAuthStore } from '../../stores/authStore';
 import { getAttendanceHistory } from '../../api/attendance.api';
+import { getLeaveSummary } from '../../api/leave.api';
 import { formatDuration, summariseDays } from '../../utils/attendanceDay';
 import { toLocalDateKey } from '../../utils/datetime';
 import { Skeleton } from '../../components/Skeleton';
@@ -48,6 +49,16 @@ export function MonthlyStatsCard() {
     enabled: !!employee,
   });
 
+  /* Leave taken this month. Its own query rather than derived from attendance:
+     a leave day has no punch, so it is indistinguishable from an absence in the
+     attendance history — which is precisely why "not marked" was overcounting
+     and why the team asked for this number beside it. */
+  const { data: leave } = useQuery({
+    queryKey: ['leave-summary', employee?.id, range.from.slice(0, 7)],
+    queryFn: () => getLeaveSummary(range.from.slice(0, 7)),
+    enabled: !!employee,
+  });
+
   const stats = useMemo(() => {
     const days = summariseDays(data ?? []);
     const present = days.filter((d) => d.firstIn).length;
@@ -67,17 +78,17 @@ export function MonthlyStatsCard() {
           <Skeleton height={44} radius={12} />
           <Skeleton height={44} radius={12} />
           <Skeleton height={44} radius={12} />
+          <Skeleton height={44} radius={12} />
         </View>
       ) : (
         <>
           <View style={styles.row}>
             <Tile value={String(stats.present)} label={t('stats.present')} tone="ok" />
+            <Tile value={String(leave?.takenTotal ?? 0)} label={t('home.leaveTaken')} tone="plain" />
             <Tile value={String(stats.notMarked)} label={t('stats.notMarked')} tone="warn" />
             <Tile value={formatDuration(stats.minutes)} label={t('stats.hours')} tone="plain" />
           </View>
-          <Text style={styles.footnote}>
-            Days off aren't distinguished yet, so "not marked" includes your weekly offs.
-          </Text>
+          <Text style={styles.footnote}>{t('stats.footnote')}</Text>
         </>
       )}
     </Card>
@@ -114,9 +125,9 @@ function makeStyles(colors: ColorScheme) {
     sub: { fontSize: 11, color: colors.slate400, fontWeight: '600' },
     spacer: { marginVertical: 12 },
 
-    row: { flexDirection: 'row', gap: 10 },
+    row: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
     tile: {
-      flex: 1, borderWidth: 1, borderColor: colors.slate200, borderRadius: radii.md,
+      flexGrow: 1, flexBasis: '44%', borderWidth: 1, borderColor: colors.slate200, borderRadius: radii.md,
       paddingVertical: 12, paddingHorizontal: 10, alignItems: 'flex-start',
     },
     tileValue: { fontSize: 17.5, fontWeight: '800', color: colors.textLight, letterSpacing: -0.4 },

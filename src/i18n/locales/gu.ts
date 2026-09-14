@@ -19,6 +19,7 @@ export const gu: Catalogue = {
   'common.goBack': 'પાછળ જાઓ',
   'common.cancel': 'રદ કરો',
   'common.close': 'બંધ કરો',
+  'stats.footnote': 'સાપ્તાહિક રજાઓ હજી અલગ બતાવાતી નથી, તેથી “નોંધ નથી”માં તે પણ સામેલ છે.',
   'clock.liveSelfie': 'લાઇવ સેલ્ફી',
   'home.appreciation': 'પ્રશંસા',
   'policy.toAcknowledge': 'સ્વીકારવાની નીતિઓ',

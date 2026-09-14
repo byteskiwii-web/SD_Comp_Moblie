@@ -29,6 +29,7 @@ export const en = {
   'common.goBack': 'Go back',
   'common.cancel': 'Cancel',
   'common.close': 'Close',
+  'stats.footnote': 'Days off aren’t distinguished yet, so “not marked” includes your weekly offs.',
   'clock.liveSelfie': 'Live selfie',
   'home.appreciation': 'Appreciation',
   'policy.toAcknowledge': 'Policies to acknowledge',

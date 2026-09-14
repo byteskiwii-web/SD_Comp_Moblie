@@ -12,6 +12,7 @@ export const te: Catalogue = {
   'common.goBack': 'వెనుకకు వెళ్లు',
   'common.cancel': 'రద్దు',
   'common.close': 'మూసివేయి',
+  'stats.footnote': 'వారపు సెలవులు ఇంకా వేరుగా చూపబడవు, కాబట్టి “గుర్తించబడలేదు”లో అవి కూడా ఉన్నాయి.',
   'clock.liveSelfie': 'లైవ్ సెల్ఫీ',
   'home.appreciation': 'ప్రశంస',
   'policy.toAcknowledge': 'అంగీకరించాల్సిన విధానాలు',

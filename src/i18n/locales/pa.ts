@@ -19,6 +19,7 @@ export const pa: Catalogue = {
   'common.goBack': 'ਪਿੱਛੇ ਜਾਓ',
   'common.cancel': 'ਰੱਦ ਕਰੋ',
   'common.close': 'ਬੰਦ ਕਰੋ',
+  'stats.footnote': 'ਹਫ਼ਤਾਵਾਰੀ ਛੁੱਟੀਆਂ ਹਾਲੇ ਵੱਖ ਨਹੀਂ ਦਿਖਾਈਆਂ ਜਾਂਦੀਆਂ, ਇਸ ਲਈ “ਨਿਸ਼ਾਨ ਨਹੀਂ” ਵਿੱਚ ਉਹ ਵੀ ਸ਼ਾਮਲ ਹਨ।',
   'clock.liveSelfie': 'ਲਾਈਵ ਸੈਲਫੀ',
   'home.appreciation': 'ਸ਼ਲਾਘਾ',
   'policy.toAcknowledge': 'ਮੰਨਣ ਵਾਲੀਆਂ ਨੀਤੀਆਂ',

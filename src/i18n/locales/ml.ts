@@ -12,6 +12,7 @@ export const ml: Catalogue = {
   'common.goBack': 'തിരികെ പോകുക',
   'common.cancel': 'റദ്ദാക്കുക',
   'common.close': 'അടയ്ക്കുക',
+  'stats.footnote': 'പ്രതിവാര അവധികൾ ഇനിയും വേർതിരിച്ചിട്ടില്ല, അതിനാൽ “അടയാളപ്പെടുത്തിയിട്ടില്ല” എന്നതിൽ അവയും ഉൾപ്പെടും.',
   'clock.liveSelfie': 'ലൈവ് സെൽഫി',
   'home.appreciation': 'അഭിനന്ദനം',
   'policy.toAcknowledge': 'സ്വീകരിക്കേണ്ട നയങ്ങൾ',

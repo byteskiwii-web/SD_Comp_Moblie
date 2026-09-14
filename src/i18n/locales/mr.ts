@@ -19,6 +19,7 @@ export const mr: Catalogue = {
   'common.goBack': 'मागे जा',
   'common.cancel': 'रद्द करा',
   'common.close': 'बंद करा',
+  'stats.footnote': 'साप्ताहिक सुट्ट्या अद्याप वेगळ्या दाखवल्या जात नाहीत, त्यामुळे “नोंद नाही” मध्ये त्या समाविष्ट आहेत.',
   'clock.liveSelfie': 'लाइव्ह सेल्फी',
   'home.appreciation': 'कौतुक',
   'policy.toAcknowledge': 'स्वीकारायच्या धोरणे',

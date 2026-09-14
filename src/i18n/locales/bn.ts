@@ -19,6 +19,7 @@ export const bn: Catalogue = {
   'common.goBack': 'ফিরে যান',
   'common.cancel': 'বাতিল',
   'common.close': 'বন্ধ করুন',
+  'stats.footnote': 'সাপ্তাহিক ছুটি এখনও আলাদা করা হয় না, তাই “চিহ্নিত নয়”-এ সেগুলিও রয়েছে।',
   'clock.liveSelfie': 'লাইভ সেলফি',
   'home.appreciation': 'প্রশংসা',
   'policy.toAcknowledge': 'স্বীকার করার নীতি',
