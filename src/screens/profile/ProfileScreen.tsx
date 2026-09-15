@@ -8,6 +8,7 @@ import { getPolicies, type Policy as PolicyType } from '../../api/policies.api';
 import { PolicyReaderSheet } from './PolicyReaderSheet';
 import { ProfilePhoto } from './ProfilePhoto';
 import { LegalLinks } from '../../components/LegalLinks';
+import { DeleteAccountCard } from './DeleteAccountCard';
 import { getKycStatus, KYC_STATUS_KEY, KycCheckStatus, kycStatusTone } from '../../api/verification.api';
 import { useNavigation } from '@react-navigation/native';
 import { formatDate, newestFirst } from '../../utils/datetime';
@@ -204,7 +205,13 @@ export function ProfileScreen() {
             app for anything handling sensitive data. Profile is where someone
             looks for it after the fact; the sign-in screen covers first use. */}
         <LegalLinks />
-        
+
+        {/* Last on the page, under the legal links, because that is where
+            somebody looking for it expects it and nowhere near the controls
+            they use daily. Both stores require this route to exist inside the
+            app, and the privacy policy already pointed here. */}
+        <DeleteAccountCard />
+
       </ScrollView>
 
       {/* Outside the ScrollView, deliberately. A React Native Modal nested in

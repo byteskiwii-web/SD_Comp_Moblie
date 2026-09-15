@@ -194,3 +194,33 @@ export async function resetPassword(resetToken: string, new_password: string) {
   );
   return res.data;
 }
+
+/* -------------------------------------------------------------------------- */
+/* Account deletion                                                           */
+/*                                                                            */
+/* Neither call takes an employee id: the server reads it from the session.   */
+/* Sending one would let a signed-in employee start somebody else's deletion. */
+/* -------------------------------------------------------------------------- */
+
+export async function getDeletionStatus() {
+  const res = await apiClient.get<{ success: true; data: { pending: boolean; requestedAt: string | null } }>(
+    '/auth/me/deletion'
+  );
+  return res.data.data;
+}
+
+export async function requestDeletionCode() {
+  const res = await apiClient.post<{ success: true; data: { maskedEmail: string } }>(
+    '/auth/me/deletion/request-code',
+    {}
+  );
+  return res.data.data;
+}
+
+export async function confirmDeletion(otp: string, reason?: string) {
+  const res = await apiClient.post<{ success: true; data: { requestId?: number; alreadyRequested?: boolean } }>(
+    '/auth/me/deletion/confirm',
+    reason ? { otp, reason } : { otp }
+  );
+  return res.data.data;
+}
