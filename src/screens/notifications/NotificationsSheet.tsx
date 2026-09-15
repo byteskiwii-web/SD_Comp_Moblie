@@ -50,13 +50,27 @@ import { FeedBucket, FeedItem, groupByDay, mergeFeed } from './feed';
  */
 
 /**
- * 'active' is the default and the point of the redesign: a notification you
- * have read disappears from it, so the inbox shows what still wants attention
- * rather than a growing pile of things already dealt with. A row still owing an
- * action stays in 'active' even once read — reading is not doing. 'all' is the
- * history, kept until the server prunes it.
+ * ONE LIST, AND READ MEANS GONE.
+ *
+ * There were two chips here, Active and All, and they are removed. The
+ * argument for keeping an archive was that somebody might want to re-read a
+ * leave approval from last week — but nobody was asking for that, and the
+ * cost was a control on every visit that mostly served to reintroduce the
+ * pile the redesign existed to remove. If the history is ever wanted it
+ * belongs somewhere it can be searched, not behind a chip that quietly
+ * undoes the point of the screen.
+ *
+ * So the sheet shows what still wants attention and nothing else. Reading a
+ * notification removes it from view. Nothing is deleted: the server keeps
+ * every row until it prunes them, and the web console can still show the
+ * full history.
+ *
+ * The one thing that survives being read is a row that still owes an ACTION.
+ * Reading is not doing, and an obligation that vanished because somebody
+ * glanced at it would be the screen losing something real. In practice this
+ * is rare to the point of theoretical — the server refuses to mark an
+ * unresolved action read, and so does the bulk action below.
  */
-type Filter = 'active' | 'all' | 'action';
 
 /** Per-kind icon and tint, across both sources. `system` is the fallback. */
 function kindTone(colors: ColorScheme): Record<string, { icon: keyof typeof Ionicons.glyphMap; tint: string; bg: string }> {
@@ -96,7 +110,6 @@ export function NotificationsSheet({ visible, onClose }: { visible: boolean; onC
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const t = useT();
 
-  const [filter, setFilter] = useState<Filter>('active');
   /** How many pages deep the employee has asked to go. Reset when reopened. */
   const [limit, setLimit] = useState(PAGE);
   /** Ticked rows. Empty means the select bar is not shown at all. */
@@ -138,11 +151,11 @@ export function NotificationsSheet({ visible, onClose }: { visible: boolean; onC
   }, [signal, queryClient]);
 
   /* A selection is a thing you are in the middle of, not a setting. Closing
-     the sheet or switching filter ends it — otherwise "Mark as read" would
-     later act on rows that are no longer even on screen. */
+     the sheet ends it — otherwise "Mark as read" would later act on rows that
+     are no longer even on screen. */
   useEffect(() => {
     setSelected(new Set());
-  }, [visible, filter]);
+  }, [visible]);
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ['notifications'] });
@@ -169,15 +182,12 @@ export function NotificationsSheet({ visible, onClose }: { visible: boolean; onC
 
   const feed = useMemo(() => mergeFeed(serverItems, deviceItems), [serverItems, deviceItems]);
   const unreadTotal = feed.filter((n) => !n.isRead).length;
-  const actionTotal = feed.filter((n) => n.needsAction).length;
 
   const shown = useMemo(() => {
-    // 'active' hides what has been read and dealt with; an unresolved action
-    // survives being read, because it is not done. 'all' is the full history.
-    if (filter === 'active') return feed.filter((n) => !n.isRead || n.needsAction);
-    if (filter === 'action') return feed.filter((n) => n.needsAction);
-    return feed;
-  }, [feed, filter]);
+    // Read and dealt with means gone. An unresolved action survives being
+    // read, because reading is not doing.
+    return feed.filter((n) => !n.isRead || n.needsAction);
+  }, [feed]);
 
   const groups = useMemo(() => groupByDay(shown), [shown]);
 
@@ -229,7 +239,11 @@ export function NotificationsSheet({ visible, onClose }: { visible: boolean; onC
 
   const markSelected = useMutation({
     mutationFn: async () => {
-      const items = feed.filter((n) => selected.has(n.id) && !n.isRead);
+      /* Skips anything still owing an action, matching what the server
+         already refuses to do in "Mark all read". Without this the bulk
+         action could mark an obligation read, and since read now means gone,
+         a tick of "select all" would make an outstanding task disappear. */
+      const items = feed.filter((n) => selected.has(n.id) && !n.isRead && !n.needsAction);
       // Device alerts live in a local store, server ones behind the API; the
       // employee ticked one list and should not have to know the difference.
       items.filter((n) => n.source === 'device')
@@ -252,13 +266,6 @@ export function NotificationsSheet({ visible, onClose }: { visible: boolean; onC
     earlier: t('notif.earlier'),
   };
 
-  const activeTotal = feed.filter((n) => !n.isRead || n.needsAction).length;
-  const FILTERS: { key: Filter; label: string; count: number }[] = [
-    { key: 'active', label: t('notif.filterActive'), count: activeTotal },
-    { key: 'all', label: t('notif.filterAll'), count: feed.length },
-    { key: 'action', label: t('notif.filterAction'), count: actionTotal },
-  ];
-
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <Pressable style={styles.backdrop} onPress={onClose} />
@@ -275,29 +282,6 @@ export function NotificationsSheet({ visible, onClose }: { visible: boolean; onC
               <Ionicons name="close" size={22} color={colors.slate500} />
             </Pressable>
           </View>
-        </View>
-
-        {/* Filters, not tabs: one list, three views of it. A separate "Read"
-            section would file away exactly what people come here to find. The
-            "Needs you" chip only appears when something is outstanding — a
-            permanently empty filter trains people to stop looking at it. */}
-        <View style={styles.filters}>
-          {FILTERS.filter((f) => f.key !== 'action' || actionTotal > 0).map((f) => {
-            const on = filter === f.key;
-            return (
-              <Pressable
-                key={f.key}
-                onPress={() => setFilter(f.key)}
-                style={[styles.chip, on && styles.chipOn, f.key === 'action' && !on && styles.chipAction]}
-                accessibilityRole="button"
-                accessibilityState={{ selected: on }}
-              >
-                <Text style={[styles.chipText, on && styles.chipTextOn, f.key === 'action' && !on && styles.chipTextAction]}>
-                  {f.label}{f.count > 0 ? ` ${f.count}` : ''}
-                </Text>
-              </Pressable>
-            );
-          })}
         </View>
 
         {/* Appears only once something is ticked. A permanently parked action
@@ -340,17 +324,8 @@ export function NotificationsSheet({ visible, onClose }: { visible: boolean; onC
             <Text style={styles.error}>{getApiErrorMessage(error)}</Text>
           ) : shown.length === 0 ? (
             <View style={styles.empty}>
-              <Ionicons
-                name={filter === 'active' ? 'checkmark-circle-outline' : 'notifications-off-outline'}
-                size={26}
-                color={colors.slate300}
-              />
-              <Text style={styles.emptyTitle}>
-                {filter === 'active' ? t('notif.emptyActive')
-                  : filter === 'action' ? t('notif.emptyAction')
-                  : t('notif.empty')}
-              </Text>
-              {filter === 'all' ? <Text style={styles.emptyBody}>{t('notif.emptyBody')}</Text> : null}
+              <Ionicons name="checkmark-circle-outline" size={26} color={colors.slate300} />
+              <Text style={styles.emptyTitle}>{t('notif.emptyActive')}</Text>
             </View>
           ) : (
             <>
@@ -371,9 +346,11 @@ export function NotificationsSheet({ visible, onClose }: { visible: boolean; onC
                 </View>
               ))}
 
-              {/* Only offers more of the SERVER half -- device history is
-                  capped at 50 locally and is always fully present. */}
-              {filter === 'all' && hasMore && (
+              {/* Older UNREAD rows, for somebody who has been away long
+                  enough to have more than a page of them. Only offers more of
+                  the SERVER half — device history is capped at 50 locally and
+                  is always fully present. */}
+              {hasMore && (
                 <Pressable style={styles.more} onPress={() => setLimit((n) => n + PAGE)} hitSlop={6}>
                   <Text style={styles.moreText}>{t('notif.loadMore')}</Text>
                 </Pressable>
@@ -490,20 +467,6 @@ function makeStyles(colors: ColorScheme) {
       backgroundColor: colors.brand[50], borderRadius: radii.pill,
       overflow: 'hidden',
     },
-
-    filters: {
-      flexDirection: 'row', gap: 8, paddingHorizontal: 20, paddingBottom: 12,
-      borderBottomWidth: 1, borderBottomColor: colors.slate100,
-    },
-    chip: {
-      paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999,
-      backgroundColor: colors.slate100,
-    },
-    chipOn: { backgroundColor: colors.brand[700] },
-    chipAction: { backgroundColor: colors.warningBg },
-    chipText: { fontSize: 11, fontWeight: '700', color: colors.slate600 },
-    chipTextOn: { color: colors.surface },
-    chipTextAction: { color: colors.warningText },
 
     list: { paddingHorizontal: 12, paddingVertical: 8 },
     error: { color: colors.dangerText, fontSize: 11.5, fontWeight: '600', padding: 20, textAlign: 'center' },
