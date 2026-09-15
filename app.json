@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "zip-hrms-mobile",
+    "name": "Zip Connect",
     "slug": "zip-hrms-mobile",
     "scheme": "ziphrmsmobile",
     "version": "1.0.0",
@@ -11,7 +11,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.sdcomputronix.ziphrmsmobile",
       "infoPlist": {
-        "NSCameraUsageDescription": "Allow zip-hrms-mobile to access your camera to verify your identity when you clock in or out.",
+        "NSCameraUsageDescription": "Zip Connect uses your camera to take a live photo when you clock in or out, confirming it is you.",
         "ITSAppUsesNonExemptEncryption": false
       }
     },
@@ -43,8 +43,8 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Allow zip-hrms-mobile to check your location every 10-15 minutes while you're clocked in, to confirm you're still at your assigned store.",
-          "locationWhenInUsePermission": "Allow zip-hrms-mobile to check your location when you clock in or out.",
+          "locationAlwaysAndWhenInUsePermission": "Zip Connect checks your location about every 12 minutes while you are clocked in — including when the app is closed — to confirm you are at your assigned store. It stops when your shift ends.",
+          "locationWhenInUsePermission": "Zip Connect checks your location when you clock in or out, to confirm you are at your assigned store.",
           "isIosBackgroundLocationEnabled": true,
           "isAndroidBackgroundLocationEnabled": true,
           "isAndroidForegroundServiceEnabled": true

@@ -85,7 +85,7 @@ export const en = {
   'role.super-admin': 'Super Admin',
 
   /* ------------------------------------------------------------------ auth */
-  'auth.brand': 'ZIP HRMS · FIELD APP',
+  'auth.brand': 'ZIP CONNECT · FIELD APP',
   'auth.signIn': 'Sign in',
   'auth.rememberMe': 'Keep me signed in',
   'auth.rememberMeOff': 'You will sign in again next time you open the app.',
@@ -385,6 +385,13 @@ export const en = {
   'notif.skippedBody': '{count} still need your action, so they stay unread until you complete them.',
   'notif.skippedBody_one': '1 notification still needs your action, so it stays unread until you complete it.',
   'notif.skippedBody_other': '{count} notifications still need your action, so they stay unread until you complete them.',
+  'notif.selectAll': 'Select all',
+  'notif.selectedCount': '{count} selected',
+  'notif.selectedCount_one': '1 selected',
+  'notif.selectedCount_other': '{count} selected',
+  'notif.markRead': 'Mark as read',
+  'notif.a11ySelect': 'Select',
+  'notif.a11yDeselect': 'Deselect',
   'notif.a11yMarkRead': 'Long press to mark as read',
   'notif.a11yMarkUnread': 'Long press to mark as unread',
   'notif.empty': 'Nothing yet',

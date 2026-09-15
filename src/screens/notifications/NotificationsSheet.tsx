@@ -99,6 +99,8 @@ export function NotificationsSheet({ visible, onClose }: { visible: boolean; onC
   const [filter, setFilter] = useState<Filter>('active');
   /** How many pages deep the employee has asked to go. Reset when reopened. */
   const [limit, setLimit] = useState(PAGE);
+  /** Ticked rows. Empty means the select bar is not shown at all. */
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const deviceItems = useNotificationsStore((s) => s.items);
   const setDeviceRead = useNotificationsStore((s) => s.setRead);
@@ -134,6 +136,13 @@ export function NotificationsSheet({ visible, onClose }: { visible: boolean; onC
   useEffect(() => {
     queryClient.invalidateQueries({ queryKey: ['notifications'] });
   }, [signal, queryClient]);
+
+  /* A selection is a thing you are in the middle of, not a setting. Closing
+     the sheet or switching filter ends it — otherwise "Mark as read" would
+     later act on rows that are no longer even on screen. */
+  useEffect(() => {
+    setSelected(new Set());
+  }, [visible, filter]);
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ['notifications'] });
@@ -203,6 +212,40 @@ export function NotificationsSheet({ visible, onClose }: { visible: boolean; onC
     else readOne.mutate(item.id);
   };
 
+  const toggleSelected = (id: string) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  /* "Select all" means everything in the view you are looking at, not the
+     whole history — ticking it while filtered to "Needs you" and silently
+     sweeping up 200 older rows would be the wrong answer. */
+  const shownIds = useMemo(() => shown.map((n) => n.id), [shown]);
+  const allSelected = shownIds.length > 0 && shownIds.every((id) => selected.has(id));
+  const toggleAll = () => setSelected(allSelected ? new Set() : new Set(shownIds));
+
+  const markSelected = useMutation({
+    mutationFn: async () => {
+      const items = feed.filter((n) => selected.has(n.id) && !n.isRead);
+      // Device alerts live in a local store, server ones behind the API; the
+      // employee ticked one list and should not have to know the difference.
+      items.filter((n) => n.source === 'device')
+        .forEach((n) => setDeviceRead(n.id.replace(/^local:/, ''), true));
+      const ids = items.filter((n) => n.source === 'server').map((n) => n.id);
+      // Sequential rather than Promise.all: a bulk tick is at most a screenful,
+      // and a burst of parallel writes against one row set is not worth it.
+      for (const id of ids) await markNotificationRead(id);
+    },
+    onSettled: () => {
+      setSelected(new Set());
+      invalidate();
+    },
+    onError: (e) => Alert.alert(t('notif.markAllRead'), getApiErrorMessage(e)),
+  });
+
   const BUCKET_LABEL: Record<FeedBucket, string> = {
     today: t('notif.today'),
     yesterday: t('notif.yesterday'),
@@ -257,6 +300,39 @@ export function NotificationsSheet({ visible, onClose }: { visible: boolean; onC
           })}
         </View>
 
+        {/* Appears only once something is ticked. A permanently parked action
+            bar costs a row of height on every visit to say nothing. */}
+        {selected.size > 0 && (
+          <View style={styles.selectBar}>
+            <Pressable
+              onPress={toggleAll}
+              hitSlop={8}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: allSelected }}
+              accessibilityLabel={t('notif.selectAll')}
+              style={styles.selectAllHit}
+            >
+              <View style={[styles.box, allSelected && styles.boxOn]}>
+                {allSelected ? <Ionicons name="checkmark" size={13} color={colors.white} /> : null}
+              </View>
+              <Text style={styles.selectAllText}>{t('notif.selectAll')}</Text>
+            </Pressable>
+
+            <Text style={styles.selectCount}>{t('notif.selectedCount', { count: selected.size })}</Text>
+
+            <Pressable
+              onPress={() => markSelected.mutate()}
+              disabled={markSelected.isPending}
+              hitSlop={6}
+              accessibilityRole="button"
+            >
+              <Text style={[styles.selectAction, markSelected.isPending && styles.selectActionOff]}>
+                {t('notif.markRead')}
+              </Text>
+            </Pressable>
+          </View>
+        )}
+
         <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
           {isLoading ? (
             <SkeletonRows count={4} />
@@ -282,7 +358,15 @@ export function NotificationsSheet({ visible, onClose }: { visible: boolean; onC
                 <View key={g.bucket}>
                   <Text style={styles.dayHeader}>{BUCKET_LABEL[g.bucket]}</Text>
                   {g.items.map((n) => (
-                    <Row key={n.id} n={n} onOpen={() => open(n)} onToggleRead={() => toggleRead(n)} />
+                    <Row
+                      key={n.id}
+                      n={n}
+                      onOpen={() => open(n)}
+                      onToggleRead={() => toggleRead(n)}
+                      selected={selected.has(n.id)}
+                      onSelect={() => toggleSelected(n.id)}
+                      selecting={selected.size > 0}
+                    />
                   ))}
                 </View>
               ))}
@@ -302,7 +386,17 @@ export function NotificationsSheet({ visible, onClose }: { visible: boolean; onC
   );
 }
 
-function Row({ n, onOpen, onToggleRead }: { n: FeedItem; onOpen: () => void; onToggleRead: () => void }) {
+function Row({
+  n, onOpen, onToggleRead, selected, onSelect, selecting,
+}: {
+  n: FeedItem;
+  onOpen: () => void;
+  onToggleRead: () => void;
+  selected: boolean;
+  onSelect: () => void;
+  /** True once anything at all is ticked — then a tap ticks instead of opens. */
+  selecting: boolean;
+}) {
   const colors = useThemeStore((s) => s.colors);
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const KIND = useMemo(() => kindTone(colors), [colors]);
@@ -312,10 +406,18 @@ function Row({ n, onOpen, onToggleRead }: { n: FeedItem; onOpen: () => void; onT
 
   return (
     <Pressable
-      onPress={onOpen}
-      accessibilityRole="button"
+      onPress={selecting ? onSelect : onOpen}
+      onLongPress={onToggleRead}
+      delayLongPress={350}
+      accessibilityRole={selecting ? 'checkbox' : 'button'}
+      accessibilityState={selecting ? { checked: selected } : undefined}
       accessibilityLabel={`${n.title ? `${n.title}. ` : ''}${n.body}`}
-      style={({ pressed }) => [styles.row, !n.isRead && styles.rowUnread, pressed && styles.rowPressed]}
+      style={({ pressed }) => [
+        styles.row,
+        !n.isRead && styles.rowUnread,
+        selected && styles.rowSelected,
+        pressed && styles.rowPressed,
+      ]}
     >
       {/* The unread marker is a solid edge, not a background wash. The wash
           this replaced was one step off the surface colour and effectively
@@ -345,24 +447,22 @@ function Row({ n, onOpen, onToggleRead }: { n: FeedItem; onOpen: () => void; onT
         </View>
       </View>
 
-      {/* The read control, as a real button rather than a decorative dot.
-          Marking something read used to mean either tapping the row — which
-          also navigated away, so you never saw it clear — or a long-press
-          nobody discovers. This does one job, in place, without leaving the
-          list. Nested Pressables do not bubble in React Native, so this never
-          triggers the row's own onPress. */}
+      {/* The checkbox is always here, not revealed by a long-press nobody
+          finds. Ticking one row is what raises the bar at the top of the
+          sheet, so "select all" and "Mark as read" appear the moment they are
+          useful and stay out of the way otherwise. Nested Pressables do not
+          bubble in React Native, so this never fires the row's own press. */}
       <Pressable
-        onPress={onToggleRead}
+        onPress={onSelect}
         hitSlop={10}
-        accessibilityRole="button"
-        accessibilityLabel={n.isRead ? t('notif.a11yMarkUnread') : t('notif.a11yMarkRead')}
+        accessibilityRole="checkbox"
+        accessibilityState={{ checked: selected }}
+        accessibilityLabel={t(selected ? 'notif.a11yDeselect' : 'notif.a11ySelect')}
         style={({ pressed }) => [styles.readBtn, pressed && styles.readBtnPressed]}
       >
-        <Ionicons
-          name={n.isRead ? 'checkmark-circle-outline' : 'ellipse'}
-          size={n.isRead ? 18 : 11}
-          color={n.isRead ? colors.slate400 : colors.brand[700]}
-        />
+        <View style={[styles.box, selected && styles.boxOn]}>
+          {selected ? <Ionicons name="checkmark" size={13} color={colors.white} /> : null}
+        </View>
       </Pressable>
     </Pressable>
   );
@@ -456,6 +556,27 @@ function makeStyles(colors: ColorScheme) {
       alignItems: 'center', justifyContent: 'center', marginTop: 2,
     },
     readBtnPressed: { backgroundColor: colors.slate100 },
+    box: {
+      width: 20, height: 20, borderRadius: 6, borderWidth: 1.5,
+      borderColor: colors.slate300, alignItems: 'center', justifyContent: 'center',
+    },
+    boxOn: { backgroundColor: colors.brand[700], borderColor: colors.brand[700] },
+    rowSelected: { backgroundColor: colors.brand[50] },
+
+    selectBar: {
+      flexDirection: 'row', alignItems: 'center', gap: 10,
+      paddingHorizontal: 20, paddingVertical: 10,
+      borderBottomWidth: 1, borderBottomColor: colors.slate100,
+      backgroundColor: colors.brand[50],
+    },
+    selectAllHit: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    selectAllText: { fontSize: 12.5, fontWeight: '700', color: colors.textLight },
+    selectCount: { flex: 1, fontSize: 12, fontWeight: '600', color: colors.slate500, textAlign: 'right' },
+    selectAction: {
+      fontSize: 11.5, fontWeight: '800', color: colors.brand[700],
+      paddingHorizontal: 10, paddingVertical: 6,
+    },
+    selectActionOff: { color: colors.slate400 },
 
     more: { alignItems: 'center', paddingVertical: 14 },
     moreText: { fontSize: 11.5, fontWeight: '700', color: colors.brand[700] },
