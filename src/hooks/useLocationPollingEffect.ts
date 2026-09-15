@@ -45,10 +45,27 @@ export function useLocationPollingEffect() {
     async function run() {
       try {
         if (shouldTrack) {
-          const fg = await Location.requestForegroundPermissionsAsync();
+          /**
+           * Reads the permission; never asks for it.
+           *
+           * This used to call requestForegroundPermissionsAsync and then
+           * requestBackgroundPermissionsAsync, which meant the system's
+           * "Allow all the time" prompt could appear from inside a useEffect
+           * — with no explanation on screen, at a moment the employee did not
+           * initiate. Google Play requires a prominent in-app disclosure
+           * BEFORE that prompt, so this was a rejection on its own.
+           *
+           * The disclosure and the request now live at the clock-in button,
+           * where the employee has just taken an action and the reason is
+           * legible. This hook only starts polling if that already happened,
+           * which is also the correct behaviour independently of the policy:
+           * background tracking should never begin without the employee
+           * having been told, whatever the store rules say.
+           */
+          const fg = await Location.getForegroundPermissionsAsync();
           if (cancelled || fg.status !== 'granted') return;
-          await Location.requestBackgroundPermissionsAsync();
-          if (cancelled) return;
+          const bg = await Location.getBackgroundPermissionsAsync();
+          if (cancelled || bg.status !== 'granted') return;
           getShiftTimer()?.start(LOCATION_POLL_INTERVAL_MS);
         } else {
           getShiftTimer()?.stop();

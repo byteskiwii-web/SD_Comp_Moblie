@@ -25,6 +25,8 @@ import { GeofenceMap, bearingBetween } from '../../components/GeofenceMap';
 import { PunchTiles } from './PunchTiles';
 import { InfoNote } from '../../components/InfoNote';
 import { useConnectivityStore } from '../../stores/connectivityStore';
+import { useConsentStore } from '../../stores/consentStore';
+import { BackgroundLocationDisclosure } from '../../components/BackgroundLocationDisclosure';
 
 const today = () => toLocalDateKey();
 
@@ -79,6 +81,39 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
   const [permission, setPermission] = useState<'unknown' | 'granted' | 'askable' | 'blocked' | 'services-off'>('unknown');
   const [pendingAction, setPendingAction] = useState<'clock-in' | 'clock-out' | null>(null);
   const [banner, setBanner] = useState<{ tone: 'success' | 'warning'; text: string } | null>(null);
+
+  /**
+   * The background-location disclosure, as a promise the punch flow can await.
+   *
+   * A modal cannot be awaited directly, so the resolver is parked in a ref and
+   * called by whichever button the employee presses. Play requires this screen
+   * to appear BEFORE the system permission prompt; parking the resolver is
+   * what lets an async handler stop at that point rather than racing past it.
+   */
+  const [disclosureVisible, setDisclosureVisible] = useState(false);
+  const disclosureResolve = useRef<((ok: boolean) => void) | null>(null);
+  const bgAccepted = useConsentStore((s) => s.backgroundLocationAcceptedAt);
+  const acceptBg = useConsentStore((s) => s.acceptBackgroundLocation);
+
+  const askDisclosure = useCallback(() => {
+    // Shown once per device. Repeating it at every clock-in would train people
+    // to dismiss it, which defeats the point of a disclosure.
+    if (bgAccepted) return Promise.resolve(true);
+    setDisclosureVisible(true);
+    return new Promise<boolean>((resolve) => {
+      disclosureResolve.current = resolve;
+    });
+  }, [bgAccepted]);
+
+  const settleDisclosure = useCallback(
+    (ok: boolean) => {
+      if (ok) acceptBg();
+      setDisclosureVisible(false);
+      disclosureResolve.current?.(ok);
+      disclosureResolve.current = null;
+    },
+    [acceptBg]
+  );
 
   const historyQuery = useQuery({
     queryKey: ['attendance-today', employee?.id],
@@ -344,8 +379,23 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
     // the throw as a denial and fall into the same gate.
     let granted = false;
     try {
-      const bg = await Location.requestBackgroundPermissionsAsync();
-      granted = bg.status === 'granted';
+      // Already granted? Then there is nothing to disclose and nothing to ask.
+      const existing = await Location.getBackgroundPermissionsAsync();
+      granted = existing.status === 'granted';
+
+      if (!granted) {
+        // THE DISCLOSURE COMES FIRST. Play's location policy requires an
+        // in-app screen naming the background collection before the system
+        // prompt appears — not an explanation afterwards, which is what this
+        // code used to do and is a rejection on its own.
+        const agreed = await askDisclosure();
+        if (!agreed) {
+          setPendingAction(null);
+          return;
+        }
+        const bg = await Location.requestBackgroundPermissionsAsync();
+        granted = bg.status === 'granted';
+      }
     } catch (err) {
       console.warn('[ClockPanel] background location is unavailable in this runtime', err);
     }
@@ -371,6 +421,12 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
 
   return (
     <View style={styles.wrap}>
+      <BackgroundLocationDisclosure
+        visible={disclosureVisible}
+        onAccept={() => settleDisclosure(true)}
+        onDecline={() => settleDisclosure(false)}
+      />
+
       {banner && (
         <View style={[styles.banner, banner.tone === 'success' ? styles.bannerSuccess : styles.bannerWarning]}>
           <Text style={styles.bannerText}>{banner.text}</Text>
