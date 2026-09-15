@@ -52,6 +52,7 @@ module.exports = ({ config }) => {
    */
   if (!wantsDevClient) plugins.push('./plugins/withoutDevLauncher');
 
+
   return {
     ...config,
     plugins,

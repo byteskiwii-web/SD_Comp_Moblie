@@ -46,13 +46,20 @@
       "bundler": "metro"
     },
     "plugins": [
-      "expo-secure-store",
+      [
+        "expo-secure-store",
+        {
+          "faceIDPermission": false
+        }
+      ],
       "expo-dev-client",
       [
         "expo-location",
         {
           "locationAlwaysAndWhenInUsePermission": "Zob Connect checks your location about every 12 minutes while you are clocked in — including when the app is closed — to confirm you are at your assigned store. It stops when your shift ends.",
           "locationWhenInUsePermission": "Zob Connect checks your location when you clock in or out, to confirm you are at your assigned store.",
+          "locationAlwaysPermission": "Zob Connect checks your location about every 12 minutes while you are clocked in — including when the app is closed — to confirm you are at your assigned store. It stops when your shift ends.",
+          "motionUsagePermission": false,
           "isIosBackgroundLocationEnabled": true,
           "isAndroidBackgroundLocationEnabled": true,
           "isAndroidForegroundServiceEnabled": true
@@ -62,7 +69,16 @@
         "expo-image-picker",
         {
           "photosPermission": "Zob Connect lets you choose an existing photo when you upload an identity document or set your profile picture.",
-          "cameraPermission": "Zob Connect uses your camera to photograph your identity documents and to take a live photo when you clock in or out."
+          "cameraPermission": "Zob Connect uses your camera to photograph your identity documents and to take a live photo when you clock in or out.",
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Zob Connect uses your camera to photograph your identity documents and to take a live photo when you clock in or out.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
         }
       ],
       [
