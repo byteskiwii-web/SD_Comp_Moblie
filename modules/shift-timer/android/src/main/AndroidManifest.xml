@@ -10,6 +10,24 @@
       android:stopWithTask="false"
       android:foregroundServiceType="location" />
 
+    <!--
+      No foregroundServiceType, deliberately, and it is not an omission.
+
+      This is a HeadlessJsTaskService: it never calls startForeground, so it
+      is not a foreground service and Android 14's typed-service requirement
+      does not apply to it. It is started with startService (see
+      ShiftTimerService.kt line ~147), not startForegroundService — and that
+      call is made from inside ShiftTimerService, which IS a foreground
+      service, so Android 12's background-start restriction is satisfied by
+      exemption rather than by luck.
+
+      Declaring a type here would be WORSE than leaving it off: it would
+      assert a foreground service that never starts, and Android 14 kills a
+      typed service that does not call startForeground in time.
+
+      The long-lived ShiftTimerService above is the real foreground service
+      and is correctly typed "location".
+    -->
     <service
       android:name=".ShiftTimerTickService"
       android:exported="false" />
