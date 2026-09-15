@@ -10,13 +10,16 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.sdcomputronix.ziphrmsmobile",
+      "buildNumber": "1",
       "infoPlist": {
         "NSCameraUsageDescription": "Zip Connect uses your camera to take a live photo when you clock in or out, confirming it is you.",
+        "NSPhotoLibraryUsageDescription": "Zip Connect lets you choose an existing photo when you upload an identity document or set your profile picture.",
         "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
       "package": "com.sdcomputronix.ziphrmsmobile",
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -31,6 +34,10 @@
         "android.permission.ACCESS_BACKGROUND_LOCATION",
         "android.permission.FOREGROUND_SERVICE",
         "android.permission.FOREGROUND_SERVICE_LOCATION"
+      ],
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
       ]
     },
     "web": {
@@ -48,6 +55,13 @@
           "isIosBackgroundLocationEnabled": true,
           "isAndroidBackgroundLocationEnabled": true,
           "isAndroidForegroundServiceEnabled": true
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Zip Connect lets you choose an existing photo when you upload an identity document or set your profile picture.",
+          "cameraPermission": "Zip Connect uses your camera to photograph your identity documents and to take a live photo when you clock in or out."
         }
       ],
       [
