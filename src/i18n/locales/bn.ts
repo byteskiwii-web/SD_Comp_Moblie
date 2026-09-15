@@ -74,7 +74,7 @@ export const bn: Catalogue = {
   'role.hr-manager': 'এইচআর ম্যানেজার',
   'role.super-admin': 'সুপার অ্যাডমিন',
 
-  'auth.brand': 'ZIP CONNECT · ফিল্ড অ্যাপ',
+  'auth.brand': 'ZOB CONNECT · ফিল্ড অ্যাপ',
   'auth.signIn': 'সাইন ইন করুন',
   'auth.rememberMe': 'আমাকে সাইন ইন রাখুন',
   'auth.rememberMeOff': 'পরের বার অ্যাপ খুললে আপনাকে আবার সাইন ইন করতে হবে।',
@@ -367,7 +367,7 @@ export const bn: Catalogue = {
   'notif.skippedBody_one': '1টি বিজ্ঞপ্তিতে এখনও আপনার পদক্ষেপ দরকার, তাই সম্পূর্ণ না হওয়া পর্যন্ত সেটি অপঠিত থাকবে।',
   'notif.skippedBody_other': '{count}টি বিজ্ঞপ্তিতে এখনও আপনার পদক্ষেপ দরকার, তাই সম্পূর্ণ না হওয়া পর্যন্ত সেগুলি অপঠিত থাকবে।',
   'loc.discloseTitle': 'শিফটে থাকাকালীন লোকেশন',
-  'loc.discloseRule': 'Zip Connect আপনি আপনার নির্ধারিত স্টোরে আছেন কিনা নিশ্চিত করতে লোকেশন ডেটা সংগ্রহ করে, এমনকি অ্যাপ বন্ধ থাকলে বা ব্যবহারে না থাকলেও।',
+  'loc.discloseRule': 'Zob Connect আপনি আপনার নির্ধারিত স্টোরে আছেন কিনা নিশ্চিত করতে লোকেশন ডেটা সংগ্রহ করে, এমনকি অ্যাপ বন্ধ থাকলে বা ব্যবহারে না থাকলেও।',
   'loc.discloseDoLabel': 'আমরা কী দেখি',
   'loc.discloseDoWhen': 'ক্লক-ইন ও ক্লক-আউটের সময় আপনার লোকেশন',
   'loc.discloseDoStore': 'শিফট চলাকালীন প্রায় প্রতি ১২ মিনিটে আপনার লোকেশন',

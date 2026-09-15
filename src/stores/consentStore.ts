@@ -44,7 +44,7 @@ export const useConsentStore = create<ConsentState>()(
       clearConsents: () => set({ backgroundLocationAcceptedAt: null }),
     }),
     {
-      name: 'zip_connect_consents',
+      name: 'zob_connect_consents',
       storage: createJSONStorage(() => AsyncStorage),
     }
   )

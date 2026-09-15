@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Zip Connect",
+    "name": "Zob Connect",
     "slug": "zip-hrms-mobile",
     "scheme": "ziphrmsmobile",
     "version": "1.0.0",
@@ -12,8 +12,8 @@
       "bundleIdentifier": "com.sdcomputronix.ziphrmsmobile",
       "buildNumber": "1",
       "infoPlist": {
-        "NSCameraUsageDescription": "Zip Connect uses your camera to take a live photo when you clock in or out, confirming it is you.",
-        "NSPhotoLibraryUsageDescription": "Zip Connect lets you choose an existing photo when you upload an identity document or set your profile picture.",
+        "NSCameraUsageDescription": "Zob Connect uses your camera to take a live photo when you clock in or out, confirming it is you.",
+        "NSPhotoLibraryUsageDescription": "Zob Connect lets you choose an existing photo when you upload an identity document or set your profile picture.",
         "ITSAppUsesNonExemptEncryption": false
       }
     },
@@ -51,8 +51,8 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Zip Connect checks your location about every 12 minutes while you are clocked in — including when the app is closed — to confirm you are at your assigned store. It stops when your shift ends.",
-          "locationWhenInUsePermission": "Zip Connect checks your location when you clock in or out, to confirm you are at your assigned store.",
+          "locationAlwaysAndWhenInUsePermission": "Zob Connect checks your location about every 12 minutes while you are clocked in — including when the app is closed — to confirm you are at your assigned store. It stops when your shift ends.",
+          "locationWhenInUsePermission": "Zob Connect checks your location when you clock in or out, to confirm you are at your assigned store.",
           "isIosBackgroundLocationEnabled": true,
           "isAndroidBackgroundLocationEnabled": true,
           "isAndroidForegroundServiceEnabled": true
@@ -61,8 +61,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Zip Connect lets you choose an existing photo when you upload an identity document or set your profile picture.",
-          "cameraPermission": "Zip Connect uses your camera to photograph your identity documents and to take a live photo when you clock in or out."
+          "photosPermission": "Zob Connect lets you choose an existing photo when you upload an identity document or set your profile picture.",
+          "cameraPermission": "Zob Connect uses your camera to photograph your identity documents and to take a live photo when you clock in or out."
         }
       ],
       [

@@ -74,7 +74,7 @@ export const pa: Catalogue = {
   'role.hr-manager': 'ਐਚਆਰ ਮੈਨੇਜਰ',
   'role.super-admin': 'ਸੁਪਰ ਐਡਮਿਨ',
 
-  'auth.brand': 'ZIP CONNECT · ਫੀਲਡ ਐਪ',
+  'auth.brand': 'ZOB CONNECT · ਫੀਲਡ ਐਪ',
   'auth.signIn': 'ਸਾਈਨ ਇਨ ਕਰੋ',
   'auth.rememberMe': 'ਮੈਨੂੰ ਸਾਈਨ ਇਨ ਰੱਖੋ',
   'auth.rememberMeOff': 'ਅਗਲੀ ਵਾਰ ਐਪ ਖੋਲ੍ਹਣ ਉੱਤੇ ਤੁਹਾਨੂੰ ਮੁੜ ਸਾਈਨ ਇਨ ਕਰਨਾ ਪਵੇਗਾ।',
@@ -367,7 +367,7 @@ export const pa: Catalogue = {
   'notif.skippedBody_one': '1 ਸੂਚਨਾ ਉੱਤੇ ਹਾਲੇ ਵੀ ਤੁਹਾਡੀ ਕਾਰਵਾਈ ਬਾਕੀ ਹੈ, ਇਸ ਲਈ ਪੂਰਾ ਹੋਣ ਤੱਕ ਉਹ ਅਣਪੜ੍ਹੀ ਰਹੇਗੀ।',
   'notif.skippedBody_other': '{count} ਸੂਚਨਾਵਾਂ ਉੱਤੇ ਹਾਲੇ ਵੀ ਤੁਹਾਡੀ ਕਾਰਵਾਈ ਬਾਕੀ ਹੈ, ਇਸ ਲਈ ਪੂਰਾ ਹੋਣ ਤੱਕ ਉਹ ਅਣਪੜ੍ਹੀਆਂ ਰਹਿਣਗੀਆਂ।',
   'loc.discloseTitle': 'ਸ਼ਿਫਟ ਦੌਰਾਨ ਟਿਕਾਣਾ',
-  'loc.discloseRule': 'Zip Connect ਇਹ ਪੁਸ਼ਟੀ ਕਰਨ ਲਈ ਟਿਕਾਣਾ ਡਾਟਾ ਇਕੱਠਾ ਕਰਦਾ ਹੈ ਕਿ ਤੁਸੀਂ ਆਪਣੇ ਨਿਯਤ ਸਟੋਰ ’ਤੇ ਹੋ, ਭਾਵੇਂ ਐਪ ਬੰਦ ਹੋਵੇ ਜਾਂ ਵਰਤੋਂ ਵਿੱਚ ਨਾ ਹੋਵੇ।',
+  'loc.discloseRule': 'Zob Connect ਇਹ ਪੁਸ਼ਟੀ ਕਰਨ ਲਈ ਟਿਕਾਣਾ ਡਾਟਾ ਇਕੱਠਾ ਕਰਦਾ ਹੈ ਕਿ ਤੁਸੀਂ ਆਪਣੇ ਨਿਯਤ ਸਟੋਰ ’ਤੇ ਹੋ, ਭਾਵੇਂ ਐਪ ਬੰਦ ਹੋਵੇ ਜਾਂ ਵਰਤੋਂ ਵਿੱਚ ਨਾ ਹੋਵੇ।',
   'loc.discloseDoLabel': 'ਅਸੀਂ ਕੀ ਜਾਂਚਦੇ ਹਾਂ',
   'loc.discloseDoWhen': 'ਕਲਾਕ-ਇਨ ਤੇ ਕਲਾਕ-ਆਊਟ ਵੇਲੇ ਤੁਹਾਡਾ ਟਿਕਾਣਾ',
   'loc.discloseDoStore': 'ਸ਼ਿਫਟ ਦੌਰਾਨ ਲਗਭਗ ਹਰ 12 ਮਿੰਟ ਬਾਅਦ ਤੁਹਾਡਾ ਟਿਕਾਣਾ',

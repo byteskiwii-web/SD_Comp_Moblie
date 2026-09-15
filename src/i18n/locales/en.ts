@@ -85,7 +85,7 @@ export const en = {
   'role.super-admin': 'Super Admin',
 
   /* ------------------------------------------------------------------ auth */
-  'auth.brand': 'ZIP CONNECT · FIELD APP',
+  'auth.brand': 'ZOB CONNECT · FIELD APP',
   'auth.signIn': 'Sign in',
   'auth.rememberMe': 'Keep me signed in',
   'auth.rememberMeOff': 'You will sign in again next time you open the app.',
@@ -386,7 +386,7 @@ export const en = {
   'notif.skippedBody_one': '1 notification still needs your action, so it stays unread until you complete it.',
   'notif.skippedBody_other': '{count} notifications still need your action, so they stay unread until you complete them.',
   'loc.discloseTitle': 'Location while you are on shift',
-  'loc.discloseRule': 'Zip Connect collects location data to confirm you are at your assigned store, even when the app is closed or not in use.',
+  'loc.discloseRule': 'Zob Connect collects location data to confirm you are at your assigned store, even when the app is closed or not in use.',
   'loc.discloseDoLabel': 'What we check',
   'loc.discloseDoWhen': 'Your location when you clock in and clock out',
   'loc.discloseDoStore': 'Your location about every 12 minutes during your shift',
