@@ -25,6 +25,7 @@ import { ColorScheme, radii } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
 import { useAuthStore } from '../../stores/authStore';
 import { useT, type TKey } from '../../i18n';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
 
 const ROLE_LABEL: Record<string, string> = {
   'field-employee': 'role.field-employee',
@@ -69,21 +70,19 @@ export function ProfileScreen() {
    * Destructive on the sign-out option, cancel-styled on Cancel, so the safe
    * choice is the one the thumb lands on by default.
    */
-  const confirmSignOut = React.useCallback(() => {
-    if (!isClockedIn) {
-      void signOut();
-      return;
-    }
-    Alert.alert(
-      t('profile.signOutShiftTitle'),
-      t('profile.signOutShiftBody'),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        { text: t('common.signOut'), style: 'destructive', onPress: () => { void signOut(); } },
-      ],
-      { cancelable: true }
-    );
-  }, [isClockedIn, signOut, t]);
+  /**
+   * Always asks now, and asks in the app's own dialog rather than the
+   * operating system's.
+   *
+   * It used to sign out silently unless a shift was open, on the reasoning
+   * that signing back in is cheap. It is not cheap here: this app binds an
+   * account to a single device, so signing out on a shared store phone can
+   * leave somebody unable to get back in without HR. The clocked-in case
+   * still gets the stronger wording, because that one also abandons an open
+   * shift — but it is no longer the only case that stops and asks.
+   */
+  const [signOutOpen, setSignOutOpen] = React.useState(false);
+  const confirmSignOut = React.useCallback(() => setSignOutOpen(true), []);
 
   // Pull to refresh: the automatic read happens at boot, and somebody whose
   // details were changed while the app was open needs a way to ask again
@@ -96,6 +95,18 @@ export function ProfileScreen() {
 
   return (
     <SafeAreaView style={styles.flex} edges={['top']}>
+      {/* At the screen root, never inside the ScrollView -- a Modal nested in
+          a scroll container renders as a black screen on Android. */}
+      <ConfirmDialog
+        visible={signOutOpen}
+        tone="danger"
+        title={t(isClockedIn ? 'profile.signOutShiftTitle' : 'profile.signOutTitle')}
+        body={t(isClockedIn ? 'profile.signOutShiftBody' : 'profile.signOutBody')}
+        confirmLabel={t('common.signOut')}
+        onCancel={() => setSignOutOpen(false)}
+        onConfirm={() => { setSignOutOpen(false); void signOut(); }}
+      />
+
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{t('profile.title')}</Text>
       </View>

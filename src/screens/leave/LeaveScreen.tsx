@@ -22,6 +22,7 @@ import {
 } from '../../api/leave.api';
 import { ApplyLeaveSheet } from './ApplyLeaveSheet';
 import { t as tr, useT, type TKey } from '../../i18n';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
 
 /**
  * Leave.
@@ -134,6 +135,9 @@ export function LeaveScreen() {
     onError: (err) => setError(getApiErrorMessage(err)),
   });
 
+  /** Which request the confirmation is asking about; null when closed. */
+  const [withdrawId, setWithdrawId] = useState<string | null>(null);
+
   const withdraw = useMutation({
     mutationFn: (id: string) => cancelLeave(id),
     onSuccess: () => {
@@ -153,6 +157,25 @@ export function LeaveScreen() {
 
   return (
     <SafeAreaView style={styles.flex} edges={['top']}>
+      {/* Withdrawing was a single tap on an irreversible action, with the
+          button sitting directly beneath the request's own text -- the
+          easiest kind of mis-tap to make and the hardest to undo, since a
+          withdrawn request cannot be reinstated and the dates may no longer
+          be free. At the screen root, never inside a scroll container. */}
+      <ConfirmDialog
+        visible={withdrawId !== null}
+        tone="danger"
+        title={t('leave.withdrawTitle')}
+        body={t('leave.withdrawBody')}
+        confirmLabel={t('leave.withdraw')}
+        pending={withdraw.isPending}
+        onCancel={() => setWithdrawId(null)}
+        onConfirm={() => {
+          if (withdrawId !== null) withdraw.mutate(withdrawId);
+          setWithdrawId(null);
+        }}
+      />
+
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{t('leave.title')}</Text>
         <TourTarget id="leave-apply">
@@ -305,7 +328,7 @@ export function LeaveScreen() {
 
                 {r.status === 'pending' && (
                   <Pressable
-                    onPress={() => withdraw.mutate(r.id)}
+                    onPress={() => setWithdrawId(r.id)}
                     disabled={withdraw.isPending}
                     style={({ pressed }) => [styles.withdraw, pressed && styles.pressed]}
                     accessibilityRole="button"
