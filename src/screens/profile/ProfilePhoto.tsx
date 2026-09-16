@@ -5,6 +5,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ColorScheme } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
 import { useAuthStore } from '../../stores/authStore';
+import axios from 'axios';
 import { apiClient, getApiErrorMessage } from '../../api/client';
 import { profilePhotoUrl, removeProfilePhoto, uploadProfilePhoto } from '../../api/photo.api';
 import type { PickedFile } from '../../api/documents.api';
@@ -168,6 +169,7 @@ export function ProfilePhoto() {
       accessibilityLabel={t('profile.photoTitle')}
       style={({ pressed }) => [styles.wrap, pressed && !busy && { opacity: 0.85 }]}
     >
+      <View style={styles.avatarSlot}>
       <View style={styles.avatar}>
         {hasPhoto && employee ? (
           <Image
@@ -186,12 +188,21 @@ export function ProfilePhoto() {
                * who can fix it.
                */
               try {
-                await apiClient.get(`/users/${encodeURIComponent(employee.id)}/photo`, {
-                  responseType: 'arraybuffer',
-                });
+                // NOT responseType arraybuffer. That was the first attempt at this
+                // and it defeated itself: axios then hands back the ERROR body as
+                // an ArrayBuffer too, so getApiErrorMessage could not read the
+                // server message out of it and fell through to "Something went
+                // wrong", which is the one answer that identifies nothing. The
+                // success path returning unparsed bytes does not matter here --
+                // this request exists only to learn why the failure happened.
+                await apiClient.get(`/users/${encodeURIComponent(employee.id)}/photo`);
                 setPhotoError(tr('profile.photoUnreadable'));
               } catch (err) {
-                setPhotoError(getApiErrorMessage(err));
+                // The STATUS is the diagnostic: 403 is the guard, 404 is a record
+                // with no photo on it, 5xx is the storage behind it. The message
+                // alone cannot separate those.
+                const status = axios.isAxiosError(err) ? err.response?.status : undefined;
+                setPhotoError(status ? getApiErrorMessage(err) + ' (' + status + ')' : getApiErrorMessage(err));
               }
             }}
             accessibilityIgnoresInvertColors
@@ -201,13 +212,16 @@ export function ProfilePhoto() {
         )}
       </View>
 
-      {photoError ? <Text style={styles.photoError}>{photoError}</Text> : null}
-
       {/* The camera badge is what tells somebody the avatar is tappable at
-          all. Without it this reads as decoration. */}
+          all. Without it this reads as decoration. Inside the avatar's own box
+          so it stays pinned to the picture rather than to the bottom of
+          whatever else this component happens to be showing. */}
       <View style={styles.badge}>
         <Ionicons name={busy ? 'hourglass-outline' : 'camera'} size={13} color={colors.white} />
       </View>
+      </View>
+
+      {photoError ? <Text style={styles.photoError}>{photoError}</Text> : null}
     </Pressable>
   );
 }
@@ -218,7 +232,9 @@ function makeStyles(colors: ColorScheme) {
       marginTop: 8, paddingHorizontal: 16,
       fontSize: 11, fontWeight: '600', textAlign: 'center', color: colors.dangerText,
     },
-    wrap: { marginBottom: 14 },
+    wrap: { marginBottom: 14, alignItems: 'center' },
+    // The badge's -2 offsets measure from THIS, not from the whole component.
+    avatarSlot: { width: 76, height: 76 },
     avatar: {
       width: 76, height: 76, borderRadius: 38, backgroundColor: colors.brand[700],
       alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
