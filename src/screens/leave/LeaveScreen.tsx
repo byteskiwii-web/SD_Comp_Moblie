@@ -5,6 +5,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ColorScheme, radii } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
+import { useAuthStore } from '../../stores/authStore';
 import { Card } from '../../components/ui';
 import { SkeletonList, SkeletonRows } from '../../components/Skeleton';
 import { TourTarget } from '../../components/tour/TourTarget';
@@ -99,12 +100,19 @@ export function LeaveScreen() {
   const [error, setError] = useState<string | null>(null);
   // Which request is having a worked day claimed against it.
   const [claiming, setClaiming] = useState<LeaveRequest | null>(null);
+  const employee = useAuthStore((st) => st.employee);
   const colors = useThemeStore((s) => s.colors);
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const STATUS_TONE = useMemo(() => statusTone(colors), [colors]);
   const t = useT();
 
-  const listQuery = useQuery({ queryKey: ['leave'], queryFn: () => getMyLeave() });
+  const listQuery = useQuery({
+    // Keyed on the employee too: a different sign-in on the same device must
+    // not read the previous holder's list out of the cache.
+    queryKey: ['leave', employee?.id],
+    queryFn: () => getMyLeave(employee!.id),
+    enabled: !!employee,
+  });
   // Which month the card is showing. Leave is discussed by the month, so the
   // month is the unit -- and being able to step back through it is the history
   // the figures belong to.

@@ -112,9 +112,27 @@ export async function getTeamLeave(from: string, to: string, limit = 100) {
   return res.data.data ?? [];
 }
 
-export async function getMyLeave(limit = 50) {
+/*
+ * ASK FOR YOUR OWN, DO NOT ASSUME THE SERVER MEANS YOURS.
+ *
+ * GET /leave and GET /regularisation scope by LEVEL, not by caller. A field
+ * employee resolves to SELF and gets only their own rows, so this read looked
+ * correct -- but a team lead or a site manager resolves to SITE, and the same
+ * request returns the WHOLE STORE. Their own "My requests" list was therefore
+ * everybody's, with a Withdraw button on each one.
+ *
+ * Nothing could be damaged: cancel() matches on employee_id = actor.id, so
+ * withdrawing a colleague's request would have 404'd. But the list was still
+ * showing one person the private reasons another gave for asking for a day
+ * off, on a screen that says "My requests".
+ *
+ * Naming the employee removes the ambiguity entirely: this call means mine at
+ * every level, and the team-facing screens keep their own unfiltered calls
+ * where seeing everybody is the point.
+ */
+export async function getMyLeave(employeeId: string, limit = 50) {
   const res = await apiClient.get<{ success: true; data: LeaveRequest[] }>(BASE, {
-    params: { limit },
+    params: { limit, employee_id: employeeId },
   });
   return res.data.data ?? [];
 }

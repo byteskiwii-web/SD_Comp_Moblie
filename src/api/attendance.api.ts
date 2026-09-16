@@ -203,11 +203,15 @@ export async function cancelRegularisation(id: string) {
   return res.data.data;
 }
 
-export async function getMyRegularisations(month?: string) {
+// Same reasoning as getMyLeave: the server scopes by level, so a scoped role
+// asking for "my requests" was handed the whole store's.
+export async function getMyRegularisations(employeeId: string, month?: string) {
   const res = await apiClient.get<{
     success: true;
     data: Regularisation[];
     meta?: RegularisationAllowance;
-  }>('/regularisation', { params: month ? { month } : undefined });
+  }>('/regularisation', {
+    params: month ? { month, employee_id: employeeId } : { employee_id: employeeId },
+  });
   return { items: res.data.data, allowance: res.data.meta ?? {} };
 }

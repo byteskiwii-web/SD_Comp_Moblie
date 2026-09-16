@@ -142,7 +142,7 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
   // against September must not be judged against October's count.
   const listQuery = useQuery({
     queryKey: ['regularisation-mine', employee?.id, markDate.slice(0, 7)],
-    queryFn: () => getMyRegularisations(markDate.slice(0, 7)),
+    queryFn: () => getMyRegularisations(employee!.id, markDate.slice(0, 7)),
     enabled: !!employee,
   });
 

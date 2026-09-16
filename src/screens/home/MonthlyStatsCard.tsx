@@ -7,7 +7,7 @@ import { useThemeStore } from '../../stores/themeStore';
 import { useAuthStore } from '../../stores/authStore';
 import { getAttendanceHistory } from '../../api/attendance.api';
 import { getLeaveSummary } from '../../api/leave.api';
-import { formatDuration, summariseDays } from '../../utils/attendanceDay';
+import { summariseDays } from '../../utils/attendanceDay';
 import { toLocalDateKey } from '../../utils/datetime';
 import { Skeleton } from '../../components/Skeleton';
 import { t as tr, useT, type TKey } from '../../i18n';
@@ -61,10 +61,11 @@ export function MonthlyStatsCard() {
 
   const stats = useMemo(() => {
     const days = summariseDays(data ?? []);
-    const present = days.filter((d) => d.firstIn).length;
-    const minutes = days.reduce((t, d) => t + (d.effectiveMinutes ?? 0), 0);
-    return { present, notMarked: Math.max(0, range.elapsed - present), minutes };
-  }, [data, range.elapsed]);
+    // Present is days with at least one punch. Nothing else is derived here
+    // any more -- the minutes total and the elapsed-minus-present count went
+    // with the tiles that showed them.
+    return { present: days.filter((d) => d.firstIn).length };
+  }, [data]);
 
   return (
     <Card>
@@ -83,12 +84,17 @@ export function MonthlyStatsCard() {
       ) : (
         <>
           <View style={styles.row}>
+            {/* Two figures, both of which mean something on their own.
+
+                NOT MARKED went because it counted weekly offs as gaps -- the
+                footnote under it admitted as much -- so it reported a number
+                nobody could act on and that looked worse than the truth.
+                HOURS went with it: the month total answers nothing a person
+                asks on a home screen, and the day detail already carries the
+                hours for any day they care about. */}
             <Tile value={String(stats.present)} label={t('stats.present')} tone="ok" />
             <Tile value={String(leave?.takenTotal ?? 0)} label={t('home.leaveTaken')} tone="plain" />
-            <Tile value={String(stats.notMarked)} label={t('stats.notMarked')} tone="warn" />
-            <Tile value={formatDuration(stats.minutes)} label={t('stats.hours')} tone="plain" />
           </View>
-          <Text style={styles.footnote}>{t('stats.footnote')}</Text>
         </>
       )}
     </Card>
