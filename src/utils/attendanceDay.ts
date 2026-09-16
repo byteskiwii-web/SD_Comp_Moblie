@@ -175,3 +175,56 @@ export function punctuality(
   rostered.setHours(h, m, 0, 0);
   return actual.getTime() - rostered.getTime() > graceMinutes * 60000 ? 'late' : 'on-time';
 }
+
+/**
+ * Is the rostered shift window open right now?
+ *
+ * The geo-fence is a question about a punch that is about to happen. Off
+ * shift there is no such punch, so "Outside geo-fence, 6.5 km away, needs HR
+ * approval" read at home in the evening is not a warning about anything -- it
+ * is a fact about where somebody lives, styled as a problem with their
+ * attendance.
+ *
+ * Returns null, not false, when there is no roster. No shift template means
+ * there is no window to be outside of, and a caller that gates on this must
+ * be able to tell "closed" from "not applicable" -- treating the second as
+ * the first would hide the fence permanently from everyone unrostered, who
+ * are exactly the people whose punches get judged on location alone.
+ *
+ * LEAD-IN, because arriving early is normal. Somebody standing outside the
+ * gate at five to ten is deciding where to be when the shift starts, and the
+ * fence line is the answer to that. Ending exactly on the rostered end is
+ * fine by contrast: an employee still clocked in past it is on shift by the
+ * only measure that counts, and callers check that separately.
+ *
+ * Wrap is measured forward from the opening edge rather than by comparing
+ * "now" to two endpoints, because a night shift's window crosses midnight and
+ * so can the lead-in on its own -- a 00:00 start opens at 23:30 the day
+ * before. One forward distance against one length handles both without the
+ * endpoint comparison quietly inverting.
+ */
+export function isWithinShiftWindow(
+  shiftStart: string | null | undefined,
+  shiftEnd: string | null | undefined,
+  now: Date = new Date(),
+  leadInMinutes = 30
+): boolean | null {
+  const start = minutesOfDay(shiftStart);
+  const end = minutesOfDay(shiftEnd);
+  if (start === null || end === null) return null;
+
+  const overnight = end <= start;
+  const spanMinutes = (overnight ? end + 1440 - start : end - start) + leadInMinutes;
+  const opensAt = (start - leadInMinutes + 1440) % 1440;
+  const sinceOpen = (now.getHours() * 60 + now.getMinutes() - opensAt + 1440) % 1440;
+  return sinceOpen <= spanMinutes;
+}
+
+/** "HH:MM:SS" (or "HH:MM") to minutes past midnight; null if unparseable. */
+function minutesOfDay(hhmmss: string | null | undefined): number | null {
+  if (!hhmmss) return null;
+  const [h, m] = String(hhmmss).split(':').map(Number);
+  if (Number.isNaN(h) || Number.isNaN(m)) return null;
+  return h * 60 + m;
+}
+

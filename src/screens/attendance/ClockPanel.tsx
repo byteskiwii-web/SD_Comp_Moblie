@@ -9,7 +9,7 @@ import { useThemeStore } from '../../stores/themeStore';
 import { usePreferencesStore } from '../../stores/preferencesStore';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useAuthStore } from '../../stores/authStore';
-import { summariseDay } from '../../utils/attendanceDay';
+import { isWithinShiftWindow, summariseDay } from '../../utils/attendanceDay';
 import { Skeleton } from '../../components/Skeleton';
 import { useShiftStore } from '../../stores/shiftStore';
 import { haversineDistance } from '../../utils/haversine';
@@ -27,6 +27,7 @@ import { PunchTiles } from './PunchTiles';
 import { InfoNote } from '../../components/InfoNote';
 import { useConnectivityStore } from '../../stores/connectivityStore';
 import { useConsentStore } from '../../stores/consentStore';
+import { useTicker } from '../../hooks/useTicker';
 import { BackgroundLocationDisclosure } from '../../components/BackgroundLocationDisclosure';
 
 const today = () => toLocalDateKey();
@@ -229,19 +230,41 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
   const lastClockIn = marks.find((m) => m.mark_type === 'clock-in');
   const lastClockOut = marks.find((m) => m.mark_type === 'clock-out');
   /*
-   * THE DAY IS DONE: clocked in, and back out again.
+   * THE FENCE IS A SHIFT-HOURS QUESTION.
    *
-   * Nothing is about to be punched, so where the phone is has stopped
-   * mattering -- and "Outside geo-fence, 193 m away, needs HR approval" read
-   * to somebody sitting at home after their shift as though something were
-   * wrong with a mark they had already made. It is not a warning at that
-   * point, it is a statement of the obvious dressed as one.
+   * "Outside geo-fence · 6.5 km from Ahmedabad-Devarc · needs HR approval",
+   * read at half past midnight by somebody at home, is not a warning about
+   * anything. Nothing is being punched, so the distance decides nothing; all
+   * it does is dress where a person lives as a problem with their attendance,
+   * in amber, on the first screen they see.
    *
-   * Before the first punch the same line is worth having: it answers whether
-   * you can clock in from where you are standing. So this hides it only once
-   * the answer can no longer change anything today.
+   * During the shift it is the opposite -- it is the single most useful line
+   * on the panel, because it answers whether clocking in from where you are
+   * standing will go through cleanly or land on an HR queue.
+   *
+   * So it shows while that answer can still change something:
+   *
+   *   - inside the rostered window, with a lead-in for arriving early;
+   *   - any time the employee is actually clocked in, which covers both
+   *     running past the rostered end and starting before it;
+   *   - always, for somebody on no roster at all, since there is no window to
+   *     judge them against and location is all their punch is judged on.
+   *
+   * and it stops once the day's two marks are done, when nothing remains that
+   * the answer could change.
+   *
+   * Hiding it loses nothing: a punch taken off-hours still comes back saying
+   * it was outside the radius and is pending HR approval (clock.outsidePending),
+   * so the fact arrives at the moment it means something rather than sitting
+   * on screen all evening. Background location tracking is a separate thing
+   * and already stops at clock-out -- shiftTimerTask bails unless the shift
+   * store says clocked in and off break.
    */
-  const shiftFinishedToday = !isCurrentlyClockedIn && !!lastClockOut;
+  const now = useTicker();
+  const dayFinishedToday = !isCurrentlyClockedIn && !!lastClockOut;
+  const shiftWindowOpen = isWithinShiftWindow(profile?.shiftStart, profile?.shiftEnd, now);
+  const fenceMatters =
+    !dayFinishedToday && (isCurrentlyClockedIn || shiftWindowOpen !== false);
   const lastBreakStart = marks.find((m) => m.mark_type === 'break-start');
   const lastBreakEnd = marks.find((m) => m.mark_type === 'break-end');
 
@@ -594,7 +617,13 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
 
       <TourTarget id="clock-location">
       <View style={styles.geoBlock}>
-        {locationError ? (
+        {/* The error outranks the fence, but only while a fix still buys
+            something. A missing fix disables Start/End Shift, so for as long
+            as either is on offer this has to say why -- a dead button with no
+            explanation is worse than the banner. Once the day's two marks are
+            done nothing is waiting on location, and "Location unavailable"
+            becomes the same after-hours noise as the fence line itself. */}
+        {locationError && !dayFinishedToday ? (
           <>
             <StatusBanner
               tone="bad"
@@ -613,7 +642,7 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
               )}
             </View>
           </>
-        ) : shiftFinishedToday ? null : (
+        ) : !fenceMatters ? null : (
           <>
             <StatusBanner
               tone={distanceMetres == null ? 'muted' : insideFence ? 'ok' : 'warn'}
