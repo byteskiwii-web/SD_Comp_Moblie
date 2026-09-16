@@ -22,6 +22,8 @@ import { FestivalCard } from './FestivalCard';
 import { TourTarget } from '../../components/tour/TourTarget';
 import { useTourStore } from '../../stores/tourStore';
 import { Skeleton, SkeletonRows } from '../../components/Skeleton';
+import { AvatarContent } from '../../components/AvatarContent';
+import { TeamLeaveCard } from './TeamLeaveCard';
 import { useT } from '../../i18n';
 
 const today = () => toLocalDateKey();
@@ -125,9 +127,7 @@ export function HomeScreen() {
             accessibilityRole="button"
             accessibilityLabel={t('profile.title')}
           >
-            <Text style={styles.avatarInitial}>
-              {initialsOf(employee?.first_name, employee?.last_name)}
-            </Text>
+            <AvatarContent initialsStyle={styles.avatarInitial} />
           </Pressable>
           <View style={styles.headerText}>
             <Text style={styles.welcome}>{t('home.welcome')}</Text>
@@ -305,6 +305,8 @@ export function HomeScreen() {
           <Ionicons name="chevron-forward" size={18} color={colors.slate400} />
         </Pressable>
 
+        <TeamLeaveCard />
+
         <FestivalCard />
 
         <MonthlyStatsCard />
@@ -366,6 +368,8 @@ function makeStyles(colors: ColorScheme) {
   avatar: {
     width: 44, height: 44, borderRadius: 22, backgroundColor: colors.brand[700],
     alignItems: 'center', justifyContent: 'center',
+    // The photo fills this circle, so it has to be clipped to it.
+    overflow: 'hidden',
   },
   avatarPressed: { opacity: 0.75 },
   avatarInitial: { color: colors.white, fontSize: 13, fontWeight: '800', letterSpacing: 0.3 },

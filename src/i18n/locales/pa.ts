@@ -94,6 +94,8 @@ export const pa: Catalogue = {
   'home.shiftStart': 'ਸ਼ਿਫਟ ਸ਼ੁਰੂ',
   'home.shiftEnd': 'ਸ਼ਿਫਟ ਸਮਾਪਤ',
   'home.geofenced': 'ਜੀਓ-ਫੈਂਸਡ · ਲੋਕੇਸ਼ਨ ਆਪਣੇ-ਆਪ ਲਈ ਜਾਂਦੀ ਹੈ',
+  'home.teamLeave': "ਟੀਮ ਦੀ ਛੁੱਟੀ",
+  'home.teamLeaveAll': "ਸਭ ਵੇਖੋ",
   'home.timeline': 'ਅੱਜ ਦੀ ਟਾਈਮਲਾਈਨ',
   'home.timelineEmpty': 'ਹਾਲੇ ਤੱਕ ਕੋਈ ਗਤੀਵਿਧੀ ਨਹੀਂ — ਸ਼ੁਰੂ ਕਰਨ ਲਈ ਸ਼ਿਫਟ ਸ਼ੁਰੂ ਕਰੋ।',
   'home.startShift': 'ਲਾਈਵ ਫੋਟੋ ਨਾਲ ਸ਼ਿਫਟ ਸ਼ੁਰੂ ਕਰੋ',

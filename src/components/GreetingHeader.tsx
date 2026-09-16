@@ -8,6 +8,7 @@ import { useAuthStore } from '../stores/authStore';
 import { ThemeToggle } from './ThemeToggle';
 import { getUnreadCount, NOTIFICATION_POLL_MS } from '../api/notifications.api';
 import { useT } from '../i18n';
+import { AvatarContent } from './AvatarContent';
 
 /**
  * Who you are and what is waiting, at the top of a tab.
@@ -42,7 +43,7 @@ export function GreetingHeader({ onNotifications }: { onNotifications: () => voi
   return (
     <View style={styles.row}>
       <View style={styles.avatar}>
-        <Text style={styles.avatarText}>{initials}</Text>
+        <AvatarContent initialsStyle={styles.avatarText} />
       </View>
 
       <View style={styles.text}>
@@ -87,6 +88,8 @@ const makeStyles = (colors: ColorScheme) =>
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: colors.brand[700],
+      // The photo fills this circle, so it has to be clipped to it.
+      overflow: 'hidden',
     },
     avatarText: { fontSize: 13.5, fontWeight: '800', color: colors.white },
     text: { flex: 1 },

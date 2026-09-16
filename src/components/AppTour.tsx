@@ -178,7 +178,6 @@ export async function markTourSeen(): Promise<void> {
 }
 
 const PAD = 8;
-const CARD_ESTIMATE = 250;
 
 export function AppTour({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const navigation = useNavigation<any>();
@@ -194,16 +193,6 @@ export function AppTour({ visible, onClose }: { visible: boolean; onClose: () =>
     [role]
   );
   const [spot, setSpot] = useState<Rect | null>(null);
-  /*
-   * The card's REAL height, once it has been laid out.
-   *
-   * CARD_ESTIMATE is a starting guess for the first frame only. The steps do
-   * not have equal bodies -- a two-line one and a five-line one differ by well
-   * over a hundred points -- so a single constant was always going to be wrong
-   * for some of them, and it was wrong in the direction that hides the Next
-   * button.
-   */
-  const [cardHeight, setCardHeight] = useState(CARD_ESTIMATE);
   const cancelled = useRef(false);
 
   // Clamped: a role change between renders must not index past the end.
@@ -279,12 +268,23 @@ export function AppTour({ visible, onClose }: { visible: boolean; onClose: () =>
   // for, and is exactly what an anchor near the bottom of a long screen
   // produces. A card that covers the thing it is pointing at is worse than
   // one that is merely centred.
-  const below = hole ? hole.y + hole.height : 0;
-  // 14 for the gap the card is placed with, plus a little margin so it never
-  // ends flush against the edge of the screen.
-  const NEEDED = cardHeight + 28;
-  const fitsBelow = hole ? screen.height - below >= NEEDED : false;
-  const fitsAbove = hole ? hole.y >= NEEDED : false;
+  /*
+   * WHICH HALF IS THE SPOTLIGHT IN -- and nothing more than that.
+   *
+   * This used to measure the card and work out whether it fit above or below
+   * the hole. Measuring is a frame behind: when the step changes, the position
+   * is computed from the PREVIOUS card's height, and a step whose body is two
+   * lines longer than the last one is placed as though it were short. That is
+   * how a card ended up anchored near the bottom of the screen with its
+   * buttons past the edge -- and a tour whose Next button cannot be reached is
+   * one somebody is stuck inside.
+   *
+   * So: no height, no arithmetic, no measurement. The card lives in a
+   * full-screen flex container and is pushed to whichever end is away from the
+   * spotlight. Flexbox cannot place it outside its parent, so it cannot be cut
+   * off, whatever its content turns out to be.
+   */
+  const holeInTopHalf = hole ? hole.y + hole.height / 2 < screen.height / 2 : false;
 
   /*
    * statusBarTranslucent, or ANDROID DRAWS EVERYTHING TOO LOW.
@@ -323,26 +323,24 @@ export function AppTour({ visible, onClose }: { visible: boolean; onClose: () =>
         <View style={[styles.fill, styles.dimAll]} pointerEvents="box-none" />
       )}
 
+      <Pressable
+        onPress={finish}
+        style={styles.escape}
+        hitSlop={8}
+        accessibilityRole="button"
+        accessibilityLabel={t('common.skip')}
+      >
+        <Ionicons name="close" size={19} color="#FFFFFF" />
+      </Pressable>
+
       <View
         style={[
           styles.cardWrap,
-          hole && fitsBelow
-            ? { top: below + 14 }
-            : hole && fitsAbove
-              ? { bottom: screen.height - hole.y + 14 }
-              : styles.cardCentred,
+          hole ? (holeInTopHalf ? styles.cardToBottom : styles.cardToTop) : styles.cardCentred,
         ]}
         pointerEvents="box-none"
       >
-        <View
-          style={styles.card}
-          onLayout={(e) => {
-            const h = Math.round(e.nativeEvent.layout.height);
-            // Only on a real change: setState in onLayout re-renders, which
-            // lays out again, which fires onLayout again.
-            if (h > 0 && h !== cardHeight) setCardHeight(h);
-          }}
-        >
+        <View style={styles.card}>
           <View style={styles.header}>
             <View style={styles.iconWrap}>
               <Ionicons name={step.icon} size={20} color={colors.white} />
@@ -410,8 +408,36 @@ function makeStyles(colors: ColorScheme) {
       borderColor: colors.white,
     },
 
-    cardWrap: { position: 'absolute', left: 0, right: 0, paddingHorizontal: 16 },
-    cardCentred: { top: 0, bottom: 0, justifyContent: 'center' },
+    /* A full-screen box in every case. Where the card sits inside it is a
+       flex decision, which is why it can never be placed off the edge. */
+    cardWrap: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      paddingHorizontal: 16,
+      // Generous, because this has to clear a notch at one end and a home
+      // indicator at the other without measuring either.
+      paddingTop: 72,
+      paddingBottom: 48,
+    },
+    cardToTop: { justifyContent: 'flex-start' },
+    cardToBottom: { justifyContent: 'flex-end' },
+    cardCentred: { justifyContent: 'center' },
+    /* Pinned to the overlay, not to the card. Whatever else goes wrong with
+       the layout, there is always something on screen that ends the tour. */
+    escape: {
+      position: 'absolute',
+      top: 44,
+      right: 16,
+      width: 34,
+      height: 34,
+      borderRadius: 17,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    },
     card: {
       width: '100%',
       maxWidth: 460,

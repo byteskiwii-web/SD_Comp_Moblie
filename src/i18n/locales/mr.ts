@@ -94,6 +94,8 @@ export const mr: Catalogue = {
   'home.shiftStart': 'शिफ्ट सुरू',
   'home.shiftEnd': 'शिफ्ट समाप्त',
   'home.geofenced': 'जिओ-फेन्स्ड · लोकेशन आपोआप घेतले जाते',
+  'home.teamLeave': "संघाची रजा",
+  'home.teamLeaveAll': "सर्व पाहा",
   'home.timeline': 'आजची टाइमलाइन',
   'home.timelineEmpty': 'अजून कोणतीही क्रिया नाही — सुरू करण्यासाठी शिफ्ट सुरू करा.',
   'home.startShift': 'लाइव्ह फोटोसह शिफ्ट सुरू करा',

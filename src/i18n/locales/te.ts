@@ -87,6 +87,8 @@ export const te: Catalogue = {
   'home.shiftStart': 'షిఫ్ట్ ప్రారంభం',
   'home.shiftEnd': 'షిఫ్ట్ ముగింపు',
   'home.geofenced': 'జియో-ఫెన్స్ · లొకేషన్ ఆటోమేటిక్‌గా నమోదు',
+  'home.teamLeave': "బృందం సెలవు",
+  'home.teamLeaveAll': "అన్నీ చూడండి",
   'home.timeline': 'ఈరోజు వివరాలు',
   'home.timelineEmpty': 'ఇంకా ఏమీ లేదు — మీ షిఫ్ట్ ప్రారంభించండి.',
   'home.startShift': 'లైవ్ ఫొటోతో షిఫ్ట్ ప్రారంభించు',

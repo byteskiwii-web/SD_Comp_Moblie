@@ -87,6 +87,8 @@ export const kn: Catalogue = {
   'home.shiftStart': 'ಶಿಫ್ಟ್ ಆರಂಭ',
   'home.shiftEnd': 'ಶಿಫ್ಟ್ ಮುಕ್ತಾಯ',
   'home.geofenced': 'ಜಿಯೋ-ಫೆನ್ಸ್ · ಸ್ಥಳ ತಾನಾಗಿಯೇ ದಾಖಲು',
+  'home.teamLeave': "ತಂಡದ ರಜೆ",
+  'home.teamLeaveAll': "ಎಲ್ಲವನ್ನೂ ನೋಡಿ",
   'home.timeline': 'ಇಂದಿನ ವಿವರ',
   'home.timelineEmpty': 'ಇನ್ನೂ ಏನೂ ಇಲ್ಲ — ನಿಮ್ಮ ಶಿಫ್ಟ್ ಆರಂಭಿಸಿ.',
   'home.startShift': 'ಲೈವ್ ಫೋಟೋದೊಂದಿಗೆ ಶಿಫ್ಟ್ ಆರಂಭಿಸಿ',

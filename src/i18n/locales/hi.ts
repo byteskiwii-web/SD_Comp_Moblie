@@ -94,6 +94,8 @@ export const hi: Catalogue = {
   'home.shiftStart': 'शिफ़्ट शुरू',
   'home.shiftEnd': 'शिफ़्ट समाप्त',
   'home.geofenced': 'जियो-फ़ेंस · लोकेशन अपने आप दर्ज',
+  'home.teamLeave': "टीम की छुट्टी",
+  'home.teamLeaveAll': "सभी देखें",
   'home.timeline': 'आज का ब्योरा',
   'home.timelineEmpty': 'अभी कोई गतिविधि नहीं — शिफ़्ट शुरू करें।',
   'home.startShift': 'लाइव फ़ोटो के साथ शिफ़्ट शुरू करें',

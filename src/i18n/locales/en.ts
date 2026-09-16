@@ -106,6 +106,8 @@ export const en = {
   'home.shiftStart': 'Shift start',
   'home.shiftEnd': 'Shift end',
   'home.geofenced': 'Geo-fenced · location auto-captured',
+  'home.teamLeave': "Team leave",
+  'home.teamLeaveAll': "View all",
   'home.timeline': "Today's timeline",
   'home.timelineEmpty': 'No activity yet — start your shift to begin.',
   'home.startShift': 'Start shift with live photo',

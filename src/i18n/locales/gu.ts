@@ -94,6 +94,8 @@ export const gu: Catalogue = {
   'home.shiftStart': 'શિફ્ટ શરૂ',
   'home.shiftEnd': 'શિફ્ટ સમાપ્ત',
   'home.geofenced': 'જિઓ-ફેન્સ્ડ · લોકેશન આપમેળે લેવાય છે',
+  'home.teamLeave': "ટીમની રજા",
+  'home.teamLeaveAll': "બધું જુઓ",
   'home.timeline': 'આજની ટાઇમલાઇન',
   'home.timelineEmpty': 'હજુ સુધી કોઈ પ્રવૃત્તિ નથી — શરૂ કરવા માટે શિફ્ટ શરૂ કરો.',
   'home.startShift': 'લાઇવ ફોટો સાથે શિફ્ટ શરૂ કરો',

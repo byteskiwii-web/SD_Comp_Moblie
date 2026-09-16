@@ -87,6 +87,8 @@ export const ml: Catalogue = {
   'home.shiftStart': 'ഷിഫ്റ്റ് തുടക്കം',
   'home.shiftEnd': 'ഷിഫ്റ്റ് അവസാനം',
   'home.geofenced': 'ജിയോ-ഫെൻസ് · ലൊക്കേഷൻ സ്വയമേവ രേഖപ്പെടുത്തും',
+  'home.teamLeave': "ടീം അവധി",
+  'home.teamLeaveAll': "എല്ലാം കാണുക",
   'home.timeline': 'ഇന്നത്തെ വിവരങ്ങൾ',
   'home.timelineEmpty': 'ഇതുവരെ ഒന്നുമില്ല — നിങ്ങളുടെ ഷിഫ്റ്റ് ആരംഭിക്കൂ.',
   'home.startShift': 'ലൈവ് ഫോട്ടോയോടെ ഷിഫ്റ്റ് ആരംഭിക്കുക',

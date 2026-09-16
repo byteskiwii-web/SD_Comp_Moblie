@@ -87,6 +87,8 @@ export const ta: Catalogue = {
   'home.shiftStart': 'பணி தொடக்கம்',
   'home.shiftEnd': 'பணி முடிவு',
   'home.geofenced': 'ஜியோ-ஃபென்ஸ் · இருப்பிடம் தானாகப் பதிவு',
+  'home.teamLeave': "குழு விடுப்பு",
+  'home.teamLeaveAll': "அனைத்தையும் பார்",
   'home.timeline': 'இன்றைய நிகழ்வுகள்',
   'home.timelineEmpty': 'இதுவரை எதுவும் இல்லை — பணியைத் தொடங்குங்கள்.',
   'home.startShift': 'நேரடிப் புகைப்படத்துடன் பணியைத் தொடங்கு',

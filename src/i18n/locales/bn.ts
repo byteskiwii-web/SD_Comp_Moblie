@@ -94,6 +94,8 @@ export const bn: Catalogue = {
   'home.shiftStart': 'শিফট শুরু',
   'home.shiftEnd': 'শিফট শেষ',
   'home.geofenced': 'জিও-ফেন্সড · লোকেশন স্বয়ংক্রিয়ভাবে নেওয়া হয়',
+  'home.teamLeave': "দলের ছুটি",
+  'home.teamLeaveAll': "সব দেখুন",
   'home.timeline': 'আজকের টাইমলাইন',
   'home.timelineEmpty': 'এখনও কোনো কার্যক্রম নেই — শুরু করতে শিফট শুরু করুন।',
   'home.startShift': 'লাইভ ছবি দিয়ে শিফট শুরু করুন',
