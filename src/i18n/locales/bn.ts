@@ -690,4 +690,21 @@ export const bn: Catalogue = {
   'reg.allowanceValue': '{limit}-এর মধ্যে {remaining}',
   'reg.allowanceNone': 'আপনি এই মাসের সব {limit}টি সংশোধন ব্যবহার করে ফেলেছেন।',
   'reg.flexibleShift': 'নমনীয় শিফট',
+
+  /* ------------------------------ the set-password gate (issued password) */
+  'setPassword.title': 'নিজের পাসওয়ার্ড দিন',
+  'setPassword.body': 'আপনি ম্যানেজারের দেওয়া পাসওয়ার্ড দিয়ে সাইন ইন করেছেন। শুরুর আগে নিজেরটি বেছে নিন।',
+  'setPassword.issuedLabel': 'আপনাকে দেওয়া পাসওয়ার্ড',
+  'setPassword.issuedPlaceholder': 'যেমন jkmpr-4821',
+  'setPassword.newLabel': 'নতুন পাসওয়ার্ড',
+  'setPassword.minChars': 'কমপক্ষে {min} অক্ষর',
+  'setPassword.confirmLabel': 'নতুন পাসওয়ার্ড আবার',
+  'setPassword.reenter': 'আবার লিখুন',
+  'setPassword.save': 'পাসওয়ার্ড সংরক্ষণ করুন',
+  'setPassword.note': 'এটি কেবল আপনারই জানা উচিত। এটি দিয়ে অন্য কেউ আপনার হাজিরা দিতে পারবে না।',
+  'setPassword.signOut': 'বরং সাইন আউট করুন',
+  'setPassword.enterIssued': 'আপনাকে দেওয়া পাসওয়ার্ডটি লিখুন।',
+  'setPassword.tooShort': 'নতুন পাসওয়ার্ডে কমপক্ষে {min} অক্ষর লাগবে।',
+  'setPassword.sameAsIssued': 'দেওয়া পাসওয়ার্ড থেকে আলাদা কিছু বেছে নিন।',
+  'setPassword.mismatch': 'দুটি নতুন পাসওয়ার্ড মিলছে না।',
 } as const;

@@ -26,6 +26,16 @@ type AuthState = {
   refreshToken: string | null;
   employee: Employee | null;
   store: StoreSnapshot;
+  /**
+   * The account is signed in but holding a password an administrator issued.
+   * RootNavigator shows the set-password screen INSTEAD of the app until it is
+   * false, and the API enforces the same thing independently.
+   *
+   * Deliberately NOT persisted: it is re-read from login and /auth/me, and a
+   * stale `false` in the keychain would be a locked-out session showing an app
+   * whose every request fails.
+   */
+  mustChangePassword: boolean;
   /** Refreshed from /auth/me; null until the first successful read. */
   profile: Me | null;
   hydrated: boolean;
@@ -39,9 +49,14 @@ type AuthState = {
   endedReason: string | null;
   hydrate: () => Promise<void>;
   setAuth: (
-    auth: { token: string; refreshToken: string; employee: Employee; store: StoreSnapshot },
+    auth: {
+      token: string; refreshToken: string; employee: Employee; store: StoreSnapshot;
+      mustChangePassword?: boolean;
+    },
     opts?: { remember?: boolean }
   ) => Promise<void>;
+  /** Called when the employee has set their own password. */
+  clearMustChangePassword: () => void;
   refreshProfile: () => Promise<void>;
   signOut: (opts?: { reason?: string }) => Promise<void>;
   clearEndedReason: () => void;
@@ -55,6 +70,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   profile: null,
   hydrated: false,
   endedReason: null,
+  mustChangePassword: false,
 
   hydrate: async () => {
     const saved = await loadAuth();
@@ -100,11 +116,16 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
     set({
       token: auth.token, refreshToken: auth.refreshToken,
       employee: auth.employee, store: auth.store, endedReason: null,
+      /* A token rotation calls this without the flag; `??` keeps whatever the
+         session already knew rather than quietly clearing a gate. */
+      mustChangePassword: auth.mustChangePassword ?? get().mustChangePassword,
     });
     void get().refreshProfile();
   },
 
   clearEndedReason: () => set({ endedReason: null }),
+
+  clearMustChangePassword: () => set({ mustChangePassword: false }),
 
   /**
    * Re-read the record the server holds.
@@ -123,6 +144,10 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       const current = get().employee;
       set({
         profile: me,
+        /* The keychain never holds this, so a relaunched session picks it up
+           here — and an administrator who issues a password mid-session has it
+           take effect on the next profile read rather than at next launch. */
+        mustChangePassword: Boolean(me.mustChangePassword),
         employee: current
           ? { ...current, role: me.role ?? current.role, store_code: me.storeCode ?? current.store_code }
           : current,

@@ -730,4 +730,21 @@ export const en = {
   'reg.allowanceNone': 'You have used all {limit} corrections for this month.',
   'reg.flexibleShift': 'Flexible shift',
 
+
+  /* ------------------------------ the set-password gate (issued password) */
+  'setPassword.title': 'Set your own password',
+  'setPassword.body': 'You signed in with a password your manager gave you. Choose your own before you start.',
+  'setPassword.issuedLabel': 'Password you were given',
+  'setPassword.issuedPlaceholder': 'e.g. jkmpr-4821',
+  'setPassword.newLabel': 'New password',
+  'setPassword.minChars': 'At least {min} characters',
+  'setPassword.confirmLabel': 'Confirm new password',
+  'setPassword.reenter': 'Type it again',
+  'setPassword.save': 'Save password',
+  'setPassword.note': 'Only you should know this. Nobody else can mark your attendance with it.',
+  'setPassword.signOut': 'Sign out instead',
+  'setPassword.enterIssued': 'Enter the password you were given.',
+  'setPassword.tooShort': 'Your new password needs at least {min} characters.',
+  'setPassword.sameAsIssued': 'Choose something different from the password you were given.',
+  'setPassword.mismatch': 'The two new passwords do not match.',
 } as const;

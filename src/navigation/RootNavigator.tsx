@@ -14,6 +14,7 @@ import { useKycGate } from '../hooks/useKycGate';
 import { useProfileCompletionGate } from '../hooks/useProfileCompletionGate';
 import { usePolicyAcceptanceGate } from '../hooks/usePolicyAcceptanceGate';
 import { AcceptPoliciesScreen } from '../screens/onboarding/AcceptPoliciesScreen';
+import { SetPasswordScreen } from '../screens/onboarding/SetPasswordScreen';
 import { CompleteProfileScreen } from '../screens/onboarding/CompleteProfileScreen';
 import { useThemeStore } from '../stores/themeStore';
 import { useI18nReady } from '../i18n';
@@ -28,6 +29,21 @@ function FullScreenSpinner() {
 }
 
 function AuthenticatedApp() {
+  /**
+   * The outermost gate, ahead of profile, KYC and policies.
+   *
+   * Not a matter of taste: while this flag is set the API refuses everything
+   * except change-password, so each of those gates would be trying to load
+   * data it cannot have. Reading the flag before their hooks run also keeps
+   * the screen from flashing a spinner for requests that are going to 403.
+   */
+  const mustChangePassword = useAuthStore((s) => s.mustChangePassword);
+  if (mustChangePassword) return <SetPasswordScreen />;
+
+  return <GatedApp />;
+}
+
+function GatedApp() {
   useShiftSync();
   useLocationPollingEffect();
   useClockOutReminderEffect();

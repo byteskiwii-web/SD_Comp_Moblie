@@ -690,4 +690,21 @@ export const pa: Catalogue = {
   'reg.allowanceValue': '{limit} ਵਿੱਚੋਂ {remaining}',
   'reg.allowanceNone': 'ਤੁਸੀਂ ਇਸ ਮਹੀਨੇ ਦੇ ਸਾਰੇ {limit} ਸੁਧਾਰ ਵਰਤ ਲਏ ਹਨ।',
   'reg.flexibleShift': 'ਲਚਕਦਾਰ ਸ਼ਿਫਟ',
+
+  /* ------------------------------ the set-password gate (issued password) */
+  'setPassword.title': 'ਆਪਣਾ ਪਾਸਵਰਡ ਰੱਖੋ',
+  'setPassword.body': 'ਤੁਸੀਂ ਮੈਨੇਜਰ ਵੱਲੋਂ ਦਿੱਤੇ ਪਾਸਵਰਡ ਨਾਲ ਸਾਈਨ ਇਨ ਕੀਤਾ ਹੈ। ਸ਼ੁਰੂ ਕਰਨ ਤੋਂ ਪਹਿਲਾਂ ਆਪਣਾ ਚੁਣੋ।',
+  'setPassword.issuedLabel': 'ਤੁਹਾਨੂੰ ਦਿੱਤਾ ਪਾਸਵਰਡ',
+  'setPassword.issuedPlaceholder': 'ਜਿਵੇਂ jkmpr-4821',
+  'setPassword.newLabel': 'ਨਵਾਂ ਪਾਸਵਰਡ',
+  'setPassword.minChars': 'ਘੱਟੋ-ਘੱਟ {min} ਅੱਖਰ',
+  'setPassword.confirmLabel': 'ਨਵਾਂ ਪਾਸਵਰਡ ਦੁਬਾਰਾ',
+  'setPassword.reenter': 'ਦੁਬਾਰਾ ਲਿਖੋ',
+  'setPassword.save': 'ਪਾਸਵਰਡ ਸੰਭਾਲੋ',
+  'setPassword.note': 'ਇਹ ਸਿਰਫ਼ ਤੁਹਾਨੂੰ ਪਤਾ ਹੋਣਾ ਚਾਹੀਦਾ ਹੈ। ਇਸ ਨਾਲ ਕੋਈ ਹੋਰ ਤੁਹਾਡੀ ਹਾਜ਼ਰੀ ਨਹੀਂ ਲਗਾ ਸਕਦਾ।',
+  'setPassword.signOut': 'ਇਸ ਦੀ ਬਜਾਏ ਸਾਈਨ ਆਉਟ ਕਰੋ',
+  'setPassword.enterIssued': 'ਤੁਹਾਨੂੰ ਦਿੱਤਾ ਪਾਸਵਰਡ ਲਿਖੋ।',
+  'setPassword.tooShort': 'ਨਵੇਂ ਪਾਸਵਰਡ ਵਿੱਚ ਘੱਟੋ-ਘੱਟ {min} ਅੱਖਰ ਚਾਹੀਦੇ ਹਨ।',
+  'setPassword.sameAsIssued': 'ਦਿੱਤੇ ਪਾਸਵਰਡ ਤੋਂ ਵੱਖਰਾ ਕੁਝ ਚੁਣੋ।',
+  'setPassword.mismatch': 'ਦੋਵੇਂ ਨਵੇਂ ਪਾਸਵਰਡ ਮੇਲ ਨਹੀਂ ਖਾਂਦੇ।',
 } as const;

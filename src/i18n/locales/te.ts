@@ -700,4 +700,21 @@ export const te: Catalogue = {
   'reg.allowanceNone': 'ఈ నెలకు కేటాయించిన {limit} సవరణలను మీరు వాడేశారు.',
   'reg.flexibleShift': 'సౌకర్యవంతమైన షిఫ్ట్',
 
+
+  /* ------------------------------ the set-password gate (issued password) */
+  'setPassword.title': 'మీ సొంత పాస్\u200cవర్డ్ పెట్టండి',
+  'setPassword.body': 'మేనేజర్ ఇచ్చిన పాస్\u200cవర్డ్\u200cతో సైన్ ఇన్ అయ్యారు. ప్రారంభించే ముందు మీ సొంతది ఎంచుకోండి.',
+  'setPassword.issuedLabel': 'మీకు ఇచ్చిన పాస్\u200cవర్డ్',
+  'setPassword.issuedPlaceholder': 'ఉదా. jkmpr-4821',
+  'setPassword.newLabel': 'కొత్త పాస్\u200cవర్డ్',
+  'setPassword.minChars': 'కనీసం {min} అక్షరాలు',
+  'setPassword.confirmLabel': 'కొత్త పాస్\u200cవర్డ్ మళ్లీ',
+  'setPassword.reenter': 'మళ్లీ టైప్ చేయండి',
+  'setPassword.save': 'పాస్\u200cవర్డ్ సేవ్ చేయండి',
+  'setPassword.note': 'ఇది మీకు మాత్రమే తెలియాలి. దీనితో ఇంకెవరూ మీ హాజరు వేయలేరు.',
+  'setPassword.signOut': 'బదులుగా సైన్ అవుట్ చేయండి',
+  'setPassword.enterIssued': 'మీకు ఇచ్చిన పాస్\u200cవర్డ్ టైప్ చేయండి.',
+  'setPassword.tooShort': 'కొత్త పాస్\u200cవర్డ్\u200cకు కనీసం {min} అక్షరాలు కావాలి.',
+  'setPassword.sameAsIssued': 'ఇచ్చిన పాస్\u200cవర్డ్ కంటే వేరేది ఎంచుకోండి.',
+  'setPassword.mismatch': 'రెండు కొత్త పాస్\u200cవర్డ్\u200cలు సరిపోలడం లేదు.',
 };

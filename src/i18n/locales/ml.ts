@@ -700,4 +700,21 @@ export const ml: Catalogue = {
   'reg.allowanceNone': 'ഈ മാസത്തെ {limit} തിരുത്തലുകളും നിങ്ങൾ ഉപയോഗിച്ചു കഴിഞ്ഞു.',
   'reg.flexibleShift': 'വഴക്കമുള്ള ഷിഫ്റ്റ്',
 
+
+  /* ------------------------------ the set-password gate (issued password) */
+  'setPassword.title': 'സ്വന്തം പാസ്\u200cവേഡ് സജ്ജമാക്കുക',
+  'setPassword.body': 'മാനേജർ നൽകിയ പാസ്\u200cവേഡ് ഉപയോഗിച്ചാണ് സൈൻ ഇൻ ചെയ്തത്. തുടങ്ങുന്നതിന് മുൻപ് സ്വന്തം പാസ്\u200cവേഡ് തിരഞ്ഞെടുക്കുക.',
+  'setPassword.issuedLabel': 'നിങ്ങൾക്ക് നൽകിയ പാസ്\u200cവേഡ്',
+  'setPassword.issuedPlaceholder': 'ഉദാ. jkmpr-4821',
+  'setPassword.newLabel': 'പുതിയ പാസ്\u200cവേഡ്',
+  'setPassword.minChars': 'കുറഞ്ഞത് {min} അക്ഷരങ്ങൾ',
+  'setPassword.confirmLabel': 'പുതിയ പാസ്\u200cവേഡ് വീണ്ടും',
+  'setPassword.reenter': 'വീണ്ടും ടൈപ്പ് ചെയ്യുക',
+  'setPassword.save': 'പാസ്\u200cവേഡ് സേവ് ചെയ്യുക',
+  'setPassword.note': 'ഇത് നിങ്ങൾക്ക് മാത്രം അറിയാവുന്നതായിരിക്കണം. ഇതുകൊണ്ട് മറ്റാർക്കും നിങ്ങളുടെ ഹാജർ രേഖപ്പെടുത്താനാകില്ല.',
+  'setPassword.signOut': 'പകരം സൈൻ ഔട്ട് ചെയ്യുക',
+  'setPassword.enterIssued': 'നിങ്ങൾക്ക് നൽകിയ പാസ്\u200cവേഡ് നൽകുക.',
+  'setPassword.tooShort': 'പുതിയ പാസ്\u200cവേഡിന് കുറഞ്ഞത് {min} അക്ഷരങ്ങൾ വേണം.',
+  'setPassword.sameAsIssued': 'നൽകിയ പാസ്\u200cവേഡിൽ നിന്ന് വ്യത്യസ്തമായത് തിരഞ്ഞെടുക്കുക.',
+  'setPassword.mismatch': 'രണ്ട് പുതിയ പാസ്\u200cവേഡുകളും ഒത്തുപോകുന്നില്ല.',
 };

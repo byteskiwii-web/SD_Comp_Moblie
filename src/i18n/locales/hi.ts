@@ -707,4 +707,21 @@ export const hi: Catalogue = {
   'reg.allowanceNone': 'आपने इस महीने के सभी {limit} सुधार इस्तेमाल कर लिए हैं।',
   'reg.flexibleShift': 'लचीली शिफ़्ट',
 
+
+  /* ------------------------------ the set-password gate (issued password) */
+  'setPassword.title': 'अपना पासवर्ड बनाएँ',
+  'setPassword.body': 'आपने मैनेजर के दिए पासवर्ड से साइन इन किया है। शुरू करने से पहले अपना पासवर्ड चुनें।',
+  'setPassword.issuedLabel': 'आपको दिया गया पासवर्ड',
+  'setPassword.issuedPlaceholder': 'जैसे jkmpr-4821',
+  'setPassword.newLabel': 'नया पासवर्ड',
+  'setPassword.minChars': 'कम से कम {min} अक्षर',
+  'setPassword.confirmLabel': 'नया पासवर्ड दोबारा',
+  'setPassword.reenter': 'दोबारा लिखें',
+  'setPassword.save': 'पासवर्ड सहेजें',
+  'setPassword.note': 'यह सिर्फ़ आपको पता होना चाहिए। इससे कोई और आपकी हाज़िरी नहीं लगा सकता।',
+  'setPassword.signOut': 'इसके बजाय साइन आउट करें',
+  'setPassword.enterIssued': 'आपको दिया गया पासवर्ड लिखें।',
+  'setPassword.tooShort': 'नए पासवर्ड में कम से कम {min} अक्षर चाहिए।',
+  'setPassword.sameAsIssued': 'दिए गए पासवर्ड से अलग कुछ चुनें।',
+  'setPassword.mismatch': 'दोनों नए पासवर्ड मेल नहीं खाते।',
 };

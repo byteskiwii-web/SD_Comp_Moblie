@@ -12,16 +12,38 @@ type SessionResponse = {
     tokenType: string;
     employee: Employee;
     store: StoreSnapshot;
+    /**
+     * An administrator issued this password, so the API will refuse every
+     * route but change-password until the employee replaces it. Sent here so
+     * the app can go straight to that screen rather than finding out by
+     * getting a 403 from the first thing it tries to draw.
+     */
+    mustChangePassword?: boolean;
   };
   meta: { requestId: string; timestamp: string };
 };
 
 export async function login(employee_id: string, password: string) {
   const res = await apiClient.post<SessionResponse>('/auth/login', { employee_id, password });
-  const { accessToken, refreshToken, employee, store } = res.data.data;
+  const { accessToken, refreshToken, employee, store, mustChangePassword } = res.data.data;
   // Normalized to {token, ...} here so the rest of the app (authStore, the
   // axios interceptor) doesn't need to know the backend calls it accessToken.
-  return { token: accessToken, refreshToken, employee, store };
+  return { token: accessToken, refreshToken, employee, store, mustChangePassword: Boolean(mustChangePassword) };
+}
+
+/**
+ * Replace the password on this account.
+ *
+ * The only route an account holding an administrator-issued password may
+ * reach, besides /auth/me and logout — which is why this lives here rather
+ * than in a profile module: it is part of signing in, not part of the profile.
+ */
+export async function changeOwnPassword(current_password: string, new_password: string) {
+  const res = await apiClient.post<{ data: { otherSessionsRevoked?: number } }>(
+    '/auth/me/password',
+    { current_password, new_password }
+  );
+  return res.data.data;
 }
 
 /**
@@ -36,6 +58,8 @@ export type Me = {
   id: string;
   name: string | null;
   role: string;
+  /** Still holding a password somebody else chose. See login(). */
+  mustChangePassword?: boolean;
   storeCode: string | null;
   dateOfJoining: string | null;
   /** Whether a profile picture exists, and when it last changed (cache bust). */

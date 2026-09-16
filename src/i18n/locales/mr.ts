@@ -690,4 +690,21 @@ export const mr: Catalogue = {
   'reg.allowanceValue': '{limit} पैकी {remaining}',
   'reg.allowanceNone': 'तुम्ही या महिन्याच्या सर्व {limit} दुरुस्त्या वापरल्या आहेत.',
   'reg.flexibleShift': 'लवचिक शिफ्ट',
+
+  /* ------------------------------ the set-password gate (issued password) */
+  'setPassword.title': 'स्वतःचा पासवर्ड ठेवा',
+  'setPassword.body': 'तुम्ही व्यवस्थापकाने दिलेल्या पासवर्डने साइन इन केले आहे. सुरू करण्यापूर्वी स्वतःचा निवडा.',
+  'setPassword.issuedLabel': 'तुम्हाला दिलेला पासवर्ड',
+  'setPassword.issuedPlaceholder': 'उदा. jkmpr-4821',
+  'setPassword.newLabel': 'नवा पासवर्ड',
+  'setPassword.minChars': 'किमान {min} अक्षरे',
+  'setPassword.confirmLabel': 'नवा पासवर्ड पुन्हा',
+  'setPassword.reenter': 'पुन्हा लिहा',
+  'setPassword.save': 'पासवर्ड जतन करा',
+  'setPassword.note': 'हे फक्त तुम्हालाच माहीत असावे. याने दुसरे कोणी तुमची हजेरी लावू शकत नाही.',
+  'setPassword.signOut': 'त्याऐवजी साइन आउट करा',
+  'setPassword.enterIssued': 'तुम्हाला दिलेला पासवर्ड लिहा.',
+  'setPassword.tooShort': 'नव्या पासवर्डमध्ये किमान {min} अक्षरे हवीत.',
+  'setPassword.sameAsIssued': 'दिलेल्या पासवर्डपेक्षा वेगळे काहीतरी निवडा.',
+  'setPassword.mismatch': 'दोन्ही नवे पासवर्ड जुळत नाहीत.',
 } as const;

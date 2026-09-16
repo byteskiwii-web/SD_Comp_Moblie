@@ -690,4 +690,21 @@ export const gu: Catalogue = {
   'reg.allowanceValue': '{limit} માંથી {remaining}',
   'reg.allowanceNone': 'તમે આ મહિનાના બધા {limit} સુધારા વાપરી લીધા છે.',
   'reg.flexibleShift': 'લવચીક શિફ્ટ',
+
+  /* ------------------------------ the set-password gate (issued password) */
+  'setPassword.title': 'તમારો પોતાનો પાસવર્ડ સેટ કરો',
+  'setPassword.body': 'તમે મેનેજરે આપેલા પાસવર્ડથી સાઇન ઇન કર્યું છે. શરૂ કરતાં પહેલાં તમારો પોતાનો પસંદ કરો.',
+  'setPassword.issuedLabel': 'તમને અપાયેલો પાસવર્ડ',
+  'setPassword.issuedPlaceholder': 'દા.ત. jkmpr-4821',
+  'setPassword.newLabel': 'નવો પાસવર્ડ',
+  'setPassword.minChars': 'ઓછામાં ઓછા {min} અક્ષર',
+  'setPassword.confirmLabel': 'નવો પાસવર્ડ ફરીથી',
+  'setPassword.reenter': 'ફરીથી લખો',
+  'setPassword.save': 'પાસવર્ડ સાચવો',
+  'setPassword.note': 'આ ફક્ત તમને ખબર હોવી જોઈએ. તેનાથી બીજું કોઈ તમારી હાજરી ભરી શકે નહીં.',
+  'setPassword.signOut': 'તેના બદલે સાઇન આઉટ કરો',
+  'setPassword.enterIssued': 'તમને અપાયેલો પાસવર્ડ લખો.',
+  'setPassword.tooShort': 'નવા પાસવર્ડમાં ઓછામાં ઓછા {min} અક્ષર જોઈએ.',
+  'setPassword.sameAsIssued': 'અપાયેલા પાસવર્ડથી અલગ કંઈક પસંદ કરો.',
+  'setPassword.mismatch': 'બંને નવા પાસવર્ડ મળતા નથી.',
 } as const;

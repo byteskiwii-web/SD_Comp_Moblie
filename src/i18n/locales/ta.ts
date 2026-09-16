@@ -700,4 +700,21 @@ export const ta: Catalogue = {
   'reg.allowanceNone': 'இந்த மாதத்திற்கான {limit} திருத்தங்களையும் நீங்கள் பயன்படுத்திவிட்டீர்கள்.',
   'reg.flexibleShift': 'நெகிழ்வான பணிநேரம்',
 
+
+  /* ------------------------------ the set-password gate (issued password) */
+  'setPassword.title': 'சொந்தக் கடவுச்சொல்லை அமைக்கவும்',
+  'setPassword.body': 'மேலாளர் கொடுத்த கடவுச்சொல்லுடன் உள்நுழைந்துள்ளீர்கள். தொடங்கும் முன் உங்கள் சொந்தக் கடவுச்சொல்லைத் தேர்ந்தெடுக்கவும்.',
+  'setPassword.issuedLabel': 'உங்களுக்கு வழங்கப்பட்ட கடவுச்சொல்',
+  'setPassword.issuedPlaceholder': 'உ.ம். jkmpr-4821',
+  'setPassword.newLabel': 'புதிய கடவுச்சொல்',
+  'setPassword.minChars': 'குறைந்தது {min} எழுத்துகள்',
+  'setPassword.confirmLabel': 'புதிய கடவுச்சொல்லை உறுதிப்படுத்தவும்',
+  'setPassword.reenter': 'மீண்டும் தட்டச்சு செய்யவும்',
+  'setPassword.save': 'கடவுச்சொல்லைச் சேமி',
+  'setPassword.note': 'இது உங்களுக்கு மட்டுமே தெரிய வேண்டும். இதைக் கொண்டு வேறு யாரும் உங்கள் வருகையைப் பதிவு செய்ய முடியாது.',
+  'setPassword.signOut': 'அதற்குப் பதிலாக வெளியேறு',
+  'setPassword.enterIssued': 'உங்களுக்கு வழங்கப்பட்ட கடவுச்சொல்லை உள்ளிடவும்.',
+  'setPassword.tooShort': 'புதிய கடவுச்சொல்லுக்கு குறைந்தது {min} எழுத்துகள் தேவை.',
+  'setPassword.sameAsIssued': 'வழங்கப்பட்ட கடவுச்சொல்லிலிருந்து வேறொன்றைத் தேர்ந்தெடுக்கவும்.',
+  'setPassword.mismatch': 'இரண்டு புதிய கடவுச்சொற்களும் பொருந்தவில்லை.',
 };

@@ -700,4 +700,21 @@ export const kn: Catalogue = {
   'reg.allowanceNone': 'ಈ ತಿಂಗಳ ಎಲ್ಲಾ {limit} ತಿದ್ದುಪಡಿಗಳನ್ನು ನೀವು ಬಳಸಿದ್ದೀರಿ.',
   'reg.flexibleShift': 'ಹೊಂದಿಕೊಳ್ಳುವ ಶಿಫ್ಟ್',
 
+
+  /* ------------------------------ the set-password gate (issued password) */
+  'setPassword.title': 'ನಿಮ್ಮದೇ ಪಾಸ್\u200cವರ್ಡ್ ಇರಿಸಿ',
+  'setPassword.body': 'ಮ್ಯಾನೇಜರ್ ನೀಡಿದ ಪಾಸ್\u200cವರ್ಡ್\u200cನಿಂದ ಸೈನ್ ಇನ್ ಆಗಿದ್ದೀರಿ. ಪ್ರಾರಂಭಿಸುವ ಮೊದಲು ನಿಮ್ಮದೇ ಆಯ್ಕೆಮಾಡಿ.',
+  'setPassword.issuedLabel': 'ನಿಮಗೆ ನೀಡಿದ ಪಾಸ್\u200cವರ್ಡ್',
+  'setPassword.issuedPlaceholder': 'ಉದಾ. jkmpr-4821',
+  'setPassword.newLabel': 'ಹೊಸ ಪಾಸ್\u200cವರ್ಡ್',
+  'setPassword.minChars': 'ಕನಿಷ್ಠ {min} ಅಕ್ಷರಗಳು',
+  'setPassword.confirmLabel': 'ಹೊಸ ಪಾಸ್\u200cವರ್ಡ್ ಮತ್ತೊಮ್ಮೆ',
+  'setPassword.reenter': 'ಮತ್ತೊಮ್ಮೆ ಟೈಪ್ ಮಾಡಿ',
+  'setPassword.save': 'ಪಾಸ್\u200cವರ್ಡ್ ಉಳಿಸಿ',
+  'setPassword.note': 'ಇದು ನಿಮಗೆ ಮಾತ್ರ ಗೊತ್ತಿರಬೇಕು. ಇದರಿಂದ ಬೇರೆಯವರು ನಿಮ್ಮ ಹಾಜರಾತಿ ಹಾಕಲಾಗದು.',
+  'setPassword.signOut': 'ಬದಲಿಗೆ ಸೈನ್ ಔಟ್ ಮಾಡಿ',
+  'setPassword.enterIssued': 'ನಿಮಗೆ ನೀಡಿದ ಪಾಸ್\u200cವರ್ಡ್ ಟೈಪ್ ಮಾಡಿ.',
+  'setPassword.tooShort': 'ಹೊಸ ಪಾಸ್\u200cವರ್ಡ್\u200cಗೆ ಕನಿಷ್ಠ {min} ಅಕ್ಷರಗಳು ಬೇಕು.',
+  'setPassword.sameAsIssued': 'ನೀಡಿದ ಪಾಸ್\u200cವರ್ಡ್\u200cಗಿಂತ ಬೇರೆಯದನ್ನು ಆಯ್ಕೆಮಾಡಿ.',
+  'setPassword.mismatch': 'ಎರಡು ಹೊಸ ಪಾಸ್\u200cವರ್ಡ್\u200cಗಳು ಹೊಂದುತ್ತಿಲ್ಲ.',
 };
