@@ -9,6 +9,7 @@ import { ColorScheme, radii } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
 import { usePreferencesStore } from '../../stores/preferencesStore';
 import { getApiErrorMessage } from '../../api/client';
+import { getTeamLeave, LEAVE_TYPE_LABEL_KEY, type LeaveRequest } from '../../api/leave.api';
 import { useAuthStore } from '../../stores/authStore';
 import { formatTime, newestFirst, toLocalDateKey } from '../../utils/datetime';
 import { formatDuration } from '../../utils/attendanceDay';
@@ -38,12 +39,13 @@ import {
  * app change.
  */
 
-type Tab = 'today' | 'register' | 'requests';
+type Tab = 'today' | 'register' | 'requests' | 'leave';
 
 const TAB_KEY: Record<Tab, TKey> = {
   today: 'shift.onShift',
   register: 'team.register',
   requests: 'team.requests',
+  leave: 'team.leave',
 };
 
 const monthShort = (m: number) => tr(('monthShort.' + (m + 1)) as TKey);
@@ -79,7 +81,7 @@ export function TeamScreen() {
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.segment}>
-          {(['today', 'register', 'requests'] as Tab[]).map((id) => (
+          {(['today', 'register', 'requests', 'leave'] as Tab[]).map((id) => (
             <Pressable
               key={id}
               onPress={() => setTab(id)}
@@ -92,7 +94,15 @@ export function TeamScreen() {
           ))}
         </View>
 
-        {tab === 'today' ? <OnShift /> : tab === 'register' ? <Register /> : <Requests />}
+        {tab === 'today' ? (
+          <OnShift />
+        ) : tab === 'register' ? (
+          <Register />
+        ) : tab === 'requests' ? (
+          <Requests />
+        ) : (
+          <TeamLeave />
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -290,6 +300,134 @@ function Requests() {
   );
 }
 
+/**
+ * WHO IS OFF, AND WHEN.
+ *
+ * A lead looking at an empty slot on the register has no way to tell an
+ * absence from an approved day off -- the two look identical there, and the
+ * answer was only ever visible to the employee and to whoever approved it.
+ *
+ * Split by time rather than by status, because that is the question being
+ * asked: who is off RIGHT NOW (the one that explains today's gap), who is
+ * about to be (the one that affects rostering), and who was (the one that
+ * settles an argument about last week). Pending rows are shown in Upcoming
+ * as well as approved ones -- a lead planning a week needs to know what is
+ * coming even before somebody has decided it, and the badge says which.
+ *
+ * Cancelled and rejected rows are left out entirely. They are not leave; they
+ * are a record of leave that never happened, and listing them here would
+ * mean reading a status badge to work out whether somebody was actually
+ * absent.
+ */
+function TeamLeave() {
+  const colors = useThemeStore((s) => s.colors);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const t = useT();
+
+  // A window around today, not all of history: 60 days back covers the last
+  // pay cycle's arguments, 90 forward covers the roster being planned.
+  const { from, to } = useMemo(() => {
+    const day = 86400000;
+    const now = Date.now();
+    return {
+      from: toLocalDateKey(new Date(now - 60 * day)),
+      to: toLocalDateKey(new Date(now + 90 * day)),
+    };
+  }, []);
+
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['team-leave', from, to],
+    queryFn: () => getTeamLeave(from, to),
+  });
+
+  const today = toLocalDateKey();
+
+  const groups = useMemo(() => {
+    const rows = (data ?? []).filter((l) => l.status === 'approved' || l.status === 'pending');
+    const now: LeaveRequest[] = [];
+    const upcoming: LeaveRequest[] = [];
+    const past: LeaveRequest[] = [];
+    for (const l of rows) {
+      // Date keys are YYYY-MM-DD, so string comparison IS date comparison --
+      // and it sidesteps a Date built from a date-only string being read as
+      // UTC midnight, which puts IST a day out for exactly the boundary this
+      // is testing.
+      if (l.startDate <= today && l.endDate >= today) now.push(l);
+      else if (l.startDate > today) upcoming.push(l);
+      else past.push(l);
+    }
+    now.sort((a, b) => a.endDate.localeCompare(b.endDate));
+    upcoming.sort((a, b) => a.startDate.localeCompare(b.startDate));
+    past.sort((a, b) => b.endDate.localeCompare(a.endDate));
+    return { now, upcoming, past };
+  }, [data, today]);
+
+  const TONE: Record<string, { bg: string; fg: string }> = useMemo(() => ({
+    pending: { bg: colors.warningBg, fg: colors.warningText },
+    approved: { bg: colors.successBg, fg: colors.successText },
+  }), [colors]);
+
+  if (isLoading) return <SkeletonList count={3} lines={1} />;
+  if (error) return <Text style={styles.error}>{getApiErrorMessage(error)}</Text>;
+
+  const total = groups.now.length + groups.upcoming.length + groups.past.length;
+  if (total === 0) {
+    return <Card><Text style={styles.empty}>{t('team.noLeave')}</Text></Card>;
+  }
+
+  const row = (l: LeaveRequest) => {
+    const tone = TONE[l.status] ?? TONE.approved;
+    const span =
+      l.startDate === l.endDate
+        ? shortDate(l.startDate)
+        : `${shortDate(l.startDate)} – ${shortDate(l.endDate)}`;
+    return (
+      <Card key={l.id} style={styles.reqCard}>
+        <View style={styles.reqHead}>
+          <Text style={styles.reqName} numberOfLines={1}>
+            {l.employeeName ?? l.employeeId}
+          </Text>
+          <View style={[styles.badge, { backgroundColor: tone.bg }]}>
+            <Text style={[styles.badgeText, { color: tone.fg }]}>
+              {t(('status.' + l.status) as TKey)}
+            </Text>
+          </View>
+        </View>
+        <Text style={styles.reqMeta}>
+          {span}
+          {l.totalDays != null ? ` · ${t('apply.days', { count: l.totalDays })}` : ''}
+          {' · '}
+          {t(LEAVE_TYPE_LABEL_KEY[l.leaveType])}
+        </Text>
+        {l.reason ? <Text style={styles.reqReason} numberOfLines={2}>{l.reason}</Text> : null}
+      </Card>
+    );
+  };
+
+  return (
+    <>
+      {groups.now.length > 0 && (
+        <>
+          <Text style={styles.sectionTitle}>{t('team.onLeaveNow')}</Text>
+          {groups.now.map(row)}
+        </>
+      )}
+      {groups.upcoming.length > 0 && (
+        <>
+          <Text style={styles.sectionTitle}>{t('team.leaveUpcoming')}</Text>
+          {groups.upcoming.map(row)}
+        </>
+      )}
+      {groups.past.length > 0 && (
+        <>
+          <Text style={styles.sectionTitle}>{t('team.leavePast')}</Text>
+          {groups.past.map(row)}
+        </>
+      )}
+    </>
+  );
+}
+
 function makeStyles(colors: ColorScheme) {
   return StyleSheet.create({
     flex: { flex: 1, backgroundColor: colors.bgLight },
@@ -348,6 +486,10 @@ function makeStyles(colors: ColorScheme) {
     rateMid: { color: colors.warningText },
     rateBad: { color: colors.dangerText },
 
+    sectionTitle: {
+      fontSize: 10.5, fontWeight: '900', letterSpacing: 0.5, textTransform: 'uppercase',
+      color: colors.slate500, marginTop: 6, marginBottom: 2,
+    },
     reqCard: { padding: 14, gap: 6 },
     reqHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
     reqName: { flex: 1, fontSize: 13, fontWeight: '800', color: colors.textLight },

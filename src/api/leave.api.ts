@@ -94,6 +94,24 @@ export type LeaveSummary = LeaveMonth & {
  * wants, but it is re-sorted client-side anyway so a server change cannot
  * quietly reorder the list.
  */
+/**
+ * The team's leave, for a lead looking at their own people.
+ *
+ * Same `GET /leave` the employee's own list uses -- the server decides who is
+ * in scope from the caller's principal, and pins a site-scoped one to their
+ * own store whatever is asked for. So there is no employee filter here to get
+ * wrong, and a transfer needs no change in the app.
+ *
+ * A window rather than everything: leave is read to answer "who is off around
+ * now", and a year of history makes that harder to see, not easier.
+ */
+export async function getTeamLeave(from: string, to: string, limit = 100) {
+  const res = await apiClient.get<{ success: true; data: LeaveRequest[] }>(BASE, {
+    params: { from, to, limit },
+  });
+  return res.data.data ?? [];
+}
+
 export async function getMyLeave(limit = 50) {
   const res = await apiClient.get<{ success: true; data: LeaveRequest[] }>(BASE, {
     params: { limit },
