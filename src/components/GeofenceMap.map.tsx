@@ -5,16 +5,16 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { ColorScheme, radii } from '../theme/tokens';
 import { useThemeStore } from '../stores/themeStore';
 import { useT } from '../i18n';
+import { frameFence } from './geofenceFrame';
 
 /**
- * The fence over a real map.
+ * The fence over a real map -- iOS only.
  *
- * Apple Maps on iOS, Google Maps on Android, both shipped inside the Expo Go
- * binary, so this needs no key to run in Expo Go. A Play Store build of the
- * Android app DOES need a Google Maps key in `android.config.googleMaps.apiKey`
- * -- without it the tiles render as a blank grid, and the map is the one thing
- * on this screen that fails visibly rather than silently. See GeofenceMap.tsx
- * for what happens when the coordinates are not there at all.
+ * Apple Maps, which needs no key and no billing account, in Expo Go or in a
+ * store build. Android no longer comes here: react-native-maps is Google Maps
+ * there, and Google requires a billing account on file before it will serve a
+ * single tile, key restrictions or not. Android draws OpenFreeMap instead --
+ * see GeofenceMap.libre.tsx.
  *
  * GESTURES ARE OFF, deliberately. This card lives inside the Clock in/out
  * ScrollView, and a pannable map inside a scrolling parent steals every
@@ -49,43 +49,12 @@ export function NativeGeofenceMap({
 
   const tint = inside ? colors.success : colors.warning;
 
-  /**
-   * What to frame.
-   *
-   * Centre on the SITE, not on the employee: the fence is the fixed thing
-   * being judged against, and a map that recentres on every GPS jitter is
-   * unreadable. The span is whichever is larger -- the fence with room around
-   * it, or far enough to keep the employee's dot on screen when they are
-   * outside it. Someone half a kilometre away then sees both ends of the
-   * problem instead of a fence with nothing near it.
-   *
-   * 111,320 m is one degree of latitude. Longitude shrinks by cos(latitude),
-   * which at Ahmedabad is about 0.93 -- ignoring it would squash the fence
-   * into an oval on exactly the east-west offsets a high street produces.
-   */
-  const region = React.useMemo<Region>(() => {
-    const METRES_PER_DEG_LAT = 111_320;
-    const cosLat = Math.max(Math.cos((siteLat * Math.PI) / 180), 0.01);
-
-    // 2.6x the radius leaves the fence filling most of the card with a margin
-    // that keeps the site chip from sitting on the boundary line.
-    let spanMetres = Math.max(radiusMetres, 50) * 2.6;
-
-    if (userLat != null && userLng != null) {
-      const dLat = Math.abs(userLat - siteLat) * METRES_PER_DEG_LAT;
-      const dLng = Math.abs(userLng - siteLng) * METRES_PER_DEG_LAT * cosLat;
-      // 2.4x the offset, so the dot lands inside the card rather than on its edge.
-      spanMetres = Math.max(spanMetres, Math.max(dLat, dLng) * 2.4);
-    }
-
-    const latitudeDelta = spanMetres / METRES_PER_DEG_LAT;
-    return {
-      latitude: siteLat,
-      longitude: siteLng,
-      latitudeDelta,
-      longitudeDelta: latitudeDelta / cosLat,
-    };
-  }, [siteLat, siteLng, userLat, userLng, radiusMetres]);
+  // See geofenceFrame.ts: shared with the Android map so both platforms frame
+  // the same stretch of street for the same fix.
+  const region = React.useMemo<Region>(
+    () => frameFence(siteLat, siteLng, userLat, userLng, radiusMetres),
+    [siteLat, siteLng, userLat, userLng, radiusMetres]
+  );
 
   return (
     <View style={[styles.wrap, { height }]}>

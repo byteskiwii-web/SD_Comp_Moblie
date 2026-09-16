@@ -1,4 +1,5 @@
 import React from 'react';
+import { Platform } from 'react-native';
 import { isWeb } from '../native/runtime';
 import { DrawnGeofenceMap } from './GeofenceMap.drawn';
 
@@ -7,10 +8,15 @@ import { DrawnGeofenceMap } from './GeofenceMap.drawn';
  *
  * Two renderings of the same fact, picked by what is actually available:
  *
- *   real map  -- react-native-maps, when we know where the site IS. Apple Maps
- *                on iOS and Google Maps on Android, both inside the Expo Go
- *                binary, so it needs no key to run there.
- *   drawn     -- the SVG fence, when we do not. See GeofenceMap.drawn.
+ *   real map  -- when we know where the site IS. Apple Maps on iOS
+ *                (GeofenceMap.map); OpenFreeMap on Android (GeofenceMap.libre).
+ *                Neither needs a key or a billing account, in Expo Go or in a
+ *                store build. Android used to be Google Maps through the same
+ *                react-native-maps component, which Google will not serve
+ *                without a card on file.
+ *   drawn     -- the SVG fence, when we do not. See GeofenceMap.drawn. Android
+ *                also shows it while its map loads, and keeps it if the map
+ *                cannot load at all.
  *
  * THE DRAWN ONE IS NOT DEAD CODE. A store row with no lat/lng is ordinary --
  * sites are created by HR before anyone stands in them -- and on web there is
@@ -25,6 +31,18 @@ import { DrawnGeofenceMap } from './GeofenceMap.drawn';
  */
 type MapModule = typeof import('./GeofenceMap.map');
 let mapModule: MapModule | null = null;
+type LibreModule = typeof import('./GeofenceMap.libre');
+let libreModule: LibreModule | null = null;
+
+function loadLibreMap(): LibreModule['LibreGeofenceMap'] {
+  // Same caching as below, for the same reason: a stable identity keeps the
+  // WebView -- and every tile it has drawn -- across the parent's re-renders.
+  if (!libreModule) {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    libreModule = require('./GeofenceMap.libre') as LibreModule;
+  }
+  return libreModule.LibreGeofenceMap;
+}
 
 function loadNativeMap(): MapModule['NativeGeofenceMap'] {
   // Module-level cache: cheap after the first call, and a stable component
@@ -62,25 +80,7 @@ export function GeofenceMap({
   userLng: number | null;
   height?: number;
 }) {
-  const canUseRealMap = !isWeb && siteLat != null && siteLng != null;
-
-  if (canUseRealMap) {
-    const NativeGeofenceMap = loadNativeMap();
-    return (
-      <NativeGeofenceMap
-        siteLat={siteLat}
-        siteLng={siteLng}
-        userLat={userLat}
-        userLng={userLng}
-        radiusMetres={radiusMetres}
-        inside={inside}
-        siteName={siteName}
-        height={height}
-      />
-    );
-  }
-
-  return (
+  const drawn = (
     <DrawnGeofenceMap
       distanceMetres={distanceMetres}
       radiusMetres={radiusMetres}
@@ -94,6 +94,28 @@ export function GeofenceMap({
       height={height}
     />
   );
+
+  const canUseRealMap = !isWeb && siteLat != null && siteLng != null;
+  if (!canUseRealMap) return drawn;
+
+  const common = {
+    siteLat,
+    siteLng,
+    userLat,
+    userLng,
+    radiusMetres,
+    inside,
+    siteName,
+    height,
+  };
+
+  if (Platform.OS === 'android') {
+    const LibreGeofenceMap = loadLibreMap();
+    return <LibreGeofenceMap {...common} fallback={drawn} />;
+  }
+
+  const NativeGeofenceMap = loadNativeMap();
+  return <NativeGeofenceMap {...common} />;
 }
 
 /**

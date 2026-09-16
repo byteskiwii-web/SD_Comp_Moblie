@@ -78,26 +78,19 @@ module.exports = ({ config }) => {
   if (!wantsDevClient) plugins.push('./plugins/withoutDevLauncher');
 
   /**
-   * THE GOOGLE MAPS KEY, ONLY WHEN THERE IS ONE.
+   * NO GOOGLE MAPS KEY, ON PURPOSE.
    *
-   * The geofence card renders a real map. iOS uses Apple Maps and needs
-   * nothing; Android uses Google Maps, which needs a key in a store build --
-   * without it the tiles come up as a blank grid. Expo Go is the exception
-   * and needs no key at all, because it ships Expo's own.
+   * Android's geofence map used to be Google Maps through react-native-maps,
+   * and a store build needed GOOGLE_MAPS_ANDROID_KEY here. Google will not
+   * serve a tile to that key until a billing account with a card is attached,
+   * and a key that leaks can be pointed at the APIs that do charge. Android
+   * now draws OpenFreeMap in a WebView (src/components/GeofenceMap.libre.tsx),
+   * which has no key at all, and iOS uses Apple Maps, which never needed one.
    *
-   * Added conditionally rather than unconditionally with an empty string: the
-   * plugin writes whatever it is given straight into AndroidManifest.xml, and
-   * a manifest advertising an empty API key is worse than one with no key
-   * entry, because it fails the same way while looking configured.
-   *
-   * Not EXPO_PUBLIC_: this is a native build-time value baked into the
-   * manifest, never read by JS, and it should be restricted by package name
-   * and SHA-1 fingerprint in the Google Cloud console rather than by secrecy.
+   * So there is no key for the react-native-maps plugin to write into the
+   * manifest, and the plugin is not added. MapView is never mounted on
+   * Android, which is the only place it would have asked for one.
    */
-  const googleMapsKey = process.env.GOOGLE_MAPS_ANDROID_KEY;
-  if (googleMapsKey) {
-    plugins.push(['react-native-maps', { androidGoogleMapsApiKey: googleMapsKey }]);
-  }
 
 
   return {
