@@ -80,6 +80,53 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
   // is Settings. Distinguishing it matters because the recovery differs.
   const [permission, setPermission] = useState<'unknown' | 'granted' | 'askable' | 'blocked' | 'services-off'>('unknown');
   const [pendingAction, setPendingAction] = useState<'clock-in' | 'clock-out' | null>(null);
+  /*
+   * THE CAMERA IS DONE THE MOMENT THERE IS A FRAME ON DISK.
+   *
+   * Two React Native Modals cannot be stacked. The camera is presented while
+   * pendingAction is set, and BackgroundLocationDisclosure -- also a Modal --
+   * then tried to open UNDERNEATH it. Its promise only settles when somebody
+   * taps Accept or Decline, so on a device that had not yet seen the
+   * disclosure the punch stopped dead on "Liveness verified", waiting on a
+   * dialog nobody could see or reach. It survived because the camera itself
+   * was unreachable until the permission fix, so nothing ever got this far.
+   *
+   * Tracking the capture separately from the action lets the camera close
+   * before that conversation starts, while pendingAction stays set because the
+   * mutation still needs to know which way the punch goes. It also means any
+   * later failure returns the employee to the panel, where the banner is,
+   * rather than stranding them on a dead camera screen.
+   */
+  const [captured, setCaptured] = useState(false);
+  /*
+   * Closing the camera is not the same as it being CLOSED.
+   *
+   * On iOS a Modal presented while another is still animating out is dropped
+   * silently -- the disclosure would never appear and the punch would hang
+   * again, just a few hundred milliseconds later and far harder to see. So the
+   * next step waits for the dismissal to actually finish.
+   *
+   * onDismiss is iOS-only, hence the timer: on Android it never fires, and
+   * there is no presentation conflict there to wait for anyway, so the timer
+   * is the normal path on that platform and the safety net on this one.
+   */
+  const cameraDismissed = useRef<(() => void) | null>(null);
+
+  const waitForCameraToClose = useCallback(
+    () =>
+      new Promise<void>((resolve) => {
+        let settled = false;
+        const finish = () => {
+          if (settled) return;
+          settled = true;
+          cameraDismissed.current = null;
+          resolve();
+        };
+        cameraDismissed.current = finish;
+        setTimeout(finish, 400);
+      }),
+    []
+  );
   const [banner, setBanner] = useState<{ tone: 'success' | 'warning'; text: string } | null>(null);
 
   /**
@@ -370,6 +417,10 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
   // earlier, since Android only lets an app prompt for background access
   // after foreground access is already granted.
   const handleCaptured = async (filePath: string) => {
+    // First statement, before anything that can await: the frame is saved, so
+    // the camera has no further job and must not block what comes next.
+    setCaptured(true);
+    await waitForCameraToClose();
     // requestBackgroundPermissionsAsync does not resolve to 'denied' when the
     // runtime has no background location at all -- it *throws*
     // (ERR_LOCATION_INFO_PLIST in Expo Go, whose Info.plist carries no
@@ -416,6 +467,13 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
     }
     punchMutation.mutate(filePath);
   };
+
+  // Whichever path ended the punch -- success, failure or cancel -- clearing
+  // pendingAction is the one thing they all do, so the camera re-arms here
+  // rather than at each of the five places that clear it.
+  useEffect(() => {
+    if (!pendingAction) setCaptured(false);
+  }, [pendingAction]);
 
   if (!employee || !store) return null;
 
@@ -660,7 +718,12 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
         </Card>
       )}
 
-      <Modal visible={!!pendingAction} animationType="slide" onRequestClose={() => setPendingAction(null)}>
+      <Modal
+        visible={!!pendingAction && !captured}
+        animationType="slide"
+        onRequestClose={() => setPendingAction(null)}
+        onDismiss={() => cameraDismissed.current?.()}
+      >
         <CameraCaptureScreen
           onCancel={() => setPendingAction(null)}
           onCaptured={handleCaptured}
