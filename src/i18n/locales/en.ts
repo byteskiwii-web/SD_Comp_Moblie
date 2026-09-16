@@ -148,6 +148,8 @@ export const en = {
   'clock.breakEnded': 'Break ended.',
   'clock.outsidePending': 'Recorded — you were outside the store radius, so this is pending HR approval.',
   'clock.bgTitle': 'Background location required',
+  'clock.bgOffTitle': "Periodic checks are off",
+  'clock.bgOffBody': "Your mark is recorded. Because location is not allowed “All the time”, we cannot re-check that you are at the store during your shift. You can turn that on in Settings.",
   'clock.bgBody': 'To start or end your shift, you must allow location access',
   'clock.bgAlways': 'Allow all the time',
   'clock.bgWhileUsing': 'While using the app',

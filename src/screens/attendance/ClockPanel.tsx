@@ -451,21 +451,37 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
       console.warn('[ClockPanel] background location is unavailable in this runtime', err);
     }
 
-    // The gate binds only where the permission can actually be granted. In a
-    // runtime that has no background location at all there is no setting to go
-    // and change, so refusing the punch protects nothing -- it just makes
-    // punching permanently impossible rather than merely unverified. Native
-    // builds are untouched: there the permission is real, a denial is a
-    // denial, and the employee is sent to Settings to fix it.
+    /*
+     * THE MARK GOES IN EITHER WAY.
+     *
+     * This used to refuse the punch outright when background location was not
+     * granted, on a native build. On Android 11 and above that made attendance
+     * impossible for most people: requestBackgroundPermissionsAsync does not
+     * show a grant dialog there at all, it OPENS SYSTEM SETTINGS (Expo SDK 57
+     * docs) and returns denied -- so the employee was sent away mid-punch, the
+     * selfie they had just taken was thrown out, and coming back meant
+     * starting over. Anyone who had not already set "Allow all the time" by
+     * hand simply could not clock in or out.
+     *
+     * The two things were conflated. A punch needs a FOREGROUND fix, which is
+     * already in `coords` and is what the geofence check uses. Background
+     * location powers the periodic re-check DURING a shift, and
+     * useLocationPollingEffect reads that permission itself and quietly does
+     * nothing without it -- so refusing the mark protected nothing that the
+     * polling had not already handled.
+     *
+     * The disclosure and the request still happen, in that order, exactly as
+     * Play requires. What changed is that a refusal now costs the periodic
+     * checks, not the employee's attendance record.
+     */
+    punchMutation.mutate(filePath);
+
     if (!granted && supportsBackgroundLocation) {
-      setPendingAction(null);
-      Alert.alert(tr('clock.bgTitle'), tr('clock.bgBodyFull'), [
-        { text: tr('common.cancel'), style: 'cancel' },
+      Alert.alert(tr('clock.bgOffTitle'), tr('clock.bgOffBody'), [
+        { text: tr('common.close'), style: 'cancel' },
         { text: tr('common.openSettings'), onPress: () => Linking.openSettings() },
       ]);
-      return;
     }
-    punchMutation.mutate(filePath);
   };
 
   // Whichever path ended the punch -- success, failure or cancel -- clearing
