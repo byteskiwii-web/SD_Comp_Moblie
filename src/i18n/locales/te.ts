@@ -285,6 +285,9 @@ export const te: Catalogue = {
   'docs.aadhaar': 'మీ పేరు మరియు ఖాతా నంబర్ ఉన్న పేజీ',
   'docs.attached': 'జతచేయబడింది',
   'docs.replace': 'మార్చు',
+  'docs.view': "చూడండి",
+  'docs.viewLabel': "{name} చూడండి",
+  'docs.cannotOpen': "ఆ ఫైల్‌ను తెరవగలిగేది ఈ ఫోన్‌లో లేదు.",
   'docs.upload': 'అప్‌లోడ్',
 
   'kyc.title': 'గుర్తింపు ధృవీకరణ',

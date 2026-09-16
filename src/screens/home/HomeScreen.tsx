@@ -92,6 +92,25 @@ export function HomeScreen() {
   const isOnShift = getLatestMarkOfTypes(marks, SHIFT_TYPES)?.mark_type === 'clock-in';
   const lastClockIn = marks.find((m) => m.mark_type === 'clock-in');
   const lastClockOut = marks.find((m) => m.mark_type === 'clock-out');
+
+  /*
+   * THE DAY'S TWO MARKS ARE IN.
+   *
+   * PunchTiles already reaches this conclusion on the Attendance tab, where
+   * both tiles turn into receipts and neither can be pressed -- its own
+   * comment says re-arming Clock In "would invite a second shift nobody asked
+   * for on a screen somebody is glancing at on their way out". Home was still
+   * offering exactly that, in the largest control on the screen, and its
+   * autoPunch would have opened the camera and taken the mark without asking
+   * again.
+   *
+   * The server permits a second clock-in after a clock-out -- it only refuses
+   * while you are still clocked in -- so nothing downstream was going to catch
+   * this. The row now reads as the receipt the rest of the app already shows,
+   * and still opens Attendance, because "what did I do today" is a fair thing
+   * to want from it.
+   */
+  const dayFinished = shiftKnown && !isOnShift && !!lastClockOut;
   const timelineMarks = [...marks].reverse(); // chronological (oldest first) for display
 
   return (
@@ -244,19 +263,26 @@ export function HomeScreen() {
               // would have opened a CLOCK-IN. Without the parameter the
               // Attendance tab just opens and waits, which is the right
               // behaviour for a decision nobody has made yet.
-              params: shiftKnown
-                ? { tab: 'clock', autoPunch: isOnShift ? 'clock-out' : 'clock-in' }
-                : { tab: 'clock' },
+              params:
+                shiftKnown && !dayFinished
+                  ? { tab: 'clock', autoPunch: isOnShift ? 'clock-out' : 'clock-in' }
+                  : { tab: 'clock' },
             })
           }
           style={({ pressed }) => [styles.cta, pressed && styles.ctaPressed]}
           accessibilityRole="button"
         >
           <View style={styles.ctaIcon}>
-            <Ionicons name="camera-outline" size={20} color={colors.brand[700]} />
+            <Ionicons
+              name={dayFinished ? 'checkmark-circle-outline' : 'camera-outline'}
+              size={20}
+              color={dayFinished ? colors.successText : colors.brand[700]}
+            />
           </View>
           <View style={styles.ctaText}>
-            {shiftKnown ? (
+            {dayFinished ? (
+              <Text style={styles.ctaTitle}>{t('clock.shiftEnded')}</Text>
+            ) : shiftKnown ? (
               <Text style={styles.ctaTitle}>
                 {isOnShift ? t('home.endShift') : t('home.startShift')}
               </Text>
@@ -268,7 +294,13 @@ export function HomeScreen() {
               // row cannot print either one before it knows which.
               <Skeleton width={168} height={15} radius={6} style={styles.ctaTitleSkeleton} />
             )}
-            <Text style={styles.ctaSubtitle}>{t('home.geofenced')}</Text>
+            {/* The times, not the geo-fence promise: that line describes what
+                a punch WILL do, and there is no punch left to take today. */}
+            <Text style={styles.ctaSubtitle}>
+              {dayFinished
+                ? `${formatTime(lastClockIn?.timestamp ?? '')} – ${formatTime(lastClockOut?.timestamp ?? '')}`
+                : t('home.geofenced')}
+            </Text>
           </View>
           <Ionicons name="chevron-forward" size={18} color={colors.slate400} />
         </Pressable>

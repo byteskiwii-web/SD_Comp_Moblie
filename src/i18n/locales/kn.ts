@@ -285,6 +285,9 @@ export const kn: Catalogue = {
   'docs.aadhaar': 'ನಿಮ್ಮ ಹೆಸರು ಮತ್ತು ಖಾತೆ ಸಂಖ್ಯೆ ಇರುವ ಪುಟ',
   'docs.attached': 'ಲಗತ್ತಿಸಲಾಗಿದೆ',
   'docs.replace': 'ಬದಲಾಯಿಸಿ',
+  'docs.view': "ನೋಡಿ",
+  'docs.viewLabel': "{name} ನೋಡಿ",
+  'docs.cannotOpen': "ಆ ಫೈಲ್ ತೆರೆಯುವಂತಹದ್ದು ಈ ಫೋನ್‌ನಲ್ಲಿ ಇಲ್ಲ.",
   'docs.upload': 'ಅಪ್‌ಲೋಡ್',
 
   'kyc.title': 'ಗುರುತಿನ ಪರಿಶೀಲನೆ',

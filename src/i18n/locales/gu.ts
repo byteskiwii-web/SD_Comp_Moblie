@@ -292,6 +292,9 @@ export const gu: Catalogue = {
   'docs.aadhaar': 'તમારું નામ અને ખાતા નંબર ધરાવતું પાનું',
   'docs.attached': 'જોડાયેલ',
   'docs.replace': 'બદલો',
+  'docs.view': "જુઓ",
+  'docs.viewLabel': "{name} જુઓ",
+  'docs.cannotOpen': "તે ફાઇલ ખોલી શકે એવું આ ફોનમાં કંઈ નથી.",
   'docs.upload': 'અપલોડ કરો',
 
   'kyc.title': 'ઓળખ ચકાસણી',

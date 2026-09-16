@@ -1,3 +1,5 @@
+import { API_V1 } from '../constants/config';
+import { File, Paths } from 'expo-file-system';
 import { apiClient } from './client';
 
 /**
@@ -117,6 +119,48 @@ export async function getMyDocuments(): Promise<EmployeeDocument[]> {
   if (Array.isArray(data)) return data;
   const documents = data?.documents;
   return Array.isArray(documents) ? documents : [];
+}
+
+/**
+ * Where the stored file can be read.
+ *
+ * Proxied through the API, exactly like the profile photo: the bytes live in
+ * Drive, but every read goes through the session so the same authority check
+ * applies. That also means the URL is useless on its own -- whatever renders
+ * it has to send the bearer token with it.
+ */
+export function documentViewUrl(id: string): string {
+  return `${API_V1}/documents/${encodeURIComponent(id)}/view`;
+}
+
+/**
+ * The same file, but on disk.
+ *
+ * An <Image> can carry an Authorization header, so a picture needs no copy.
+ * A PDF cannot be drawn by this app at all -- there is no PDF renderer in the
+ * Expo Go runtime -- so it has to be handed to something that can, and the
+ * OS will only open a file it can reach. Hence: fetch it with the session,
+ * write it to the cache, return the path.
+ *
+ * Cache, not documents: this is a convenience copy of something the server
+ * already holds, and the OS is free to reclaim it.
+ */
+export async function downloadDocumentToCache(
+  id: string,
+  fileName: string,
+  token: string
+): Promise<string> {
+  // File.downloadFileAsync takes the headers itself, so the bytes go straight
+  // from the socket to the disk. The alternative -- pulling an ArrayBuffer
+  // through axios and encoding it by hand -- needs Buffer or btoa, and this
+  // runtime is not guaranteed to have either.
+  const safe = fileName.replace(/[^\w.\-]/g, '_') || `document_${id}`;
+  const file = await File.downloadFileAsync(
+    documentViewUrl(id),
+    new File(Paths.cache, safe),
+    { headers: { Authorization: `Bearer ${token}` }, idempotent: true }
+  );
+  return file.uri;
 }
 
 export async function deleteDocument(id: string): Promise<void> {

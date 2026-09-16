@@ -285,6 +285,9 @@ export const ml: Catalogue = {
   'docs.aadhaar': 'നിങ്ങളുടെ പേരും അക്കൗണ്ട് നമ്പറും ഉള്ള പേജ്',
   'docs.attached': 'ചേർത്തു',
   'docs.replace': 'മാറ്റുക',
+  'docs.view': "കാണുക",
+  'docs.viewLabel': "{name} കാണുക",
+  'docs.cannotOpen': "ആ ഫയൽ തുറക്കാൻ കഴിയുന്നത് ഈ ഫോണിൽ ഇല്ല.",
   'docs.upload': 'അപ്‌ലോഡ്',
 
   'kyc.title': 'തിരിച്ചറിയൽ പരിശോധന',

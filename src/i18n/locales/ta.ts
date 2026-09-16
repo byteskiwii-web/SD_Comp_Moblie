@@ -285,6 +285,9 @@ export const ta: Catalogue = {
   'docs.aadhaar': 'உங்கள் பெயரும் கணக்கு எண்ணும் உள்ள பக்கம்',
   'docs.attached': 'இணைக்கப்பட்டது',
   'docs.replace': 'மாற்று',
+  'docs.view': "பார்க்க",
+  'docs.viewLabel': "{name} பார்க்க",
+  'docs.cannotOpen': "அந்தக் கோப்பைத் திறக்கக்கூடியது இந்த ஃபோனில் இல்லை.",
   'docs.upload': 'பதிவேற்று',
 
   'kyc.title': 'அடையாளச் சரிபார்ப்பு',

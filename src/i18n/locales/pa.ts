@@ -292,6 +292,9 @@ export const pa: Catalogue = {
   'docs.aadhaar': 'ਉਹ ਪੰਨਾ ਜਿਸ ਤੇ ਤੁਹਾਡਾ ਨਾਮ ਅਤੇ ਖਾਤਾ ਨੰਬਰ ਹੈ',
   'docs.attached': 'ਨੱਥੀ ਕੀਤਾ',
   'docs.replace': 'ਬਦਲੋ',
+  'docs.view': "ਵੇਖੋ",
+  'docs.viewLabel': "{name} ਵੇਖੋ",
+  'docs.cannotOpen': "ਉਹ ਫ਼ਾਈਲ ਖੋਲ੍ਹ ਸਕੇ ਅਜਿਹਾ ਕੁਝ ਇਸ ਫ਼ੋਨ ਵਿੱਚ ਨਹੀਂ ਹੈ।",
   'docs.upload': 'ਅੱਪਲੋਡ ਕਰੋ',
 
   'kyc.title': 'ਪਛਾਣ ਤਸਦੀਕ',

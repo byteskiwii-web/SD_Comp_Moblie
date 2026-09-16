@@ -292,6 +292,9 @@ export const hi: Catalogue = {
   'docs.aadhaar': 'वह पन्ना जिस पर आपका नाम और खाता नंबर हो',
   'docs.attached': 'संलग्न',
   'docs.replace': 'बदलें',
+  'docs.view': "देखें",
+  'docs.viewLabel': "{name} देखें",
+  'docs.cannotOpen': "इस फ़ोन में वह फ़ाइल खोलने वाला कुछ नहीं है।",
   'docs.upload': 'अपलोड',
 
   'kyc.title': 'पहचान सत्यापन',

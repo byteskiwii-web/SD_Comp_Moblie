@@ -307,6 +307,9 @@ export const en = {
   'docs.aadhaar': 'The page with your name and account number',
   'docs.attached': 'Attached',
   'docs.replace': 'Replace',
+  'docs.view': "View",
+  'docs.viewLabel': "View {name}",
+  'docs.cannotOpen': "This phone has nothing that can open that file.",
   'docs.upload': 'Upload',
 
   /* ------------------------------------------------------------------- kyc */

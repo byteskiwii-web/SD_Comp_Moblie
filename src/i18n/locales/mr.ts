@@ -292,6 +292,9 @@ export const mr: Catalogue = {
   'docs.aadhaar': 'तुमचे नाव आणि खाते क्रमांक असलेले पान',
   'docs.attached': 'संलग्न',
   'docs.replace': 'बदला',
+  'docs.view': "पाहा",
+  'docs.viewLabel': "{name} पाहा",
+  'docs.cannotOpen': "ती फाईल उघडू शकेल असे या फोनमध्ये काही नाही.",
   'docs.upload': 'अपलोड करा',
 
   'kyc.title': 'ओळख पडताळणी',

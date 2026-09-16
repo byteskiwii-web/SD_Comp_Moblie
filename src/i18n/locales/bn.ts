@@ -292,6 +292,9 @@ export const bn: Catalogue = {
   'docs.aadhaar': 'যে পাতায় আপনার নাম এবং অ্যাকাউন্ট নম্বর আছে',
   'docs.attached': 'সংযুক্ত',
   'docs.replace': 'প্রতিস্থাপন করুন',
+  'docs.view': "দেখুন",
+  'docs.viewLabel': "{name} দেখুন",
+  'docs.cannotOpen': "ওই ফাইল খুলতে পারে এমন কিছু এই ফোনে নেই।",
   'docs.upload': 'আপলোড করুন',
 
   'kyc.title': 'পরিচয় যাচাইকরণ',
