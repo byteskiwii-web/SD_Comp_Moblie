@@ -5,6 +5,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useQuery } from '@tanstack/react-query';
 import { Card } from '../../components/ui';
 import { SkeletonList, SkeletonRows } from '../../components/Skeleton';
+import { TourTarget } from '../../components/tour/TourTarget';
 import { ColorScheme, radii } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
 import { usePreferencesStore } from '../../stores/preferencesStore';
@@ -80,6 +81,7 @@ export function TeamScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <TourTarget id="team-tabs">
         <View style={styles.segment}>
           {(['today', 'register', 'requests', 'leave'] as Tab[]).map((id) => (
             <Pressable
@@ -93,6 +95,7 @@ export function TeamScreen() {
             </Pressable>
           ))}
         </View>
+        </TourTarget>
 
         {tab === 'today' ? (
           <OnShift />

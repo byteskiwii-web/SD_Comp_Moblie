@@ -459,6 +459,18 @@ export const en = {
   'file.failed': 'Could not attach that',
 
   /* ------------------------------------------------------------------ tour */
+  'tour.addPhoto': "Add your photo",
+  'tour.addPhotoBody': "It is how your manager picks your name out of a list. Add one from Profile now, or tap Next to skip — you can do it any time.",
+  'tour.breaks': "Breaks",
+  'tour.breaksBody': "Start and end a break from the same screen. Break time comes out of your effective hours, and the card shows the longest your store allows.",
+  'tour.takeItBack': "Changed your mind?",
+  'tour.takeItBackBody': "A correction you raised stays yours until somebody decides it. Withdraw takes it back and leaves the day free to request again.",
+  'tour.leaveStatus': "Your leave requests",
+  'tour.leaveStatusBody': "Every request you have made and where it got to. One still pending can be withdrawn from here.",
+  'tour.yourTeam': "Your team",
+  'tour.yourTeamBody': "Who is on shift now, the register for any date, and the corrections your people have raised. Reading only — the decision stays with the approver named on each request.",
+  'tour.whoIsOff': "Who is off",
+  'tour.whoIsOffBody': "The Leave tab shows who is away right now, who is about to be, and who was — so an empty slot on the register is never a mystery.",
   'tour.dayHere': 'Your day, here',
   'tour.startShift': 'Start your shift',
   'tour.insideFence': 'Inside the geo-fence',

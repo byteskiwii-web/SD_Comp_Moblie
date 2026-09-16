@@ -291,7 +291,9 @@ export function LeaveScreen() {
           )}
         </Card>
 
-        <Text style={styles.sectionTitle}>{t('leave.myRequests')}</Text>
+        <TourTarget id="leave-list">
+          <Text style={styles.sectionTitle}>{t('leave.myRequests')}</Text>
+        </TourTarget>
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
@@ -333,6 +335,7 @@ export function LeaveScreen() {
                     style={({ pressed }) => [styles.withdraw, pressed && styles.pressed]}
                     accessibilityRole="button"
                   >
+                    <Ionicons name="arrow-undo-outline" size={13} color={colors.dangerText} />
                     <Text style={styles.withdrawText}>{t('leave.withdraw')}</Text>
                   </Pressable>
                 )}
@@ -489,7 +492,24 @@ function makeStyles(colors: ColorScheme) {
     reqMeta: { fontSize: 10.5, color: colors.slate500, fontWeight: '700' },
     reqReason: { fontSize: 11.5, color: colors.slate600, lineHeight: 17 },
     reqNote: { fontSize: 11, color: colors.slate500, fontStyle: 'italic' },
-    withdraw: { alignSelf: 'flex-start', paddingVertical: 4 },
+    /* A BORDER AND A GROUND, so it reads as a control rather than a label.
+       Bare red text sat under other bare text in a card whose only other
+       coloured element is the status badge -- which is exactly what it looked
+       like. Outlined rather than filled, because a filled red chip in a list
+       of filled status chips would swap one confusion for another. */
+    withdraw: {
+      alignSelf: 'flex-start',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 5,
+      marginTop: 4,
+      paddingHorizontal: 11,
+      paddingVertical: 7,
+      borderRadius: radii.sm,
+      borderWidth: 1,
+      borderColor: colors.danger,
+      backgroundColor: colors.dangerBg,
+    },
     claim: { flexDirection: 'row', alignItems: 'center', gap: 5, alignSelf: 'flex-start', paddingVertical: 4 },
     claimText: { fontSize: 11.5, fontWeight: '800', color: colors.brand[700] },
     compRow: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 4 },

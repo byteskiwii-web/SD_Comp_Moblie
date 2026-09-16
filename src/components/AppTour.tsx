@@ -5,6 +5,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import { ColorScheme, radii } from '../theme/tokens';
 import { useThemeStore } from '../stores/themeStore';
+import { useAuthStore } from '../stores/authStore';
 import { useTourRegistry, type Rect } from './tour/TourTarget';
 import { useT, type TKey } from '../i18n';
 
@@ -38,6 +39,7 @@ const SEEN_KEY = 'zip_hrms_tour_seen_v1';
 type Destination =
   | { tab: 'Home' }
   | { tab: 'Leave' }
+  | { tab: 'Team' }
   | { tab: 'Profile' }
   | { tab: 'Attendance'; panel: 'clock' | 'history' | 'regularise' };
 
@@ -48,9 +50,28 @@ type Step = {
   to: Destination;
   /** The `TourTarget` id to spotlight. Absent, or absent from the tree, centres the card. */
   target?: string;
+  /**
+   * Restricts the step to one role.
+   *
+   * The Team tab only exists for a team lead, so walking an employee to it
+   * would navigate nowhere and describe a screen they will never see. Filtered
+   * before the walk rather than skipped during it, so "3 of 9" counts the
+   * steps this person is actually getting.
+   */
+  role?: 'team-lead';
 };
 
 const STEPS: Step[] = [
+  /* THE ONE ASK, FIRST AND SKIPPABLE. A photo is how a manager recognises a
+     name in the team list, so it is worth asking for -- but it is not worth
+     blocking anyone over, and Next is the skip. */
+  {
+    icon: 'camera-reverse-outline',
+    titleKey: 'tour.addPhoto',
+    bodyKey: 'tour.addPhotoBody',
+    to: { tab: 'Profile' },
+    target: 'profile-top',
+  },
   {
     icon: 'phone-portrait-outline',
     titleKey: 'tour.dayHere',
@@ -73,6 +94,13 @@ const STEPS: Step[] = [
     target: 'clock-location',
   },
   {
+    icon: 'pause-circle-outline',
+    titleKey: 'tour.breaks',
+    bodyKey: 'tour.breaksBody',
+    to: { tab: 'Attendance', panel: 'clock' },
+    target: 'clock-action',
+  },
+  {
     icon: 'time-outline',
     titleKey: 'tour.yourHours',
     bodyKey: 'tour.yourHoursBody',
@@ -87,11 +115,41 @@ const STEPS: Step[] = [
     target: 'regularise-form',
   },
   {
+    icon: 'arrow-undo-outline',
+    titleKey: 'tour.takeItBack',
+    bodyKey: 'tour.takeItBackBody',
+    to: { tab: 'Attendance', panel: 'regularise' },
+    target: 'regularise-list',
+  },
+  {
     icon: 'calendar-outline',
     titleKey: 'tour.timeOff',
     bodyKey: 'tour.timeOffBody',
     to: { tab: 'Leave' },
     target: 'leave-apply',
+  },
+  {
+    icon: 'list-outline',
+    titleKey: 'tour.leaveStatus',
+    bodyKey: 'tour.leaveStatusBody',
+    to: { tab: 'Leave' },
+    target: 'leave-list',
+  },
+  {
+    icon: 'people-outline',
+    titleKey: 'tour.yourTeam',
+    bodyKey: 'tour.yourTeamBody',
+    to: { tab: 'Team' },
+    target: 'team-tabs',
+    role: 'team-lead',
+  },
+  {
+    icon: 'airplane-outline',
+    titleKey: 'tour.whoIsOff',
+    bodyKey: 'tour.whoIsOffBody',
+    to: { tab: 'Team' },
+    target: 'team-tabs',
+    role: 'team-lead',
   },
   {
     icon: 'person-circle-outline',
@@ -129,11 +187,18 @@ export function AppTour({ visible, onClose }: { visible: boolean; onClose: () =>
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const t = useT();
   const [index, setIndex] = useState(0);
+  // The employee's own role decides which steps exist at all -- see Step.role.
+  const role = useAuthStore((st) => st.employee?.role);
+  const steps = useMemo(
+    () => STEPS.filter((st: Step) => !st.role || st.role === role),
+    [role]
+  );
   const [spot, setSpot] = useState<Rect | null>(null);
   const cancelled = useRef(false);
 
-  const step = STEPS[index];
-  const last = index === STEPS.length - 1;
+  // Clamped: a role change between renders must not index past the end.
+  const step = steps[Math.min(index, steps.length - 1)];
+  const last = index >= steps.length - 1;
 
   useEffect(() => {
     if (visible) setIndex(0);
@@ -249,7 +314,7 @@ export function AppTour({ visible, onClose }: { visible: boolean; onClose: () =>
             </View>
             <View style={styles.headerText}>
               <Text style={styles.stepCount}>
-                STEP {index + 1} OF {STEPS.length}
+                STEP {index + 1} OF {steps.length}
               </Text>
               <Text style={styles.title}>{t(step.titleKey)}</Text>
             </View>
@@ -259,7 +324,7 @@ export function AppTour({ visible, onClose }: { visible: boolean; onClose: () =>
             <Text style={styles.bodyText}>{t(step.bodyKey)}</Text>
 
             <View style={styles.dots}>
-              {STEPS.map((_, i) => (
+              {steps.map((_, i) => (
                 <View key={i} style={[styles.dot, i === index && styles.dotActive]} />
               ))}
             </View>

@@ -23,7 +23,21 @@ import { SkeletonRows } from '../../components/Skeleton';
 import { t as tr, useT, type TKey } from '../../i18n';
 import { RadioRow } from '../../components/RadioRow';
 
-const today = () => toLocalDateKey();
+/**
+ * The latest day a correction may target: yesterday, locally.
+ *
+ * The server refuses anything that is not "a day that has already finished",
+ * so today is never a valid answer -- an employee still on shift has hours
+ * yet to record, and correcting a day while it is running would be correcting
+ * a half-written record.
+ *
+ * toLocalDateKey, not toISOString().slice(0, 10). ISO is UTC, and for IST that
+ * is wrong for the first five and a half hours of every day: at 04:00 local it
+ * would name the day before yesterday. Everything else on this screen already
+ * works in local date keys, and the picker's own bound is computed the same
+ * way, so this keeps the form and its limit in agreement.
+ */
+const latestCorrectableDay = () => toLocalDateKey(new Date(Date.now() - 24 * 60 * 60 * 1000));
 
 const STATUS_TONE: Record<RegularisationStatus, 'warning' | 'success' | 'danger' | 'slate'> = {
   pending: 'warning',
@@ -81,9 +95,7 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
   const queryClient = useQueryClient();
 
   // Defaults to YESTERDAY, since today is not correctable yet.
-  const [markDate, setMarkDate] = useState(
-    initialDate ?? new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
-  );
+  const [markDate, setMarkDate] = useState(initialDate ?? latestCorrectableDay());
   const [requestType, setRequestType] = useState<RegularisationRequestType>('adjust');
   const [rows, setRows] = useState<StampRow[]>([]);
   const [reason, setReason] = useState('');
@@ -286,7 +298,7 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
           label={t('common.date')}
           value={markDate}
           onChange={setMarkDate}
-          maximumDate={new Date(Date.now() - 24 * 60 * 60 * 1000)}
+          maximumDate={new Date(`${latestCorrectableDay()}T12:00:00`)}
         />
         </TourTarget>
 
@@ -464,7 +476,7 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
                 setJustSubmitted(false);
                 setErrors({});
                 setReason('');
-                setMarkDate(today());
+                setMarkDate(latestCorrectableDay());
               }}
             />
           </View>
@@ -489,6 +501,7 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
         </View>
       </Card>
 
+      <TourTarget id="regularise-list">
       <Card style={styles.listCard}>
         <Text style={styles.listTitle}>{t('reg.yourRequests')}</Text>
         {listQuery.isLoading ? (
@@ -520,7 +533,10 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
                     accessibilityRole="button"
                     accessibilityLabel={t('reg.withdraw')}
                   >
-                    <Text style={styles.withdraw}>{t('reg.withdraw')}</Text>
+                    <View style={styles.withdrawBtn}>
+                      <Ionicons name="arrow-undo-outline" size={13} color={colors.dangerText} />
+                      <Text style={styles.withdraw}>{t('reg.withdraw')}</Text>
+                    </View>
                   </Pressable>
                 )}
               </View>
@@ -528,6 +544,7 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
           ))
         )}
       </Card>
+      </TourTarget>
     </View>
   );
 }
@@ -614,7 +631,20 @@ function makeStyles(colors: ColorScheme) {
   },
   spacer: { marginVertical: 12 },
   empty: { fontSize: 11.5, color: colors.slate400, paddingVertical: 8 },
-  reqSide: { alignItems: 'flex-end', gap: 6 },
+  reqSide: { alignItems: 'flex-end', gap: 8 },
+  // Matches the Leave list's control exactly: the same action in two places
+  // should not be two different shapes.
+  withdrawBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: radii.sm,
+    borderWidth: 1,
+    borderColor: colors.danger,
+    backgroundColor: colors.dangerBg,
+  },
   // Understated on purpose: taking a request back is ordinary, not an alarm,
   // but it is still the only destructive control in this list.
   withdraw: { fontSize: 11, fontWeight: '700', color: colors.dangerText },
