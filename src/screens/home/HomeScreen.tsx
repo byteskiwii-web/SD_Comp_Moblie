@@ -21,7 +21,7 @@ import { MonthlyStatsCard } from './MonthlyStatsCard';
 import { FestivalCard } from './FestivalCard';
 import { TourTarget } from '../../components/tour/TourTarget';
 import { useTourStore } from '../../stores/tourStore';
-import { SkeletonRows } from '../../components/Skeleton';
+import { Skeleton, SkeletonRows } from '../../components/Skeleton';
 import { useT } from '../../i18n';
 
 const today = () => toLocalDateKey();
@@ -69,6 +69,17 @@ export function HomeScreen() {
   // share this table, that latest mark must be filtered to shift types
   // specifically (the most recent mark overall could be a break event).
   const marks = data ?? [];
+  /*
+   * WHETHER WE KNOW YET, kept separate from the answer itself.
+   *
+   * `marks` falls back to [] so the list code below has something to map, and
+   * an empty list reads as "no clock-in today" -- which is indistinguishable
+   * from "the request has not come back". The hero card was rendering that
+   * gap as the confident claim "Not clocked in", in the dark inactive colour,
+   * to somebody who was in fact mid-shift. It corrects itself a second later,
+   * which makes it look like the app lost the shift and found it again.
+   */
+  const shiftKnown = data !== undefined;
   const isOnShift = getLatestMarkOfTypes(marks, SHIFT_TYPES)?.mark_type === 'clock-in';
   const lastClockIn = marks.find((m) => m.mark_type === 'clock-in');
   const lastClockOut = marks.find((m) => m.mark_type === 'clock-out');
@@ -128,32 +139,73 @@ export function HomeScreen() {
           </Pressable>
         </View>
 
-        <TourTarget id="home-hero" style={[styles.hero, isOnShift ? styles.heroActive : styles.heroInactive]}>
+        <TourTarget
+          id="home-hero"
+          style={[
+            styles.hero,
+            // The BACKGROUND is a claim too -- green says on shift and dark
+            // says off it, so neither may be shown while the answer is
+            // unknown. A neutral card is the only honest third state.
+            !shiftKnown ? styles.heroLoading : isOnShift ? styles.heroActive : styles.heroInactive,
+          ]}
+          accessibilityLabel={!shiftKnown ? t('common.loading') : undefined}
+        >
           <View style={styles.heroDecoration} pointerEvents="none" />
           <View style={styles.heroTopRow}>
-            <View style={[styles.statusDot, isOnShift ? styles.statusDotActive : styles.statusDotInactive]} />
-            <Text style={styles.heroLabel}>
+            {/* The date is known without asking the server, so it stays put --
+                only the dot, which encodes shift state, waits. */}
+            {shiftKnown ? (
+              <View style={[styles.statusDot, isOnShift ? styles.statusDotActive : styles.statusDotInactive]} />
+            ) : (
+              <Skeleton width={8} height={8} radius={4} />
+            )}
+            <Text style={[styles.heroLabel, !shiftKnown && styles.heroLabelLoading]}>
               {formatDateLong(new Date())}
             </Text>
           </View>
-          <Text style={styles.heroTitle}>
-            {isOnShift ? t('shift.onShift') : t('shift.notClockedIn')}
-          </Text>
-          <Text style={styles.heroSubtitle}>{store?.name ?? '—'}</Text>
+
+          {shiftKnown ? (
+            <Text style={styles.heroTitle}>
+              {isOnShift ? t('shift.onShift') : t('shift.notClockedIn')}
+            </Text>
+          ) : (
+            // Sized to the real title's line box so the card does not resize
+            // under the finger when the answer lands.
+            <Skeleton width={190} height={30} radius={8} style={styles.heroTitleSkeleton} />
+          )}
+
+          {shiftKnown ? (
+            <Text style={styles.heroSubtitle}>{store?.name ?? '—'}</Text>
+          ) : (
+            <Skeleton width={140} height={13} radius={6} style={styles.heroSubtitleSkeleton} />
+          )}
+
           <View style={styles.heroDivider} />
           <View style={styles.heroStatsRow}>
             <View style={styles.heroStat}>
-              <Text style={styles.heroStatLabel}>{t('home.shiftStart')}</Text>
-              <Text style={styles.heroStatValue}>
-                {formatTime(lastClockIn?.timestamp ?? '')}
+              <Text style={[styles.heroStatLabel, !shiftKnown && styles.heroLabelLoading]}>
+                {t('home.shiftStart')}
               </Text>
+              {shiftKnown ? (
+                <Text style={styles.heroStatValue}>
+                  {formatTime(lastClockIn?.timestamp ?? '')}
+                </Text>
+              ) : (
+                <Skeleton width={72} height={17} radius={6} style={styles.heroStatSkeleton} />
+              )}
             </View>
             <View style={styles.heroStatSeparator} />
             <View style={styles.heroStat}>
-              <Text style={styles.heroStatLabel}>{t('home.shiftEnd')}</Text>
-              <Text style={styles.heroStatValue}>
-                {formatTime(lastClockOut?.timestamp ?? '')}
+              <Text style={[styles.heroStatLabel, !shiftKnown && styles.heroLabelLoading]}>
+                {t('home.shiftEnd')}
               </Text>
+              {shiftKnown ? (
+                <Text style={styles.heroStatValue}>
+                  {formatTime(lastClockOut?.timestamp ?? '')}
+                </Text>
+              ) : (
+                <Skeleton width={72} height={17} radius={6} style={styles.heroStatSkeleton} />
+              )}
             </View>
           </View>
         </TourTarget>
@@ -169,7 +221,16 @@ export function HomeScreen() {
           onPress={() =>
             navigation.navigate('Attendance', {
               screen: 'AttendanceHome',
-              params: { tab: 'clock', autoPunch: isOnShift ? 'clock-out' : 'clock-in' },
+              // NO autoPunch UNTIL THE DIRECTION IS KNOWN. This opens the
+              // camera and takes the punch without asking again, so guessing
+              // here is not a cosmetic slip: before the query returns,
+              // isOnShift is false, and tapping this while genuinely mid-shift
+              // would have opened a CLOCK-IN. Without the parameter the
+              // Attendance tab just opens and waits, which is the right
+              // behaviour for a decision nobody has made yet.
+              params: shiftKnown
+                ? { tab: 'clock', autoPunch: isOnShift ? 'clock-out' : 'clock-in' }
+                : { tab: 'clock' },
             })
           }
           style={({ pressed }) => [styles.cta, pressed && styles.ctaPressed]}
@@ -179,9 +240,15 @@ export function HomeScreen() {
             <Ionicons name="camera-outline" size={20} color={colors.brand[700]} />
           </View>
           <View style={styles.ctaText}>
-            <Text style={styles.ctaTitle}>
-              {isOnShift ? t('home.endShift') : t('home.startShift')}
-            </Text>
+            {shiftKnown ? (
+              <Text style={styles.ctaTitle}>
+                {isOnShift ? t('home.endShift') : t('home.startShift')}
+              </Text>
+            ) : (
+              // "Start shift" and "End shift" are opposite instructions; the
+              // row cannot print either one before it knows which.
+              <Skeleton width={168} height={15} radius={6} style={styles.ctaTitleSkeleton} />
+            )}
             <Text style={styles.ctaSubtitle}>{t('home.geofenced')}</Text>
           </View>
           <Ionicons name="chevron-forward" size={18} color={colors.slate400} />
@@ -275,6 +342,17 @@ function makeStyles(colors: ColorScheme) {
   // rather than always being the same hard-coded green in both. See
   // ColorScheme's comment on why the same key can differ this much by scheme.
   heroActive: { backgroundColor: colors.heroActive },
+  // Neither state's colour while neither is known.
+  heroLoading: { backgroundColor: colors.slate100 },
+  // The date and the stat labels are real text on a card whose colour has not
+  // been decided, so they need a foreground that works on the neutral ground.
+  heroLabelLoading: { color: colors.slate400 },
+  // Vertical margins matched to the text these stand in for, so the card is
+  // exactly as tall before the data arrives as after it.
+  heroTitleSkeleton: { marginVertical: 3 },
+  heroSubtitleSkeleton: { marginVertical: 2 },
+  heroStatSkeleton: { marginTop: 3 },
+  ctaTitleSkeleton: { marginVertical: 2 },
   heroInactive: { backgroundColor: colors.heroInactive },
   heroDecoration: {
     position: 'absolute', top: -40, right: -40, width: 140, height: 140, borderRadius: 70,
