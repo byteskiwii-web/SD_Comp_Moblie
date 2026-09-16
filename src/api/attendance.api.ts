@@ -176,6 +176,21 @@ export type RegularisationAllowance = {
   remainingThisMonth?: number;
 };
 
+/**
+ * Withdraw a request you raised.
+ *
+ * The server takes it only while the request is still pending and only from
+ * the employee who owns it -- a decided request is part of the attendance
+ * record and is not the employee's to remove. A 404 here therefore means
+ * "somebody decided it while you were looking at it", not "no such request".
+ */
+export async function cancelRegularisation(id: string) {
+  const res = await apiClient.post<{ success: true; data: Regularisation }>(
+    `/regularisation/${id}/cancel`
+  );
+  return res.data.data;
+}
+
 export async function getMyRegularisations(month?: string) {
   const res = await apiClient.get<{
     success: true;

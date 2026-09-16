@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Badge, Button, Card, TextField } from '../../components/ui';
@@ -9,7 +9,12 @@ import { Toast, ToastState } from '../../components/Toast';
 import { ColorScheme, radii } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
 import { useAuthStore } from '../../stores/authStore';
-import { getAttendanceHistory, getMyRegularisations, submitRegularisation } from '../../api/attendance.api';
+import {
+  cancelRegularisation,
+  getAttendanceHistory,
+  getMyRegularisations,
+  submitRegularisation,
+} from '../../api/attendance.api';
 import { getApiErrorMessage } from '../../api/client';
 import { formatDuration, summariseDay } from '../../utils/attendanceDay';
 import { formatTime, newestFirst, toLocalDateKey } from '../../utils/datetime';
@@ -172,6 +177,35 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
     onError: (err) => setToast({ tone: 'warning', text: getApiErrorMessage(err) }),
   });
 
+  /*
+   * WITHDRAWING, which the server has always allowed and nothing ever offered.
+   *
+   * Until a reviewer decides it, the request is entirely the employee's --
+   * raised on the wrong day, raised twice, or simply no longer needed. Without
+   * this the only way out was to ask a manager to reject it, which puts a
+   * refusal on a record that should just have been taken back, and burns one
+   * of the month's three corrections either way.
+   */
+  const withdrawMutation = useMutation({
+    mutationFn: (id: string) => cancelRegularisation(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['regularisation-mine', employee?.id] });
+      setToast({ tone: 'success', text: tr('reg.withdrawn') });
+    },
+    onError: (err) => setToast({ tone: 'warning', text: getApiErrorMessage(err) }),
+  });
+
+  function confirmWithdraw(r: Regularisation) {
+    Alert.alert(tr('reg.withdrawConfirm'), tr('reg.withdrawConfirmBody'), [
+      { text: tr('common.cancel'), style: 'cancel' },
+      {
+        text: tr('reg.withdraw'),
+        style: 'destructive',
+        onPress: () => withdrawMutation.mutate(r.id),
+      },
+    ]);
+  }
+
   function validate(): boolean {
     const next: typeof errors = {};
     if (!reason.trim()) next.reason = tr('reg.needNote');
@@ -201,6 +235,28 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
   const myRequests = useMemo(
     () => newestFirst(listQuery.data?.items ?? [], 'markDate', 'createdAt'),
     [listQuery.data]
+  );
+
+  /*
+   * IS THE CHOSEN DAY ALREADY SETTLED?
+   *
+   * The server refuses a second correction for a day it has already approved,
+   * and a pending one blocks a duplicate too. Both are correct as a last
+   * line, but meeting either as a 409 after filling in times and a mandatory
+   * note is the worst moment to learn it -- the same reason the monthly cap
+   * moved above the form rather than staying a rejection.
+   *
+   * Read off the list this screen already loads, so it costs no extra
+   * request. If the list has not arrived the form stays open: guessing
+   * "blocked" from missing data would be the same mistake in the other
+   * direction, and the server is still there to refuse it.
+   */
+  const dayBlocker = useMemo(
+    () =>
+      myRequests.find(
+        (r) => r.markDate === markDate && (r.status === 'approved' || r.status === 'pending')
+      ),
+    [myRequests, markDate]
   );
 
   if (!employee || !store) return null;
@@ -379,6 +435,16 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
           </View>
         )}
 
+        {/* Stated before the work, not after it. */}
+        {dayBlocker && (
+          <View style={[styles.allowance, styles.allowanceSpent]}>
+            <Ionicons name="lock-closed-outline" size={14} color={colors.dangerText} />
+            <Text style={[styles.allowanceText, styles.allowanceTextSpent]}>
+              {dayBlocker.status === 'approved' ? t('reg.dayApproved') : t('reg.dayPending')}
+            </Text>
+          </View>
+        )}
+
         <TextField
           label={t('reg.note')}
           value={reason}
@@ -417,7 +483,7 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
                 if (validate()) submitMutation.mutate();
               }}
               loading={submitMutation.isPending}
-              disabled={justSubmitted}
+              disabled={justSubmitted || !!dayBlocker}
             />
           </View>
         </View>
@@ -442,7 +508,22 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
                 </Text>
                 {r.decisionNote ? <Text style={styles.reqNote}>“{r.decisionNote}”</Text> : null}
               </View>
-              <Badge tone={STATUS_TONE[r.status]}>{t(STATUS_KEY[r.status])}</Badge>
+              <View style={styles.reqSide}>
+                <Badge tone={STATUS_TONE[r.status]}>{t(STATUS_KEY[r.status])}</Badge>
+                {/* Pending only. Everything else has been decided by somebody
+                    else and is no longer the employee's to take back. */}
+                {r.status === 'pending' && (
+                  <Pressable
+                    onPress={() => confirmWithdraw(r)}
+                    disabled={withdrawMutation.isPending}
+                    hitSlop={8}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('reg.withdraw')}
+                  >
+                    <Text style={styles.withdraw}>{t('reg.withdraw')}</Text>
+                  </Pressable>
+                )}
+              </View>
             </View>
           ))
         )}
@@ -533,6 +614,11 @@ function makeStyles(colors: ColorScheme) {
   },
   spacer: { marginVertical: 12 },
   empty: { fontSize: 11.5, color: colors.slate400, paddingVertical: 8 },
+  reqSide: { alignItems: 'flex-end', gap: 6 },
+  // Understated on purpose: taking a request back is ordinary, not an alarm,
+  // but it is still the only destructive control in this list.
+  withdraw: { fontSize: 11, fontWeight: '700', color: colors.dangerText },
+
   reqRow: {
     flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12,
     borderBottomWidth: 1, borderBottomColor: colors.slate100,
