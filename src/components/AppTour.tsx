@@ -194,6 +194,16 @@ export function AppTour({ visible, onClose }: { visible: boolean; onClose: () =>
     [role]
   );
   const [spot, setSpot] = useState<Rect | null>(null);
+  /*
+   * The card's REAL height, once it has been laid out.
+   *
+   * CARD_ESTIMATE is a starting guess for the first frame only. The steps do
+   * not have equal bodies -- a two-line one and a five-line one differ by well
+   * over a hundred points -- so a single constant was always going to be wrong
+   * for some of them, and it was wrong in the direction that hides the Next
+   * button.
+   */
+  const [cardHeight, setCardHeight] = useState(CARD_ESTIMATE);
   const cancelled = useRef(false);
 
   // Clamped: a role change between renders must not index past the end.
@@ -264,13 +274,30 @@ export function AppTour({ visible, onClose }: { visible: boolean; onClose: () =>
       }
     : null;
 
-  // Below the hole when there is room, above it otherwise. A card that covers
-  // the thing it is pointing at is worse than one that is merely centred.
+  // Below the hole when there is room, above it otherwise, centred when
+  // neither fits -- which is the case the old two-way choice had no answer
+  // for, and is exactly what an anchor near the bottom of a long screen
+  // produces. A card that covers the thing it is pointing at is worse than
+  // one that is merely centred.
   const below = hole ? hole.y + hole.height : 0;
-  const cardBelow = hole ? screen.height - below > CARD_ESTIMATE : false;
+  // 14 for the gap the card is placed with, plus a little margin so it never
+  // ends flush against the edge of the screen.
+  const NEEDED = cardHeight + 28;
+  const fitsBelow = hole ? screen.height - below >= NEEDED : false;
+  const fitsAbove = hole ? hole.y >= NEEDED : false;
 
+  /*
+   * statusBarTranslucent, or ANDROID DRAWS EVERYTHING TOO LOW.
+   *
+   * Without it a Modal's content starts below the status bar, while the
+   * spotlight rectangles come from measureInWindow, which counts from the top
+   * of the screen. The two disagree by exactly the status bar's height, so
+   * every hole and every card sat that far down -- enough, on a tall phone
+   * with an anchor near the bottom, to push the card's buttons off screen.
+   * Toast.tsx sets this for the same reason.
+   */
   return (
-    <Modal visible transparent animationType="fade" onRequestClose={finish}>
+    <Modal visible transparent animationType="fade" statusBarTranslucent onRequestClose={finish}>
       {hole ? (
         <View style={styles.fill} pointerEvents="box-none">
           {/* Four panes around the cutout. A real mask needs a native shape
@@ -299,15 +326,23 @@ export function AppTour({ visible, onClose }: { visible: boolean; onClose: () =>
       <View
         style={[
           styles.cardWrap,
-          hole
-            ? cardBelow
-              ? { top: below + 14 }
-              : { bottom: screen.height - hole.y + 14 }
-            : styles.cardCentred,
+          hole && fitsBelow
+            ? { top: below + 14 }
+            : hole && fitsAbove
+              ? { bottom: screen.height - hole.y + 14 }
+              : styles.cardCentred,
         ]}
         pointerEvents="box-none"
       >
-        <View style={styles.card}>
+        <View
+          style={styles.card}
+          onLayout={(e) => {
+            const h = Math.round(e.nativeEvent.layout.height);
+            // Only on a real change: setState in onLayout re-renders, which
+            // lays out again, which fires onLayout again.
+            if (h > 0 && h !== cardHeight) setCardHeight(h);
+          }}
+        >
           <View style={styles.header}>
             <View style={styles.iconWrap}>
               <Ionicons name={step.icon} size={20} color={colors.white} />
