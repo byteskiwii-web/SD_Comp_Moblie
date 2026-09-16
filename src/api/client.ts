@@ -160,12 +160,37 @@ apiClient.interceptors.response.use(
 
 export type ApiErrorBody = {
   success: false;
-  error: { code: string; message: string };
+  error: {
+    code: string;
+    message: string;
+    /**
+     * Which field, and what it needed. Present on VALIDATION_FAILED.
+     *
+     * The top-level message for those is "Some of the details provided are not
+     * valid." -- true, and useless: it names neither the field nor the shape.
+     * Somebody signing in as TL-0001 instead of TL-00001 was told only that
+     * something was wrong, and read that as a wrong password.
+     */
+    details?: { field?: string; message?: string }[];
+  };
 };
 
 export function getApiErrorMessage(err: unknown, fallback = 'Something went wrong. Please try again.'): string {
   if (axios.isAxiosError(err)) {
     const body = err.response?.data as ApiErrorBody | undefined;
+    /*
+     * The specific complaint beats the general one.
+     *
+     * A validation failure carries the field that was wrong and what it should
+     * look like; the envelope carries only "some of the details are not valid".
+     * Showing the envelope turns "your employee ID is one digit short" into a
+     * mystery, and the nearest guess is always "wrong password".
+     *
+     * Only the first: the forms these come from show one line, and a list of
+     * every fault at once reads as a wall rather than an instruction.
+     */
+    const detail = body?.error?.details?.find((d) => d?.message)?.message;
+    if (detail) return detail;
     if (body?.error?.message) return body.error.message;
     if (err.message === 'Network Error') {
       return 'Could not reach the server. Check your Wi-Fi connection and try again.';
