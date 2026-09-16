@@ -580,6 +580,10 @@ export const ml: Catalogue = {
   'policy.acknowledge': 'സ്വീകരിക്കുക',
   'policy.noSummary': 'ഈ നയത്തിന് വിവരണം നൽകിയിട്ടില്ല.',
   'policy.attachment': 'അറ്റാച്ച് ചെയ്ത രേഖ',
+  'policy.openDocument': 'രേഖ തുറക്കുക',
+  'policy.openingDocument': 'തുറക്കുന്നു…',
+  'policy.documentOpened': 'തുറന്നു',
+  'policy.openDocumentFirst': 'അംഗീകരിക്കാൻ രേഖ തുറക്കുക',
   'policy.tapToRead': 'ഈ നയം വായിക്കാൻ ടാപ്പ് ചെയ്യുക',
 
   'kyc.aadhaarShort': 'ആധാർ',

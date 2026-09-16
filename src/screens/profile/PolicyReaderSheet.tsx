@@ -1,12 +1,14 @@
-import React, { useMemo } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import * as Sharing from 'expo-sharing';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ColorScheme, radii } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
 import { getApiErrorMessage } from '../../api/client';
-import { acknowledgePolicy, type Policy } from '../../api/policies.api';
+import { acknowledgePolicy, downloadPolicyFileToCache, type Policy } from '../../api/policies.api';
+import { useAuthStore } from '../../stores/authStore';
 import { Button } from '../../components/ui';
 import { formatDate } from '../../utils/datetime';
 import { useT } from '../../i18n';
@@ -18,16 +20,63 @@ import { useT } from '../../i18n';
  * could see but not open. This is what a tap on it now leads to: the summary
  * the policy carries (which for a text policy IS the document), its version and
  * effective date, whether it still needs your signature, and the button to give
- * it. A policy that also has an attached file says so; the file itself is read
- * in the web console, since a signed-URL PDF viewer is a heavier thing than a
- * field phone needs to acknowledge a policy.
+ * it.
+ *
+ * A POLICY WITH A FILE IS THE FILE. The first version of this sheet showed the
+ * attachment's name and left the reading to the web console — a console a
+ * field employee has never seen and cannot sign in to. So the one thing they
+ * could do was acknowledge a document they had no way to open, which is not
+ * an acknowledgement of anything and would not survive being questioned.
+ *
+ * Now the attachment opens: fetched to the cache with the session token and
+ * handed to whatever the phone uses for PDFs, exactly as an employee's own
+ * documents are. And Acknowledge stays disabled until that has happened —
+ * the same rule the gate applies to opening the sheet at all, carried through
+ * to the thing that actually needs reading. `onFileOpened` lets the gate
+ * screen apply it to its own per-card button.
  */
-export function PolicyReaderSheet({ policy, onClose }: { policy: Policy | null; onClose: () => void }) {
+export function PolicyReaderSheet({
+  policy, onClose, onFileOpened,
+}: { policy: Policy | null; onClose: () => void; onFileOpened?: (id: string) => void }) {
   const insets = useSafeAreaInsets();
   const colors = useThemeStore((s) => s.colors);
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const queryClient = useQueryClient();
   const t = useT();
+  const token = useAuthStore((s) => s.token);
+
+  const [opening, setOpening] = useState(false);
+  const [openedFile, setOpenedFile] = useState<string | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
+
+  // A different policy is a different document: what was opened for the last
+  // one says nothing about this one.
+  useEffect(() => { setOpenedFile(null); setFileError(null); }, [policy?.id]);
+
+  const openFile = async () => {
+    if (!policy || !token || opening) return;
+    setFileError(null);
+    setOpening(true);
+    try {
+      const uri = await downloadPolicyFileToCache(policy.id, policy.fileName, token);
+      if (!(await Sharing.isAvailableAsync())) {
+        setFileError(t('docs.cannotOpen'));
+        return;
+      }
+      // Counted as opened once the phone has been handed the file. Whether
+      // they read it is between them and the document; that they could is
+      // what this records.
+      setOpenedFile(policy.id);
+      onFileOpened?.(policy.id);
+      await Sharing.shareAsync(uri, { mimeType: 'application/pdf', UTI: 'com.adobe.pdf', dialogTitle: policy.title });
+    } catch (err) {
+      setFileError(getApiErrorMessage(err));
+    } finally {
+      setOpening(false);
+    }
+  };
+
+  const mustOpenFirst = Boolean(policy?.hasFile) && openedFile !== policy?.id;
 
   const ack = useMutation({
     mutationFn: (id: string) => acknowledgePolicy(id),
@@ -78,22 +127,38 @@ export function PolicyReaderSheet({ policy, onClose }: { policy: Policy | null; 
               <Text style={styles.summary}>{policy.summary?.trim() || t('policy.noSummary')}</Text>
 
               {policy.hasFile ? (
-                <View style={styles.attachment}>
-                  <Ionicons name="document-attach-outline" size={16} color={colors.brand[700]} />
-                  <Text style={styles.attachmentText} numberOfLines={1}>
-                    {policy.fileName || t('policy.attachment')}
-                  </Text>
-                </View>
+                <Pressable
+                  onPress={openFile}
+                  disabled={opening}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('policy.openDocument')}
+                  style={({ pressed }) => [styles.attachment, pressed && styles.attachmentPressed]}
+                >
+                  {opening
+                    ? <ActivityIndicator size="small" color={colors.brand[700]} />
+                    : <Ionicons name={openedFile === policy.id ? 'checkmark-circle' : 'document-attach-outline'} size={18} color={colors.brand[700]} />}
+                  <View style={styles.attachmentBody}>
+                    <Text style={styles.attachmentText} numberOfLines={1}>
+                      {policy.fileName || t('policy.attachment')}
+                    </Text>
+                    <Text style={styles.attachmentHint}>
+                      {opening ? t('policy.openingDocument') : openedFile === policy.id ? t('policy.documentOpened') : t('policy.openDocument')}
+                    </Text>
+                  </View>
+                  <Ionicons name="open-outline" size={16} color={colors.brand[700]} />
+                </Pressable>
               ) : null}
+              {fileError ? <Text style={styles.error}>{fileError}</Text> : null}
             </ScrollView>
 
             {ack.isError ? <Text style={styles.error}>{getApiErrorMessage(ack.error)}</Text> : null}
 
             {policy.requiresAck && !policy.acknowledgedByMe ? (
               <Button
-                title={ack.isPending ? t('common.saving') : t('policy.acknowledge')}
-                onPress={() => ack.mutate(policy.id)}
-                disabled={ack.isPending}
+                title={ack.isPending ? t('common.saving') : mustOpenFirst ? t('policy.openDocumentFirst') : t('policy.acknowledge')}
+                variant={mustOpenFirst ? 'outline' : 'primary'}
+                onPress={() => (mustOpenFirst ? openFile() : ack.mutate(policy.id))}
+                disabled={ack.isPending || opening}
               />
             ) : null}
           </>
@@ -139,7 +204,10 @@ function makeStyles(colors: ColorScheme) {
       flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 16,
       backgroundColor: colors.brand[50], padding: 12, borderRadius: radii.md,
     },
-    attachmentText: { flex: 1, fontSize: 12, fontWeight: '700', color: colors.brand[700] },
+    attachmentPressed: { opacity: 0.7 },
+    attachmentBody: { flex: 1 },
+    attachmentText: { fontSize: 12, fontWeight: '700', color: colors.brand[700] },
+    attachmentHint: { fontSize: 11, color: colors.slate500, marginTop: 2 },
 
     error: { color: colors.dangerText, fontSize: 12, fontWeight: '600', marginTop: 12, marginBottom: 4 },
   });

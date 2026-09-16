@@ -584,6 +584,10 @@ export const mr: Catalogue = {
   'policy.acknowledge': 'स्वीकारा',
   'policy.noSummary': 'या धोरणासाठी कोणतेही वर्णन दिलेले नाही.',
   'policy.attachment': 'संलग्न दस्तऐवज',
+  'policy.openDocument': 'दस्तऐवज उघडा',
+  'policy.openingDocument': 'उघडत आहे…',
+  'policy.documentOpened': 'उघडले',
+  'policy.openDocumentFirst': 'स्वीकारण्यासाठी दस्तऐवज उघडा',
   'policy.tapToRead': 'हे धोरण वाचण्यासाठी टॅप करा',
 
   'kyc.aadhaarShort': 'आधार',

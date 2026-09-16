@@ -36,8 +36,13 @@ export function AcceptPoliciesScreen() {
   const t = useT();
 
   const [reading, setReading] = useState<Policy | null>(null);
-  /** Policies whose text has actually been opened on this screen. */
+  /**
+   * Policies that have actually been READ on this screen — for a text policy,
+   * opening the sheet; for one with a file, opening the file. The sheet reports
+   * the second, because the card cannot see whether it happened.
+   */
   const [opened, setOpened] = useState<Set<string>>(new Set());
+  const markOpened = (id: string) => setOpened((prev) => new Set(prev).add(id));
   const [error, setError] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
@@ -60,7 +65,8 @@ export function AcceptPoliciesScreen() {
   });
 
   const open = (p: Policy) => {
-    setOpened((prev) => new Set(prev).add(p.id));
+    // A file policy is not read by opening the sheet; the sheet says when.
+    if (!p.hasFile) markOpened(p.id);
     setReading(p);
   };
 
@@ -114,7 +120,7 @@ export function AcceptPoliciesScreen() {
         <Text style={styles.footnote}>{t('policyGate.footnote')}</Text>
       </ScrollView>
 
-      <PolicyReaderSheet policy={reading} onClose={() => setReading(null)} />
+      <PolicyReaderSheet policy={reading} onClose={() => setReading(null)} onFileOpened={markOpened} />
     </SafeAreaView>
   );
 }

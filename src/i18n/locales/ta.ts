@@ -580,6 +580,10 @@ export const ta: Catalogue = {
   'policy.acknowledge': 'ஏற்றுக்கொள்ளுங்கள்',
   'policy.noSummary': 'இந்தக் கொள்கைக்கு விளக்கம் எதுவும் வழங்கப்படவில்லை.',
   'policy.attachment': 'இணைக்கப்பட்ட ஆவணம்',
+  'policy.openDocument': 'ஆவணத்தைத் திற',
+  'policy.openingDocument': 'திறக்கிறது…',
+  'policy.documentOpened': 'திறக்கப்பட்டது',
+  'policy.openDocumentFirst': 'ஒப்புக்கொள்ள ஆவணத்தைத் திறக்கவும்',
   'policy.tapToRead': 'இந்தக் கொள்கையைப் படிக்க தட்டவும்',
 
   'kyc.aadhaarShort': 'ஆதார்',

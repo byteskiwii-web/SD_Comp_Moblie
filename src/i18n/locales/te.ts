@@ -580,6 +580,10 @@ export const te: Catalogue = {
   'policy.acknowledge': 'అంగీకరించండి',
   'policy.noSummary': 'ఈ విధానానికి ఎటువంటి వివరణ ఇవ్వలేదు.',
   'policy.attachment': 'జతచేసిన పత్రం',
+  'policy.openDocument': 'పత్రం తెరవండి',
+  'policy.openingDocument': 'తెరుస్తోంది…',
+  'policy.documentOpened': 'తెరిచారు',
+  'policy.openDocumentFirst': 'అంగీకరించడానికి పత్రం తెరవండి',
   'policy.tapToRead': 'ఈ విధానాన్ని చదవడానికి నొక్కండి',
 
   'kyc.aadhaarShort': 'ఆధార్',

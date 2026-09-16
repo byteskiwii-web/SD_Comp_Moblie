@@ -587,6 +587,10 @@ export const hi: Catalogue = {
   'policy.acknowledge': 'स्वीकार करें',
   'policy.noSummary': 'इस नीति के लिए कोई विवरण नहीं दिया गया है।',
   'policy.attachment': 'संलग्न दस्तावेज़',
+  'policy.openDocument': 'दस्तावेज़ खोलें',
+  'policy.openingDocument': 'खुल रहा है…',
+  'policy.documentOpened': 'खोला गया',
+  'policy.openDocumentFirst': 'स्वीकार करने के लिए दस्तावेज़ खोलें',
   'policy.tapToRead': 'यह नीति पढ़ने के लिए टैप करें',
 
   'kyc.aadhaarShort': 'आधार',

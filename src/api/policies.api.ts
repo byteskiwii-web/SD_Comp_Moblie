@@ -1,4 +1,6 @@
 import { apiClient } from './client';
+import { File, Paths } from 'expo-file-system';
+import { API_V1 } from '../constants/config';
 
 export type PolicyStatus = 'draft' | 'published' | 'archived';
 
@@ -51,6 +53,25 @@ export async function getPolicies(limit = 50) {
 }
 
 /** Signing is per version: a republished policy has to be acknowledged again. */
+/**
+ * Fetch a policy's attached file into the cache, so the phone can open it.
+ *
+ * Same route the console reads, same session token, same reasoning as
+ * downloadDocumentToCache: File.downloadFileAsync takes the headers itself,
+ * so the bytes go from the socket to the disk without passing through a
+ * Buffer this runtime may not have. Idempotent, so reopening the same policy
+ * does not fetch it twice.
+ */
+export async function downloadPolicyFileToCache(id: string, fileName: string | null, token: string): Promise<string> {
+  const safe = (fileName ?? '').replace(/[^\w.\-]/g, '_') || `policy_${id}.pdf`;
+  const file = await File.downloadFileAsync(
+    `${API_V1}/policies/${encodeURIComponent(id)}/file`,
+    new File(Paths.cache, safe),
+    { headers: { Authorization: `Bearer ${token}` }, idempotent: true }
+  );
+  return file.uri;
+}
+
 export async function acknowledgePolicy(id: string) {
   const res = await apiClient.post<{ success: true; data: Policy }>(`/policies/${id}/acknowledge`);
   return res.data.data;

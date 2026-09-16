@@ -584,6 +584,10 @@ export const gu: Catalogue = {
   'policy.acknowledge': 'સ્વીકારો',
   'policy.noSummary': 'આ નીતિ માટે કોઈ વર્ણન આપવામાં આવ્યું નથી.',
   'policy.attachment': 'જોડાયેલ દસ્તાવેજ',
+  'policy.openDocument': 'દસ્તાવેજ ખોલો',
+  'policy.openingDocument': 'ખૂલી રહ્યું છે…',
+  'policy.documentOpened': 'ખોલાયું',
+  'policy.openDocumentFirst': 'સ્વીકારવા માટે દસ્તાવેજ ખોલો',
   'policy.tapToRead': 'આ નીતિ વાંચવા ટૅપ કરો',
 
   'kyc.aadhaarShort': 'આધાર',

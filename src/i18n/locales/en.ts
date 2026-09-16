@@ -598,6 +598,10 @@ export const en = {
   'policy.acknowledge': 'Acknowledge',
   'policy.noSummary': 'No description was provided for this policy.',
   'policy.attachment': 'Attached document',
+  'policy.openDocument': 'Open document',
+  'policy.openingDocument': 'Opening…',
+  'policy.documentOpened': 'Opened',
+  'policy.openDocumentFirst': 'Open the document to acknowledge',
   'policy.tapToRead': 'Tap to read this policy',
 
   'kyc.aadhaarShort': 'Aadhaar',

@@ -584,6 +584,10 @@ export const bn: Catalogue = {
   'policy.acknowledge': 'স্বীকার করুন',
   'policy.noSummary': 'এই নীতির জন্য কোনো বিবরণ দেওয়া হয়নি।',
   'policy.attachment': 'সংযুক্ত নথি',
+  'policy.openDocument': 'নথি খুলুন',
+  'policy.openingDocument': 'খোলা হচ্ছে…',
+  'policy.documentOpened': 'খোলা হয়েছে',
+  'policy.openDocumentFirst': 'স্বীকার করতে নথিটি খুলুন',
   'policy.tapToRead': 'এই নীতি পড়তে ট্যাপ করুন',
 
   'kyc.aadhaarShort': 'আধার',

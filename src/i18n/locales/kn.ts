@@ -580,6 +580,10 @@ export const kn: Catalogue = {
   'policy.acknowledge': 'ಅಂಗೀಕರಿಸಿ',
   'policy.noSummary': 'ಈ ನೀತಿಗೆ ಯಾವುದೇ ವಿವರಣೆ ನೀಡಲಾಗಿಲ್ಲ.',
   'policy.attachment': 'ಲಗತ್ತಿಸಿದ ದಾಖಲೆ',
+  'policy.openDocument': 'ದಾಖಲೆ ತೆರೆಯಿರಿ',
+  'policy.openingDocument': 'ತೆರೆಯುತ್ತಿದೆ…',
+  'policy.documentOpened': 'ತೆರೆಯಲಾಗಿದೆ',
+  'policy.openDocumentFirst': 'ಒಪ್ಪಿಕೊಳ್ಳಲು ದಾಖಲೆಯನ್ನು ತೆರೆಯಿರಿ',
   'policy.tapToRead': 'ಈ ನೀತಿಯನ್ನು ಓದಲು ಟ್ಯಾಪ್ ಮಾಡಿ',
 
   'kyc.aadhaarShort': 'ಆಧಾರ್',

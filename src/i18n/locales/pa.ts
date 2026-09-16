@@ -584,6 +584,10 @@ export const pa: Catalogue = {
   'policy.acknowledge': 'ਮੰਨੋ',
   'policy.noSummary': 'ਇਸ ਨੀਤੀ ਲਈ ਕੋਈ ਵੇਰਵਾ ਨਹੀਂ ਦਿੱਤਾ ਗਿਆ।',
   'policy.attachment': 'ਨੱਥੀ ਦਸਤਾਵੇਜ਼',
+  'policy.openDocument': 'ਦਸਤਾਵੇਜ਼ ਖੋਲ੍ਹੋ',
+  'policy.openingDocument': 'ਖੁੱਲ੍ਹ ਰਿਹਾ ਹੈ…',
+  'policy.documentOpened': 'ਖੋਲ੍ਹਿਆ ਗਿਆ',
+  'policy.openDocumentFirst': 'ਸਵੀਕਾਰ ਕਰਨ ਲਈ ਦਸਤਾਵੇਜ਼ ਖੋਲ੍ਹੋ',
   'policy.tapToRead': 'ਇਹ ਨੀਤੀ ਪੜ੍ਹਨ ਲਈ ਟੈਪ ਕਰੋ',
 
   'kyc.aadhaarShort': 'ਆਧਾਰ',
