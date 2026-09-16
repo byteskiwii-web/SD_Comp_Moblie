@@ -22,6 +22,23 @@ import { useT } from '../i18n';
  * Out button and the map pans instead. It is a picture of where you are, not
  * somewhere to navigate, so the scroll belongs to the page.
  */
+/**
+ * A theme colour at partial opacity, as `rgba()`.
+ *
+ * Not an 8-digit hex: Android parses `#RRGGBBAA` as `#AARRGGBB`, so the
+ * alpha would be read as red and the fence would come out the wrong colour on
+ * one platform only. `rgba()` goes through React Native's own colour
+ * processing and means the same thing on both.
+ */
+function withAlpha(hex: string, alpha: number): string {
+  const full = hex.replace('#', '');
+  // Expand #abc as well as #aabbcc, since the token file permits both.
+  const six = full.length === 3 ? full.split('').map((c) => c + c).join('') : full;
+  const n = parseInt(six, 16);
+  // eslint-disable-next-line no-bitwise
+  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
+}
+
 export function NativeGeofenceMap({
   siteLat,
   siteLng,
@@ -118,7 +135,12 @@ export function NativeGeofenceMap({
             // Dashed, as the design has it -- a boundary you are judged
             // against, not a solid object sitting on the street.
             lineDashPattern={[6, 6]}
-            fillColor={inside ? colors.successBg : colors.warningBg}
+            // A WASH, NOT A LID. successBg/warningBg are opaque surface
+            // colours -- correct behind text, but over map tiles they hide the
+            // streets the map was added for. This keeps the inside/outside
+            // signal at a strength you read without looking at it, and leaves
+            // the roads legible underneath.
+            fillColor={withAlpha(tint, 0.14)}
           />
         )}
 
