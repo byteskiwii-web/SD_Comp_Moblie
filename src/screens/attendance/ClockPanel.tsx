@@ -693,27 +693,66 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
         body={t('clock.note', { tab: t('attendance.regularise') })}
       />
 
+      {/* TODAY'S MARKS, laid out the way the day detail screen lays them out.
+          This was four sentences of running text under a screen made of
+          labelled figures, which made the one card carrying exact times read
+          as a footnote. Same two-column shape, same arrows and colours, so
+          moving between the two screens is not a change of language.
+
+          Seconds stay. The tiles above already say "Done at 6:36 PM"; being
+          able to see 6:36:51 is the entire reason this card exists, and it is
+          what somebody reads out when a mark is disputed. */}
       {(lastClockIn || lastClockOut || lastBreakStart || lastBreakEnd) && (
-        <Card>
-          {lastClockIn && (
-            <Text style={styles.lastPunchText}>
-              {t('clock.lastShiftStart', { time: formatTimeWithSeconds(lastClockIn.timestamp) })}
-            </Text>
+        <Card style={styles.marksCard}>
+          {(lastClockIn || lastClockOut) && (
+            <View style={styles.markRow}>
+              <View style={styles.markCol}>
+                <Text style={styles.markLabel}>{t('mark.clock-in')}</Text>
+                <View style={styles.markValue}>
+                  <Ionicons name="arrow-down-outline" size={14} color={colors.success} />
+                  <Text style={styles.markTime}>
+                    {lastClockIn ? formatTimeWithSeconds(lastClockIn.timestamp) : '—'}
+                  </Text>
+                </View>
+              </View>
+              <View style={[styles.markCol, styles.markColRight]}>
+                <Text style={styles.markLabel}>{t('mark.clock-out')}</Text>
+                <View style={styles.markValue}>
+                  <Ionicons name="arrow-up-outline" size={14} color={colors.danger} />
+                  <Text style={styles.markTime}>
+                    {lastClockOut ? formatTimeWithSeconds(lastClockOut.timestamp) : '—'}
+                  </Text>
+                </View>
+              </View>
+            </View>
           )}
-          {lastClockOut && (
-            <Text style={styles.lastPunchText}>
-              {t('clock.lastShiftEnd', { time: formatTimeWithSeconds(lastClockOut.timestamp) })}
-            </Text>
-          )}
-          {lastBreakStart && (
-            <Text style={styles.lastPunchText}>
-              {t('clock.lastBreakStart', { time: formatTimeWithSeconds(lastBreakStart.timestamp) })}
-            </Text>
-          )}
-          {lastBreakEnd && (
-            <Text style={styles.lastPunchText}>
-              {t('clock.lastBreakEnd', { time: formatTimeWithSeconds(lastBreakEnd.timestamp) })}
-            </Text>
+
+          {/* The break row only appears on a day that had one, rather than
+              sitting there as two em dashes on every other day. */}
+          {(lastBreakStart || lastBreakEnd) && (
+            <>
+              {(lastClockIn || lastClockOut) && <View style={styles.markDivider} />}
+              <View style={styles.markRow}>
+                <View style={styles.markCol}>
+                  <Text style={styles.markLabel}>{t('mark.break-start')}</Text>
+                  <View style={styles.markValue}>
+                    <Ionicons name="pause-outline" size={14} color={colors.warning} />
+                    <Text style={styles.markTime}>
+                      {lastBreakStart ? formatTimeWithSeconds(lastBreakStart.timestamp) : '—'}
+                    </Text>
+                  </View>
+                </View>
+                <View style={[styles.markCol, styles.markColRight]}>
+                  <Text style={styles.markLabel}>{t('mark.break-end')}</Text>
+                  <View style={styles.markValue}>
+                    <Ionicons name="play-outline" size={14} color={colors.success} />
+                    <Text style={styles.markTime}>
+                      {lastBreakEnd ? formatTimeWithSeconds(lastBreakEnd.timestamp) : '—'}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            </>
           )}
         </Card>
       )}
@@ -796,6 +835,18 @@ function makeStyles(colors: ColorScheme) {
   breakCardLeft: { fontSize: 11, color: colors.slate400, fontWeight: '600' },
   breakCardOverText: { fontSize: 11.5, color: '#B45309', fontWeight: '800' },
   breakButton: { flex: 1 },
-  lastPunchText: { fontSize: 11, color: colors.slate500, fontWeight: '600' },
+  marksCard: { gap: 12 },
+  markRow: { flexDirection: 'row' },
+  markCol: { flex: 1, gap: 5 },
+  markColRight: { alignItems: 'flex-end' },
+  markLabel: { fontSize: 10.5, color: colors.slate400, fontWeight: '700' },
+  markValue: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  // Tabular figures so the two columns line up rather than drifting with the
+  // width of a 1 against a 7 -- these are read side by side.
+  markTime: {
+    fontSize: 15, fontWeight: '800', color: colors.textLight,
+    letterSpacing: -0.3, fontVariant: ['tabular-nums'],
+  },
+  markDivider: { height: 1, backgroundColor: colors.slate100 },
   });
 }
