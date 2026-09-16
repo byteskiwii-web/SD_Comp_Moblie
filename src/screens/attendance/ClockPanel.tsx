@@ -22,6 +22,7 @@ import { formatTime, formatTimeWithSeconds, toLocalDateKey } from '../../utils/d
 import { t as tr, useT } from '../../i18n';
 import { StatusBanner } from '../../components/StatusBanner';
 import { GeofenceMap } from '../../components/GeofenceMap';
+import { Toast, type ToastState } from '../../components/Toast';
 import { PunchTiles } from './PunchTiles';
 import { InfoNote } from '../../components/InfoNote';
 import { useConnectivityStore } from '../../stores/connectivityStore';
@@ -98,6 +99,22 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
    * rather than stranding them on a dead camera screen.
    */
   const [captured, setCaptured] = useState(false);
+  /*
+   * THE ANSWER HAS TO BE WHERE THE QUESTION WAS ASKED.
+   *
+   * The punch result was only ever a banner at the TOP of this panel, and the
+   * buttons that trigger it are at the bottom -- past the shift card, the
+   * geofence card and a 190px map, inside a ScrollView. So a punch taken from
+   * the tiles put its outcome several hundred pixels above the viewport: a
+   * refusal rendered, correctly worded, entirely off screen. The employee saw
+   * the tiles unchanged and concluded nothing had happened, which is exactly
+   * what was reported -- liveness passed, no mark, no explanation.
+   *
+   * The toast is pinned to the bottom of the window, so it cannot be scrolled
+   * away from. The banner stays: it is still the right thing for somebody
+   * looking at the top of the screen, and it persists after the toast fades.
+   */
+  const [toast, setToast] = useState<ToastState>(null);
   /*
    * Closing the camera is not the same as it being CLOSED.
    *
@@ -353,19 +370,23 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
       const unverified = supportsBackgroundLocation
         ? ''
         : ' ' + tr('clock.noMidShift', { runtime: runtimeLabel });
-      setBanner({
-        tone: isPending || !supportsBackgroundLocation ? 'warning' : 'success',
-        text:
-          (isPending
-            ? tr('clock.outsidePending')
-            : pendingAction === 'clock-in'
-              ? tr('clock.shiftStarted')
-              : tr('clock.shiftEnded')) + unverified,
-      });
+      const tone = isPending || !supportsBackgroundLocation ? 'warning' : 'success';
+      const text =
+        (isPending
+          ? tr('clock.outsidePending')
+          : pendingAction === 'clock-in'
+            ? tr('clock.shiftStarted')
+            : tr('clock.shiftEnded')) + unverified;
+      setBanner({ tone, text });
+      setToast({ tone, text });
       setPendingAction(null);
     },
     onError: (err) => {
-      setBanner({ tone: 'warning', text: getApiErrorMessage(err) });
+      // The one that was invisible. A punch that did not land is the single
+      // most important thing this screen ever has to say.
+      const text = getApiErrorMessage(err);
+      setBanner({ tone: 'warning', text });
+      setToast({ tone: 'warning', text });
       setPendingAction(null);
     },
   });
@@ -772,6 +793,8 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
           )}
         </Card>
       )}
+
+      <Toast state={toast} onHide={() => setToast(null)} />
 
       <Modal
         visible={!!pendingAction && !captured}
