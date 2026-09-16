@@ -1,6 +1,6 @@
 import { apiClient } from './client';
 
-export type NotificationType = 'kudos' | 'regularisation' | 'policy' | 'onboarding' | 'system';
+export type NotificationType = 'kudos' | 'regularisation' | 'policy' | 'onboarding' | 'system' | 'leave';
 
 export type AppNotification = {
   id: string;

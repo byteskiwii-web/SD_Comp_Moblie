@@ -77,6 +77,7 @@ function kindTone(colors: ColorScheme): Record<string, { icon: keyof typeof Ioni
   return {
     // Server
     regularisation: { icon: 'create-outline', tint: colors.brand[700], bg: colors.brand[50] },
+    leave: { icon: 'calendar-outline', tint: colors.brand[700], bg: colors.brand[50] },
     kudos: { icon: 'trophy-outline', tint: colors.warningText, bg: colors.warningBg },
     policy: { icon: 'document-text-outline', tint: colors.slate600, bg: colors.slate100 },
     onboarding: { icon: 'person-add-outline', tint: colors.successText, bg: colors.successBg },

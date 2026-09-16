@@ -18,6 +18,8 @@ import { SetPasswordScreen } from '../screens/onboarding/SetPasswordScreen';
 import { CompleteProfileScreen } from '../screens/onboarding/CompleteProfileScreen';
 import { useThemeStore } from '../stores/themeStore';
 import { useI18nReady } from '../i18n';
+import { usePushNotifications } from '../hooks/usePushNotifications';
+import { navigationRef } from './navigationRef';
 
 function FullScreenSpinner() {
   const colors = useThemeStore((s) => s.colors);
@@ -44,6 +46,10 @@ function AuthenticatedApp() {
 }
 
 function GatedApp() {
+  /* Here and not in AuthenticatedApp: registering a push token is a request
+     like any other, and while a password change is being forced it would
+     403. Past that gate the session is fully usable. */
+  usePushNotifications();
   useShiftSync();
   useLocationPollingEffect();
   useClockOutReminderEffect();
@@ -102,7 +108,7 @@ export function RootNavigator() {
   }
 
   return (
-    <NavigationContainer theme={navTheme}>
+    <NavigationContainer ref={navigationRef} theme={navTheme}>
       {token ? <AuthenticatedApp /> : <AuthStack />}
     </NavigationContainer>
   );

@@ -39,4 +39,14 @@ export const hasShiftTimer = !isWeb && !isExpoGo && Platform.OS === 'android';
  */
 export const hasNotifications = !isWeb && !(isExpoGo && Platform.OS === 'android');
 
+/**
+ * Remote push — a token from Expo's push service that the server can send to.
+ *
+ * Narrower than hasNotifications: iOS Expo Go can still load the module, but
+ * a push token from Go is tied to Expo's own app id, not this project's, and
+ * would never reach an installed build anyway. Only a build of THIS app can
+ * hold a token the server should keep.
+ */
+export const hasRemotePush = !isWeb && !isExpoGo;
+
 export const runtimeLabel = isWeb ? 'web' : isExpoGo ? 'Expo Go' : 'development build';

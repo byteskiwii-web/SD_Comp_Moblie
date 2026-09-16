@@ -92,10 +92,37 @@ module.exports = ({ config }) => {
    * Android, which is the only place it would have asked for one.
    */
 
+  /**
+   * FIREBASE, ONLY WHEN THERE IS A CONFIG FOR IT.
+   *
+   * Push notifications reach an Android phone through FCM, and FCM needs the
+   * app to carry the Firebase project's google-services.json. Two things are
+   * required for a push to arrive, and this is only one of them:
+   *
+   *   1. This file, in the build. Locally: put google-services.json in the
+   *      repo root (gitignored). On EAS: `eas env:create --scope project
+   *      --name GOOGLE_SERVICES_JSON --type file --value ./google-services.json`
+   *      and EAS writes it to a path it hands over in that variable.
+   *   2. The FCM V1 service-account key on the EAS project:
+   *      `eas credentials` → Android → Push Notifications. This is what lets
+   *      Expo's push service call FCM on the project's behalf.
+   *
+   * Conditional for the same reason the Maps key is: a path that does not
+   * exist fails prebuild outright, and a build without push must still be a
+   * build. Without the file the app runs exactly as before — the token
+   * request fails, is caught, and the inbox keeps polling.
+   */
+  const fs = require('fs');
+  const path = require('path');
+  const googleServices = process.env.GOOGLE_SERVICES_JSON || path.join(__dirname, 'google-services.json');
+  const android = fs.existsSync(googleServices)
+    ? { ...config.android, googleServicesFile: googleServices }
+    : config.android;
 
   return {
     ...config,
     plugins,
+    android,
     updates: {
       ...config.updates,
       url: `https://u.expo.dev/${projectId}`,

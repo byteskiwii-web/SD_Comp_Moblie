@@ -157,6 +157,10 @@ export function registerNotificationHistoryListener(): { remove: () => void } {
 
   return Notifications.addNotificationReceivedListener((event: import('expo-notifications').NotificationResponse['notification']) => {
     const { title, body, data } = event.request.content;
+    // A push from the server is already a row in the inbox the sheet reads
+    // (its data carries the row's id); capturing it here too would show it
+    // twice. Only locally-fired reminders and alerts belong in this list.
+    if (data && typeof (data as { id?: unknown }).id === 'string') return;
     const kind = (data as { kind?: string } | undefined)?.kind;
     const type =
       kind === 'clock-out-reminder' ? 'clock-out-reminder' :
