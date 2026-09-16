@@ -228,12 +228,25 @@ export function DayDetailScreen() {
         )}
       </ScrollView>
 
-      <View style={styles.footer}>
-        <Button
-          title={t('day.raiseRequest')}
-          onPress={() => navigation.navigate('AttendanceHome', { tab: 'regularise', date })}
-        />
-      </View>
+      {/* A CORRECTION IS THE EMPLOYEE'S OWN.
+
+          This button carries only the date, so the form it opens builds a
+          request for whoever is signed in. On a colleague's day that is not
+          a correction on their record -- it is one silently filed against the
+          lead's own, for a date they did not work.
+
+          The server refuses the honest version too: a team lead is not a
+          reviewer, and submit() rejects a non-reviewer raising for somebody
+          else. So there is nothing to offer here, and a lead who spots a
+          missing punch asks the employee to raise it. */}
+      {!viewingSomeoneElse && (
+        <View style={styles.footer}>
+          <Button
+            title={t('day.raiseRequest')}
+            onPress={() => navigation.navigate('AttendanceHome', { tab: 'regularise', date })}
+          />
+        </View>
+      )}
     </SafeAreaView>
   );
 }
