@@ -107,9 +107,9 @@ module.exports = ({ config }) => {
    *      `eas credentials` → Android → Push Notifications. This is what lets
    *      Expo's push service call FCM on the project's behalf.
    *
-   * Conditional for the same reason the Maps key is: a path that does not
-   * exist fails prebuild outright, and a build without push must still be a
-   * build. Without the file the app runs exactly as before — the token
+   * Conditional on the file existing: a googleServicesFile path that does
+   * not exist fails prebuild outright, and a build without push must still
+   * be a build. Without the file the app runs exactly as before — the token
    * request fails, is caught, and the inbox keeps polling.
    */
   const fs = require('fs');
