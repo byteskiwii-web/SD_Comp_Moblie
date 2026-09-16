@@ -228,6 +228,20 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
   const isCurrentlyOnBreak = latestBreakMark?.mark_type === 'break-start';
   const lastClockIn = marks.find((m) => m.mark_type === 'clock-in');
   const lastClockOut = marks.find((m) => m.mark_type === 'clock-out');
+  /*
+   * THE DAY IS DONE: clocked in, and back out again.
+   *
+   * Nothing is about to be punched, so where the phone is has stopped
+   * mattering -- and "Outside geo-fence, 193 m away, needs HR approval" read
+   * to somebody sitting at home after their shift as though something were
+   * wrong with a mark they had already made. It is not a warning at that
+   * point, it is a statement of the obvious dressed as one.
+   *
+   * Before the first punch the same line is worth having: it answers whether
+   * you can clock in from where you are standing. So this hides it only once
+   * the answer can no longer change anything today.
+   */
+  const shiftFinishedToday = !isCurrentlyClockedIn && !!lastClockOut;
   const lastBreakStart = marks.find((m) => m.mark_type === 'break-start');
   const lastBreakEnd = marks.find((m) => m.mark_type === 'break-end');
 
@@ -599,7 +613,7 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
               )}
             </View>
           </>
-        ) : (
+        ) : shiftFinishedToday ? null : (
           <>
             <StatusBanner
               tone={distanceMetres == null ? 'muted' : insideFence ? 'ok' : 'warn'}
