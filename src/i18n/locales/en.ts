@@ -38,6 +38,8 @@ export const en = {
   'profile.photoLibrary': 'Choose from gallery',
   'profile.photoRemove': 'Remove photo',
   'profile.photoFailed': 'Could not update your photo',
+  'profile.photoNotStored': "Uploaded, but your record still shows no photo.",
+  'profile.photoUnreadable': "Saved, but it could not be displayed.",
   'stats.footnote': 'Days off aren’t distinguished yet, so “not marked” includes your weekly offs.',
   'clock.liveSelfie': 'Live selfie',
   'home.appreciation': 'Appreciation',

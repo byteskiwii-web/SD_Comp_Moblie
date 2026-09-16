@@ -28,6 +28,8 @@ export const hi: Catalogue = {
   'profile.photoLibrary': 'गैलरी से चुनें',
   'profile.photoRemove': 'फ़ोटो हटाएँ',
   'profile.photoFailed': 'आपकी फ़ोटो अपडेट नहीं हो सकी',
+  'profile.photoNotStored': "अपलोड हो गई, पर आपके रिकॉर्ड में अब भी कोई फ़ोटो नहीं है।",
+  'profile.photoUnreadable': "सेव हो गई, पर दिखाई नहीं जा सकी।",
   'stats.footnote': 'साप्ताहिक अवकाश अभी अलग नहीं दिखाए जाते, इसलिए “चिह्नित नहीं” में वे भी शामिल हैं।',
   'clock.liveSelfie': 'लाइव सेल्फ़ी',
   'home.appreciation': 'सराहना',

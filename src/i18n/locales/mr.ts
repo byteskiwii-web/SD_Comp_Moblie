@@ -28,6 +28,8 @@ export const mr: Catalogue = {
   'profile.photoLibrary': 'गॅलरीतून निवडा',
   'profile.photoRemove': 'फोटो काढून टाका',
   'profile.photoFailed': 'तुमचा फोटो अपडेट होऊ शकला नाही',
+  'profile.photoNotStored': "अपलोड झाली, पण तुमच्या नोंदीत अजूनही फोटो नाही.",
+  'profile.photoUnreadable': "जतन झाली, पण दाखवता आली नाही.",
   'stats.footnote': 'साप्ताहिक सुट्ट्या अद्याप वेगळ्या दाखवल्या जात नाहीत, त्यामुळे “नोंद नाही” मध्ये त्या समाविष्ट आहेत.',
   'clock.liveSelfie': 'लाइव्ह सेल्फी',
   'home.appreciation': 'कौतुक',

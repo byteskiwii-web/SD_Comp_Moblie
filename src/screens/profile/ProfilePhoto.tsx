@@ -5,7 +5,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ColorScheme } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
 import { useAuthStore } from '../../stores/authStore';
-import { getApiErrorMessage } from '../../api/client';
+import { apiClient, getApiErrorMessage } from '../../api/client';
 import { profilePhotoUrl, removeProfilePhoto, uploadProfilePhoto } from '../../api/photo.api';
 import type { PickedFile } from '../../api/documents.api';
 import { t as tr, useT } from '../../i18n';
@@ -77,6 +77,20 @@ export function ProfilePhoto() {
   // Set when the remote image fails, so one bad load falls back to initials
   // instead of leaving a broken frame on the screen.
   const [failed, setFailed] = useState(false);
+  /*
+   * WHY IT IS NOT SHOWING, IN WORDS.
+   *
+   * Every way this can fail was silent. A refused image reverted to initials
+   * with no message; a profile read that failed left the old record in place
+   * and said nothing; an upload the server accepted but never recorded looked
+   * identical to one that worked. Three different faults, one appearance --
+   * "I pressed it and nothing happened" -- which is exactly how long it took
+   * to find the real one.
+   *
+   * None of these should be common. All of them should be legible when they
+   * do happen.
+   */
+  const [photoError, setPhotoError] = useState<string | null>(null);
 
   const initials =
     `${employee?.first_name?.[0] ?? ''}${employee?.last_name?.[0] ?? ''}`.toUpperCase() || '?';
@@ -85,8 +99,15 @@ export function ProfilePhoto() {
     mutationFn: (file: PickedFile) => uploadProfilePhoto(employee!.id, file),
     onSuccess: async () => {
       setFailed(false);
+      setPhotoError(null);
       await refreshProfile();
       queryClient.invalidateQueries({ queryKey: ['employee'] });
+      // The server took the file. If the record still says there is no photo,
+      // something between the upload and the profile read dropped it -- and
+      // that gap is precisely what looked like "nothing happened".
+      if (!useAuthStore.getState().profile?.hasPhoto) {
+        setPhotoError(tr('profile.photoNotStored'));
+      }
     },
     onError: (err) => Alert.alert(t('profile.photoFailed'), getApiErrorMessage(err)),
   });
@@ -155,13 +176,32 @@ export function ProfilePhoto() {
               headers: token ? { Authorization: `Bearer ${token}` } : undefined,
             }}
             style={styles.image}
-            onError={() => setFailed(true)}
+            onError={async () => {
+              setFailed(true);
+              /*
+               * Ask again WITH the session attached, purely to find out why.
+               * <Image> reports that it failed and never what the server
+               * said, so this is the only way to tell a refusal from a file
+               * that is there but unreadable -- and the difference decides
+               * who can fix it.
+               */
+              try {
+                await apiClient.get(`/users/${encodeURIComponent(employee.id)}/photo`, {
+                  responseType: 'arraybuffer',
+                });
+                setPhotoError(tr('profile.photoUnreadable'));
+              } catch (err) {
+                setPhotoError(getApiErrorMessage(err));
+              }
+            }}
             accessibilityIgnoresInvertColors
           />
         ) : (
           <Text style={styles.initial}>{initials}</Text>
         )}
       </View>
+
+      {photoError ? <Text style={styles.photoError}>{photoError}</Text> : null}
 
       {/* The camera badge is what tells somebody the avatar is tappable at
           all. Without it this reads as decoration. */}
@@ -174,6 +214,10 @@ export function ProfilePhoto() {
 
 function makeStyles(colors: ColorScheme) {
   return StyleSheet.create({
+    photoError: {
+      marginTop: 8, paddingHorizontal: 16,
+      fontSize: 11, fontWeight: '600', textAlign: 'center', color: colors.dangerText,
+    },
     wrap: { marginBottom: 14 },
     avatar: {
       width: 76, height: 76, borderRadius: 38, backgroundColor: colors.brand[700],

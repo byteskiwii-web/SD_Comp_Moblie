@@ -28,6 +28,8 @@ export const pa: Catalogue = {
   'profile.photoLibrary': 'ਗੈਲਰੀ ਵਿੱਚੋਂ ਚੁਣੋ',
   'profile.photoRemove': 'ਫੋਟੋ ਹਟਾਓ',
   'profile.photoFailed': 'ਤੁਹਾਡੀ ਫੋਟੋ ਅੱਪਡੇਟ ਨਹੀਂ ਹੋ ਸਕੀ',
+  'profile.photoNotStored': "ਅਪਲੋਡ ਹੋ ਗਈ, ਪਰ ਤੁਹਾਡੇ ਰਿਕਾਰਡ ਵਿੱਚ ਹਾਲੇ ਵੀ ਫ਼ੋਟੋ ਨਹੀਂ ਹੈ।",
+  'profile.photoUnreadable': "ਸੰਭਾਲੀ ਗਈ, ਪਰ ਦਿਖਾਈ ਨਹੀਂ ਜਾ ਸਕੀ।",
   'stats.footnote': 'ਹਫ਼ਤਾਵਾਰੀ ਛੁੱਟੀਆਂ ਹਾਲੇ ਵੱਖ ਨਹੀਂ ਦਿਖਾਈਆਂ ਜਾਂਦੀਆਂ, ਇਸ ਲਈ “ਨਿਸ਼ਾਨ ਨਹੀਂ” ਵਿੱਚ ਉਹ ਵੀ ਸ਼ਾਮਲ ਹਨ।',
   'clock.liveSelfie': 'ਲਾਈਵ ਸੈਲਫੀ',
   'home.appreciation': 'ਸ਼ਲਾਘਾ',

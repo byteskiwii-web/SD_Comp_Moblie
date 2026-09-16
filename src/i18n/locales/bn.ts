@@ -28,6 +28,8 @@ export const bn: Catalogue = {
   'profile.photoLibrary': 'গ্যালারি থেকে বাছুন',
   'profile.photoRemove': 'ছবি সরান',
   'profile.photoFailed': 'আপনার ছবি আপডেট করা যায়নি',
+  'profile.photoNotStored': "আপলোড হয়েছে, কিন্তু আপনার রেকর্ডে এখনও ছবি নেই।",
+  'profile.photoUnreadable': "সেভ হয়েছে, কিন্তু দেখানো যায়নি।",
   'stats.footnote': 'সাপ্তাহিক ছুটি এখনও আলাদা করা হয় না, তাই “চিহ্নিত নয়”-এ সেগুলিও রয়েছে।',
   'clock.liveSelfie': 'লাইভ সেলফি',
   'home.appreciation': 'প্রশংসা',

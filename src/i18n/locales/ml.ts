@@ -21,6 +21,8 @@ export const ml: Catalogue = {
   'profile.photoLibrary': 'ഗാലറിയിൽ നിന്ന് തിരഞ്ഞെടുക്കുക',
   'profile.photoRemove': 'ഫോട്ടോ നീക്കുക',
   'profile.photoFailed': 'നിങ്ങളുടെ ഫോട്ടോ അപ്‌ഡേറ്റ് ചെയ്യാനായില്ല',
+  'profile.photoNotStored': "അപ്‌ലോഡ് ചെയ്തു, പക്ഷേ നിങ്ങളുടെ രേഖയിൽ ഇപ്പോഴും ഫോട്ടോ ഇല്ല.",
+  'profile.photoUnreadable': "സേവ് ചെയ്തു, പക്ഷേ കാണിക്കാനായില്ല.",
   'stats.footnote': 'പ്രതിവാര അവധികൾ ഇനിയും വേർതിരിച്ചിട്ടില്ല, അതിനാൽ “അടയാളപ്പെടുത്തിയിട്ടില്ല” എന്നതിൽ അവയും ഉൾപ്പെടും.',
   'clock.liveSelfie': 'ലൈവ് സെൽഫി',
   'home.appreciation': 'അഭിനന്ദനം',

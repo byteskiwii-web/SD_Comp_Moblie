@@ -168,9 +168,13 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
           ? { ...current, role: me.role ?? current.role, store_code: me.storeCode ?? current.store_code }
           : current,
       });
-    } catch {
+    } catch (err) {
       // Offline, or the session expired and the interceptor is already
-      // handling it. Either way the cached record stays.
+      // handling it. Either way the cached record stays -- but a caller that
+      // just wrote something and is waiting to see it reflected needs to know
+      // this read did not happen, rather than reading a stale record as though
+      // it were fresh.
+      console.warn('[authStore] refreshProfile failed; the cached profile is stale', err);
     }
   },
 

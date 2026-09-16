@@ -21,6 +21,8 @@ export const te: Catalogue = {
   'profile.photoLibrary': 'గ్యాలరీ నుండి ఎంచుకోండి',
   'profile.photoRemove': 'ఫోటో తొలగించండి',
   'profile.photoFailed': 'మీ ఫోటో అప్‌డేట్ కాలేదు',
+  'profile.photoNotStored': "అప్‌లోడ్ అయింది, కానీ మీ రికార్డులో ఇంకా ఫోటో లేదు.",
+  'profile.photoUnreadable': "సేవ్ అయింది, కానీ చూపించలేకపోయాం.",
   'stats.footnote': 'వారపు సెలవులు ఇంకా వేరుగా చూపబడవు, కాబట్టి “గుర్తించబడలేదు”లో అవి కూడా ఉన్నాయి.',
   'clock.liveSelfie': 'లైవ్ సెల్ఫీ',
   'home.appreciation': 'ప్రశంస',

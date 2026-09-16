@@ -28,6 +28,8 @@ export const gu: Catalogue = {
   'profile.photoLibrary': 'ગેલેરીમાંથી પસંદ કરો',
   'profile.photoRemove': 'ફોટો દૂર કરો',
   'profile.photoFailed': 'તમારો ફોટો અપડેટ થઈ શક્યો નથી',
+  'profile.photoNotStored': "અપલોડ થઈ, પણ તમારા રેકોર્ડમાં હજુ ફોટો નથી.",
+  'profile.photoUnreadable': "સાચવાઈ, પણ બતાવી શકાઈ નહીં.",
   'stats.footnote': 'સાપ્તાહિક રજાઓ હજી અલગ બતાવાતી નથી, તેથી “નોંધ નથી”માં તે પણ સામેલ છે.',
   'clock.liveSelfie': 'લાઇવ સેલ્ફી',
   'home.appreciation': 'પ્રશંસા',

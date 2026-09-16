@@ -21,6 +21,8 @@ export const ta: Catalogue = {
   'profile.photoLibrary': 'கேலரியிலிருந்து தேர்வு',
   'profile.photoRemove': 'படத்தை நீக்கு',
   'profile.photoFailed': 'உங்கள் படத்தைப் புதுப்பிக்க முடியவில்லை',
+  'profile.photoNotStored': "பதிவேற்றப்பட்டது, ஆனால் உங்கள் பதிவில் இன்னும் புகைப்படம் இல்லை.",
+  'profile.photoUnreadable': "சேமிக்கப்பட்டது, ஆனால் காட்ட முடியவில்லை.",
   'stats.footnote': 'வாராந்திர விடுமுறைகள் இன்னும் தனியாகக் காட்டப்படவில்லை, எனவே “குறிக்கப்படவில்லை” என்பதில் அவையும் அடங்கும்.',
   'clock.liveSelfie': 'நேரடி செல்ஃபி',
   'home.appreciation': 'பாராட்டு',

@@ -21,6 +21,8 @@ export const kn: Catalogue = {
   'profile.photoLibrary': 'ಗ್ಯಾಲರಿಯಿಂದ ಆಯ್ಕೆಮಾಡಿ',
   'profile.photoRemove': 'ಫೋಟೋ ತೆಗೆದುಹಾಕಿ',
   'profile.photoFailed': 'ನಿಮ್ಮ ಫೋಟೋ ಅಪ್‌ಡೇಟ್ ಆಗಲಿಲ್ಲ',
+  'profile.photoNotStored': "ಅಪ್‌ಲೋಡ್ ಆಗಿದೆ, ಆದರೆ ನಿಮ್ಮ ದಾಖಲೆಯಲ್ಲಿ ಇನ್ನೂ ಫೋಟೋ ಇಲ್ಲ.",
+  'profile.photoUnreadable': "ಉಳಿಸಲಾಗಿದೆ, ಆದರೆ ತೋರಿಸಲಾಗಲಿಲ್ಲ.",
   'stats.footnote': 'ಸಾಪ್ತಾಹಿಕ ರಜೆಗಳನ್ನು ಇನ್ನೂ ಪ್ರತ್ಯೇಕಿಸಿಲ್ಲ, ಆದ್ದರಿಂದ “ಗುರುತಿಸಿಲ್ಲ” ಎಂಬುದರಲ್ಲಿ ಅವೂ ಸೇರಿವೆ.',
   'clock.liveSelfie': 'ಲೈವ್ ಸೆಲ್ಫಿ',
   'home.appreciation': 'ಪ್ರಶಂಸೆ',
