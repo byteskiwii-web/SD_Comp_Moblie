@@ -125,6 +125,20 @@ function IosPickerSheet({
 }) {
   const colors = useThemeStore((s) => s.colors);
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  /*
+   * THE WHEEL FOLLOWED iOS, THE SHEET FOLLOWS US.
+   *
+   * UIDatePicker takes its text colour from the SYSTEM appearance, while this
+   * sheet is painted from the app theme. A phone set to dark iOS running the
+   * app in light mode therefore drew white digits on a white sheet: the
+   * picker was there, laid out and spinning, and completely invisible -- only
+   * Cancel and Done, which are our own Text, could be seen.
+   *
+   * themeVariant pins the wheel to the same theme that painted the sheet
+   * behind it, so the two can never disagree again.
+   */
+  // Named for what it is; `mode` on this component is date-vs-time.
+  const appTheme = useThemeStore((s) => s.mode);
   const [draft, setDraft] = useState(initial);
 
   // Remount on each open so the wheel starts from the current field value.
@@ -148,6 +162,7 @@ function IosPickerSheet({
           value={draft}
           mode={mode}
           display="spinner"
+          themeVariant={appTheme}
           maximumDate={maximumDate}
           minimumDate={minimumDate}
           onChange={(_e, picked) => picked && setDraft(picked)}
