@@ -664,6 +664,10 @@ export const mr: Catalogue = {
   'camera.turnHead': 'हळूहळू तुमचे डोके वळवा',
   'camera.timedOut': 'पडताळता आले नाही — पुन्हा प्रयत्न करा',
 
+  'map.label': "{site} आणि त्याच्या जिओ-फेन्सचा नकाशा",
+
+  'map.youAreHere': "तुम्ही येथे आहात",
+
   'map.fenceRadius': '{metres} मीटर फेन्स',
   'map.locating': 'तुमचे लोकेशन शोधत आहे…',
   'net.online': 'ऑनलाइन · चिन्हे रिअल टाइममध्ये सिंक होतात',

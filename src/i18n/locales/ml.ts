@@ -670,6 +670,12 @@ export const ml: Catalogue = {
   'camera.timedOut': 'പരിശോധിക്കാനായില്ല — വീണ്ടും ശ്രമിക്കുക',
 
 
+  'map.label': "{site}-ന്റെയും അതിന്റെ ജിയോ-ഫെൻസിന്റെയും ഭൂപടം",
+
+
+  'map.youAreHere': "നിങ്ങൾ ഇവിടെയാണ്",
+
+
   'map.fenceRadius': '{metres} മീ വേലി',
   'map.locating': 'നിങ്ങളുടെ ലൊക്കേഷൻ കണ്ടെത്തുന്നു…',
   'net.online': 'ഓൺലൈൻ · രേഖകൾ ഉടനടി സിങ്ക് ചെയ്യും',

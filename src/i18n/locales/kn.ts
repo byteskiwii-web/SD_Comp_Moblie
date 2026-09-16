@@ -670,6 +670,12 @@ export const kn: Catalogue = {
   'camera.timedOut': 'ಪರಿಶೀಲಿಸಲಾಗಲಿಲ್ಲ — ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ',
 
 
+  'map.label': "{site} ಮತ್ತು ಅದರ ಜಿಯೋ-ಫೆನ್ಸ್ ನಕ್ಷೆ",
+
+
+  'map.youAreHere': "ನೀವು ಇಲ್ಲಿದ್ದೀರಿ",
+
+
   'map.fenceRadius': '{metres} ಮೀ ಬೇಲಿ',
   'map.locating': 'ನಿಮ್ಮ ಸ್ಥಳ ಹುಡುಕಲಾಗುತ್ತಿದೆ…',
   'net.online': 'ಆನ್‌ಲೈನ್ · ದಾಖಲೆಗಳು ತಕ್ಷಣ ಸಿಂಕ್ ಆಗುತ್ತವೆ',

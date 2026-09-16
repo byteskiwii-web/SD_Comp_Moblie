@@ -664,6 +664,10 @@ export const gu: Catalogue = {
   'camera.turnHead': 'ધીમેથી તમારું માથું ફેરવો',
   'camera.timedOut': 'ચકાસી શકાયું નહીં — ફરી પ્રયાસ કરો',
 
+  'map.label': "{site} અને તેની જીઓ-ફેન્સનો નકશો",
+
+  'map.youAreHere': "તમે અહીં છો",
+
   'map.fenceRadius': '{metres} મીટર ફેન્સ',
   'map.locating': 'તમારું લોકેશન શોધી રહ્યાં છીએ…',
   'net.online': 'ઓનલાઇન · ચિહ્નો રિયલ ટાઇમમાં સિંક થાય છે',

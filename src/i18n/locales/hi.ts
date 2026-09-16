@@ -677,6 +677,12 @@ export const hi: Catalogue = {
   'camera.timedOut': 'सत्यापन नहीं हो सका — फिर कोशिश करें',
 
 
+  'map.label': "{site} और उसके जियो-फ़ेंस का नक्शा",
+
+
+  'map.youAreHere': "आप यहाँ हैं",
+
+
   'map.fenceRadius': '{metres} मी घेरा',
   'map.locating': 'आपकी लोकेशन खोजी जा रही है…',
   'net.online': 'ऑनलाइन · मार्क तुरंत सिंक होते हैं',

@@ -21,7 +21,7 @@ import { getLatestMarkOfTypes, SHIFT_TYPES, BREAK_TYPES } from '../../utils/atte
 import { formatTime, formatTimeWithSeconds, toLocalDateKey } from '../../utils/datetime';
 import { t as tr, useT } from '../../i18n';
 import { StatusBanner } from '../../components/StatusBanner';
-import { GeofenceMap, bearingBetween } from '../../components/GeofenceMap';
+import { GeofenceMap } from '../../components/GeofenceMap';
 import { PunchTiles } from './PunchTiles';
 import { InfoNote } from '../../components/InfoNote';
 import { useConnectivityStore } from '../../stores/connectivityStore';
@@ -534,17 +534,20 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
               }
             />
 
-            {/* The fence, drawn. See GeofenceMap for why this is not a map. */}
+            {/* The fence over a real map, falling back to the drawn one when
+                the site has no coordinates. GeofenceMap picks; both take the
+                same distance, so the card always agrees with the line above
+                it. lat/lng arrive as strings from the API -- Number() on an
+                absent one gives NaN, so check before converting, not after. */}
             <GeofenceMap
               distanceMetres={distanceMetres}
               radiusMetres={store?.geofence_radius_m ?? 0}
-              bearingDegrees={
-                coords && store?.lat && store?.lng
-                  ? bearingBetween(Number(store.lat), Number(store.lng), coords.latitude, coords.longitude)
-                  : null
-              }
               inside={insideForMap}
               siteName={store?.name ?? t('clock.yourSite')}
+              siteLat={store?.lat != null ? Number(store.lat) : null}
+              siteLng={store?.lng != null ? Number(store.lng) : null}
+              userLat={coords?.latitude ?? null}
+              userLng={coords?.longitude ?? null}
             />
           </>
         )}

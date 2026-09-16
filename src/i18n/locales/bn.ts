@@ -664,6 +664,10 @@ export const bn: Catalogue = {
   'camera.turnHead': 'ধীরে ধীরে আপনার মাথা ঘোরান',
   'camera.timedOut': 'যাচাই করা যায়নি — আবার চেষ্টা করুন',
 
+  'map.label': "{site} এবং তার জিও-ফেন্সের মানচিত্র",
+
+  'map.youAreHere': "আপনি এখানে আছেন",
+
   'map.fenceRadius': '{metres} মিটার ফেন্স',
   'map.locating': 'আপনার লোকেশন খোঁজা হচ্ছে…',
   'net.online': 'অনলাইন · চিহ্ন রিয়েল টাইমে সিঙ্ক হয়',

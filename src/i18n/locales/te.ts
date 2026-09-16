@@ -670,6 +670,12 @@ export const te: Catalogue = {
   'camera.timedOut': 'ధృవీకరించలేకపోయాము — మళ్లీ ప్రయత్నించండి',
 
 
+  'map.label': "{site} మరియు దాని జియో-ఫెన్స్ మ్యాప్",
+
+
+  'map.youAreHere': "మీరు ఇక్కడ ఉన్నారు",
+
+
   'map.fenceRadius': '{metres} మీ. హద్దు',
   'map.locating': 'మీ లొకేషన్ కోసం వెతుకుతోంది…',
   'net.online': 'ఆన్‌లైన్ · నమోదులు వెంటనే సింక్ అవుతాయి',

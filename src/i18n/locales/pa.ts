@@ -664,6 +664,10 @@ export const pa: Catalogue = {
   'camera.turnHead': 'ਹੌਲੀ-ਹੌਲੀ ਆਪਣਾ ਸਿਰ ਮੋੜੋ',
   'camera.timedOut': 'ਤਸਦੀਕ ਨਹੀਂ ਹੋ ਸਕੀ — ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ',
 
+  'map.label': "{site} ਅਤੇ ਇਸਦੀ ਜੀਓ-ਫੈਂਸ ਦਾ ਨਕਸ਼ਾ",
+
+  'map.youAreHere': "ਤੁਸੀਂ ਇੱਥੇ ਹੋ",
+
   'map.fenceRadius': '{metres} ਮੀਟਰ ਫੈਂਸ',
   'map.locating': 'ਤੁਹਾਡੀ ਲੋਕੇਸ਼ਨ ਲੱਭ ਰਹੇ ਹਾਂ…',
   'net.online': 'ਆਨਲਾਈਨ · ਚਿੰਨ੍ਹ ਰੀਅਲ ਟਾਈਮ ਵਿੱਚ ਸਿੰਕ ਹੁੰਦੇ ਹਨ',

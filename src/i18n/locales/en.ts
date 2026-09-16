@@ -700,6 +700,12 @@ export const en = {
   'camera.timedOut': 'Could not verify — try again',
 
 
+  'map.label': "Map of {site} and its geofence",
+
+
+  'map.youAreHere': "You are here",
+
+
   'map.fenceRadius': '{metres} m fence',
   'map.locating': 'Finding your location…',
   'net.online': 'Online · marks sync in real time',
