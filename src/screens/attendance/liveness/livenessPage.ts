@@ -372,14 +372,28 @@ function drawBrackets(colour) {
 }
 
 function capture() {
+  // CAP THE LONG EDGE. The camera is asked for 960x540 but a constraint is a
+  // hint, and a phone is free to hand back 1080p -- which is roughly four
+  // times the bytes for detail nobody downstream uses. Every one of those
+  // bytes is paid for three times over: base64 across the WebView bridge (a
+  // third bigger again), a write to disk, and then a multipart upload over
+  // whatever signal the shop floor has. That upload is the slow, failing step
+  // people are reporting.
+  var vw = video.videoWidth, vh = video.videoHeight;
+  var MAX_EDGE = 720;
+  var scale = Math.min(1, MAX_EDGE / Math.max(vw, vh, 1));
+  var w = Math.max(1, Math.round(vw * scale));
+  var h = Math.max(1, Math.round(vh * scale));
   var c = document.createElement("canvas");
-  c.width = video.videoWidth; c.height = video.videoHeight;
+  c.width = w; c.height = h;
   // Deliberately NOT mirrored: the preview is flipped for the user's benefit,
   // but the stored selfie should match how the person actually looks.
-  c.getContext("2d").drawImage(video, 0, 0, c.width, c.height);
-  var url = c.toDataURL("image/jpeg", 0.8);
+  c.getContext("2d").drawImage(video, 0, 0, w, h);
+  // 0.72 rather than 0.8: at this size the difference is invisible on a face
+  // and worth about a fifth of the payload.
+  var url = c.toDataURL("image/jpeg", 0.72);
   send({ type: "captured", base64: url.slice(url.indexOf(",") + 1),
-         width: c.width, height: c.height });
+         width: w, height: h });
 }
 
 function pass() {

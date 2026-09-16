@@ -170,6 +170,12 @@ export function getApiErrorMessage(err: unknown, fallback = 'Something went wron
     if (err.message === 'Network Error') {
       return 'Could not reach the server. Check your Wi-Fi connection and try again.';
     }
+    // A timeout is not "something went wrong", which is what this used to fall
+    // through to. It is a specific thing with a specific remedy, and on this
+    // app it almost always means a punch photo going up a weak uplink.
+    if (err.code === 'ECONNABORTED' || /timeout/i.test(err.message)) {
+      return 'The connection is too slow to finish that right now. Move somewhere with better signal and try again.';
+    }
   }
   return fallback;
 }

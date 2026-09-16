@@ -20,6 +20,18 @@ type PunchInput = {
 
 // Async because the web branch has to read the captured image off a
 // blob:/data: URL before it can be attached.
+/**
+ * How long a punch may take.
+ *
+ * The client's default is 15s, which is right for reading JSON and wrong for
+ * pushing a photo off a phone: on shop-floor mobile data a selfie upload
+ * regularly runs past it, and an aborted upload looks to the employee exactly
+ * like a mark that did not happen -- it IS a mark that did not happen. The
+ * request is idempotent enough to be worth waiting for, and waiting beats a
+ * missing attendance record.
+ */
+const PUNCH_TIMEOUT_MS = 60000;
+
 async function buildPunchFormData(input: PunchInput): Promise<FormData> {
   const form = new FormData();
   form.append('employee_id', input.employee_id);
@@ -61,7 +73,7 @@ export async function clockIn(input: PunchInput) {
   const res = await apiClient.post<{ success: true; message: string; data: PunchResult }>(
     '/attendance/clock-in',
     await buildPunchFormData(input),
-    { headers: { 'Content-Type': 'multipart/form-data' } }
+    { headers: { 'Content-Type': 'multipart/form-data' }, timeout: PUNCH_TIMEOUT_MS }
   );
   return res.data.data;
 }
@@ -70,7 +82,7 @@ export async function clockOut(input: PunchInput) {
   const res = await apiClient.post<{ success: true; message: string; data: PunchResult }>(
     '/attendance/clock-out',
     await buildPunchFormData(input),
-    { headers: { 'Content-Type': 'multipart/form-data' } }
+    { headers: { 'Content-Type': 'multipart/form-data' }, timeout: PUNCH_TIMEOUT_MS }
   );
   return res.data.data;
 }
