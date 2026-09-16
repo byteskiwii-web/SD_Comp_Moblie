@@ -109,6 +109,28 @@ apiClient.interceptors.response.use(
       useConnectivityStore.getState().markUnreachable();
     }
 
+    /*
+     * THE SERVER SAYS THIS ACCOUNT MUST CHANGE ITS PASSWORD FIRST.
+     *
+     * It refuses everything but a handful of auth routes until then, so
+     * without this the app sits on a screen whose every query fails and says
+     * nothing about why -- which is precisely what happened: an account
+     * flagged after it had already signed in never learned, because the flag
+     * was only ever read from the login response.
+     *
+     * Flipping it here sends RootNavigator to the set-password screen from
+     * whatever request happened to be refused first, so the session heals
+     * itself rather than waiting for a fresh sign-in.
+     */
+    if (
+      error.response?.status === 403 &&
+      (error.response.data as { error?: { code?: string } } | undefined)?.error?.code ===
+        'PASSWORD_CHANGE_REQUIRED'
+    ) {
+      useAuthStore.getState().requirePasswordChange();
+      return Promise.reject(error);
+    }
+
     const config = error.config as RetriableConfig | undefined;
     const isAuthRoute = config?.url?.startsWith('/auth/');
     if (error.response?.status !== 401 || !config || config._retriedAfterRefresh || isAuthRoute) {

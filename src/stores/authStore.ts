@@ -57,6 +57,17 @@ type AuthState = {
   ) => Promise<void>;
   /** Called when the employee has set their own password. */
   clearMustChangePassword: () => void;
+  /**
+   * Set when the SERVER says so, from a 403 PASSWORD_CHANGE_REQUIRED on any
+   * request -- not just at sign-in.
+   *
+   * The flag can turn true while a session is already running (an
+   * administrator issues a credential, or the field was added to /auth/me
+   * after this session signed in). Reading it only at login leaves exactly the
+   * state this type's own comment warns about: a locked-out session showing an
+   * app whose every request fails, with nothing on screen explaining why.
+   */
+  requirePasswordChange: () => void;
   refreshProfile: () => Promise<void>;
   signOut: (opts?: { reason?: string }) => Promise<void>;
   clearEndedReason: () => void;
@@ -126,6 +137,11 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   clearEndedReason: () => set({ endedReason: null }),
 
   clearMustChangePassword: () => set({ mustChangePassword: false }),
+  requirePasswordChange: () => {
+    // Guarded so a burst of refused requests does not re-render the navigator
+    // once per failure.
+    if (!get().mustChangePassword) set({ mustChangePassword: true });
+  },
 
   /**
    * Re-read the record the server holds.

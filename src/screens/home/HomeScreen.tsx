@@ -57,7 +57,7 @@ export function HomeScreen() {
      and an unsigned mandatory policy should not look the same. */
   const needsAction = counts?.needsAction ?? 0;
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['attendance-today', employee?.id],
     queryFn: () => getAttendanceHistory(employee!.id, today(), today()),
     enabled: !!employee,
@@ -80,6 +80,15 @@ export function HomeScreen() {
    * which makes it look like the app lost the shift and found it again.
    */
   const shiftKnown = data !== undefined;
+  /*
+   * A QUERY THAT FAILED IS NOT A QUERY THAT IS STILL LOADING.
+   *
+   * `shiftKnown` alone was wrong here: an errored query leaves data
+   * undefined for good, so the card pulsed as a skeleton forever while every
+   * other card on the screen rendered zeros. Waiting silently is only honest
+   * while something is actually on its way.
+   */
+  const shiftFailed = isError && !isLoading;
   const isOnShift = getLatestMarkOfTypes(marks, SHIFT_TYPES)?.mark_type === 'clock-in';
   const lastClockIn = marks.find((m) => m.mark_type === 'clock-in');
   const lastClockOut = marks.find((m) => m.mark_type === 'clock-out');
@@ -156,7 +165,7 @@ export function HomeScreen() {
                 only the dot, which encodes shift state, waits. */}
             {shiftKnown ? (
               <View style={[styles.statusDot, isOnShift ? styles.statusDotActive : styles.statusDotInactive]} />
-            ) : (
+            ) : shiftFailed ? null : (
               <Skeleton width={8} height={8} radius={4} />
             )}
             <Text style={[styles.heroLabel, !shiftKnown && styles.heroLabelLoading]}>
@@ -168,13 +177,20 @@ export function HomeScreen() {
             <Text style={styles.heroTitle}>
               {isOnShift ? t('shift.onShift') : t('shift.notClockedIn')}
             </Text>
+          ) : shiftFailed ? (
+            // Still not a claim about the shift -- it says the app could not
+            // find out, which is the true statement, and offers the way out.
+            <Pressable onPress={() => refetch()} accessibilityRole="button">
+              <Text style={styles.heroFailed}>{t('common.tryAgain')}</Text>
+              <Text style={styles.heroRetry}>{t('common.retry')}</Text>
+            </Pressable>
           ) : (
             // Sized to the real title's line box so the card does not resize
             // under the finger when the answer lands.
             <Skeleton width={190} height={30} radius={8} style={styles.heroTitleSkeleton} />
           )}
 
-          {shiftKnown ? (
+          {shiftKnown || shiftFailed ? (
             <Text style={styles.heroSubtitle}>{store?.name ?? '—'}</Text>
           ) : (
             <Skeleton width={140} height={13} radius={6} style={styles.heroSubtitleSkeleton} />
@@ -186,7 +202,7 @@ export function HomeScreen() {
               <Text style={[styles.heroStatLabel, !shiftKnown && styles.heroLabelLoading]}>
                 {t('home.shiftStart')}
               </Text>
-              {shiftKnown ? (
+              {shiftKnown || shiftFailed ? (
                 <Text style={styles.heroStatValue}>
                   {formatTime(lastClockIn?.timestamp ?? '')}
                 </Text>
@@ -199,7 +215,7 @@ export function HomeScreen() {
               <Text style={[styles.heroStatLabel, !shiftKnown && styles.heroLabelLoading]}>
                 {t('home.shiftEnd')}
               </Text>
-              {shiftKnown ? (
+              {shiftKnown || shiftFailed ? (
                 <Text style={styles.heroStatValue}>
                   {formatTime(lastClockOut?.timestamp ?? '')}
                 </Text>
@@ -244,6 +260,9 @@ export function HomeScreen() {
               <Text style={styles.ctaTitle}>
                 {isOnShift ? t('home.endShift') : t('home.startShift')}
               </Text>
+            ) : shiftFailed ? (
+              // The destination is still true when the direction is not.
+              <Text style={styles.ctaTitle}>{t('attendance.title')}</Text>
             ) : (
               // "Start shift" and "End shift" are opposite instructions; the
               // row cannot print either one before it knows which.
@@ -350,6 +369,8 @@ function makeStyles(colors: ColorScheme) {
   // Vertical margins matched to the text these stand in for, so the card is
   // exactly as tall before the data arrives as after it.
   heroTitleSkeleton: { marginVertical: 3 },
+  heroFailed: { fontSize: 15, fontWeight: '800', color: colors.slate500, marginVertical: 3 },
+  heroRetry: { fontSize: 12, fontWeight: '800', color: colors.brand[700] },
   heroSubtitleSkeleton: { marginVertical: 2 },
   heroStatSkeleton: { marginTop: 3 },
   ctaTitleSkeleton: { marginVertical: 2 },
