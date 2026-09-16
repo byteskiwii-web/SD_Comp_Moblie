@@ -66,17 +66,22 @@ export function DayDetailScreen() {
   const t = useT();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const navigation = useNavigation<Nav>();
-  const { date } = useRoute<DayRoute>().params;
+  const { date, employeeId, employeeName } = useRoute<DayRoute>().params;
   const employee = useAuthStore((s) => s.employee);
   const profile = useAuthStore((s) => s.profile);
+  // Whose day this is. The server decides whether the caller may read it --
+  // scopeEmployeeParam allows self at any level and a site-scoped role its own
+  // store -- so this is a request, not a claim.
+  const subjectId = employeeId ?? employee?.id;
+  const viewingSomeoneElse = !!employeeId && employeeId !== employee?.id;
 
   // Refetched for the single day rather than handed down the route. A route
   // param would be a snapshot of the list at tap time, and this screen is
   // where somebody lands after clocking out to check it registered.
   const { data, isLoading, error } = useQuery({
-    queryKey: ['attendance-day', employee?.id, date],
-    queryFn: () => getAttendanceHistory(employee!.id, date, date),
-    enabled: !!employee,
+    queryKey: ['attendance-day', subjectId, date],
+    queryFn: () => getAttendanceHistory(subjectId!, date, date),
+    enabled: !!subjectId,
   });
 
   // A running shift keeps counting here too, on the same five-minute beat.
@@ -86,7 +91,13 @@ export function DayDetailScreen() {
     () => summariseDay(date, data ?? [], isToday ? now : undefined),
     [date, data, isToday, now]
   );
-  const status = punctuality(day.firstIn, profile?.shiftStart ?? null);
+  /*
+   * Late or on time is judged against the SHIFT, and the only shift this app
+   * holds is the viewer's own. Showing a colleague's clock-in against your
+   * roster would invent a verdict, so somebody else's day reports the times
+   * and leaves the judgement to whoever has their roster.
+   */
+  const status = viewingSomeoneElse ? null : punctuality(day.firstIn, profile?.shiftStart ?? null);
 
   const window = useMemo(() => {
     const from = rosterTime(profile?.shiftStart ?? null);
@@ -100,8 +111,12 @@ export function DayDetailScreen() {
         <Pressable onPress={() => navigation.goBack()} hitSlop={12} accessibilityRole="button" accessibilityLabel={t('common.back')}>
           <Ionicons name="chevron-back" size={26} color={colors.textLight} />
         </Pressable>
-        <Text style={styles.navTitle}>
-          {isToday ? t('day.todaySuffix') : t('day.title')}
+        <Text style={styles.navTitle} numberOfLines={1}>
+          {viewingSomeoneElse && employeeName
+            ? employeeName
+            : isToday
+              ? t('day.todaySuffix')
+              : t('day.title')}
         </Text>
         {/* Balances the back chevron so the title sits centred. */}
         <View style={styles.navSpacer} />

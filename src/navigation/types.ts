@@ -31,7 +31,15 @@ export type AttendanceStackParamList = {
   AttendanceHome:
     | { tab?: 'clock' | 'history' | 'regularise'; date?: string; autoPunch?: 'clock-in' | 'clock-out' }
     | undefined;
-  AttendanceDay: { date: string };
+  /*
+   * employeeId is how a team lead opens somebody else's day.
+   *
+   * Absent means "mine", which is every existing caller. The name rides along
+   * only so the screen can title itself without a second request -- the day's
+   * marks are still fetched fresh, because a lead lands here to check what was
+   * recorded, and a value copied out of a list at tap time is not that.
+   */
+  AttendanceDay: { date: string; employeeId?: string; employeeName?: string };
 };
 
 /**

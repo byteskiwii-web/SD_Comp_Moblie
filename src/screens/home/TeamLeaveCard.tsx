@@ -7,7 +7,8 @@ import { ColorScheme, radii } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
 import { useAuthStore } from '../../stores/authStore';
 import { Skeleton } from '../../components/Skeleton';
-import { getTeamLeave, type LeaveRequest } from '../../api/leave.api';
+import { EmployeeAvatar } from '../../components/EmployeeAvatar';
+import { getTeamLeave, LEAVE_TYPE_LABEL_KEY, type LeaveRequest } from '../../api/leave.api';
 import { toLocalDateKey } from '../../utils/datetime';
 import { t as tr, useT, type TKey } from '../../i18n';
 
@@ -107,13 +108,32 @@ export function TeamLeaveCard() {
 
   const row = (l: LeaveRequest, key: string, tone: 'now' | 'later') => (
     <View key={key} style={styles.row}>
-      <View style={[styles.dot, tone === 'now' ? styles.dotNow : styles.dotLater]} />
-      <Text style={styles.name} numberOfLines={1}>
-        {l.employeeName ?? l.employeeId}
-      </Text>
-      <Text style={styles.when} numberOfLines={1}>
-        {l.startDate === l.endDate ? shortDate(l.startDate) : `${shortDate(l.startDate)} – ${shortDate(l.endDate)}`}
-      </Text>
+      {/* A face, not a bullet. A lead reads this list to work out who is
+          missing from the floor, and recognises people by face faster than by
+          a name they have to parse. */}
+      <EmployeeAvatar employeeId={l.employeeId} name={l.employeeName} size={32} />
+      <View style={styles.rowText}>
+        <Text style={styles.name} numberOfLines={1}>
+          {l.employeeName ?? l.employeeId}
+        </Text>
+        {/* HALF DAY IS THE THING A LEAD NEEDS. "0.5 days" is the same fact
+            stated as arithmetic, and whether somebody is gone for the morning
+            or the whole day changes how the floor is covered. Paid or unpaid
+            rides alongside because it is free to show and is the other
+            question asked about a leave row. */}
+        <Text style={styles.sub} numberOfLines={1}>
+          {(l.halfDay ? t('apply.halfDay') : t('apply.days', { count: l.totalDays ?? 1 })) +
+            ' · ' +
+            t(LEAVE_TYPE_LABEL_KEY[l.leaveType])}
+        </Text>
+      </View>
+      {/* The date carries the colour: amber for somebody who is away right
+          now, quiet for somebody who will be. */}
+      <View style={[styles.whenChip, tone === 'now' ? styles.whenNow : styles.whenLater]}>
+        <Text style={[styles.when, tone === 'now' && styles.whenNowText]} numberOfLines={1}>
+          {l.startDate === l.endDate ? shortDate(l.startDate) : `${shortDate(l.startDate)} – ${shortDate(l.endDate)}`}
+        </Text>
+      </View>
     </View>
   );
 
@@ -174,19 +194,22 @@ const makeStyles = (colors: ColorScheme) =>
     pressed: { opacity: 0.9 },
     eyebrow: {
       fontSize: 10.5, fontWeight: '900', letterSpacing: 0.6,
-      textTransform: 'uppercase', color: colors.slate500,
+      textTransform: 'uppercase', color: colors.brand[700],
     },
     section: {
       fontSize: 10, fontWeight: '800', letterSpacing: 0.4, textTransform: 'uppercase',
       color: colors.slate400, marginTop: 12, marginBottom: 6,
     },
     sectionSpaced: { marginTop: 14 },
-    row: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 5 },
-    dot: { width: 7, height: 7, borderRadius: 3.5 },
-    dotNow: { backgroundColor: colors.warning },
-    dotLater: { backgroundColor: colors.slate300 },
-    name: { flex: 1, fontSize: 13.5, fontWeight: '700', color: colors.textLight },
-    when: { fontSize: 11.5, fontWeight: '700', color: colors.slate500, fontVariant: ['tabular-nums'] },
+    row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 7 },
+    rowText: { flex: 1, gap: 1 },
+    name: { fontSize: 13.5, fontWeight: '700', color: colors.textLight },
+    sub: { fontSize: 11, fontWeight: '600', color: colors.slate400 },
+    whenChip: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: radii.sm },
+    whenNow: { backgroundColor: colors.warningBg },
+    whenLater: { backgroundColor: colors.slate100 },
+    when: { fontSize: 11.5, fontWeight: '800', color: colors.slate500, fontVariant: ['tabular-nums'] },
+    whenNowText: { color: colors.warningText },
     empty: { fontSize: 12, color: colors.slate400, fontWeight: '600', marginTop: 10 },
     footer: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 14 },
     viewAll: { fontSize: 12, fontWeight: '800', color: colors.brand[700] },

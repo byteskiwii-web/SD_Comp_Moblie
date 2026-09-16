@@ -3,9 +3,11 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigation } from '@react-navigation/native';
 import { Card } from '../../components/ui';
 import { SkeletonList, SkeletonRows } from '../../components/Skeleton';
 import { TourTarget } from '../../components/tour/TourTarget';
+import { EmployeeAvatar } from '../../components/EmployeeAvatar';
 import { ColorScheme, radii } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
 import { usePreferencesStore } from '../../stores/preferencesStore';
@@ -113,6 +115,7 @@ export function TeamScreen() {
 
 /** Who is in, right now. */
 function OnShift() {
+  const navigation = useNavigation<any>();
   const colors = useThemeStore((s) => s.colors);
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const t = useT();
@@ -149,7 +152,25 @@ function OnShift() {
       ) : (
         <Card style={styles.listCard}>
           {[...on, ...off].map((p, i) => (
-            <View key={p.employeeId} style={[styles.row, i === 0 && styles.rowFirst]}>
+            /* The list answered "is anyone in?" and stopped there. The next
+               question is always "what did they actually do today", and that
+               screen already exists -- it just had no way to be opened for
+               anybody but yourself. */
+            <Pressable
+              key={p.employeeId}
+              onPress={() =>
+                navigation.navigate('Attendance', {
+                  screen: 'AttendanceDay',
+                  params: { date: toLocalDateKey(), employeeId: p.employeeId, employeeName: p.name },
+                })
+              }
+              style={({ pressed }) => [styles.row, i === 0 && styles.rowFirst, pressed && styles.rowPressed]}
+              accessibilityRole="button"
+              accessibilityLabel={p.name}
+            >
+              <EmployeeAvatar employeeId={p.employeeId} name={p.name} size={34} />
+              {/* The dot still carries on-shift, beside the face rather than
+                  instead of it: one says who, the other says whether. */}
               <View style={[styles.dot, p.onShift ? styles.dotOn : styles.dotOff]} />
               <View style={styles.rowText}>
                 <Text style={styles.rowName} numberOfLines={1}>{p.name}</Text>
@@ -164,7 +185,8 @@ function OnShift() {
               <Text style={[styles.rowState, p.onShift && styles.rowStateOn]}>
                 {p.onShift ? 'IN' : '—'}
               </Text>
-            </View>
+              <Ionicons name="chevron-forward" size={15} color={colors.slate300} />
+            </Pressable>
           ))}
         </Card>
       )}
@@ -387,6 +409,7 @@ function TeamLeave() {
     return (
       <Card key={l.id} style={styles.reqCard}>
         <View style={styles.reqHead}>
+          <EmployeeAvatar employeeId={l.employeeId} name={l.employeeName} size={30} />
           <Text style={styles.reqName} numberOfLines={1}>
             {l.employeeName ?? l.employeeId}
           </Text>
@@ -396,9 +419,13 @@ function TeamLeave() {
             </Text>
           </View>
         </View>
+        {/* Half day, not 0.5 days: whether somebody is gone for the morning
+            or the whole day is the thing that changes the roster, and
+            arithmetic makes the reader do the conversion. */}
         <Text style={styles.reqMeta}>
           {span}
-          {l.totalDays != null ? ` · ${t('apply.days', { count: l.totalDays })}` : ''}
+          {' · '}
+          {l.halfDay ? t('apply.halfDay') : t('apply.days', { count: l.totalDays ?? 1 })}
           {' · '}
           {t(LEAVE_TYPE_LABEL_KEY[l.leaveType])}
         </Text>
@@ -473,6 +500,7 @@ function makeStyles(colors: ColorScheme) {
       flexDirection: 'row', alignItems: 'center', gap: 10,
       paddingVertical: 11, borderTopWidth: 1, borderTopColor: colors.slate100,
     },
+    rowPressed: { opacity: 0.6 },
     rowFirst: { borderTopWidth: 0 },
     dot: { width: 8, height: 8, borderRadius: 4 },
     dotOn: { backgroundColor: colors.success },
