@@ -447,7 +447,13 @@ function LinkRow({ linked, onCheck }: { linked: boolean | null; onCheck?: () => 
       ? { icon: 'link' as const, tint: colors.successText, label: t('kyc.linked'), bg: colors.successBg }
       : linked === false
         ? { icon: 'unlink' as const, tint: colors.warningText, label: t('kyc.notLinked'), bg: colors.warningBg }
-        : { icon: 'link-outline' as const, tint: colors.slate400, label: t('kyc.notChecked'), bg: colors.slate100 };
+        : // PENDING, not "Not checked". Every other row in this card says
+          // Pending while it is outstanding, and this one said something
+          // different in a grey that reads as disabled -- so the one check
+          // nobody had run looked like the one check that was unavailable.
+          // It is the same state as the others: not done yet, and there is a
+          // button right beside it to do it.
+          { icon: 'link-outline' as const, tint: colors.warningText, label: t('status.pending'), bg: colors.warningBg };
 
   const body = (
     <>
