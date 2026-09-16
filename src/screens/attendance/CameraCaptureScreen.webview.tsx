@@ -1,7 +1,10 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 import { File, Paths } from 'expo-file-system';
+import { useCameraPermissions } from 'expo-camera';
+import { Button } from '../../components/ui';
+import { useT } from '../../i18n';
 import { radii } from '../../theme/tokens';
 import { API_BASE_URL } from '../../constants/config';
 import { LIVENESS_HTML, livenessStringsScript } from './liveness/livenessPage';
@@ -32,6 +35,28 @@ type LivenessMessage =
   | { type: 'error'; kind: string; message: string };
 
 export function WebViewCameraCaptureScreen({ onCaptured, onCancel }: CameraCaptureProps) {
+  const t = useT();
+  /*
+   * THE PAGE CANNOT GRANT ITSELF A PERMISSION THE APP DOES NOT HOLD.
+   *
+   * getUserMedia inside the WebView is granted by the host app, not by the
+   * document: on Android react-native-webview answers the page's
+   * onPermissionRequest from the permissions the APP holds, and on iOS
+   * mediaCapturePermissionGrantType="grant" skips WKWebView's own prompt --
+   * which also means it never triggers the OS one. Either way, if nothing has
+   * requested CAMERA at runtime the page's request is denied outright and the
+   * only symptom is NotAllowedError from deep inside the detector, long after
+   * the model has loaded.
+   *
+   * This screen used to assume Expo Go already held it. Nothing on this path
+   * ever asked -- the VisionCamera and fallback screens both do, but neither
+   * of them runs here -- so the check failed on a clean install every time.
+   * Asking before the WebView mounts is what makes the grant real, and the
+   * WebView must stay unmounted until then: mounting it fires getUserMedia
+   * immediately, spending the one request the page gets.
+   */
+  const [permission, requestPermission] = useCameraPermissions();
+  const askedRef = useRef(false);
   const [loading, setLoading] = useState(true);
   // What the page is actually doing. A single "starting…" for the whole boot
   // is indistinguishable from a hang, and on older hardware the model load is
@@ -108,8 +133,45 @@ export function WebViewCameraCaptureScreen({ onCaptured, onCancel }: CameraCaptu
     [onCaptured, onCancel]
   );
 
+  /*
+   * Once only, and never after a refusal: re-requesting a denied permission
+   * is a no-op on Android and re-prompts forever on iOS. The button below is
+   * the deliberate second ask.
+   */
+  useEffect(() => {
+    if (askedRef.current) return;
+    if (permission && !permission.granted && permission.canAskAgain) {
+      askedRef.current = true;
+      void requestPermission();
+    }
+  }, [permission, requestPermission]);
+
   if (useFallback) {
     return <FallbackCameraCaptureScreen onCaptured={onCaptured} onCancel={onCancel} />;
+  }
+
+  // null while the hook resolves -- not the same as denied, and showing the
+  // refusal copy in that gap would be a lie for one frame.
+  if (!permission) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator color="#FFFFFF" size="large" />
+      </View>
+    );
+  }
+
+  if (!permission.granted) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.permissionText}>
+          {permission.canAskAgain ? t('camera.needed') : t('camera.denied')}
+        </Text>
+        {permission.canAskAgain && (
+          <Button title={t('camera.grant')} onPress={requestPermission} />
+        )}
+        <Button title={t('common.cancel')} variant="outline" onPress={onCancel} />
+      </View>
+    );
   }
 
   return (
@@ -159,6 +221,10 @@ export function WebViewCameraCaptureScreen({ onCaptured, onCancel }: CameraCaptu
 // light/dark setting -- same reasoning as CameraCaptureScreen.vision/.fallback.
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: '#000' },
+  center: {
+    flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, padding: 24, backgroundColor: '#0F172A',
+  },
+  permissionText: { color: '#FFFFFF', fontSize: 12.5, textAlign: 'center', marginBottom: 8 },
   loading: {
     position: 'absolute',
     top: 0,
