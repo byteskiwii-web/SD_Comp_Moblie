@@ -218,7 +218,13 @@ export async function requestDeletionCode() {
 }
 
 export async function confirmDeletion(otp: string, reason?: string) {
-  const res = await apiClient.post<{ success: true; data: { requestId?: number; alreadyRequested?: boolean } }>(
+  const res = await apiClient.post<{
+    success: true;
+    // requestId is a bigint id, so it arrives as a string (see AttendanceMark.id).
+    // It is absent on a concurrent duplicate, which returns alreadyRequested instead
+    // and is still a success.
+    data: { requestId?: string; sessionsRevoked?: number; alreadyRequested?: boolean };
+  }>(
     '/auth/me/deletion/confirm',
     reason ? { otp, reason } : { otp }
   );

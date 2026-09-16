@@ -2,7 +2,14 @@ export type MarkType = 'clock-in' | 'clock-out' | '2hr-check' | 'break-start' | 
 export type ApprovalStatus = 'auto-approved' | 'pending-approval' | 'approved' | 'rejected';
 
 export type AttendanceMark = {
-  id: number;
+  /**
+   * A STRING, not a number. Since backend migration 048 this column is
+   * `bigint`, and the driver returns bigint as a JSON string because a
+   * JavaScript number silently loses precision above 2^53. Treat it as
+   * opaque: compare as a string, never do arithmetic on it, and send it
+   * back exactly as it arrived.
+   */
+  id: string;
   employee_id: string;
   store_code: string;
   mark_date: string;

@@ -32,6 +32,31 @@ module.exports = ({ config }) => {
    * set is to include it — the restriction binds on CI, which is the only
    * place a store binary is produced.
    */
+  /**
+   * WHERE UPDATES COME FROM, AND WHO MAY ACCEPT THEM.
+   *
+   * Restored after f628e12 dropped it while rewriting this file for F1/F3.
+   * Without these two keys the config has no updates URL at all, so
+   * `eas update` has nowhere to publish and any native build made from it
+   * can never fetch one -- a failure that is silent in both directions.
+   *
+   * Getting runtimeVersion wrong fails silently too: a client only accepts an
+   * update whose runtime version equals its own, and a mismatch is not an
+   * error -- the server simply has nothing to offer.
+   *
+   *   * Expo Go can only run an update stamped with the SDK it ships
+   *     (exposdk:57.0.0), which is what the `sdkVersion` policy emits. That
+   *     is the tester-facing channel, so it is the default here.
+   *   * A native build has its own binary, unrelated to any Expo Go SDK, so
+   *     it needs `appVersion`. eas.json sets EXPO_UPDATES_TARGET=build on
+   *     every build profile, so a build can never inherit the Expo Go policy.
+   */
+  const projectId = config.extra?.eas?.projectId;
+  if (!projectId) {
+    throw new Error('app.json is missing expo.extra.eas.projectId; cannot build the updates URL.');
+  }
+  const isNativeBuild = process.env.EXPO_UPDATES_TARGET === 'build';
+
   const profile = process.env.EAS_BUILD_PROFILE;
   const wantsDevClient = profile === undefined || profile === 'development';
 
@@ -56,6 +81,14 @@ module.exports = ({ config }) => {
   return {
     ...config,
     plugins,
+    updates: {
+      ...config.updates,
+      url: `https://u.expo.dev/${projectId}`,
+      // Never block the splash screen waiting on the update server: show the
+      // bundle already on the device and fetch the new one in the background.
+      fallbackToCacheTimeout: 0,
+    },
+    runtimeVersion: isNativeBuild ? { policy: 'appVersion' } : { policy: 'sdkVersion' },
     ios: {
       ...config.ios,
       /**
