@@ -405,7 +405,7 @@ export const te: Catalogue = {
   'loc.discloseTitle': 'షిఫ్ట్ సమయంలో లొకేషన్',
   'loc.discloseRule': 'మీరు కేటాయించిన స్టోర్‌లో ఉన్నారని నిర్ధారించడానికి Zob Connect లొకేషన్ డేటాను సేకరిస్తుంది — యాప్ మూసివేసి ఉన్నా లేదా వాడుకలో లేకపోయినా.',
   'loc.discloseDoLabel': 'మేము ఏమి తనిఖీ చేస్తాము',
-  'loc.discloseDoWhen': 'క్లాక్-ఇన్, క్లాక్-అవుట్ సమయంలో మీ లొకేషన్',
+  'loc.discloseDoWhen': 'క్లాక్-ఇన్ సమయంలో మీ లొకేషన్',
   'loc.discloseDoStore': 'షిఫ్ట్ సమయంలో దాదాపు ప్రతి 12 నిమిషాలకు మీ లొకేషన్',
   'loc.discloseDoStop': 'షిఫ్ట్ ముగియగానే తనిఖీ ఆగిపోతుంది',
   'loc.discloseNotLabel': 'మేము ఎప్పుడూ చేయనివి',

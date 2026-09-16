@@ -412,7 +412,7 @@ export const bn: Catalogue = {
   'loc.discloseTitle': 'শিফটে থাকাকালীন লোকেশন',
   'loc.discloseRule': 'Zob Connect আপনি আপনার নির্ধারিত স্টোরে আছেন কিনা নিশ্চিত করতে লোকেশন ডেটা সংগ্রহ করে, এমনকি অ্যাপ বন্ধ থাকলে বা ব্যবহারে না থাকলেও।',
   'loc.discloseDoLabel': 'আমরা কী দেখি',
-  'loc.discloseDoWhen': 'ক্লক-ইন ও ক্লক-আউটের সময় আপনার লোকেশন',
+  'loc.discloseDoWhen': 'ক্লক-ইনের সময় আপনার লোকেশন',
   'loc.discloseDoStore': 'শিফট চলাকালীন প্রায় প্রতি ১২ মিনিটে আপনার লোকেশন',
   'loc.discloseDoStop': 'শিফট শেষ হওয়ামাত্র দেখা বন্ধ হয়ে যায়',
   'loc.discloseNotLabel': 'আমরা কখনও যা করি না',

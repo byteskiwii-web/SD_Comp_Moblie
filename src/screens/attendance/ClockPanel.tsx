@@ -382,12 +382,18 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
 
   const punchMutation = useMutation({
     mutationFn: async (filePath: string) => {
-      if (!employee || !store || !coords) throw new Error('Missing required data');
+      if (!employee || !store) throw new Error('Missing required data');
+      /* Location goes with a clock-in and with nothing else. The permission
+         screen says "your location when you clock in", and the server would
+         discard a clock-out's coordinates regardless — so a clock-out neither
+         waits for a fix nor sends one. */
+      if (pendingAction === 'clock-in' && !coords) throw new Error('Missing required data');
       const input = {
         employee_id: employee.id,
         store_code: store.store_code,
-        latitude: coords.latitude,
-        longitude: coords.longitude,
+        ...(pendingAction === 'clock-in' && coords
+          ? { latitude: coords.latitude, longitude: coords.longitude }
+          : {}),
         device_id: 'mobile-app',
         selfieFilePath: filePath,
       };
@@ -428,17 +434,16 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
     },
   });
 
-  // Breaks are geofence-only -- no selfie, so no camera step and no
-  // background-permission gate (that gate exists to support the mid-shift
-  // location poll, which is already running once the employee is clocked in).
+  // Breaks carry no selfie and no location -- so no camera step, no wait for
+  // a fix, and no background-permission gate (that gate exists to support the
+  // mid-shift location poll, which is already running once the employee is
+  // clocked in and is what still confirms presence during a break).
   const breakMutation = useMutation({
     mutationFn: async (action: 'break-start' | 'break-end') => {
-      if (!employee || !store || !coords) throw new Error('Missing required data');
+      if (!employee || !store) throw new Error('Missing required data');
       const input = {
         employee_id: employee.id,
         store_code: store.store_code,
-        latitude: coords.latitude,
-        longitude: coords.longitude,
         device_id: 'mobile-app',
       };
       return action === 'break-start' ? startBreak(input) : endBreak(input);
@@ -618,12 +623,13 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
       <TourTarget id="clock-location">
       <View style={styles.geoBlock}>
         {/* The error outranks the fence, but only while a fix still buys
-            something. A missing fix disables Start/End Shift, so for as long
-            as either is on offer this has to say why -- a dead button with no
-            explanation is worse than the banner. Once the day's two marks are
-            done nothing is waiting on location, and "Location unavailable"
-            becomes the same after-hours noise as the fence line itself. */}
-        {locationError && !dayFinishedToday ? (
+            something. A missing fix disables Start Shift (End Shift no longer
+            waits on one -- a clock-out is not judged on location), so for as
+            long as a clock-in is still on offer this has to say why: a dead
+            button with no explanation is worse than the banner. Once the
+            employee is clocked in nothing is waiting on a fix except the
+            periodic check, which reports for itself. */}
+        {locationError && !isCurrentlyClockedIn && !dayFinishedToday ? (
           <>
             <StatusBanner
               tone="bad"
@@ -733,9 +739,13 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
         clockOutAt={lastClockOut ? formatTime(lastClockOut.timestamp) : null}
         onClockIn={() => setPendingAction('clock-in')}
         onClockOut={() => setPendingAction('clock-out')}
-        // A break must be ended before the shift can be, and a punch with no
-        // fix would be submitted without the location it is judged on.
-        disabled={!coords || (isCurrentlyClockedIn && isCurrentlyOnBreak)}
+        // A clock-in with no fix would be submitted without the location it is
+        // judged on, so it waits for one. A clock-out is not judged on
+        // location and must not wait: the one thing worse than a late clock-out
+        // is one that cannot be made because the GPS is slow indoors.
+        clockInDisabled={!coords}
+        // A break must be ended before the shift can be.
+        clockOutDisabled={isCurrentlyClockedIn && isCurrentlyOnBreak}
         labels={{
           clockIn: t('day.clockIn'),
           clockOut: t('day.clockOut'),
@@ -752,7 +762,7 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
             title={isCurrentlyOnBreak ? t('clock.endBreak') : t('clock.startBreak')}
             variant="outline"
             onPress={() => breakMutation.mutate(isCurrentlyOnBreak ? 'break-end' : 'break-start')}
-            disabled={!coords || breakMutation.isPending}
+            disabled={breakMutation.isPending}
           />
         </View>
       )}

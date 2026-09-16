@@ -412,7 +412,7 @@ export const pa: Catalogue = {
   'loc.discloseTitle': 'ਸ਼ਿਫਟ ਦੌਰਾਨ ਟਿਕਾਣਾ',
   'loc.discloseRule': 'Zob Connect ਇਹ ਪੁਸ਼ਟੀ ਕਰਨ ਲਈ ਟਿਕਾਣਾ ਡਾਟਾ ਇਕੱਠਾ ਕਰਦਾ ਹੈ ਕਿ ਤੁਸੀਂ ਆਪਣੇ ਨਿਯਤ ਸਟੋਰ ’ਤੇ ਹੋ, ਭਾਵੇਂ ਐਪ ਬੰਦ ਹੋਵੇ ਜਾਂ ਵਰਤੋਂ ਵਿੱਚ ਨਾ ਹੋਵੇ।',
   'loc.discloseDoLabel': 'ਅਸੀਂ ਕੀ ਜਾਂਚਦੇ ਹਾਂ',
-  'loc.discloseDoWhen': 'ਕਲਾਕ-ਇਨ ਤੇ ਕਲਾਕ-ਆਊਟ ਵੇਲੇ ਤੁਹਾਡਾ ਟਿਕਾਣਾ',
+  'loc.discloseDoWhen': 'ਕਲਾਕ-ਇਨ ਵੇਲੇ ਤੁਹਾਡਾ ਟਿਕਾਣਾ',
   'loc.discloseDoStore': 'ਸ਼ਿਫਟ ਦੌਰਾਨ ਲਗਭਗ ਹਰ 12 ਮਿੰਟ ਬਾਅਦ ਤੁਹਾਡਾ ਟਿਕਾਣਾ',
   'loc.discloseDoStop': 'ਸ਼ਿਫਟ ਖ਼ਤਮ ਹੁੰਦੇ ਹੀ ਜਾਂਚ ਬੰਦ ਹੋ ਜਾਂਦੀ ਹੈ',
   'loc.discloseNotLabel': 'ਅਸੀਂ ਕਦੇ ਕੀ ਨਹੀਂ ਕਰਦੇ',

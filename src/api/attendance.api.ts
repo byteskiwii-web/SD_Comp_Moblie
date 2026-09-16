@@ -12,8 +12,14 @@ import type {
 type PunchInput = {
   employee_id: string;
   store_code: string;
-  latitude: number;
-  longitude: number;
+  /**
+   * Sent with a clock-in only. A clock-out carries no location — that is
+   * what the permission screen promises ("your location when you clock in")
+   * and the server discards coordinates on a clock-out anyway, so sending
+   * them would be a request the API is documented to ignore.
+   */
+  latitude?: number;
+  longitude?: number;
   device_id?: string;
   selfieFilePath: string; // filesystem path from VisionCamera's capturePhotoToFile
 };
@@ -36,8 +42,10 @@ async function buildPunchFormData(input: PunchInput): Promise<FormData> {
   const form = new FormData();
   form.append('employee_id', input.employee_id);
   form.append('store_code', input.store_code);
-  form.append('latitude', String(input.latitude));
-  form.append('longitude', String(input.longitude));
+  if (input.latitude != null && input.longitude != null) {
+    form.append('latitude', String(input.latitude));
+    form.append('longitude', String(input.longitude));
+  }
   form.append('client_timestamp', new Date().toISOString());
   if (input.device_id) form.append('device_id', input.device_id);
 
@@ -87,11 +95,10 @@ export async function clockOut(input: PunchInput) {
   return res.data.data;
 }
 
+/** No location: a break is not judged against the fence — see PunchInput. */
 type BreakInput = {
   employee_id: string;
   store_code: string;
-  latitude: number;
-  longitude: number;
   device_id?: string;
 };
 

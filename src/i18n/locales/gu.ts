@@ -412,7 +412,7 @@ export const gu: Catalogue = {
   'loc.discloseTitle': 'શિફ્ટ દરમિયાન લોકેશન',
   'loc.discloseRule': 'Zob Connect તમે તમારા નિયત સ્ટોર પર છો તેની ખાતરી કરવા લોકેશન ડેટા એકત્ર કરે છે, ભલે ઍપ બંધ હોય કે ઉપયોગમાં ન હોય.',
   'loc.discloseDoLabel': 'અમે શું તપાસીએ છીએ',
-  'loc.discloseDoWhen': 'ક્લોક-ઇન અને ક્લોક-આઉટ સમયે તમારું લોકેશન',
+  'loc.discloseDoWhen': 'ક્લોક-ઇન સમયે તમારું લોકેશન',
   'loc.discloseDoStore': 'શિફ્ટ દરમિયાન લગભગ દર 12 મિનિટે તમારું લોકેશન',
   'loc.discloseDoStop': 'શિફ્ટ પૂરી થતાં જ તપાસ બંધ થાય છે',
   'loc.discloseNotLabel': 'અમે શું ક્યારેય કરતા નથી',

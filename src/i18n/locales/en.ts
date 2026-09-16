@@ -431,7 +431,7 @@ export const en = {
   'loc.discloseTitle': 'Location while you are on shift',
   'loc.discloseRule': 'Zob Connect collects location data to confirm you are at your assigned store, even when the app is closed or not in use.',
   'loc.discloseDoLabel': 'What we check',
-  'loc.discloseDoWhen': 'Your location when you clock in and clock out',
+  'loc.discloseDoWhen': 'Your location when you clock in',
   'loc.discloseDoStore': 'Your location about every 12 minutes during your shift',
   'loc.discloseDoStop': 'Checking stops the moment your shift ends',
   'loc.discloseNotLabel': 'What we never do',

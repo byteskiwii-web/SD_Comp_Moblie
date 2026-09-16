@@ -412,7 +412,7 @@ export const mr: Catalogue = {
   'loc.discloseTitle': 'शिफ्टदरम्यान लोकेशन',
   'loc.discloseRule': 'Zob Connect तुम्ही नेमून दिलेल्या स्टोअरमध्ये आहात याची खात्री करण्यासाठी लोकेशन डेटा गोळा करते, अ‍ॅप बंद असतानाही किंवा वापरात नसतानाही.',
   'loc.discloseDoLabel': 'आम्ही काय तपासतो',
-  'loc.discloseDoWhen': 'क्लॉक-इन आणि क्लॉक-आउटच्या वेळी तुमचे लोकेशन',
+  'loc.discloseDoWhen': 'क्लॉक-इनच्या वेळी तुमचे लोकेशन',
   'loc.discloseDoStore': 'शिफ्टदरम्यान दर सुमारे 12 मिनिटांनी तुमचे लोकेशन',
   'loc.discloseDoStop': 'शिफ्ट संपताच तपासणी थांबते',
   'loc.discloseNotLabel': 'आम्ही काय कधीच करत नाही',

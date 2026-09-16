@@ -23,7 +23,8 @@ export function PunchTiles({
   clockOutAt,
   onClockIn,
   onClockOut,
-  disabled,
+  clockInDisabled,
+  clockOutDisabled,
   labels,
 }: {
   clockedIn: boolean;
@@ -32,8 +33,13 @@ export function PunchTiles({
   clockOutAt: string | null;
   onClockIn: () => void;
   onClockOut: () => void;
-  /** No location fix yet, or a punch already in flight. */
-  disabled?: boolean;
+  /**
+   * Separate, because the two punches wait on different things: a clock-in
+   * on a location fix (it is judged on it), a clock-out only on the break
+   * being over (it is not judged on location at all).
+   */
+  clockInDisabled?: boolean;
+  clockOutDisabled?: boolean;
   labels: {
     clockIn: string;
     clockOut: string;
@@ -59,7 +65,7 @@ export function PunchTiles({
         title={labels.clockIn}
         sub={clockInAt ? labels.doneAt(clockInAt) : labels.startHint}
         onPress={onClockIn}
-        disabled={disabled}
+        disabled={clockInDisabled}
         styles={styles}
         colors={colors}
       />
@@ -69,7 +75,7 @@ export function PunchTiles({
         title={labels.clockOut}
         sub={dayFinished && clockOutAt ? labels.doneAt(clockOutAt) : labels.endHint}
         onPress={onClockOut}
-        disabled={disabled}
+        disabled={clockOutDisabled}
         styles={styles}
         colors={colors}
       />
