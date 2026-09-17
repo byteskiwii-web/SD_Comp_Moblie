@@ -302,203 +302,231 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
         />
         </TourTarget>
 
-        {/* WHICH SHIFT THAT DAY WAS. A correction is judged against the
-            rostered window, so the window belongs on the form -- otherwise
-            somebody is guessing at the times they are meant to be correcting
-            towards. */}
-        <View style={styles.shiftRow}>
-          <Text style={styles.shiftLabel} numberOfLines={1}>
-            {profile?.shift?.name ?? t('reg.flexibleShift')}
-          </Text>
-          <Text style={styles.shiftWindow}>
-            {profile?.shiftStart && profile?.shiftEnd
-              ? `${String(profile.shiftStart).slice(0, 5)} – ${String(profile.shiftEnd).slice(0, 5)}`
-              : '—'}
-          </Text>
-        </View>
+        {/*
+          A DAY THAT IS ALREADY SPOKEN FOR.
 
-        <Text style={styles.fieldLabel}>{t('reg.requestType')}</Text>
-        {/* Full sentences, because the choice decides what the rest of the
-            form becomes and two words could not say that. See RadioRow. */}
-        <View style={styles.radios}>
-          <RadioRow
-            selected={requestType === 'adjust'}
-            label={t('reg.typeAdjustLong')}
-            onPress={() => setRequestType('adjust')}
-          />
-          <RadioRow
-            selected={requestType === 'other'}
-            label={t('reg.typeOtherLong')}
-            onPress={() => setRequestType('other')}
-          />
-        </View>
+          Filing a request leaves the form on the same day, and the list this
+          screen loads now contains that request -- so the very next thing
+          the employee saw, right after "submitted successfully", was a red
+          lock saying a request was already pending. Their own. Two people
+          in a row read it as the submission having failed.
 
-        {requestType === 'adjust' && (
-          <>
-            <Text style={styles.fieldLabel}>{t('reg.title')}</Text>
-            <Text style={styles.help}>
-              {dayQuery.isLoading
-                ? t('reg.loadingDay')
-                : day.pairs.length > 0
-                  ? t('reg.recordedHint')
-                  : t('reg.nothingRecordedHint')}
-            </Text>
-
-            <View style={styles.stampBox}>
-              <Text style={styles.stampBoxTitle}>{day.storeName ?? store.name}</Text>
-              {rows.map((row) => (
-                <View key={row.key} style={styles.stampRow}>
-                  <Ionicons name="arrow-down-outline" size={15} color={colors.success} />
-                  <View style={styles.stampCell}>
-                    <TimePickerField
-                      label=""
-                      value={row.inTime}
-                      onChange={(v) => updateRow(row.key, { inTime: v })}
-                    />
-                  </View>
-                  <Ionicons name="arrow-up-outline" size={15} color={colors.danger} />
-                  <View style={styles.stampCell}>
-                    <TimePickerField
-                      label=""
-                      value={row.outTime}
-                      onChange={(v) => updateRow(row.key, { outTime: v })}
-                    />
-                  </View>
-                  {/* The reason most people are on this screen is that ONE
-                      half of a pair never registered. Saying which half is
-                      missing turns a blank box into a diagnosis. */}
-                  {(!row.inTime || !row.outTime) && (
-                    <View style={styles.missingChip}>
-                      <Text style={styles.missingChipText}>{t('reg.missing')}</Text>
-                    </View>
-                  )}
-                  <Pressable
-                    onPress={() => removeRow(row.key)}
-                    disabled={rows.length === 1}
-                    hitSlop={8}
-                    accessibilityRole="button"
-                    accessibilityLabel={t('reg.removePair')}
-                  >
-                    <Ionicons
-                      name="remove-circle-outline"
-                      size={22}
-                      color={rows.length === 1 ? colors.slate200 : colors.danger}
-                    />
-                  </Pressable>
-                </View>
-              ))}
-
-              <Pressable onPress={addRow} style={styles.addRow} accessibilityRole="button">
-                <Ionicons name="add-circle-outline" size={26} color={colors.brand[700]} />
-              </Pressable>
-            </View>
-
-            {rows.length > 1 && submitted.inTime && submitted.outTime && (
-              <View style={styles.submitNote}>
-                <Ionicons name="information-circle-outline" size={15} color={colors.slate500} />
-                <Text style={styles.submitNoteText}>
-                  {t('reg.sentAsOne', {
-                    from: formatTime(new Date(`${markDate}T${submitted.inTime}:00`)),
-                    to: formatTime(new Date(`${markDate}T${submitted.outTime}:00`)),
-                  })}
-                </Text>
-              </View>
-            )}
-
-            {errors.time ? <Text style={styles.errorText}>{errors.time}</Text> : null}
-          </>
-        )}
-
-        {/* THE CAP, BEFORE THE FORM. The server has always refused the
-            request that would exceed this month's limit; until now the
-            employee met that rule as a 409 after typing everything, which is
-            the worst possible moment to learn it. Hidden entirely when the
-            server does not report it, rather than guessed at. */}
-        {typeof allowance.monthlyLimit === 'number' && (
-          <View
-            style={[
-              styles.allowance,
-              allowance.remainingThisMonth === 0 && styles.allowanceSpent,
-            ]}
-          >
+          A pending request for the chosen day is not a fault to warn about;
+          it is the state the form just created. So instead of the form with
+          an error on it, the day gets a calm receipt: what was sent, that it
+          is waiting on review, and what to do if it was a mistake. An
+          approved day keeps its firmer wording -- that one really is
+          closed. The date picker stays above so another day is one tap away.
+        */}
+        {dayBlocker ? (
+          <View style={[styles.settled, dayBlocker.status === 'approved' ? styles.settledApproved : styles.settledPending]}>
             <Ionicons
-              name={allowance.remainingThisMonth === 0 ? 'alert-circle-outline' : 'information-circle-outline'}
-              size={14}
-              color={allowance.remainingThisMonth === 0 ? colors.dangerText : colors.slate500}
+              name={dayBlocker.status === 'approved' ? 'lock-closed-outline' : 'checkmark-circle'}
+              size={20}
+              color={dayBlocker.status === 'approved' ? colors.slate500 : colors.successText}
             />
-            <Text
+            <View style={styles.settledText}>
+              <Text style={[styles.settledTitle, dayBlocker.status === 'approved' && styles.settledTitleApproved]}>
+                {dayBlocker.status === 'approved'
+                  ? t('reg.dayApproved')
+                  : t('reg.dayPendingTitle', { date: fmtDate(dayBlocker.markDate) })}
+              </Text>
+              <Text style={styles.settledBody}>
+                {dayBlocker.status === 'approved' ? t('reg.pickAnotherDay') : t('reg.dayPendingBody')}
+              </Text>
+            </View>
+          </View>
+        ) : (
+          <>
+          {/* WHICH SHIFT THAT DAY WAS. A correction is judged against the
+              rostered window, so the window belongs on the form -- otherwise
+              somebody is guessing at the times they are meant to be correcting
+              towards. */}
+          <View style={styles.shiftRow}>
+            <Text style={styles.shiftLabel} numberOfLines={1}>
+              {profile?.shift?.name ?? t('reg.flexibleShift')}
+            </Text>
+            <Text style={styles.shiftWindow}>
+              {profile?.shiftStart && profile?.shiftEnd
+                ? `${String(profile.shiftStart).slice(0, 5)} – ${String(profile.shiftEnd).slice(0, 5)}`
+                : '—'}
+            </Text>
+          </View>
+
+          <Text style={styles.fieldLabel}>{t('reg.requestType')}</Text>
+          {/* Full sentences, because the choice decides what the rest of the
+              form becomes and two words could not say that. See RadioRow. */}
+          <View style={styles.radios}>
+            <RadioRow
+              selected={requestType === 'adjust'}
+              label={t('reg.typeAdjustLong')}
+              onPress={() => setRequestType('adjust')}
+            />
+            <RadioRow
+              selected={requestType === 'other'}
+              label={t('reg.typeOtherLong')}
+              onPress={() => setRequestType('other')}
+            />
+          </View>
+
+          {requestType === 'adjust' && (
+            <>
+              <Text style={styles.fieldLabel}>{t('reg.title')}</Text>
+              <Text style={styles.help}>
+                {dayQuery.isLoading
+                  ? t('reg.loadingDay')
+                  : day.pairs.length > 0
+                    ? t('reg.recordedHint')
+                    : t('reg.nothingRecordedHint')}
+              </Text>
+
+              <View style={styles.stampBox}>
+                <Text style={styles.stampBoxTitle}>{day.storeName ?? store.name}</Text>
+                {rows.map((row) => (
+                  <View key={row.key} style={styles.stampRow}>
+                    <Ionicons name="arrow-down-outline" size={15} color={colors.success} />
+                    <View style={styles.stampCell}>
+                      <TimePickerField
+                        label=""
+                        value={row.inTime}
+                        onChange={(v) => updateRow(row.key, { inTime: v })}
+                      />
+                    </View>
+                    <Ionicons name="arrow-up-outline" size={15} color={colors.danger} />
+                    <View style={styles.stampCell}>
+                      <TimePickerField
+                        label=""
+                        value={row.outTime}
+                        onChange={(v) => updateRow(row.key, { outTime: v })}
+                      />
+                    </View>
+                    {/* The reason most people are on this screen is that ONE
+                        half of a pair never registered. Saying which half is
+                        missing turns a blank box into a diagnosis. */}
+                    {(!row.inTime || !row.outTime) && (
+                      <View style={styles.missingChip}>
+                        <Text style={styles.missingChipText}>{t('reg.missing')}</Text>
+                      </View>
+                    )}
+                    <Pressable
+                      onPress={() => removeRow(row.key)}
+                      disabled={rows.length === 1}
+                      hitSlop={8}
+                      accessibilityRole="button"
+                      accessibilityLabel={t('reg.removePair')}
+                    >
+                      <Ionicons
+                        name="remove-circle-outline"
+                        size={22}
+                        color={rows.length === 1 ? colors.slate200 : colors.danger}
+                      />
+                    </Pressable>
+                  </View>
+                ))}
+
+                <Pressable onPress={addRow} style={styles.addRow} accessibilityRole="button">
+                  <Ionicons name="add-circle-outline" size={26} color={colors.brand[700]} />
+                </Pressable>
+              </View>
+
+              {rows.length > 1 && submitted.inTime && submitted.outTime && (
+                <View style={styles.submitNote}>
+                  <Ionicons name="information-circle-outline" size={15} color={colors.slate500} />
+                  <Text style={styles.submitNoteText}>
+                    {t('reg.sentAsOne', {
+                      from: formatTime(new Date(`${markDate}T${submitted.inTime}:00`)),
+                      to: formatTime(new Date(`${markDate}T${submitted.outTime}:00`)),
+                    })}
+                  </Text>
+                </View>
+              )}
+
+              {errors.time ? <Text style={styles.errorText}>{errors.time}</Text> : null}
+            </>
+          )}
+
+          {/* THE CAP, BEFORE THE FORM. The server has always refused the
+              request that would exceed this month's limit; until now the
+              employee met that rule as a 409 after typing everything, which is
+              the worst possible moment to learn it. Hidden entirely when the
+              server does not report it, rather than guessed at. */}
+          {typeof allowance.monthlyLimit === 'number' && (
+            <View
               style={[
-                styles.allowanceText,
-                allowance.remainingThisMonth === 0 && styles.allowanceTextSpent,
+                styles.allowance,
+                allowance.remainingThisMonth === 0 && styles.allowanceSpent,
               ]}
             >
-              {allowance.remainingThisMonth === 0
-                ? t('reg.allowanceNone', { limit: allowance.monthlyLimit })
-                : t('reg.allowance') + ': '}
-              {allowance.remainingThisMonth !== 0 && (
-                <Text style={styles.allowanceValue}>
-                  {t('reg.allowanceValue', {
-                    remaining: allowance.remainingThisMonth ?? 0,
-                    limit: allowance.monthlyLimit,
-                  })}
-                </Text>
-              )}
-            </Text>
+              <Ionicons
+                name={allowance.remainingThisMonth === 0 ? 'alert-circle-outline' : 'information-circle-outline'}
+                size={14}
+                color={allowance.remainingThisMonth === 0 ? colors.dangerText : colors.slate500}
+              />
+              <Text
+                style={[
+                  styles.allowanceText,
+                  allowance.remainingThisMonth === 0 && styles.allowanceTextSpent,
+                ]}
+              >
+                {allowance.remainingThisMonth === 0
+                  ? t('reg.allowanceNone', { limit: allowance.monthlyLimit })
+                  : t('reg.allowance') + ': '}
+                {allowance.remainingThisMonth !== 0 && (
+                  <Text style={styles.allowanceValue}>
+                    {t('reg.allowanceValue', {
+                      remaining: allowance.remainingThisMonth ?? 0,
+                      limit: allowance.monthlyLimit,
+                    })}
+                  </Text>
+                )}
+              </Text>
+            </View>
+          )}
+
+          <TextField
+            label={t('reg.note')}
+            value={reason}
+            onChangeText={setReason}
+            placeholder={t('reg.notePlaceholder')}
+            multiline
+            error={errors.reason}
+          />
+
+          <View style={styles.actions}>
+            <View style={styles.actionHalf}>
+              <Button
+                title={t('common.cancel')}
+                variant="outline"
+                onPress={() => {
+                  setToast(null);
+                  setJustSubmitted(false);
+                  setErrors({});
+                  setReason('');
+                  setMarkDate(latestCorrectableDay());
+                }}
+              />
+            </View>
+            <View style={styles.actionHalf}>
+              <Button
+                // The label change is the confirmation staying put on the one
+                // thing that cannot scroll out of view -- the control the
+                // person's thumb is already on. Disabled with it so the same
+                // request cannot be fired again while that's still on screen;
+                // it re-enables the moment the toast clears (see onHide above),
+                // by which point "Request" reads as the next request, not this
+                // one repeated.
+                title={justSubmitted ? t('reg.sent') : t('reg.submit')}
+                onPress={() => {
+                  setToast(null);
+                  if (validate()) submitMutation.mutate();
+                }}
+                loading={submitMutation.isPending}
+                disabled={justSubmitted}
+              />
+            </View>
           </View>
+          </>
         )}
-
-        {/* Stated before the work, not after it. */}
-        {dayBlocker && (
-          <View style={[styles.allowance, styles.allowanceSpent]}>
-            <Ionicons name="lock-closed-outline" size={14} color={colors.dangerText} />
-            <Text style={[styles.allowanceText, styles.allowanceTextSpent]}>
-              {dayBlocker.status === 'approved' ? t('reg.dayApproved') : t('reg.dayPending')}
-            </Text>
-          </View>
-        )}
-
-        <TextField
-          label={t('reg.note')}
-          value={reason}
-          onChangeText={setReason}
-          placeholder={t('reg.notePlaceholder')}
-          multiline
-          error={errors.reason}
-        />
-
-        <View style={styles.actions}>
-          <View style={styles.actionHalf}>
-            <Button
-              title={t('common.cancel')}
-              variant="outline"
-              onPress={() => {
-                setToast(null);
-                setJustSubmitted(false);
-                setErrors({});
-                setReason('');
-                setMarkDate(latestCorrectableDay());
-              }}
-            />
-          </View>
-          <View style={styles.actionHalf}>
-            <Button
-              // The label change is the confirmation staying put on the one
-              // thing that cannot scroll out of view -- the control the
-              // person's thumb is already on. Disabled with it so the same
-              // request cannot be fired again while that's still on screen;
-              // it re-enables the moment the toast clears (see onHide above),
-              // by which point "Request" reads as the next request, not this
-              // one repeated.
-              title={justSubmitted ? t('reg.sent') : t('reg.submit')}
-              onPress={() => {
-                setToast(null);
-                if (validate()) submitMutation.mutate();
-              }}
-              loading={submitMutation.isPending}
-              disabled={justSubmitted || !!dayBlocker}
-            />
-          </View>
-        </View>
       </Card>
 
       <TourTarget id="regularise-list">
@@ -591,6 +619,17 @@ function makeStyles(colors: ColorScheme) {
   allowanceText: { flex: 1, fontSize: 11, color: colors.slate500, fontWeight: '600' },
   allowanceTextSpent: { color: colors.dangerText },
   allowanceValue: { fontWeight: '900', color: colors.textLight },
+
+  settled: {
+    flexDirection: 'row', alignItems: 'flex-start', gap: 10,
+    padding: 14, borderRadius: radii.md, marginTop: 4,
+  },
+  settledPending: { backgroundColor: colors.successBg },
+  settledApproved: { backgroundColor: colors.slate50 },
+  settledText: { flex: 1 },
+  settledTitle: { fontSize: 13, fontWeight: '800', color: colors.successText },
+  settledTitleApproved: { color: colors.textLight },
+  settledBody: { fontSize: 11.5, color: colors.slate600, fontWeight: '600', marginTop: 4, lineHeight: 17 },
 
   fieldLabel: {
     fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.4,
