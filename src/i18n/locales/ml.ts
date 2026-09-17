@@ -105,7 +105,7 @@ export const ml: Catalogue = {
   'shift.onShift': 'ഷിഫ്റ്റിൽ',
   'shift.onBreak': 'ഇടവേളയിൽ',
   'shift.notClockedIn': 'ക്ലോക്ക് ഇൻ ചെയ്തിട്ടില്ല',
-  'shift.noRoster': 'നിശ്ചിത ഷിഫ്റ്റ് ഇല്ല',
+  'shift.noRoster': 'ഇതുവരെ ഷിഫ്റ്റ് നൽകിയിട്ടില്ല — HR-നോട് ചോദിക്കുക',
 
   'attendance.title': 'ഹാജർ',
   'attendance.clock': 'ക്ലോക്ക് ഇൻ/ഔട്ട്',
@@ -775,7 +775,6 @@ export const ml: Catalogue = {
   'reg.allowance': 'ഈ മാസം ബാക്കിയുള്ള തിരുത്തലുകൾ',
   'reg.allowanceValue': '{limit}-ൽ {remaining}',
   'reg.allowanceNone': 'ഈ മാസത്തെ {limit} തിരുത്തലുകളും നിങ്ങൾ ഉപയോഗിച്ചു കഴിഞ്ഞു.',
-  'reg.flexibleShift': 'വഴക്കമുള്ള ഷിഫ്റ്റ്',
 
 
   /* ------------------------------ the set-password gate (issued password) */

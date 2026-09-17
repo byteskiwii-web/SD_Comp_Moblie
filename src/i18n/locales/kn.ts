@@ -105,7 +105,7 @@ export const kn: Catalogue = {
   'shift.onShift': 'ಶಿಫ್ಟ್‌ನಲ್ಲಿ',
   'shift.onBreak': 'ವಿರಾಮದಲ್ಲಿ',
   'shift.notClockedIn': 'ಕ್ಲಾಕ್ ಇನ್ ಆಗಿಲ್ಲ',
-  'shift.noRoster': 'ನಿಗದಿತ ಶಿಫ್ಟ್ ಇಲ್ಲ',
+  'shift.noRoster': 'ಇನ್ನೂ ಶಿಫ್ಟ್ ನೀಡಿಲ್ಲ — HR ಅನ್ನು ಕೇಳಿ',
 
   'attendance.title': 'ಹಾಜರಾತಿ',
   'attendance.clock': 'ಕ್ಲಾಕ್ ಇನ್/ಔಟ್',
@@ -775,7 +775,6 @@ export const kn: Catalogue = {
   'reg.allowance': 'ಈ ತಿಂಗಳು ಉಳಿದ ತಿದ್ದುಪಡಿಗಳು',
   'reg.allowanceValue': '{limit} ರಲ್ಲಿ {remaining}',
   'reg.allowanceNone': 'ಈ ತಿಂಗಳ ಎಲ್ಲಾ {limit} ತಿದ್ದುಪಡಿಗಳನ್ನು ನೀವು ಬಳಸಿದ್ದೀರಿ.',
-  'reg.flexibleShift': 'ಹೊಂದಿಕೊಳ್ಳುವ ಶಿಫ್ಟ್',
 
 
   /* ------------------------------ the set-password gate (issued password) */

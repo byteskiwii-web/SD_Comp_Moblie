@@ -80,6 +80,22 @@ export function formatClockTime(hhmm: string | null | undefined, fallback = '—
   return `${hour12}:${pad(m)} ${period}`;
 }
 
+/**
+ * The shift as people say it: `Morning · 11:00 AM – 8:00 PM`. Either half on
+ * its own when that is all there is; the fallback when there is neither --
+ * which now means HR has not assigned a shift yet (a shift is one of the two
+ * templates and nothing else).
+ */
+export function formatShift(
+  name: string | null | undefined,
+  start: string | null | undefined,
+  end: string | null | undefined,
+  fallback = '—'
+): string {
+  const window = formatShiftWindow(start, end, '');
+  return [name, window].filter(Boolean).join(' · ') || fallback;
+}
+
 /** `10:00 AM – 7:00 PM`, or the fallback when either end is missing. */
 export function formatShiftWindow(start: string | null | undefined, end: string | null | undefined, fallback = '—'): string {
   if (!start || !end) return fallback;

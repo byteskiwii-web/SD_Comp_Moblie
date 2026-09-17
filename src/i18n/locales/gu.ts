@@ -112,7 +112,7 @@ export const gu: Catalogue = {
   'shift.onShift': 'શિફ્ટમાં છે',
   'shift.onBreak': 'બ્રેક પર છે',
   'shift.notClockedIn': 'ક્લોક ઇન કરેલ નથી',
-  'shift.noRoster': 'કોઈ નિયત શિફ્ટ નથી',
+  'shift.noRoster': 'હજી કોઈ શિફ્ટ સોંપાઈ નથી — HR ને પૂછો',
 
   'attendance.title': 'હાજરી',
   'attendance.clock': 'ક્લોક ઇન/આઉટ',
@@ -766,7 +766,6 @@ export const gu: Catalogue = {
   'reg.allowance': 'આ મહિનામાં બાકી સુધારા',
   'reg.allowanceValue': '{limit} માંથી {remaining}',
   'reg.allowanceNone': 'તમે આ મહિનાના બધા {limit} સુધારા વાપરી લીધા છે.',
-  'reg.flexibleShift': 'લવચીક શિફ્ટ',
 
   /* ------------------------------ the set-password gate (issued password) */
   'setPassword.title': 'તમારો પોતાનો પાસવર્ડ સેટ કરો',

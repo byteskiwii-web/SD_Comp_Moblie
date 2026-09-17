@@ -108,8 +108,9 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
   const [toast, setToast] = useState<ToastState>(null);
   const [justSubmitted, setJustSubmitted] = useState(false);
 
-  const dayStart = shiftHHMM(profile?.shiftStart, '10:00');
-  const dayEnd = shiftHHMM(profile?.shiftEnd, '19:00');
+  // No shift assigned yet: start from Morning, the earlier of the two shifts.
+  const dayStart = shiftHHMM(profile?.shiftStart, '11:00');
+  const dayEnd = shiftHHMM(profile?.shiftEnd, '20:00');
 
   const dayQuery = useQuery({
     queryKey: ['attendance-day', employee?.id, markDate],
@@ -344,7 +345,7 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
               towards. */}
           <View style={styles.shiftRow}>
             <Text style={styles.shiftLabel} numberOfLines={1}>
-              {profile?.shift?.name ?? t('reg.flexibleShift')}
+              {profile?.shift?.name ?? t('shift.noRoster')}
             </Text>
             <Text style={styles.shiftWindow}>
               {profile?.shiftStart && profile?.shiftEnd

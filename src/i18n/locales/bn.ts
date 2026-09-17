@@ -112,7 +112,7 @@ export const bn: Catalogue = {
   'shift.onShift': 'শিফটে আছেন',
   'shift.onBreak': 'ব্রেকে আছেন',
   'shift.notClockedIn': 'ক্লক ইন করা হয়নি',
-  'shift.noRoster': 'কোনো নির্ধারিত শিফট নেই',
+  'shift.noRoster': 'এখনও কোনো শিফট দেওয়া হয়নি — HR-কে জিজ্ঞাসা করুন',
 
   'attendance.title': 'উপস্থিতি',
   'attendance.clock': 'ক্লক ইন/আউট',
@@ -766,7 +766,6 @@ export const bn: Catalogue = {
   'reg.allowance': 'এই মাসে বাকি সংশোধন',
   'reg.allowanceValue': '{limit}-এর মধ্যে {remaining}',
   'reg.allowanceNone': 'আপনি এই মাসের সব {limit}টি সংশোধন ব্যবহার করে ফেলেছেন।',
-  'reg.flexibleShift': 'নমনীয় শিফট',
 
   /* ------------------------------ the set-password gate (issued password) */
   'setPassword.title': 'নিজের পাসওয়ার্ড দিন',

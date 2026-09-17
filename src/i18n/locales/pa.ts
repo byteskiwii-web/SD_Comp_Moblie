@@ -112,7 +112,7 @@ export const pa: Catalogue = {
   'shift.onShift': 'ਸ਼ਿਫਟ ਵਿੱਚ ਹੈ',
   'shift.onBreak': 'ਬ੍ਰੇਕ ਤੇ ਹੈ',
   'shift.notClockedIn': 'ਕਲਾਕ ਇਨ ਨਹੀਂ ਕੀਤਾ',
-  'shift.noRoster': 'ਕੋਈ ਨਿਯਤ ਸ਼ਿਫਟ ਨਹੀਂ',
+  'shift.noRoster': 'ਅਜੇ ਕੋਈ ਸ਼ਿਫਟ ਨਹੀਂ ਦਿੱਤੀ — HR ਨੂੰ ਪੁੱਛੋ',
 
   'attendance.title': 'ਹਾਜ਼ਰੀ',
   'attendance.clock': 'ਕਲਾਕ ਇਨ/ਆਊਟ',
@@ -766,7 +766,6 @@ export const pa: Catalogue = {
   'reg.allowance': 'ਇਸ ਮਹੀਨੇ ਬਾਕੀ ਸੁਧਾਰ',
   'reg.allowanceValue': '{limit} ਵਿੱਚੋਂ {remaining}',
   'reg.allowanceNone': 'ਤੁਸੀਂ ਇਸ ਮਹੀਨੇ ਦੇ ਸਾਰੇ {limit} ਸੁਧਾਰ ਵਰਤ ਲਏ ਹਨ।',
-  'reg.flexibleShift': 'ਲਚਕਦਾਰ ਸ਼ਿਫਟ',
 
   /* ------------------------------ the set-password gate (issued password) */
   'setPassword.title': 'ਆਪਣਾ ਪਾਸਵਰਡ ਰੱਖੋ',

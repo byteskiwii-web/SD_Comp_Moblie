@@ -17,7 +17,7 @@ import { CameraCaptureScreen } from './CameraCaptureScreen';
 import { runtimeLabel, supportsBackgroundLocation } from '../../native/runtime';
 import { getApiErrorMessage } from '../../api/client';
 import { getLatestMarkOfTypes, SHIFT_TYPES, BREAK_TYPES } from '../../utils/attendanceStatus';
-import { formatTime, formatTimeWithSeconds, toLocalDateKey, formatClockTime, formatShiftWindow } from '../../utils/datetime';
+import { formatTime, formatTimeWithSeconds, toLocalDateKey, formatClockTime, formatShift } from '../../utils/datetime';
 import { t as tr, useT } from '../../i18n';
 import { StatusBanner } from '../../components/StatusBanner';
 import { GeofenceMap } from '../../components/GeofenceMap';
@@ -604,10 +604,7 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
           </Text>
         </View>
         <Text style={styles.heroShift}>
-          {profile?.shift?.name ??
-            (profile?.shiftStart && profile?.shiftEnd
-              ? formatShiftWindow(profile.shiftStart, profile.shiftEnd)
-              : t('shift.noRoster'))}
+          {formatShift(profile?.shift?.name, profile?.shiftStart, profile?.shiftEnd, t('shift.noRoster'))}
         </Text>
         {lastClockIn && isCurrentlyClockedIn ? (
           <Text style={styles.heroSince}>

@@ -105,7 +105,7 @@ export const te: Catalogue = {
   'shift.onShift': 'షిఫ్ట్‌లో',
   'shift.onBreak': 'బ్రేక్‌లో',
   'shift.notClockedIn': 'క్లాక్ ఇన్ కాలేదు',
-  'shift.noRoster': 'నిర్ణీత షిఫ్ట్ లేదు',
+  'shift.noRoster': 'ఇంకా షిఫ్ట్ కేటాయించలేదు — HR ని అడగండి',
 
   'attendance.title': 'హాజరు',
   'attendance.clock': 'క్లాక్ ఇన్/అవుట్',
@@ -775,7 +775,6 @@ export const te: Catalogue = {
   'reg.allowance': 'ఈ నెల మిగిలిన సవరణలు',
   'reg.allowanceValue': '{limit}లో {remaining}',
   'reg.allowanceNone': 'ఈ నెలకు కేటాయించిన {limit} సవరణలను మీరు వాడేశారు.',
-  'reg.flexibleShift': 'సౌకర్యవంతమైన షిఫ్ట్',
 
 
   /* ------------------------------ the set-password gate (issued password) */

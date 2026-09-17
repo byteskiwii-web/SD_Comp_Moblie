@@ -105,7 +105,7 @@ export const ta: Catalogue = {
   'shift.onShift': 'பணியில்',
   'shift.onBreak': 'இடைவேளையில்',
   'shift.notClockedIn': 'பணி தொடங்கவில்லை',
-  'shift.noRoster': 'நிர்ணயித்த பணிநேரம் இல்லை',
+  'shift.noRoster': 'இன்னும் ஷிஃப்ட் ஒதுக்கப்படவில்லை — HR-இடம் கேளுங்கள்',
 
   'attendance.title': 'வருகை',
   'attendance.clock': 'வருகை பதிவு',
@@ -775,7 +775,6 @@ export const ta: Catalogue = {
   'reg.allowance': 'இந்த மாதம் மீதமுள்ள திருத்தங்கள்',
   'reg.allowanceValue': '{limit} இல் {remaining}',
   'reg.allowanceNone': 'இந்த மாதத்திற்கான {limit} திருத்தங்களையும் நீங்கள் பயன்படுத்திவிட்டீர்கள்.',
-  'reg.flexibleShift': 'நெகிழ்வான பணிநேரம்',
 
 
   /* ------------------------------ the set-password gate (issued password) */

@@ -124,7 +124,7 @@ export const en = {
   'shift.onShift': 'On shift',
   'shift.onBreak': 'On break',
   'shift.notClockedIn': 'Not clocked in',
-  'shift.noRoster': 'No rostered shift',
+  'shift.noRoster': 'No shift assigned yet — ask HR',
 
   /* ------------------------------------------------------------ attendance */
   'attendance.title': 'Attendance',
@@ -793,7 +793,6 @@ export const en = {
   'reg.allowance': 'Corrections left this month',
   'reg.allowanceValue': '{remaining} of {limit}',
   'reg.allowanceNone': 'You have used all {limit} corrections for this month.',
-  'reg.flexibleShift': 'Flexible shift',
 
 
   /* ------------------------------ the set-password gate (issued password) */

@@ -112,7 +112,7 @@ export const hi: Catalogue = {
   'shift.onShift': 'शिफ़्ट पर',
   'shift.onBreak': 'ब्रेक पर',
   'shift.notClockedIn': 'क्लॉक इन नहीं किया',
-  'shift.noRoster': 'कोई निर्धारित शिफ़्ट नहीं',
+  'shift.noRoster': 'अभी कोई शिफ्ट तय नहीं — HR से पूछें',
 
   'attendance.title': 'हाज़िरी',
   'attendance.clock': 'क्लॉक इन/आउट',
@@ -782,7 +782,6 @@ export const hi: Catalogue = {
   'reg.allowance': 'इस महीने बचे सुधार',
   'reg.allowanceValue': '{limit} में से {remaining}',
   'reg.allowanceNone': 'आपने इस महीने के सभी {limit} सुधार इस्तेमाल कर लिए हैं।',
-  'reg.flexibleShift': 'लचीली शिफ़्ट',
 
 
   /* ------------------------------ the set-password gate (issued password) */

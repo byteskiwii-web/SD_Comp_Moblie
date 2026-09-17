@@ -112,7 +112,7 @@ export const mr: Catalogue = {
   'shift.onShift': 'शिफ्टवर आहे',
   'shift.onBreak': 'ब्रेकवर आहे',
   'shift.notClockedIn': 'क्लॉक इन केलेले नाही',
-  'shift.noRoster': 'कोणतीही नियोजित शिफ्ट नाही',
+  'shift.noRoster': 'अजून शिफ्ट दिलेली नाही — HR ला विचारा',
 
   'attendance.title': 'हजेरी',
   'attendance.clock': 'क्लॉक इन/आउट',
@@ -766,7 +766,6 @@ export const mr: Catalogue = {
   'reg.allowance': 'या महिन्यात उरलेल्या दुरुस्त्या',
   'reg.allowanceValue': '{limit} पैकी {remaining}',
   'reg.allowanceNone': 'तुम्ही या महिन्याच्या सर्व {limit} दुरुस्त्या वापरल्या आहेत.',
-  'reg.flexibleShift': 'लवचिक शिफ्ट',
 
   /* ------------------------------ the set-password gate (issued password) */
   'setPassword.title': 'स्वतःचा पासवर्ड ठेवा',
