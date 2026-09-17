@@ -12,7 +12,7 @@ import { OTP_LENGTH } from '../../constants/config';
 import { useAuthStore } from '../../stores/authStore';
 import { verifyAadhaarOtp } from '../../api/verification.api';
 import { getApiErrorMessage } from '../../api/client';
-import { kycGateQueryKey } from '../../hooks/useKycGate';
+import { onboardingGateQueryKey as kycGateQueryKey } from '../../hooks/useOnboardingGate';
 import { aadhaarOtpVerifySchema } from '../../schemas/kyc.schema';
 import { KycStackParamList } from '../../navigation/types';
 import { useT } from '../../i18n';
@@ -37,10 +37,9 @@ export function AadhaarOtpVerifyScreen({ navigation, route }: Props) {
       if (result.verified) {
         queryClient.invalidateQueries({ queryKey: kycGateQueryKey(employee?.id) });
         setSuccess(t('aadhaar.verified'));
-        // No manual navigation needed -- RootNavigator re-renders on its own
-        // once the gate query reflects the new status (to KycGateScreen if
-        // only Aadhaar was outstanding, or straight to AppTabs if both
-        // checks are now done).
+        // Back to wherever this was opened from -- the onboarding checklist
+        // or the Profile hub -- with the tick already showing.
+        setTimeout(() => navigation.popToTop(), 900);
       } else if (result.pending) {
         // Provider asks to retry the same reference shortly -- no new OTP
         // needed, so the filled boxes are left as-is for resubmission.

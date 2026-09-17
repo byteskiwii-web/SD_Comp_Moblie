@@ -132,8 +132,8 @@ export type Me = {
    *
    * null on any account that predates migration 020's backfill (never
    * happens in practice -- that backfill ran once, immediately, against
-   * every existing row). 'pending-approval' is what the mobile app gates
-   * the "complete your profile" flow on -- see useProfileCompletionGate.ts.
+   * every existing row). The onboarding checklist
+   * (useOnboardingGate.ts) shows it as the last step.
    */
   approvalStatus: 'pending-approval' | 'approved' | 'rejected' | null;
   approvalRejectionReason: string | null;
@@ -258,5 +258,25 @@ export async function confirmDeletion(otp: string, reason?: string) {
     '/auth/me/deletion/confirm',
     reason ? { otp, reason } : { otp }
   );
+  return res.data.data;
+}
+
+/** The six steps that stand between a new field employee and their first clock-in. */
+export type OnboardingStep = 'profile' | 'pan' | 'aadhaar' | 'link' | 'bank' | 'approval';
+
+export type OnboardingStatus = {
+  /** false for office roles, who never clock in and are never onboarding */
+  applies: boolean;
+  complete: boolean;
+  /** everything but HR's approval is done */
+  selfComplete: boolean;
+  steps: Record<OnboardingStep, boolean>;
+  missing: OnboardingStep[];
+  approvalStatus: string | null;
+  approvalRejectionReason: string | null;
+};
+
+export async function getMyOnboarding() {
+  const res = await apiClient.get<{ success: true; data: OnboardingStatus }>('/auth/me/onboarding');
   return res.data.data;
 }

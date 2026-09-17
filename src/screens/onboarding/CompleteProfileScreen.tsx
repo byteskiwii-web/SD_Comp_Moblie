@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigation } from '@react-navigation/native';
 import { Button, TextField, Card } from '../../components/ui';
 import { DatePickerField } from '../../components/PickerField';
 import { DocumentsCard } from '../profile/DocumentsCard';
@@ -11,6 +12,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { updateMyProfile } from '../../api/auth.api';
 import { getApiErrorMessage } from '../../api/client';
 import { useT } from '../../i18n';
+import { onboardingGateQueryKey } from '../../hooks/useOnboardingGate';
 
 /**
  * "Sign up complete": the last step between HR creating an account and the
@@ -19,12 +21,8 @@ import { useT } from '../../i18n';
  * (date of birth, address, supporting documents) is the employee's own to
  * supply, which this screen collects in one place.
  *
- * Not a wait-for-approval screen. Submitting clears the gate (see
- * useProfileCompletionGate.ts) and the employee moves straight into the
- * app -- HR's review happens in the background, on the same
- * pending-approval banner the web admin already shows on
- * EmployeeDetailPage. Blocking daily work on a manual HR click would make a
- * slow approval queue into a slow first day.
+ * The first row of the onboarding checklist (OnboardingChecklistScreen):
+ * saving ticks it and returns there. Also reachable later from Profile.
  */
 export function CompleteProfileScreen() {
   const colors = useThemeStore((s) => s.colors);
@@ -32,6 +30,8 @@ export function CompleteProfileScreen() {
   const t = useT();
   const employee = useAuthStore((s) => s.employee);
   const refreshProfile = useAuthStore((s) => s.refreshProfile);
+  const queryClient = useQueryClient();
+  const navigation = useNavigation<any>();
 
   const [dateOfBirth, setDateOfBirth] = useState('');
   const [addressLine1, setAddressLine1] = useState('');
@@ -53,10 +53,12 @@ export function CompleteProfileScreen() {
       }),
     onSuccess: async () => {
       setError('');
-      // The gate reads profile straight from the store, so refreshing it
-      // here is what actually clears the gate -- there is no separate
-      // "submitted" flag to flip.
+      // Profile and the onboarding checklist both read this; the checklist
+      // is where the back navigation lands, and it must already show the
+      // tick when it does.
       await refreshProfile();
+      await queryClient.invalidateQueries({ queryKey: onboardingGateQueryKey(employee?.id) });
+      if (navigation.canGoBack()) navigation.goBack();
     },
     onError: (err) => setError(getApiErrorMessage(err)),
   });
@@ -72,6 +74,9 @@ export function CompleteProfileScreen() {
     <SafeAreaView style={styles.flex}>
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+          <View style={styles.backRow}>
+            <Button title={t('common.back')} variant="outline" onPress={() => navigation.goBack()} />
+          </View>
           <Text style={styles.title}>{t('onboard.title')}</Text>
           <Text style={styles.subtitle}>
             {t('onboard.subtitle', { name: employee?.first_name ?? '' })}
@@ -144,6 +149,7 @@ function makeStyles(colors: ColorScheme) {
       fontSize: 11.5, color: colors.slate500, textAlign: 'center',
       marginTop: 8, marginBottom: 20, lineHeight: 18,
     },
+    backRow: { alignSelf: 'flex-start', marginBottom: 10 },
     card: { marginBottom: 14, gap: 2 },
     row: { flexDirection: 'row', gap: 12 },
     rowItem: { flex: 1 },

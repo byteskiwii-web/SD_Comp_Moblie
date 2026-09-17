@@ -3,19 +3,17 @@ import { ActivityIndicator, View } from 'react-native';
 import { NavigationContainer, DefaultTheme, DarkTheme, Theme } from '@react-navigation/native';
 import { AuthStack } from './AuthStack';
 import { AppTabs } from './AppTabs';
-import { KycStack } from './KycStack';
+import { OnboardingStack } from './OnboardingStack';
 import { useAuthStore } from '../stores/authStore';
 import { useShiftSync } from '../hooks/useShiftSync';
 import { useLocationPollingEffect } from '../hooks/useLocationPollingEffect';
 import { useClockOutReminderEffect } from '../hooks/useClockOutReminderEffect';
 import { useBreakReminderEffect } from '../hooks/useBreakReminderEffect';
 import { useShiftIntegrityWatcher } from '../hooks/useShiftIntegrityWatcher';
-import { useKycGate } from '../hooks/useKycGate';
-import { useProfileCompletionGate } from '../hooks/useProfileCompletionGate';
+import { useOnboardingGate } from '../hooks/useOnboardingGate';
 import { usePolicyAcceptanceGate } from '../hooks/usePolicyAcceptanceGate';
 import { AcceptPoliciesScreen } from '../screens/onboarding/AcceptPoliciesScreen';
 import { SetPasswordScreen } from '../screens/onboarding/SetPasswordScreen';
-import { CompleteProfileScreen } from '../screens/onboarding/CompleteProfileScreen';
 import { useThemeStore } from '../stores/themeStore';
 import { useI18nReady } from '../i18n';
 import { usePushNotifications } from '../hooks/usePushNotifications';
@@ -55,18 +53,16 @@ function GatedApp() {
   useClockOutReminderEffect();
   useBreakReminderEffect();
   useShiftIntegrityWatcher();
-  const profileGate = useProfileCompletionGate();
-  const kycGate = useKycGate();
+  const onboarding = useOnboardingGate();
   const policyGate = usePolicyAcceptanceGate();
 
-  if (profileGate.isLoading || kycGate.isLoading || policyGate.isLoading) return <FullScreenSpinner />;
-  // Profile completion comes first, before KYC: date of birth and address
-  // are the more basic facts, filled in earlier in a real onboarding
-  // conversation than a PAN or Aadhaar number would be. Same ordering
-  // LIFECYCLE_STAGES already uses on the backend -- onboarding outranks
-  // approval because identity settles before what depends on it.
-  if (profileGate.gateRequired) return <CompleteProfileScreen />;
-  if (kycGate.gateRequired) return <KycStack />;
+  if (onboarding.isLoading || policyGate.isLoading) return <FullScreenSpinner />;
+  /* One gate for the whole of onboarding: profile, PAN, Aadhaar, the
+     PAN–Aadhaar link, bank, HR approval. The server decides
+     (GET /auth/me/onboarding) and the same rule refuses a clock-in, so the
+     tabs stay hidden until every step is done -- a field employee has nothing
+     to do in them before they can mark attendance. Office roles never apply. */
+  if (onboarding.gateRequired) return <OnboardingStack />;
   /* Policies last. You cannot meaningfully agree to one before the record
      saying who you are exists and has been verified — signing earlier would be
      signing on behalf of an identity nobody has checked. */

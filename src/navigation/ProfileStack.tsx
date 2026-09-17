@@ -24,12 +24,9 @@ const Stack = createNativeStackNavigator<ProfileStackParamList>();
  * the topics that used to be stacked on one page. Then the KYC screens,
  * which Identity opens.
  *
- * Bank verification lives here rather than in KycStack because KycStack only
- * exists while the KYC gate is up, and the gate is satisfied by PAN and
- * Aadhaar alone -- deliberately, since blocking somebody from clocking in over
- * a missing bank account would stop them working. So by the time anyone can
- * reach Profile, KycStack has unmounted and the bank screen would have had no
- * route in at all.
+ * The verification screens are hosted here as well as in OnboardingStack:
+ * that stack only exists until HR approves the employee, and a check that
+ * later expires or fails has to be redoable from Profile.
  */
 export function ProfileStack() {
   return (

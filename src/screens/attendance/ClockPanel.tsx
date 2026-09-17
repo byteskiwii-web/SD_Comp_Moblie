@@ -15,7 +15,8 @@ import { haversineDistance } from '../../utils/haversine';
 import { clockIn, clockOut, endBreak, getAttendanceHistory, startBreak } from '../../api/attendance.api';
 import { CameraCaptureScreen } from './CameraCaptureScreen';
 import { runtimeLabel, supportsBackgroundLocation } from '../../native/runtime';
-import { getApiErrorMessage } from '../../api/client';
+import { getApiErrorCode, getApiErrorMessage } from '../../api/client';
+import { onboardingGateQueryKey } from '../../hooks/useOnboardingGate';
 import { getLatestMarkOfTypes, SHIFT_TYPES, BREAK_TYPES } from '../../utils/attendanceStatus';
 import { formatTime, formatTimeWithSeconds, toLocalDateKey, formatClockTime, formatShift } from '../../utils/datetime';
 import { t as tr, useT } from '../../i18n';
@@ -446,6 +447,12 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
       setBanner({ tone: 'warning', text });
       setToast({ tone: 'warning', text });
       setPendingAction(null);
+      // Onboarding regressed since the tabs opened (HR un-approved the
+      // record, a check was reset). Re-asking the gate swaps the tabs for
+      // the checklist, which is the screen that says what to do about it.
+      if (getApiErrorCode(err) === 'ONBOARDING_INCOMPLETE') {
+        queryClient.invalidateQueries({ queryKey: onboardingGateQueryKey(employee?.id) });
+      }
     },
   });
 

@@ -24,12 +24,8 @@ export type KycStatus = {
   bank: { status: KycCheckStatus; verifiedAt: string | null; masked: string | null; ifsc: string | null };
 };
 
-export function isKycComplete(kyc: KycStatus): boolean {
-  return kyc.pan.status === 'verified' && kyc.aadhaar.status === 'verified';
-}
-
 // Shared label/tone for a KYC check's status -- one source of truth, consumed
-// identically by the mandatory KYC gate screen and the Profile screen's KYC
+// identically by the onboarding checklist and the Profile screen's KYC
 // section, so a "Verified" chip looks and reads the same everywhere.
 /** Catalogue keys, not text -- a module constant would freeze the language. */
 export const KYC_STATUS_KEY = {
@@ -250,29 +246,3 @@ export async function verifyBankAccount(input: BankVerifyInput): Promise<BankVer
   return res.data.data;
 }
 
-// Shared "is the KYC gate required" fetch, consumed by both useKycGate (the
-// mandatory Attendance-blocking gate) and the Profile screen's read-only KYC
-// section, so there's exactly one place that decides fail-open vs fail-closed.
-export type GateData =
-  | { verificationEnabled: false }
-  | { verificationEnabled: true; kyc: KycStatus; capabilities: KycCapabilities };
-
-export async function fetchKycGateStatus(): Promise<GateData> {
-  let deps;
-  try {
-    deps = await getHealthDeps();
-  } catch {
-    // Can't even confirm enforcement is meant to be active -- fail OPEN,
-    // matching the un-gated behaviour every employee has today.
-    return { verificationEnabled: false };
-  }
-  if (deps.dependencies.verification !== 'enabled') {
-    return { verificationEnabled: false };
-  }
-  // Verification is confirmed enabled from here on -- this call is
-  // deliberately NOT wrapped in try/catch. Letting it throw gives a
-  // consuming useQuery's `isError` one unambiguous meaning: "enforcement
-  // should apply, but we couldn't confirm completion" -- i.e. fail CLOSED.
-  const status = await getKycStatus();
-  return { verificationEnabled: true, kyc: status.kyc, capabilities: status.capabilities };
-}

@@ -5,12 +5,22 @@ export type AuthStackParamList = {
   ResetPassword: { resetToken: string };
 };
 
-export type KycStackParamList = {
-  KycGate: undefined;
+/**
+ * The onboarding checklist and the screens it opens. PanVerify /
+ * AadhaarOtp* / BankVerify are the same components ProfileStack hosts, so
+ * their param shapes must stay identical between the two.
+ */
+export type OnboardingStackParamList = {
+  OnboardingChecklist: undefined;
+  CompleteProfile: undefined;
   PanVerify: undefined;
   AadhaarOtpRequest: undefined;
   AadhaarOtpVerify: { referenceId: string };
+  BankVerify: undefined;
 };
+
+/** @deprecated the KYC gate is now part of OnboardingStack; kept for the verification screens' typings. */
+export type KycStackParamList = OnboardingStackParamList;
 
 /**
  * The Attendance tab is a stack, not a single screen.
@@ -64,9 +74,9 @@ export type ProfileStackParamList = {
   Preferences: undefined;
   Account: undefined;
   BankVerify: undefined;
-  // The same three screens KycStack hosts, by the same route names. A check
-  // that is still pending has to be completable from Profile, and once the
-  // gate is satisfied KycStack no longer exists to reach them through.
+  // The same screens OnboardingStack hosts, by the same route names. A check
+  // that later fails has to be redoable from Profile, and once HR approves
+  // the employee OnboardingStack no longer exists to reach them through.
   PanVerify: undefined;
   AadhaarOtpRequest: undefined;
   AadhaarOtpVerify: { referenceId: string };

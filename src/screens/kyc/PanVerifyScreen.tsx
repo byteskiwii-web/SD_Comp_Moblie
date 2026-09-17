@@ -11,7 +11,7 @@ import { useThemeStore } from '../../stores/themeStore';
 import { useAuthStore } from '../../stores/authStore';
 import { getKycStatus, verifyPan } from '../../api/verification.api';
 import { getApiErrorMessage } from '../../api/client';
-import { kycGateQueryKey } from '../../hooks/useKycGate';
+import { onboardingGateQueryKey as kycGateQueryKey } from '../../hooks/useOnboardingGate';
 import { panVerifySchema } from '../../schemas/kyc.schema';
 import { KycStackParamList } from '../../navigation/types';
 import { useT } from '../../i18n';

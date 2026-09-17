@@ -27,7 +27,7 @@ import {
   type IfscLookupResult,
 } from '../../api/verification.api';
 import { getApiErrorMessage } from '../../api/client';
-import { kycGateQueryKey } from '../../hooks/useKycGate';
+import { onboardingGateQueryKey as kycGateQueryKey } from '../../hooks/useOnboardingGate';
 import { bankVerifySchema } from '../../schemas/kyc.schema';
 import { useT } from '../../i18n';
 
