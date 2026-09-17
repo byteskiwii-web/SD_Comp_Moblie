@@ -6,7 +6,6 @@ import { Button, Card } from '../../components/ui';
 import { TourTarget } from '../../components/tour/TourTarget';
 import { ColorScheme, radii } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
-import { usePreferencesStore } from '../../stores/preferencesStore';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useAuthStore } from '../../stores/authStore';
 import { isWithinShiftWindow, summariseDay } from '../../utils/attendanceDay';
@@ -18,7 +17,7 @@ import { CameraCaptureScreen } from './CameraCaptureScreen';
 import { runtimeLabel, supportsBackgroundLocation } from '../../native/runtime';
 import { getApiErrorMessage } from '../../api/client';
 import { getLatestMarkOfTypes, SHIFT_TYPES, BREAK_TYPES } from '../../utils/attendanceStatus';
-import { formatTime, formatTimeWithSeconds, toLocalDateKey } from '../../utils/datetime';
+import { formatTime, formatTimeWithSeconds, toLocalDateKey, formatClockTime, formatShiftWindow } from '../../utils/datetime';
 import { t as tr, useT } from '../../i18n';
 import { StatusBanner } from '../../components/StatusBanner';
 import { GeofenceMap } from '../../components/GeofenceMap';
@@ -58,9 +57,6 @@ function formatDistance(metres: number): string {
 
 export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
   const colors = useThemeStore((s) => s.colors);
-  // Subscribed purely so a change to the 12/24-hour setting re-renders the
-  // times on this screen; the formatters read the store outside React.
-  usePreferencesStore((s) => s.clock);
   const t = useT();
   // Whether the server can be reached. Read from what the API client has
   // actually observed, not from a radio flag -- a phone with full bars behind
@@ -610,7 +606,7 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
         <Text style={styles.heroShift}>
           {profile?.shift?.name ??
             (profile?.shiftStart && profile?.shiftEnd
-              ? `${String(profile.shiftStart).slice(0, 5)} – ${String(profile.shiftEnd).slice(0, 5)}`
+              ? formatShiftWindow(profile.shiftStart, profile.shiftEnd)
               : t('shift.noRoster'))}
         </Text>
         {lastClockIn && isCurrentlyClockedIn ? (
@@ -720,7 +716,7 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
           {breakUsage.used > 0 &&
             (breakUsage.overrun > 0 ? (
               <Text style={styles.breakCardOverText}>
-                {t('clock.breakOver', { overrun: breakUsage.overrun, endsAt: breakUsage.endsAt ?? '—' })}
+                {t('clock.breakOver', { overrun: breakUsage.overrun, endsAt: formatClockTime(breakUsage.endsAt) })}
               </Text>
             ) : (
               <Text style={styles.breakCardLeft}>

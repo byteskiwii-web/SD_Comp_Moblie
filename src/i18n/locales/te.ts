@@ -242,7 +242,7 @@ export const te: Catalogue = {
   'profile.group.account': 'ఖాతా',
   'profile.menu.work': 'పని వివరాలు',
   'profile.menu.workHint': 'సైట్, షిఫ్ట్, మేనేజర్లు',
-  'profile.menu.prefs': 'భాష & సమయం',
+  'profile.menu.prefs': 'భాష',
   'profile.menu.account': 'గోప్యత & ఖాతా',
   'profile.menu.accountHint': 'గోప్యతా విధానం, నిబంధనలు, ఖాతా తొలగింపు',
   'profile.badge.toUpload': '{count} అప్‌లోడ్ చేయాలి',

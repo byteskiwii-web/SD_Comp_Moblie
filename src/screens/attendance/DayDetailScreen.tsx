@@ -7,13 +7,12 @@ import { useNavigation, useRoute, type RouteProp } from '@react-navigation/nativ
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ColorScheme, radii } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
-import { usePreferencesStore } from '../../stores/preferencesStore';
 import { Button } from '../../components/ui';
 import { SkeletonCard } from '../../components/Skeleton';
 import { useAuthStore } from '../../stores/authStore';
 import { getAttendanceHistory } from '../../api/attendance.api';
 import { getApiErrorMessage } from '../../api/client';
-import { formatTime, formatTimeWithSeconds, toLocalDateKey } from '../../utils/datetime';
+import { formatTime, formatTimeWithSeconds, toLocalDateKey, formatClockTime } from '../../utils/datetime';
 import { formatDuration, punctuality, summariseDay } from '../../utils/attendanceDay';
 import { useTicker } from '../../hooks/useTicker';
 import type { AttendanceStackParamList } from '../../navigation/types';
@@ -51,18 +50,12 @@ const longDate = (key: string) => {
 /** "09:30 AM" from the "HH:MM:SS" the profile carries. */
 function rosterTime(hhmmss: string | null): string | null {
   if (!hhmmss) return null;
-  const [h, m] = hhmmss.split(':').map(Number);
-  if (Number.isNaN(h) || Number.isNaN(m)) return null;
-  const d = new Date();
-  d.setHours(h, m, 0, 0);
-  return formatTime(d);
+  const out = formatClockTime(hhmmss, '');
+  return out || null;
 }
 
 export function DayDetailScreen() {
   const colors = useThemeStore((s) => s.colors);
-  // Subscribed purely so a change to the 12/24-hour setting re-renders the
-  // times on this screen; the formatters read the store outside React.
-  usePreferencesStore((s) => s.clock);
   const t = useT();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const navigation = useNavigation<Nav>();

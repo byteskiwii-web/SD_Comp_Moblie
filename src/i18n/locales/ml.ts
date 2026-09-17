@@ -242,7 +242,7 @@ export const ml: Catalogue = {
   'profile.group.account': 'അക്കൗണ്ട്',
   'profile.menu.work': 'ജോലി വിവരങ്ങൾ',
   'profile.menu.workHint': 'സൈറ്റ്, ഷിഫ്റ്റ്, മാനേജർമാർ',
-  'profile.menu.prefs': 'ഭാഷ & സമയം',
+  'profile.menu.prefs': 'ഭാഷ',
   'profile.menu.account': 'സ്വകാര്യത & അക്കൗണ്ട്',
   'profile.menu.accountHint': 'സ്വകാര്യതാ നയം, നിബന്ധനകൾ, അക്കൗണ്ട് ഇല്ലാതാക്കുക',
   'profile.badge.toUpload': '{count} അപ്‌ലോഡ് ചെയ്യാനുണ്ട്',

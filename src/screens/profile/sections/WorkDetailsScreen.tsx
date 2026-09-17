@@ -5,7 +5,7 @@ import { Card } from '../../../components/ui';
 import { DeptManagerCard } from '../DeptManagerCard';
 import { ReportingCard } from '../ReportingCard';
 import { SectionScreen } from '../SectionScreen';
-import { formatDate } from '../../../utils/datetime';
+import { formatDate, formatShiftWindow } from '../../../utils/datetime';
 import { ColorScheme } from '../../../theme/tokens';
 import { useThemeStore } from '../../../stores/themeStore';
 import { useAuthStore } from '../../../stores/authStore';
@@ -46,7 +46,7 @@ export function WorkDetailsScreen() {
         <Row
           icon="albums-outline"
           label={t('profile.shift')}
-          value={profile?.shift?.name ?? (profile?.shiftStart && profile?.shiftEnd ? profile.shiftStart + ' – ' + profile.shiftEnd : '—')}
+          value={[profile?.shift?.name, formatShiftWindow(profile?.shiftStart, profile?.shiftEnd, '')].filter(Boolean).join(' · ') || '—'}
         />
         <Row
           icon="calendar-outline"

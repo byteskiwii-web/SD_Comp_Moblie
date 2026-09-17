@@ -249,7 +249,7 @@ export const pa: Catalogue = {
   'profile.group.account': 'ਖਾਤਾ',
   'profile.menu.work': 'ਕੰਮ ਦੇ ਵੇਰਵੇ',
   'profile.menu.workHint': 'ਸਾਈਟ, ਸ਼ਿਫਟ, ਮੈਨੇਜਰ',
-  'profile.menu.prefs': 'ਭਾਸ਼ਾ ਅਤੇ ਸਮਾਂ',
+  'profile.menu.prefs': 'ਭਾਸ਼ਾ',
   'profile.menu.account': 'ਪਰਦੇਦਾਰੀ ਅਤੇ ਖਾਤਾ',
   'profile.menu.accountHint': 'ਪਰਦੇਦਾਰੀ ਨੀਤੀ, ਸ਼ਰਤਾਂ, ਖਾਤਾ ਮਿਟਾਓ',
   'profile.badge.toUpload': '{count} ਅੱਪਲੋਡ ਬਾਕੀ',

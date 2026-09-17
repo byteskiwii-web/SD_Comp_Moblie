@@ -242,7 +242,7 @@ export const kn: Catalogue = {
   'profile.group.account': 'ಖಾತೆ',
   'profile.menu.work': 'ಕೆಲಸದ ವಿವರಗಳು',
   'profile.menu.workHint': 'ಸೈಟ್, ಶಿಫ್ಟ್, ಮ್ಯಾನೇಜರ್‌ಗಳು',
-  'profile.menu.prefs': 'ಭಾಷೆ & ಸಮಯ',
+  'profile.menu.prefs': 'ಭಾಷೆ',
   'profile.menu.account': 'ಗೌಪ್ಯತೆ & ಖಾತೆ',
   'profile.menu.accountHint': 'ಗೌಪ್ಯತಾ ನೀತಿ, ನಿಯಮಗಳು, ಖಾತೆ ಅಳಿಸಿ',
   'profile.badge.toUpload': '{count} ಅಪ್‌ಲೋಡ್ ಬಾಕಿ',

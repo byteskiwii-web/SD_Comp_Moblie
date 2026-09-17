@@ -1,4 +1,3 @@
-import { currentClockFormat } from '../stores/preferencesStore';
 import { t } from '../i18n';
 
 /**
@@ -39,8 +38,9 @@ function toDate(value: string | number | Date): Date | null {
 const pad = (n: number) => String(n).padStart(2, '0');
 
 /**
- * `9:26 AM` / `12:21 PM`, or `09:26` / `21:26` when the employee has asked
- * for a 24-hour clock. Midnight is 12 AM, noon is 12 PM.
+ * `9:26 AM` / `12:21 PM`. Always 12-hour with AM/PM: a choice of clock was
+ * offered once and dropped, because two formats on the same team's phones
+ * confused more than it helped. Midnight is 12 AM, noon is 12 PM.
  *
  * Still hand-rolled rather than Intl: Hermes renders the noon hour as AM,
  * which is the bug this function exists to avoid.
@@ -49,7 +49,6 @@ export function formatTime(value: string | number | Date, fallback = '—'): str
   const d = toDate(value);
   if (!d) return fallback;
   const h = d.getHours();
-  if (currentClockFormat() === '24h') return `${pad(h)}:${pad(d.getMinutes())}`;
   const period = h < 12 ? 'AM' : 'PM';
   const hour12 = h % 12 === 0 ? 12 : h % 12;
   return `${hour12}:${pad(d.getMinutes())} ${period}`;
@@ -60,12 +59,31 @@ export function formatTimeWithSeconds(value: string | number | Date, fallback = 
   const d = toDate(value);
   if (!d) return fallback;
   const h = d.getHours();
-  if (currentClockFormat() === '24h') {
-    return `${pad(h)}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
-  }
   const period = h < 12 ? 'AM' : 'PM';
   const hour12 = h % 12 === 0 ? 12 : h % 12;
   return `${hour12}:${pad(d.getMinutes())}:${pad(d.getSeconds())} ${period}`;
+}
+
+/**
+ * A roster time as the server sends it -- `"10:00"` or `"19:00:00"` -- as
+ * `10:00 AM` / `7:00 PM`. Shift windows arrive as bare wall-clock strings, not
+ * instants, and were being printed raw, which is how "10:00 – 19:00" sat on
+ * screens where every other time read "5:30 PM".
+ */
+export function formatClockTime(hhmm: string | null | undefined, fallback = '—'): string {
+  if (!hhmm) return fallback;
+  const [h, m] = String(hhmm).split(':').map(Number);
+  if (!Number.isFinite(h) || !Number.isFinite(m)) return fallback;
+  const hh = ((h % 24) + 24) % 24;
+  const period = hh < 12 ? 'AM' : 'PM';
+  const hour12 = hh % 12 === 0 ? 12 : hh % 12;
+  return `${hour12}:${pad(m)} ${period}`;
+}
+
+/** `10:00 AM – 7:00 PM`, or the fallback when either end is missing. */
+export function formatShiftWindow(start: string | null | undefined, end: string | null | undefined, fallback = '—'): string {
+  if (!start || !end) return fallback;
+  return `${formatClockTime(start)} – ${formatClockTime(end)}`;
 }
 
 /** `Tue, 8 Sep`, in the employee's language. */

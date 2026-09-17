@@ -249,7 +249,7 @@ export const bn: Catalogue = {
   'profile.group.account': 'অ্যাকাউন্ট',
   'profile.menu.work': 'কাজের বিবরণ',
   'profile.menu.workHint': 'সাইট, শিফট, ম্যানেজার',
-  'profile.menu.prefs': 'ভাষা ও সময়',
+  'profile.menu.prefs': 'ভাষা',
   'profile.menu.account': 'গোপনীয়তা ও অ্যাকাউন্ট',
   'profile.menu.accountHint': 'গোপনীয়তা নীতি, শর্তাবলী, অ্যাকাউন্ট মুছুন',
   'profile.badge.toUpload': '{count}টি আপলোড বাকি',

@@ -4,11 +4,11 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { Card } from '../../components/ui';
 import { ColorScheme, radii } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
-import { LANGUAGES, usePreferencesStore, type ClockFormat, type LanguageCode } from '../../stores/preferencesStore';
+import { LANGUAGES, usePreferencesStore, type LanguageCode } from '../../stores/preferencesStore';
 import { useT } from '../../i18n';
 
 /**
- * Display preferences: language and clock.
+ * Display preferences: the app's language. (Times are always 12-hour.)
  *
  * Both are on-device settings rather than profile fields, because neither is a
  * fact about the employee that HR or payroll has any use for — they are how
@@ -28,8 +28,6 @@ export function PreferencesCard() {
 
   const language = usePreferencesStore((s) => s.language);
   const setLanguage = usePreferencesStore((s) => s.setLanguage);
-  const clock = usePreferencesStore((s) => s.clock);
-  const setClock = usePreferencesStore((s) => s.setClock);
 
   return (
     <Card>
@@ -64,32 +62,6 @@ export function PreferencesCard() {
         </Text>
       </View>
 
-      <View style={styles.divider} />
-
-      <Text style={styles.label}>{t('prefs.timeFormat')}</Text>
-      <View style={styles.segment}>
-        {(['12h', '24h'] as ClockFormat[]).map((c) => {
-          const on = clock === c;
-          return (
-            <Pressable
-              key={c}
-              onPress={() => setClock(c)}
-              style={[styles.segmentItem, on && styles.segmentItemOn]}
-              accessibilityRole="button"
-              accessibilityState={{ selected: on }}
-            >
-              <Text style={[styles.segmentText, on && styles.segmentTextOn]}>
-                {c === '12h' ? t('prefs.clock12') : t('prefs.clock24')}
-              </Text>
-              {/* A worked example, because "12-hour" and "24-hour" are jargon
-                  and the sample is the thing people actually recognise. */}
-              <Text style={[styles.segmentEg, on && styles.segmentTextOn]}>
-                {c === '12h' ? '5:30 PM' : '17:30'}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
     </Card>
   );
 }
@@ -120,12 +92,5 @@ const makeStyles = (colors: ColorScheme) =>
     note: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginTop: 10 },
     noteText: { flex: 1, fontSize: 10.5, color: colors.slate400, lineHeight: 15 },
 
-    divider: { height: 1, backgroundColor: colors.slate100, marginVertical: 16 },
 
-    segment: { flexDirection: 'row', backgroundColor: colors.slate100, borderRadius: radii.md, padding: 4, gap: 4 },
-    segmentItem: { flex: 1, alignItems: 'center', paddingVertical: 9, borderRadius: radii.sm },
-    segmentItemOn: { backgroundColor: colors.surface },
-    segmentText: { fontSize: 12.5, fontWeight: '800', color: colors.slate500 },
-    segmentTextOn: { color: colors.brand[700] },
-    segmentEg: { fontSize: 10.5, fontWeight: '600', color: colors.slate400, marginTop: 2 },
   });

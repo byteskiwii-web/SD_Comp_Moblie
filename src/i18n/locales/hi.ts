@@ -249,7 +249,7 @@ export const hi: Catalogue = {
   'profile.group.account': 'खाता',
   'profile.menu.work': 'काम का विवरण',
   'profile.menu.workHint': 'साइट, शिफ्ट, मैनेजर',
-  'profile.menu.prefs': 'भाषा और समय',
+  'profile.menu.prefs': 'भाषा',
   'profile.menu.account': 'गोपनीयता और खाता',
   'profile.menu.accountHint': 'गोपनीयता नीति, शर्तें, खाता हटाएँ',
   'profile.badge.toUpload': '{count} अपलोड बाकी',

@@ -10,7 +10,6 @@ import { TourTarget } from '../../components/tour/TourTarget';
 import { EmployeeAvatar } from '../../components/EmployeeAvatar';
 import { ColorScheme, radii } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
-import { usePreferencesStore } from '../../stores/preferencesStore';
 import { getApiErrorMessage } from '../../api/client';
 import { getTeamLeave, LEAVE_TYPE_LABEL_KEY, type LeaveRequest } from '../../api/leave.api';
 import { useAuthStore } from '../../stores/authStore';
@@ -61,9 +60,6 @@ export function TeamScreen() {
   const store = useAuthStore((s) => s.store);
   const [tab, setTab] = useState<Tab>('today');
   const colors = useThemeStore((s) => s.colors);
-  // Subscribed purely so a change to the 12/24-hour setting re-renders the
-  // times on this screen; the formatters read the store outside React.
-  usePreferencesStore((s) => s.clock);
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const t = useT();
 

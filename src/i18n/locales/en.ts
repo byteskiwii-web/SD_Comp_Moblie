@@ -264,7 +264,7 @@ export const en = {
   'profile.group.account': 'Account',
   'profile.menu.work': 'Work details',
   'profile.menu.workHint': 'Site, shift, managers',
-  'profile.menu.prefs': 'Language & time',
+  'profile.menu.prefs': 'Language',
   'profile.menu.account': 'Privacy & account',
   'profile.menu.accountHint': 'Privacy policy, terms, delete account',
   'profile.badge.toUpload': '{count} to upload',

@@ -249,7 +249,7 @@ export const gu: Catalogue = {
   'profile.group.account': 'ખાતું',
   'profile.menu.work': 'કામની વિગતો',
   'profile.menu.workHint': 'સાઇટ, શિફ્ટ, મેનેજર',
-  'profile.menu.prefs': 'ભાષા અને સમય',
+  'profile.menu.prefs': 'ભાષા',
   'profile.menu.account': 'ગોપનીયતા અને ખાતું',
   'profile.menu.accountHint': 'ગોપનીયતા નીતિ, શરતો, ખાતું કાઢી નાખો',
   'profile.badge.toUpload': '{count} અપલોડ બાકી',

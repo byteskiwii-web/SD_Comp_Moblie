@@ -7,7 +7,6 @@ import { useNavigation } from '@react-navigation/native';
 import { Card } from '../../components/ui';
 import { ColorScheme, radii } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
-import { usePreferencesStore } from '../../stores/preferencesStore';
 import { useAuthStore } from '../../stores/authStore';
 import { getAttendanceHistory } from '../../api/attendance.api';
 import { getLatestMarkOfTypes, SHIFT_TYPES } from '../../utils/attendanceStatus';
@@ -32,9 +31,6 @@ export function HomeScreen() {
   const store = useAuthStore((s) => s.store);
   const navigation = useNavigation<any>();
   const colors = useThemeStore((s) => s.colors);
-  // Subscribed purely so a change to the 12/24-hour setting re-renders the
-  // times on this screen; the formatters read the store outside React.
-  usePreferencesStore((s) => s.clock);
   const t = useT();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 

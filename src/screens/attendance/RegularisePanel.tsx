@@ -17,7 +17,7 @@ import {
 } from '../../api/attendance.api';
 import { getApiErrorMessage } from '../../api/client';
 import { formatDuration, summariseDay } from '../../utils/attendanceDay';
-import { formatTime, newestFirst, toLocalDateKey } from '../../utils/datetime';
+import { formatTime, newestFirst, toLocalDateKey, formatShiftWindow } from '../../utils/datetime';
 import type { Regularisation, RegularisationRequestType, RegularisationStatus } from '../../types/attendance';
 import { SkeletonRows } from '../../components/Skeleton';
 import { t as tr, useT, type TKey } from '../../i18n';
@@ -348,7 +348,7 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
             </Text>
             <Text style={styles.shiftWindow}>
               {profile?.shiftStart && profile?.shiftEnd
-                ? `${String(profile.shiftStart).slice(0, 5)} – ${String(profile.shiftEnd).slice(0, 5)}`
+                ? formatShiftWindow(profile.shiftStart, profile.shiftEnd)
                 : '—'}
             </Text>
           </View>

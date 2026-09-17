@@ -242,7 +242,7 @@ export const ta: Catalogue = {
   'profile.group.account': 'கணக்கு',
   'profile.menu.work': 'பணி விவரங்கள்',
   'profile.menu.workHint': 'தளம், ஷிஃப்ட், மேலாளர்கள்',
-  'profile.menu.prefs': 'மொழி & நேரம்',
+  'profile.menu.prefs': 'மொழி',
   'profile.menu.account': 'தனியுரிமை & கணக்கு',
   'profile.menu.accountHint': 'தனியுரிமைக் கொள்கை, விதிமுறைகள், கணக்கை நீக்கு',
   'profile.badge.toUpload': '{count} பதிவேற்ற வேண்டும்',
