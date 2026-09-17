@@ -61,6 +61,12 @@ export type Me = {
   /** Still holding a password somebody else chose. See login(). */
   mustChangePassword?: boolean;
   storeCode: string | null;
+  /**
+   * The site, in the same shape login returns. Absent from a server older
+   * than this field, which is why it is optional: absent means "not said",
+   * and the cached snapshot stands; null means the employee has no site.
+   */
+  store?: StoreSnapshot;
   dateOfJoining: string | null;
   /** Whether a profile picture exists, and when it last changed (cache bust). */
   hasPhoto?: boolean;

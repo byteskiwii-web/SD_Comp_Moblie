@@ -158,8 +158,18 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
     try {
       const me = await getMe();
       const current = get().employee;
+      /*
+       * THE SITE COMES WITH THE PROFILE NOW.
+       *
+       * It used to arrive only at sign-in, so a site renamed in the console
+       * went on showing its old name on every phone -- and, worse, a site
+       * whose pin or radius was corrected went on judging punches against
+       * the old fence, until each employee happened to sign out.
+       */
+      const siteSaid = me.store !== undefined;
       set({
         profile: me,
+        ...(siteSaid ? { store: me.store ?? null } : {}),
         /* The keychain never holds this, so a relaunched session picks it up
            here — and an administrator who issues a password mid-session has it
            take effect on the next profile read rather than at next launch. */
@@ -168,6 +178,29 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
           ? { ...current, role: me.role ?? current.role, store_code: me.storeCode ?? current.store_code }
           : current,
       });
+
+      /*
+       * And the remembered copy, or the next launch opens on the old site for
+       * as long as this read takes -- long enough to draw the old fence.
+       *
+       * Only when a copy exists: a session the employee chose not to keep
+       * must not be written to the keychain by a profile read. Written from
+       * memory rather than from what was loaded, so a token rotation that
+       * lands in between is kept rather than overwritten with the old pair.
+       */
+      if (siteSaid) {
+        const saved = await loadAuth();
+        const now = get();
+        if (saved && now.token && now.refreshToken && now.employee &&
+            JSON.stringify(saved.store) !== JSON.stringify(now.store)) {
+          await saveAuth({
+            token: now.token,
+            refreshToken: now.refreshToken,
+            employee: now.employee as unknown as Record<string, unknown>,
+            store: now.store as unknown as Record<string, unknown> | null,
+          });
+        }
+      }
     } catch (err) {
       // Offline, or the session expired and the interceptor is already
       // handling it. Either way the cached record stays -- but a caller that

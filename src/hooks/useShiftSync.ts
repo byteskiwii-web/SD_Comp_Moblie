@@ -13,6 +13,28 @@ import { getLatestMarkOfTypes, SHIFT_TYPES, BREAK_TYPES } from '../utils/attenda
 // (useLocationPollingEffect), not just the locally-persisted shiftStore
 // value, so a killed-and-reopened app or a clock-out/break-start that
 // happened elsewhere is always corrected.
+/*
+ * The profile -- and with it the site's name and fence -- was read at launch
+ * and at sign-in only. An app brought back from the background kept whatever
+ * it had, so a site renamed or re-pinned in the console did not reach anyone
+ * who never fully closed the app. Refreshed here, on the same foreground
+ * transition that reconciles the shift.
+ *
+ * At most once a minute: the camera, the permission dialogs and the share
+ * sheet all bounce the app through 'active', and none of those is a reason to
+ * ask the server who you are again.
+ */
+const PROFILE_REFRESH_MIN_GAP_MS = 60_000;
+let lastForegroundProfileRefresh = 0;
+
+function refreshProfileOnForeground() {
+  const now = Date.now();
+  if (now - lastForegroundProfileRefresh < PROFILE_REFRESH_MIN_GAP_MS) return;
+  lastForegroundProfileRefresh = now;
+  const auth = useAuthStore.getState();
+  if (auth.token) void auth.refreshProfile();
+}
+
 export function useShiftSync() {
   const employee = useAuthStore((s) => s.employee);
   const setClockedIn = useShiftStore((s) => s.setClockedIn);
@@ -56,7 +78,10 @@ export function useShiftSync() {
   useEffect(() => {
     sync();
     const subscription = AppState.addEventListener('change', (state) => {
-      if (state === 'active') sync();
+      if (state === 'active') {
+        sync();
+        refreshProfileOnForeground();
+      }
     });
     return () => subscription.remove();
   }, [sync]);
