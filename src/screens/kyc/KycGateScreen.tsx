@@ -32,7 +32,7 @@ function StatusRow({ label, status }: { label: string; status: KycCheckStatus })
 export function KycGateScreen() {
   const navigation = useNavigation<Nav>();
   const signOut = useAuthStore((s) => s.signOut);
-  const { kyc, isError, isFetching, refetch } = useKycGate();
+  const { kyc, capabilities, isError, isFetching, refetch } = useKycGate();
   const colors = useThemeStore((s) => s.colors);
   const styles = React.useMemo(() => makeStyles(colors), [colors]);
   const t = useT();
@@ -67,7 +67,20 @@ export function KycGateScreen() {
             {isFetching ? <Text style={styles.refreshing}>{t('common.refreshing')}</Text> : null}
 
             <View style={styles.ctaGap}>
-              {!panDone ? (
+              {capabilities.combinedPanAadhaar ? (
+                // One screen verifies both from a single submission -- there is
+                // no separate Aadhaar step to route to under this provider, and
+                // re-submitting is also how a PAN that passed but an Aadhaar
+                // that didn't gets retried (recomputed together, every time).
+                <Button
+                  title={
+                    kyc?.pan.status === 'failed' || kyc?.aadhaar.status === 'failed'
+                      ? t('kyc.retryPan')
+                      : t('kyc.startPan')
+                  }
+                  onPress={() => navigation.navigate('PanVerify')}
+                />
+              ) : !panDone ? (
                 <Button
                   title={kyc?.pan.status === 'failed' ? t('kyc.retryPan') : t('kyc.startPan')}
                   onPress={() => navigation.navigate('PanVerify')}

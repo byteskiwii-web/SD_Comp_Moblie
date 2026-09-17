@@ -44,6 +44,25 @@ export function kycStatusTone(status: KycCheckStatus, colors: ColorScheme): { bg
   return { bg: colors.warningBg, fg: colors.warningText };
 }
 
+/**
+ * What the ACTIVE KYC provider can do right now -- read this instead of
+ * hardcoding which screens exist. `sandbox` (today's default) reports
+ * `{ combinedPanAadhaar: false, aadhaarOtp: true, bank: true }`, so nothing
+ * visible changes for a deployment that never switches provider.
+ */
+export type KycCapabilities = {
+  /** PAN and Aadhaar are verified together from one PAN screen submission. */
+  combinedPanAadhaar: boolean;
+  /** The standalone Aadhaar OTP screens (request/verify) are usable. */
+  aadhaarOtp: boolean;
+  /** Bank account verification is usable at all. */
+  bank: boolean;
+  /** The money-moving penny-drop mode is usable — false under SurePass, which only has Pennyless wired up. */
+  bankPennyDrop: boolean;
+  /** The free, pre-submit IFSC branch lookup is usable — false under SurePass (Find IFSC is unapproved). */
+  bankIfscLookup: boolean;
+};
+
 export type HealthDepsResponse = {
   status: 'ok';
   dependencies: {
@@ -65,7 +84,7 @@ export async function getHealthDeps(): Promise<HealthDepsResponse> {
   return res.data;
 }
 
-export type KycStatusResponse = { employeeId: string; kyc: KycStatus };
+export type KycStatusResponse = { employeeId: string; kyc: KycStatus; capabilities: KycCapabilities };
 
 // No employee_id sent -- a field-employee's subject always resolves to
 // themselves server-side regardless of what's passed.
@@ -74,7 +93,17 @@ export async function getKycStatus(): Promise<KycStatusResponse> {
   return res.data.data;
 }
 
-export type PanVerifyInput = { pan: string; name_as_per_pan?: string; date_of_birth?: string };
+export type PanVerifyInput = {
+  pan: string;
+  name_as_per_pan?: string;
+  date_of_birth?: string;
+  /**
+   * Only meaningful when `capabilities.combinedPanAadhaar` is true. The raw
+   * number is used once for a server-side comparison and never stored or
+   * echoed back, masked or otherwise -- see PanVerifyScreen.tsx.
+   */
+  aadhaar_number?: string;
+};
 export type PanVerifyResult = {
   verified: boolean;
   outcome: string;
@@ -89,6 +118,12 @@ export type PanVerifyResult = {
     aadhaarLinkConfirmed?: boolean | null;
     remarks?: string | null;
   };
+  /**
+   * Present only under the combined-provider flow (`capabilities.
+   * combinedPanAadhaar`). This is the ONLY way Aadhaar gets verified while
+   * that provider is active -- there is no separate OTP step to fall back to.
+   */
+  aadhaar?: { verified: boolean; outcome: string; message: string };
   meta: Record<string, unknown>;
 };
 
@@ -218,7 +253,9 @@ export async function verifyBankAccount(input: BankVerifyInput): Promise<BankVer
 // Shared "is the KYC gate required" fetch, consumed by both useKycGate (the
 // mandatory Attendance-blocking gate) and the Profile screen's read-only KYC
 // section, so there's exactly one place that decides fail-open vs fail-closed.
-export type GateData = { verificationEnabled: false } | { verificationEnabled: true; kyc: KycStatus };
+export type GateData =
+  | { verificationEnabled: false }
+  | { verificationEnabled: true; kyc: KycStatus; capabilities: KycCapabilities };
 
 export async function fetchKycGateStatus(): Promise<GateData> {
   let deps;
@@ -237,5 +274,5 @@ export async function fetchKycGateStatus(): Promise<GateData> {
   // consuming useQuery's `isError` one unambiguous meaning: "enforcement
   // should apply, but we couldn't confirm completion" -- i.e. fail CLOSED.
   const status = await getKycStatus();
-  return { verificationEnabled: true, kyc: status.kyc };
+  return { verificationEnabled: true, kyc: status.kyc, capabilities: status.capabilities };
 }

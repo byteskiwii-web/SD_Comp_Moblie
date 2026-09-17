@@ -36,7 +36,7 @@ export function AadhaarOtpVerifyScreen({ navigation, route }: Props) {
     onSuccess: (result) => {
       if (result.verified) {
         queryClient.invalidateQueries({ queryKey: kycGateQueryKey(employee?.id) });
-        setSuccess('Aadhaar verified');
+        setSuccess(t('aadhaar.verified'));
         // No manual navigation needed -- RootNavigator re-renders on its own
         // once the gate query reflects the new status (to KycGateScreen if
         // only Aadhaar was outstanding, or straight to AppTabs if both

@@ -13,12 +13,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button, TextField } from '../../components/ui';
 import { ColorScheme, radii } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
 import { useAuthStore } from '../../stores/authStore';
 import {
+  getKycStatus,
   lookupIfsc,
   verifyBankAccount,
   type BankVerifyMode,
@@ -64,6 +65,18 @@ export function BankVerifyScreen() {
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const t = useT();
 
+  // Same technique as PanVerifyScreen: a cheap, self-contained read so this
+  // screen doesn't need its capabilities threaded through as a route param
+  // from both places that navigate here (KycCard and, under Sandbox, the
+  // gate flow).
+  const { data: status } = useQuery({
+    queryKey: ['kyc-capabilities'],
+    queryFn: getKycStatus,
+    staleTime: 5 * 60 * 1000,
+  });
+  const pennyDropAvailable = status?.capabilities.bankPennyDrop ?? true;
+  const ifscLookupAvailable = status?.capabilities.bankIfscLookup ?? true;
+
   const [ifsc, setIfsc] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
   const [confirmAccount, setConfirmAccount] = useState('');
@@ -98,9 +111,12 @@ export function BankVerifyScreen() {
     onSuccess: (data) => {
       setResult(data);
       setError('');
-      // The Profile badge and the gate both read this.
+      // The Profile badge and the gate both read this. The badge's actual key
+      // is ['profile-kyc-status', employee?.id] (ProfileScreen.tsx) -- this
+      // used to invalidate a plain ['kyc-status'] that nothing subscribes to,
+      // so the badge never refreshed after a successful bank verification.
       queryClient.invalidateQueries({ queryKey: kycGateQueryKey(employee?.id) });
-      queryClient.invalidateQueries({ queryKey: ['kyc-status'] });
+      queryClient.invalidateQueries({ queryKey: ['profile-kyc-status', employee?.id] });
     },
     onError: (err) => {
       setResult(null);
@@ -173,14 +189,16 @@ export function BankVerifyScreen() {
             placeholder="HDFC0001234"
           />
 
-          <View style={styles.lookupRow}>
-            <Button
-              title={branchLookup.isPending ? t('common.checking') : t('bank.findBranch')}
-              variant="outline"
-              onPress={() => branchLookup.mutate()}
-              disabled={ifsc.trim().length !== 11 || branchLookup.isPending}
-            />
-          </View>
+          {ifscLookupAvailable && (
+            <View style={styles.lookupRow}>
+              <Button
+                title={branchLookup.isPending ? t('common.checking') : t('bank.findBranch')}
+                variant="outline"
+                onPress={() => branchLookup.mutate()}
+                disabled={ifsc.trim().length !== 11 || branchLookup.isPending}
+              />
+            </View>
+          )}
 
           {branch && (
             <View style={styles.branchCard}>
@@ -234,22 +252,29 @@ export function BankVerifyScreen() {
             placeholder={t('bank.tenDigits')}
           />
 
-          <Text style={styles.fieldLabel}>{t('bank.howToVerify')}</Text>
-          <View style={styles.modes}>
-            <ModeOption
-              selected={mode === 'penniless'}
-              onPress={() => setMode('penniless')}
-              title={t('bank.standard')}
-              detail={t('bank.standardNote')}
-            />
-            <ModeOption
-              selected={mode === 'pennydrop'}
-              onPress={() => setMode('pennydrop')}
-              title={t('bank.pennyMode', { amount: PENNY_DROP_AMOUNT })}
-              detail={t('bank.pennyModeNote', { amount: PENNY_DROP_AMOUNT })}
-              warn
-            />
-          </View>
+          {/* Hidden, not shown-and-disabled: under SurePass this mode is not
+              "temporarily off", it is a check this provider does not offer at
+              all, and `mode` simply never leaves its 'penniless' default. */}
+          {pennyDropAvailable && (
+            <>
+              <Text style={styles.fieldLabel}>{t('bank.howToVerify')}</Text>
+              <View style={styles.modes}>
+                <ModeOption
+                  selected={mode === 'penniless'}
+                  onPress={() => setMode('penniless')}
+                  title={t('bank.standard')}
+                  detail={t('bank.standardNote')}
+                />
+                <ModeOption
+                  selected={mode === 'pennydrop'}
+                  onPress={() => setMode('pennydrop')}
+                  title={t('bank.pennyMode', { amount: PENNY_DROP_AMOUNT })}
+                  detail={t('bank.pennyModeNote', { amount: PENNY_DROP_AMOUNT })}
+                  warn
+                />
+              </View>
+            </>
+          )}
 
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
 

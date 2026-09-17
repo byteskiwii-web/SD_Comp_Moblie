@@ -2,7 +2,16 @@ import { useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '../stores/authStore';
-import { fetchKycGateStatus, isKycComplete, KycStatus } from '../api/verification.api';
+import { fetchKycGateStatus, isKycComplete, KycCapabilities, KycStatus } from '../api/verification.api';
+
+/** Matches Sandbox's shape -- the default everything renders against before the first fetch settles. */
+const DEFAULT_CAPABILITIES: KycCapabilities = {
+  combinedPanAadhaar: false,
+  aadhaarOtp: true,
+  bank: true,
+  bankPennyDrop: true,
+  bankIfscLookup: true,
+};
 
 export const kycGateQueryKey = (employeeId?: string) => ['kyc-gate', employeeId] as const;
 
@@ -61,19 +70,22 @@ export function useKycGate() {
    * Latching to the last settled attempt breaks that loop: an in-flight
    * refetch no longer changes what's on screen, only a completed one does.
    */
-  const settledRef = useRef<{ gateRequired: boolean; kyc: KycStatus | null } | null>(null);
+  const settledRef = useRef<{ gateRequired: boolean; kyc: KycStatus | null; capabilities: KycCapabilities } | null>(
+    null
+  );
   const [, forceRender] = useState(0);
 
   if (query.isError) {
     if (!settledRef.current || settledRef.current.gateRequired !== true || settledRef.current.kyc !== null) {
-      settledRef.current = { gateRequired: true, kyc: null };
+      settledRef.current = { gateRequired: true, kyc: null, capabilities: DEFAULT_CAPABILITIES };
       forceRender((n) => n + 1);
     }
   } else if (query.data) {
     const required = query.data.verificationEnabled === true && !isKycComplete(query.data.kyc);
     const kyc = query.data.verificationEnabled ? query.data.kyc : null;
+    const capabilities = query.data.verificationEnabled ? query.data.capabilities : DEFAULT_CAPABILITIES;
     if (!settledRef.current || settledRef.current.gateRequired !== required || settledRef.current.kyc !== kyc) {
-      settledRef.current = { gateRequired: required, kyc };
+      settledRef.current = { gateRequired: required, kyc, capabilities };
       forceRender((n) => n + 1);
     }
   }
@@ -87,6 +99,7 @@ export function useKycGate() {
     isError: query.isError,
     isFetching: query.isFetching,
     kyc: settledRef.current?.kyc ?? null,
+    capabilities: settledRef.current?.capabilities ?? DEFAULT_CAPABILITIES,
     gateRequired: isFieldEmployee && Boolean(settledRef.current?.gateRequired),
     refetch: query.refetch,
   };

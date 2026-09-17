@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
-import { getKycStatus, KYC_STATUS_KEY, KycCheckStatus, kycStatusTone } from '../../api/verification.api';
+import { getHealthDeps, getKycStatus, KYC_STATUS_KEY, KycCheckStatus, kycStatusTone } from '../../api/verification.api';
 import { Card } from '../../components/ui';
 import { ColorScheme, radii } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
@@ -45,6 +45,20 @@ export function KycCard() {
   const styles = React.useMemo(() => makeStyles(colors), [colors]);
   const t = useT();
 
+  // Whether verification is switched on AT ALL. GET /verification/status
+  // stays reachable regardless (so a check verified before a toggle-off never
+  // disappears), which is exactly what made this easy to miss before: the
+  // rows below rendered "Pending" chips with a tappable "Verify now" that
+  // POSTed to an unmounted route and 404'd. Checked here, once, rather than
+  // per-row.
+  const health = useQuery({
+    queryKey: ['kyc-health', employee?.id],
+    queryFn: getHealthDeps,
+    enabled: worksAtSite,
+    retry: false,
+  });
+  const verificationEnabled = health.data?.dependencies.verification === 'enabled';
+
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['profile-kyc-status', employee?.id],
     queryFn: getKycStatus,
@@ -58,13 +72,25 @@ export function KycCard() {
   // in the background.
   useFocusEffect(
     React.useCallback(() => {
-      if (worksAtSite) refetch();
+      if (worksAtSite) {
+        refetch();
+        health.refetch();
+      }
+      // health.refetch is stable across renders (react-query), and including
+      // it would refire this effect every time `health` itself is a new
+      // object -- the same reason `refetch` alone is listed below, not `data`.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [worksAtSite, refetch])
   );
 
   if (!worksAtSite) return null;
 
   const kyc = data?.kyc ?? null;
+  const combinedPanAadhaar = data?.capabilities.combinedPanAadhaar ?? false;
+  const bankAvailable = data?.capabilities.bank ?? true;
+
+  // Nothing is actionable while verification is off -- readable, not tappable.
+  const action = (target: string) => (verificationEnabled ? () => navigation.navigate(target) : undefined);
 
   return (
     <Card>
@@ -75,27 +101,27 @@ export function KycCard() {
         <Text style={styles.kycMuted}>{t('kyc.statusFailed')}</Text>
       ) : kyc ? (
         <>
-          {/* Every check that is not yet verified offers a way to finish it.
-              A status nobody can act on is just a reminder that something is
-              wrong -- and for two of these three, the KYC gate that used to be
-              the only route in is gone by the time anyone reaches Profile. */}
+          {/* Every check that is not yet verified offers a way to finish it,
+              UNLESS verification is currently switched off entirely -- a
+              status nobody can act on either way is just a reminder that
+              something is wrong, or that it isn't available right now. For
+              two of these three, the KYC gate that used to be the only route
+              in is gone by the time anyone reaches Profile. */}
           <KycRow
             icon="card-outline"
             label={t('kyc.panShort')}
             status={kyc.pan.status}
             detail={kyc.pan.masked}
-            onPress={kyc.pan.status === 'verified' ? undefined : () => navigation.navigate('PanVerify')}
+            onPress={kyc.pan.status === 'verified' ? undefined : action('PanVerify')}
           />
 
           <KycRow
             icon="finger-print-outline"
             label={t('kyc.aadhaarShort')}
             status={kyc.aadhaar.status}
-            onPress={
-              kyc.aadhaar.status === 'verified'
-                ? undefined
-                : () => navigation.navigate('AadhaarOtpRequest')
-            }
+            // Under the combined provider there is no separate Aadhaar screen
+            // to route to -- PanVerify verifies both from one submission.
+            onPress={kyc.aadhaar.status === 'verified' ? undefined : action(combinedPanAadhaar ? 'PanVerify' : 'AadhaarOtpRequest')}
           />
           {/* A row of its own, at the same level as the checks around it.
               It was previously indented underneath PAN, which stacked a second
@@ -106,22 +132,22 @@ export function KycCard() {
               about BOTH of them, so it reads as following from the pair. */}
           <LinkRow
             linked={kyc.pan.aadhaarLinked ?? null}
-            onCheck={
-              kyc.pan.aadhaarLinked === true ? undefined : () => navigation.navigate('PanVerify')
-            }
+            last={!bankAvailable}
+            onCheck={kyc.pan.aadhaarLinked === true ? undefined : action('PanVerify')}
           />
-          <KycRow
-            icon="wallet-outline"
-            label={t('bank.title')}
-            status={kyc.bank.status}
-            detail={kyc.bank.masked}
-            last
-            onPress={
-              kyc.bank.status === 'verified'
-                ? undefined
-                : () => navigation.navigate('BankVerify')
-            }
-          />
+          {/* Hidden rather than shown-and-disabled: under SurePass this is not
+              "temporarily off", it is a check this provider does not offer at
+              all, and a permanently-pending row would just be confusing. */}
+          {bankAvailable ? (
+            <KycRow
+              icon="wallet-outline"
+              label={t('bank.title')}
+              status={kyc.bank.status}
+              detail={kyc.bank.masked}
+              last
+              onPress={kyc.bank.status === 'verified' ? undefined : action('BankVerify')}
+            />
+          ) : null}
         </>
       ) : (
         <Text style={styles.kycMuted}>{t('kyc.none')}</Text>
@@ -198,7 +224,7 @@ function KycRow({
  * is a real finding. Collapsing them would either invent a problem or hide
  * one, and the provider's enum is undocumented past yes and no.
  */
-function LinkRow({ linked, onCheck }: { linked: boolean | null; onCheck?: () => void }) {
+function LinkRow({ linked, last, onCheck }: { linked: boolean | null; last?: boolean; onCheck?: () => void }) {
   const colors = useThemeStore((s) => s.colors);
   const styles = React.useMemo(() => makeStyles(colors), [colors]);
   const t = useT();
@@ -232,10 +258,10 @@ function LinkRow({ linked, onCheck }: { linked: boolean | null; onCheck?: () => 
     </>
   );
 
-  if (!onCheck) return <View style={styles.row}>{body}</View>;
+  if (!onCheck) return <View style={[styles.row, last && styles.rowLast]}>{body}</View>;
   return (
     <Pressable
-      style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
+      style={({ pressed }) => [styles.row, last && styles.rowLast, pressed && styles.rowPressed]}
       onPress={onCheck}
       accessibilityRole="button"
       accessibilityLabel={t('kyc.linkRowLabel', { state: state.label })}

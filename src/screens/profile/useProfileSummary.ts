@@ -67,7 +67,12 @@ export function useProfileSummary() {
     let identity: Summary | null = null;
     const k = kyc.data?.kyc;
     if (worksAtSite && k) {
-      const statuses = [k.pan.status, k.aadhaar.status, k.bank.status];
+      // Bank only counts while the active provider actually offers it --
+      // under SurePass it is permanently absent, not permanently pending,
+      // and counting it here would leave this row stuck on "Pending" forever
+      // even once PAN and Aadhaar are both verified.
+      const bankAvailable = kyc.data?.capabilities.bank ?? true;
+      const statuses = bankAvailable ? [k.pan.status, k.aadhaar.status, k.bank.status] : [k.pan.status, k.aadhaar.status];
       if (statuses.some((s) => s === 'failed')) identity = { tone: 'danger', state: 'failed' };
       else if (statuses.some((s) => s !== 'verified')) identity = { tone: 'warning', state: 'pending' };
       else identity = { tone: 'success', state: 'verified' };

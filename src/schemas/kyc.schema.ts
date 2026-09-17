@@ -17,6 +17,16 @@ export const panVerifySchema = z.object({
     .regex(/^(0[1-9]|[12][0-9]|3[01])\/(0[1-9]|1[0-2])\/(19|20)[0-9]{2}$/, {
       error: 'Enter date of birth as DD/MM/YYYY',
     }),
+  // Optional here -- Sandbox ignores it entirely. Only required when
+  // `capabilities.combinedPanAadhaar` is true, which PanVerifyScreen checks
+  // itself before submitting: whether it's required depends on which
+  // provider is active, which a static schema has no way to express.
+  aadhaar_number: z
+    .string()
+    .trim()
+    .regex(/^[2-9][0-9]{11}$/, { error: 'Enter a valid 12-digit Aadhaar number' })
+    .optional()
+    .or(z.literal('')),
   consentAccepted: z.literal(true, { error: 'You must give consent to proceed' }),
 });
 export type PanVerifyFormInput = z.infer<typeof panVerifySchema>;

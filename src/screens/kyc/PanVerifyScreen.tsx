@@ -4,12 +4,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button, TextField } from '../../components/ui';
 import { ColorScheme } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
 import { useAuthStore } from '../../stores/authStore';
-import { verifyPan } from '../../api/verification.api';
+import { getKycStatus, verifyPan } from '../../api/verification.api';
 import { getApiErrorMessage } from '../../api/client';
 import { kycGateQueryKey } from '../../hooks/useKycGate';
 import { panVerifySchema } from '../../schemas/kyc.schema';
@@ -26,20 +26,49 @@ export function PanVerifyScreen() {
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const t = useT();
 
+  // Which provider is active decides whether this screen also verifies
+  // Aadhaar. Cheap DB-only read, and this screen is reached from two
+  // different stacks (KycGate and Profile) that each already know this from
+  // their OWN query -- fetching it again here, rather than threading it
+  // through as a route param from both, keeps this screen self-contained.
+  const { data: status } = useQuery({
+    queryKey: ['kyc-capabilities'],
+    queryFn: getKycStatus,
+    staleTime: 5 * 60 * 1000,
+  });
+  const combinedPanAadhaar = status?.capabilities.combinedPanAadhaar ?? false;
+
   const [pan, setPan] = useState('');
   const [nameAsPerPan, setNameAsPerPan] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState('');
+  const [aadhaarNumber, setAadhaarNumber] = useState('');
   const [consentAccepted, setConsentAccepted] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
   const mutation = useMutation({
-    mutationFn: () => verifyPan({ pan, name_as_per_pan: nameAsPerPan, date_of_birth: dateOfBirth }),
+    mutationFn: () =>
+      verifyPan({
+        pan,
+        name_as_per_pan: nameAsPerPan,
+        date_of_birth: dateOfBirth,
+        ...(combinedPanAadhaar ? { aadhaar_number: aadhaarNumber } : {}),
+      }),
     onSuccess: (result) => {
+      // Cleared regardless of outcome: the raw number has done its one job
+      // and this screen never holds onto it longer than the request needs.
+      setAadhaarNumber('');
       queryClient.invalidateQueries({ queryKey: kycGateQueryKey(employee?.id) });
-      if (result.verified) {
-        setSuccess(`PAN ${result.pan.masked} verified`);
+      queryClient.invalidateQueries({ queryKey: ['profile-kyc-status', employee?.id] });
+      if (result.verified && (!result.aadhaar || result.aadhaar.verified)) {
+        setSuccess(
+          result.aadhaar ? t('pan.combinedVerified') : t('pan.verifiedWith', { masked: result.pan.masked })
+        );
         setTimeout(() => navigation.goBack(), 900);
+      } else if (result.aadhaar && !result.aadhaar.verified) {
+        // PAN itself may still be verified here -- the message is about
+        // Aadhaar specifically, which is what stopped this from completing.
+        setError(result.aadhaar.message);
       } else {
         setError(result.message);
       }
@@ -59,10 +88,18 @@ export function PanVerifyScreen() {
       pan,
       name_as_per_pan: nameAsPerPan,
       date_of_birth: dateOfBirth,
+      aadhaar_number: aadhaarNumber,
       consentAccepted,
     });
     if (!parsed.success) {
       setError(parsed.error.issues[0]?.message ?? t('pan.invalid'));
+      return;
+    }
+    // Whether this field is required at all depends on the active provider,
+    // which the static schema above has no way to express -- see
+    // pan.service.js#requireCombinedFields on the server for the same check.
+    if (combinedPanAadhaar && !aadhaarNumber) {
+      setError(t('pan.aadhaarRequired'));
       return;
     }
     mutation.mutate();
@@ -73,7 +110,7 @@ export function PanVerifyScreen() {
       <ScreenHeader title={t('kyc.panShort')} />
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-          <Text style={styles.subtitle}>{t('pan.intro')}</Text>
+          <Text style={styles.subtitle}>{combinedPanAadhaar ? t('pan.introCombined') : t('pan.intro')}</Text>
 
           <TextField
             label={t('pan.number')}
@@ -110,12 +147,26 @@ export function PanVerifyScreen() {
             placeholder="DD/MM/YYYY"
           />
 
+          {combinedPanAadhaar ? (
+            <TextField
+              label={t('pan.aadhaarNumber')}
+              value={aadhaarNumber}
+              onChangeText={(t) => {
+                setAadhaarNumber(t.replace(/\D/g, '').slice(0, 12));
+                setError('');
+              }}
+              keyboardType="number-pad"
+              maxLength={12}
+              placeholder={t('pan.aadhaarHint')}
+            />
+          ) : null}
+
           <Pressable style={styles.consentRow} onPress={() => setConsentAccepted((v) => !v)}>
             <View style={[styles.checkbox, consentAccepted && styles.checkboxChecked]}>
               {consentAccepted ? <Text style={styles.checkmark}>✓</Text> : null}
             </View>
             <Text style={styles.consentText}>
-              {t('pan.consent')}
+              {combinedPanAadhaar ? t('pan.consentCombined') : t('pan.consent')}
             </Text>
           </Pressable>
 
