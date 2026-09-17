@@ -106,6 +106,9 @@ export function usePushNotifications(): void {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
       queryClient.invalidateQueries({ queryKey: ['notifications-unread'] });
       for (const key of STALE_BY_TYPE[data?.type ?? ''] ?? []) queryClient.invalidateQueries({ queryKey: key });
+      // Kit status (and other onboarding facts) live on the profile record,
+      // not in a query -- re-read it so "Kit issued" shows without a pull.
+      if (data?.type === 'onboarding') void useAuthStore.getState().refreshProfile();
     };
 
     const open = (data: PushData | undefined) => {

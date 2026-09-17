@@ -300,6 +300,7 @@ export const mr: Catalogue = {
   'kit.issued': 'किट दिली',
   'kit.issuedOn': '{date} रोजी किट दिली',
   'kit.notIssued': 'किट अजून दिलेली नाही',
+  'kit.preparing': "HR कडे तुमचा साइज आहे आणि तुमची किट तयार होत आहे. दिल्यावर तुम्हाला कळवले जाईल.",
 
   'deptMgr.title': 'विभाग व्यवस्थापक',
   'deptMgr.namePlaceholder': 'त्यांचे पूर्ण नाव',

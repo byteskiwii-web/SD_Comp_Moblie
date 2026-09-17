@@ -300,6 +300,7 @@ export const bn: Catalogue = {
   'kit.issued': 'কিট দেওয়া হয়েছে',
   'kit.issuedOn': '{date} তারিখে কিট দেওয়া হয়েছে',
   'kit.notIssued': 'কিট এখনও দেওয়া হয়নি',
+  'kit.preparing': "HR আপনার সাইজ পেয়েছে এবং কিট তৈরি করছে। দেওয়া হলে আপনাকে জানানো হবে।",
 
   'deptMgr.title': 'বিভাগীয় ম্যানেজার',
   'deptMgr.namePlaceholder': 'তাদের পুরো নাম',

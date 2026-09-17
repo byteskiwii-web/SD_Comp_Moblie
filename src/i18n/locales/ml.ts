@@ -293,6 +293,7 @@ export const ml: Catalogue = {
   'kit.issued': 'കിറ്റ് നൽകി',
   'kit.issuedOn': 'കിറ്റ് {date}-ന് നൽകി',
   'kit.notIssued': 'കിറ്റ് ഇതുവരെ നൽകിയിട്ടില്ല',
+  'kit.preparing': "HR-ന്റെ കൈവശം നിങ്ങളുടെ സൈസ് ഉണ്ട്, കിറ്റ് തയ്യാറാകുന്നു. നൽകുമ്പോൾ നിങ്ങളെ അറിയിക്കും.",
 
   'deptMgr.title': 'വകുപ്പ് മാനേജർ',
   'deptMgr.namePlaceholder': 'അവരുടെ മുഴുവൻ പേര്',

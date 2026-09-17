@@ -293,6 +293,7 @@ export const te: Catalogue = {
   'kit.issued': 'కిట్ ఇవ్వబడింది',
   'kit.issuedOn': 'కిట్ {date}న ఇవ్వబడింది',
   'kit.notIssued': 'కిట్ ఇంకా ఇవ్వలేదు',
+  'kit.preparing': "HR వద్ద మీ సైజు ఉంది, మీ కిట్ సిద్ధమవుతోంది. ఇచ్చినప్పుడు మీకు తెలియజేస్తాం.",
 
   'deptMgr.title': 'విభాగ మేనేజర్',
   'deptMgr.namePlaceholder': 'వారి పూర్తి పేరు',

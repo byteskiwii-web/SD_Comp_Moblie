@@ -293,6 +293,7 @@ export const ta: Catalogue = {
   'kit.issued': 'கிட் வழங்கப்பட்டது',
   'kit.issuedOn': 'கிட் {date} அன்று வழங்கப்பட்டது',
   'kit.notIssued': 'கிட் இன்னும் வழங்கப்படவில்லை',
+  'kit.preparing': "HR-இடம் உங்கள் அளவு உள்ளது, உங்கள் கிட் தயாராகிறது. வழங்கியதும் உங்களுக்குத் தெரிவிக்கப்படும்.",
 
   'deptMgr.title': 'துறை மேலாளர்',
   'deptMgr.namePlaceholder': 'அவரது முழுப் பெயர்',

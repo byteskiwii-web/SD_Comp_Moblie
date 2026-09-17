@@ -293,6 +293,7 @@ export const kn: Catalogue = {
   'kit.issued': 'ಕಿಟ್ ನೀಡಲಾಗಿದೆ',
   'kit.issuedOn': 'ಕಿಟ್ {date} ರಂದು ನೀಡಲಾಗಿದೆ',
   'kit.notIssued': 'ಕಿಟ್ ಇನ್ನೂ ನೀಡಿಲ್ಲ',
+  'kit.preparing': "HR ಬಳಿ ನಿಮ್ಮ ಗಾತ್ರ ಇದೆ, ನಿಮ್ಮ ಕಿಟ್ ಸಿದ್ಧವಾಗುತ್ತಿದೆ. ಕೊಟ್ಟಾಗ ನಿಮಗೆ ತಿಳಿಸಲಾಗುತ್ತದೆ.",
 
   'deptMgr.title': 'ವಿಭಾಗದ ಮ್ಯಾನೇಜರ್',
   'deptMgr.namePlaceholder': 'ಅವರ ಪೂರ್ಣ ಹೆಸರು',

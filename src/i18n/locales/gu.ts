@@ -300,6 +300,7 @@ export const gu: Catalogue = {
   'kit.issued': 'કિટ આપવામાં આવી',
   'kit.issuedOn': '{date} ના રોજ કિટ આપવામાં આવી',
   'kit.notIssued': 'કિટ હજુ આપવામાં આવી નથી',
+  'kit.preparing': "HR પાસે તમારી સાઇઝ છે અને તમારી કિટ તૈયાર થઈ રહી છે. અપાશે ત્યારે તમને જાણ થશે.",
 
   'deptMgr.title': 'વિભાગ મેનેજર',
   'deptMgr.namePlaceholder': 'તેમનું પૂરું નામ',

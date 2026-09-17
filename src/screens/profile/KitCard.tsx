@@ -134,7 +134,10 @@ export function KitCard() {
             ? profile.welcomeKitIssuedAt
               ? t('kit.issuedOn', { date: formatDate(profile.welcomeKitIssuedAt) })
               : t('kit.issued')
-            : t('kit.notIssued')}
+            : locked
+              // Size in, kit not out: say what happens next, not just "not yet".
+              ? t('kit.preparing')
+              : t('kit.notIssued')}
         </Text>
       </View>
     </Card>

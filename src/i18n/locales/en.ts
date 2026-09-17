@@ -315,6 +315,7 @@ export const en = {
   'kit.issued': 'Kit issued',
   'kit.issuedOn': 'Kit issued on {date}',
   'kit.notIssued': 'Kit not issued yet',
+  'kit.preparing': "HR has your size and is preparing your kit. You'll be notified when it's issued.",
 
   'deptMgr.title': 'Department manager',
   'deptMgr.namePlaceholder': 'Their full name',

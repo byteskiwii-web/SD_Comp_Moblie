@@ -300,6 +300,7 @@ export const pa: Catalogue = {
   'kit.issued': 'ਕਿੱਟ ਦਿੱਤੀ ਗਈ',
   'kit.issuedOn': '{date} ਨੂੰ ਕਿੱਟ ਦਿੱਤੀ ਗਈ',
   'kit.notIssued': 'ਕਿੱਟ ਹਾਲੇ ਨਹੀਂ ਦਿੱਤੀ ਗਈ',
+  'kit.preparing': "HR ਕੋਲ ਤੁਹਾਡਾ ਸਾਈਜ਼ ਹੈ ਅਤੇ ਤੁਹਾਡੀ ਕਿੱਟ ਤਿਆਰ ਹੋ ਰਹੀ ਹੈ। ਦਿੱਤੇ ਜਾਣ ਤੇ ਤੁਹਾਨੂੰ ਸੂਚਿਤ ਕੀਤਾ ਜਾਵੇਗਾ।",
 
   'deptMgr.title': 'ਵਿਭਾਗ ਮੈਨੇਜਰ',
   'deptMgr.namePlaceholder': 'ਉਹਨਾਂ ਦਾ ਪੂਰਾ ਨਾਮ',

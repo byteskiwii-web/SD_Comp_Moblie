@@ -32,6 +32,10 @@ export function resolveLinkTarget(linkPath: string | null | undefined): LinkTarg
     case '/leave':
       return { tab: 'Leave' };
 
+    // "Welcome kit issued" -- straight to the kit screen under Profile.
+    case '/profile/kit':
+      return { tab: 'Profile', screen: 'Kit' };
+
     // Both live as cards on Home: policies are acknowledged inline in
     // PoliciesCard, and appreciation is read in AppreciationCard. Landing on
     // Home IS arriving at them, so there is no deeper screen to push.
