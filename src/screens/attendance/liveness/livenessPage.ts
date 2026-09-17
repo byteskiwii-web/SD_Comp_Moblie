@@ -110,6 +110,8 @@ export const LIVENESS_HTML = `<!doctype html>
   #err.show { display:grid; }
   #err h2 { color:#fff; font-size:17px; margin:0 0 10px; }
   #err p { color:rgba(255,255,255,.75); font-size:13.5px; line-height:1.5; margin:0 0 16px; }
+  /* What actually failed, for whoever is sent the screenshot. */
+  #err p.detail { color:rgba(255,255,255,.45); font-size:11px; line-height:1.4; margin:-8px 0 16px; word-break:break-word; }
   .btn { appearance:none; border:0; border-radius:12px; padding:14px 18px; font-size:15px;
     font-weight:700; width:100%; margin-top:10px; }
   .btn.primary { background:var(--brand); color:#fff; }
@@ -137,14 +139,109 @@ export const LIVENESS_HTML = `<!doctype html>
     <div>
       <h2 id="errTitle">Camera unavailable</h2>
       <p id="errBody"></p>
+      <p id="errDetail" class="detail"></p>
       <button class="btn primary" id="retry">Try again</button>
       <button class="btn ghost" id="fallback">Continue without liveness</button>
       <button class="btn ghost" id="cancel2">Cancel</button>
     </div>
   </div>
 </div>
+<script>
+// THE MODULE BELOW CAN FAIL WITHOUT RUNNING A LINE.
+//
+// Its engine came in through a static import from cdn.jsdelivr.net. When that
+// host is unreachable from a phone -- a network that blocks it, a DNS that
+// cannot resolve it -- or the WebView is too old to parse the bundle, a
+// module with a failing static import is simply never executed. Nothing was
+// posted, the error screen buttons were never wired, and the app sat on
+// "Starting liveness check..." for as long as anybody would wait.
+//
+// This plain script runs regardless. It says the page is alive, and if the
+// module has not started within fifteen seconds it shows the error screen
+// itself -- with working buttons and the reason -- so the employee always has
+// a way forward and whoever is sent the screenshot can see what broke.
+(function () {
+  var RN = window.ReactNativeWebView;
+  function send(o) { try { if (RN) RN.postMessage(JSON.stringify(o)); } catch (e) {} }
+  // Split, not a regex: this page is a template literal, which would eat
+  // the backslashes a regex needs.
+  var ua = navigator.userAgent;
+  var chrome = parseInt(ua.split("Chrome/")[1] || "", 10);
+  var safari = parseInt(ua.split("Version/")[1] || "", 10);
+  window.__engineInfo = chrome ? "WebView " + chrome : (safari ? "WebKit " + safari : "unknown engine");
+  send({ type: "status", phase: "page-loaded" });
+
+  window.__livenessStuck = function (kind, detail) {
+    var S = window.__LIVENESS_STRINGS || {};
+    document.getElementById("errTitle").textContent = S["live.modelFailTitle"] || "Face check unavailable";
+    document.getElementById("errBody").textContent = S["live.modelFailBody"] ||
+      "The liveness model could not be loaded. Check your connection and try again.";
+    document.getElementById("errDetail").textContent = detail + " \u00b7 " + window.__engineInfo;
+    document.getElementById("fallback").textContent = S["live.continueWithout"] || "Continue without liveness";
+    document.getElementById("retry").textContent = S["common.retry"] || "Try again";
+    document.getElementById("cancel2").textContent = S["common.cancel"] || "Cancel";
+    // Wired here because the module that normally wires them never ran.
+    // Retry asks the app to rebuild the WebView: reloading this document
+    // in place would navigate to its base URL, which is the API.
+    document.getElementById("retry").onclick = function () { send({ type: "retry" }); };
+    document.getElementById("fallback").onclick = function () { send({ type: "fallback" }); };
+    document.getElementById("cancel2").onclick = function () { send({ type: "cancel" }); };
+    document.getElementById("err").classList.add("show");
+    send({ type: "error", kind: kind, message: detail + " (" + window.__engineInfo + ")" });
+  };
+
+  setTimeout(function () {
+    if (!window.__livenessModuleRan) {
+      window.__livenessStuck("engine", "the face check did not start");
+    }
+  }, 15000);
+})();
+</script>
+<!-- Runs only where modules are not supported at all: say so at once. -->
+<script nomodule>
+  window.__livenessStuck("engine", "this browser engine is too old for the face check");
+</script>
 <script type="module">
-import { FaceLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.18/vision_bundle.mjs";
+window.__livenessModuleRan = true;
+
+// The engine, from whichever mirror answers. Same package and version on
+// both, so the WASM is fetched from the same host the bundle came from.
+var ENGINE_MIRRORS = [
+  "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.18",
+  "https://unpkg.com/@mediapipe/tasks-vision@0.10.18"
+];
+var FaceLandmarker = null, FilesetResolver = null, engineBase = null;
+
+// A fetch that never answers never rejects either. Every network wait on the
+// way to "ready" goes through this, so each one ends in an answer.
+function withTimeout(p, ms, label) {
+  return new Promise(function (resolve, reject) {
+    var timer = setTimeout(function () {
+      reject(new Error(label + " did not answer in " + Math.round(ms / 1000) + "s"));
+    }, ms);
+    p.then(function (v) { clearTimeout(timer); resolve(v); },
+           function (e) { clearTimeout(timer); reject(e); });
+  });
+}
+
+async function loadEngine() {
+  if (FaceLandmarker) return;
+  var problems = [];
+  for (var i = 0; i < ENGINE_MIRRORS.length; i++) {
+    var host = ENGINE_MIRRORS[i].split("/")[2];
+    try {
+      if (i > 0) send({ type: "status", phase: "engine-mirror" });
+      var mod = await withTimeout(import(ENGINE_MIRRORS[i] + "/vision_bundle.mjs"), 20000, host);
+      FaceLandmarker = mod.FaceLandmarker;
+      FilesetResolver = mod.FilesetResolver;
+      engineBase = ENGINE_MIRRORS[i];
+      return;
+    } catch (e) {
+      problems.push(host + ": " + (e && e.message ? e.message : e));
+    }
+  }
+  throw new Error(problems.join("; "));
+}
 
 // ---- tunables: every threshold lives here so this is cheap to calibrate ----
 var BLINKS_NEEDED = 3;     // "blink two or three times" -- three, counted
@@ -255,6 +352,8 @@ function fail(title, body, kind, detail) {
   showArrow(null);
   document.getElementById("errTitle").textContent = title;
   document.getElementById("errBody").textContent = body;
+  document.getElementById("errDetail").textContent =
+    (detail ? String(detail) + " \u00b7 " : "") + (window.__engineInfo || "");
   errBox.classList.add("show");
   send({ type: "error", kind: kind, message: String(detail || body) });
 }
@@ -571,7 +670,8 @@ async function boot() {
   }
   try {
     send({ type: "status", phase: "loading-model" });
-    var fileset = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.18/wasm");
+    await loadEngine();
+    var fileset = await withTimeout(FilesetResolver.forVisionTasks(engineBase + "/wasm"), 30000, "face engine files");
 
     // GPU first, CPU when the device will not give WebGL a context.
     //
@@ -593,11 +693,13 @@ async function boot() {
       });
     };
 
+    // Bounded: the model is a download from storage.googleapis.com, and a
+    // stalled one used to leave "Loading the face model..." up forever.
     try {
-      landmarker = await buildLandmarker("GPU");
+      landmarker = await withTimeout(buildLandmarker("GPU"), 60000, "face model");
     } catch (gpuErr) {
       send({ type: "status", phase: "gpu-unavailable-using-cpu" });
-      landmarker = await buildLandmarker("CPU");
+      landmarker = await withTimeout(buildLandmarker("CPU"), 60000, "face model");
     }
   } catch (e) {
     fail(S("live.modelFailTitle", "Face check unavailable"),

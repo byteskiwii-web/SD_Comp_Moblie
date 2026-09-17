@@ -21,7 +21,7 @@
  * which a page loaded from a string cannot import without a bundler. The
  * integrity hashes pin the exact bytes: this page has a message bridge back
  * into the app, and a CDN serving something else should get a refused script,
- * not a running one. jsDelivr serves the pinned file as immutable, so after
+ * not a running one. The mirrors serve the pinned file as long-lived, so after
  * the first load the WebView's own cache answers and the megabyte is paid once.
  *
  * WRITTEN WITHOUT BACKTICKS OR DOLLAR-BRACE. The whole page is one TypeScript
@@ -29,13 +29,28 @@
  * in through a placeholder instead.
  *
  * Protocol, page to app, as plain strings:
- *   ready   the script is up; send state with window.__fence(state)
- *   shown   the first complete frame is on screen
- *   failed  no map is coming (no WebGL, CDN or style unreachable, timeout) --
- *           the app draws the SVG fence instead. Never sent once shown: a
- *           working map is not swapped out because a tile later went missing.
+ *   boot      the page itself is running (sent before any download)
+ *   ready     the library is in; send state with window.__fence(state)
+ *   shown     the first complete frame is on screen
+ *   failed:<why>  no map is coming (no WebGL, every mirror or the style
+ *           unreachable, timeout) -- the app draws the SVG fence instead and
+ *           logs the reason. Never sent once shown: a working map is not
+ *           swapped out because a tile later went missing.
  */
-const MAPLIBRE = 'https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/';
+/**
+ * THREE MIRRORS, ONE HASH.
+ *
+ * A single CDN was a single point of failure: an Android phone that could not
+ * reach cdn.jsdelivr.net drew no map, and nothing said why. The same package
+ * version is served byte-for-byte by all three (checked: identical sha384),
+ * so one integrity hash covers every mirror and none of them can substitute
+ * different code. Tried in order; see loadJs in the page.
+ */
+const MAPLIBRE_MIRRORS = [
+  'https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/',
+  'https://unpkg.com/maplibre-gl@5.24.0/dist/',
+  'https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/5.24.0/',
+];
 const JS_SRI = 'sha384-5+cfbwT0iiub6VsQAdn6yz16nr6sDiQoHx6tm4O8OVYXHYOxcffFmCJBL0dgdvGp';
 const CSS_SRI = 'sha384-uTttxo/aOKbdE5RlD/SPzSDoDmNvGlUYPjONi2MN/b7c9HPSvW07OIuyP7uL6jxK';
 
@@ -68,9 +83,14 @@ const PAGE = `<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<link rel="stylesheet" href="__MAPLIBRE__maplibre-gl.css" integrity="__CSS_SRI__" crossorigin="anonymous">
 <style>
   html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: transparent; }
+  /* The few MapLibre rules the map cannot lay out without, inline, so a
+     stylesheet that never arrives costs nothing but polish. The full sheet
+     still loads from the same mirrors as the script. */
+  .maplibregl-map { overflow: hidden; position: relative; }
+  .maplibregl-canvas { position: absolute; top: 0; left: 0; }
+  .maplibregl-marker { position: absolute; top: 0; left: 0; will-change: transform; }
   /* Hidden, not display:none -- the map still needs its size to render the
      first frame, it just should not be seen half-drawn. */
   #map { position: absolute; top: 0; right: 0; bottom: 0; left: 0; visibility: hidden; }
@@ -85,23 +105,89 @@ const PAGE = `<!doctype html>
 <body>
 <div id="map"></div>
 <script>
-  window.__post = function (m) {
-    try { window.ReactNativeWebView && window.ReactNativeWebView.postMessage(m); } catch (e) {}
-  };
-</script>
-<script src="__MAPLIBRE__maplibre-gl.js" integrity="__JS_SRI__" crossorigin="anonymous"
-        onerror="window.__post('failed')"></script>
-<script>
 (function () {
-  var shown = false, failed = false;
-  function fail() {
+  function post(m) {
+    try { window.ReactNativeWebView && window.ReactNativeWebView.postMessage(m); } catch (e) {}
+  }
+  // First thing, so the app can tell "the page never ran" from "the page is
+  // still fetching its library".
+  post('boot');
+
+  var MIRRORS = __MIRRORS__;
+  var JS_SRI = __JS_SRI__;
+  var CSS_SRI = __CSS_SRI__;
+  var shown = false, failed = false, started = false, problems = [];
+
+  // The reason rides along after the colon, for the app's log.
+  function fail(reason) {
     if (shown || failed) return;
     failed = true;
-    window.__post('failed');
+    post('failed:' + reason);
   }
-  window.onerror = function () { fail(); };
-  if (typeof maplibregl === 'undefined') { fail(); return; }
 
+  window.onerror = function (msg) {
+    // Chrome reports ResizeObserver's loop notice through window.onerror. It
+    // is harmless, and MapLibre watches its container with one -- treating it
+    // as fatal would throw away a working map on some phones and not others.
+    if (String(msg).indexOf('ResizeObserver') !== -1) return;
+    fail('script error: ' + msg);
+  };
+
+  function host(i) { return MIRRORS[i].split('/')[2]; }
+
+  function loadCss(i) {
+    if (i >= MIRRORS.length) return;
+    var l = document.createElement('link');
+    l.rel = 'stylesheet';
+    l.crossOrigin = 'anonymous';
+    l.integrity = CSS_SRI;
+    l.onerror = function () { l.parentNode && l.parentNode.removeChild(l); loadCss(i + 1); };
+    l.href = MIRRORS[i] + 'maplibre-gl.css';
+    document.head.appendChild(l);
+  }
+
+  // One mirror at a time. A mirror that errors moves on at once; one that
+  // hangs gets twenty seconds. A late arrival from an abandoned mirror is
+  // still used if nothing else has won by then.
+  function loadJs(i) {
+    if (i >= MIRRORS.length) {
+      fail('map library unreachable: ' + problems.join('; '));
+      return;
+    }
+    var settled = false;
+    var s = document.createElement('script');
+    var timer = setTimeout(function () {
+      if (settled) return;
+      settled = true;
+      problems.push(host(i) + ' timed out');
+      loadJs(i + 1);
+    }, 20000);
+    s.onload = function () {
+      clearTimeout(timer);
+      settled = true;
+      start();
+    };
+    s.onerror = function () {
+      clearTimeout(timer);
+      if (settled) return;
+      settled = true;
+      problems.push(host(i) + ' failed');
+      loadJs(i + 1);
+    };
+    s.crossOrigin = 'anonymous';
+    s.integrity = JS_SRI;
+    s.src = MIRRORS[i] + 'maplibre-gl.js';
+    document.head.appendChild(s);
+  }
+
+  function start() {
+    if (started || failed) return;
+    started = true;
+    if (typeof maplibregl === 'undefined') { fail('map library did not load'); return; }
+    run();
+  }
+
+  function run() {
   var STYLE = __STYLE_URL__;
   var map = null, loaded = false, styleLoaded = false, latest = null;
   var siteMarker = null, siteEl = null;
@@ -174,8 +260,8 @@ const PAGE = `<!doctype html>
         fadeDuration: 0
       });
     } catch (e) {
-      // No WebGL on this device.
-      fail();
+      // Most often: no WebGL on this device.
+      fail('map could not start: ' + (e && e.message ? e.message : e));
       return;
     }
 
@@ -183,11 +269,15 @@ const PAGE = `<!doctype html>
     // tab or a locked screen does not render, so 'load' can legitimately wait
     // for as long as nobody is looking -- and a map waiting to be seen has not
     // failed. Once the style is in, everything left is rendering.
-    var timer = setTimeout(fail, 20000);
+    var timer = setTimeout(function () { fail('map style timed out'); }, 20000);
     map.on('style.load', function () { styleLoaded = true; clearTimeout(timer); });
     // Only a failure to get the STYLE is fatal. A missing tile or glyph later
     // raises the same event and leaves a perfectly usable map.
-    map.on('error', function () { if (!styleLoaded) { clearTimeout(timer); fail(); } });
+    map.on('error', function (e) {
+      if (styleLoaded) return;
+      clearTimeout(timer);
+      fail('map style failed: ' + (e && e.error && e.error.message ? e.error.message : 'unknown'));
+    });
 
     map.on('load', function () {
       if (failed) return;
@@ -223,7 +313,7 @@ const PAGE = `<!doctype html>
         // and the map's layout depends on them.
         document.getElementById('map').classList.add('shown');
         shown = true;
-        window.__post('shown');
+        post('shown');
       });
     });
   }
@@ -235,7 +325,11 @@ const PAGE = `<!doctype html>
     if (loaded) apply(s);
   };
 
-  window.__post('ready');
+  post('ready');
+  }
+
+  loadCss(0);
+  loadJs(0);
 })();
 </script>
 </body>
@@ -244,8 +338,8 @@ const PAGE = `<!doctype html>
 export function buildLibreMapPage(styleUrl: string): string {
   // Replacement functions, not strings: a "$" in a replacement string is a
   // pattern, and none of these should ever be interpreted.
-  return PAGE.replace(/__MAPLIBRE__/g, () => MAPLIBRE)
-    .replace('__JS_SRI__', () => JS_SRI)
-    .replace('__CSS_SRI__', () => CSS_SRI)
+  return PAGE.replace('__MIRRORS__', () => JSON.stringify(MAPLIBRE_MIRRORS))
+    .replace('__JS_SRI__', () => JSON.stringify(JS_SRI))
+    .replace('__CSS_SRI__', () => JSON.stringify(CSS_SRI))
     .replace('__STYLE_URL__', () => JSON.stringify(styleUrl));
 }

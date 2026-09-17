@@ -32,7 +32,19 @@ type LivenessMessage =
   | { type: 'captured'; base64: string; width: number; height: number }
   | { type: 'cancel' }
   | { type: 'fallback' }
+  // The page's own bootstrap asks for this when its engine never started:
+  // reloading the document in place would navigate to its base URL.
+  | { type: 'retry' }
   | { type: 'error'; kind: string; message: string };
+
+/**
+ * How long the page may stay completely silent.
+ *
+ * Its bootstrap posts "page-loaded" as the first thing it does, so silence
+ * past this means the document itself never ran -- the WebView failed to load
+ * it at all. Everything after that point the page times for itself.
+ */
+const PAGE_SILENCE_MS = 20_000;
 
 export function WebViewCameraCaptureScreen({ onCaptured, onCancel }: CameraCaptureProps) {
   const t = useT();
@@ -68,6 +80,19 @@ export function WebViewCameraCaptureScreen({ onCaptured, onCancel }: CameraCaptu
   // stranding them on an error page.
   const [useFallback, setUseFallback] = useState(false);
   const handledRef = useRef(false);
+  // Bumped to rebuild the WebView from scratch on "Try again".
+  const [attempt, setAttempt] = useState(0);
+  const [heard, setHeard] = useState(false);
+  const [silent, setSilent] = useState(false);
+
+  const retry = useCallback(() => {
+    handledRef.current = false;
+    setHeard(false);
+    setSilent(false);
+    setStage('Starting liveness check…');
+    setLoading(true);
+    setAttempt((a) => a + 1);
+  }, []);
 
   const handleMessage = useCallback(
     async (event: WebViewMessageEvent) => {
@@ -78,6 +103,7 @@ export function WebViewCameraCaptureScreen({ onCaptured, onCancel }: CameraCaptu
         console.warn('[liveness] unparseable message', event.nativeEvent.data);
         return;
       }
+      setHeard(true);
 
       switch (msg.type) {
         case 'ready':
@@ -89,6 +115,8 @@ export function WebViewCameraCaptureScreen({ onCaptured, onCancel }: CameraCaptu
           // without attaching a debugger to the WebView.
           console.log('[liveness] phase:', msg.phase);
           const label: Record<string, string> = {
+            'page-loaded': 'Starting the camera…',
+            'engine-mirror': 'Trying another server for the face check…',
             'camera-ready': 'Loading the face model…',
             'loading-model': 'Loading the face model…',
             'gpu-unavailable-using-cpu': 'This device needs the slower check — one moment…',
@@ -124,14 +152,36 @@ export function WebViewCameraCaptureScreen({ onCaptured, onCancel }: CameraCaptu
           onCancel();
           return;
 
+        case 'retry':
+          retry();
+          return;
+
         case 'error':
           console.warn(`[liveness] ${msg.kind}: ${msg.message}`);
           setLoading(false);
           return;
       }
     },
-    [onCaptured, onCancel]
+    [onCaptured, onCancel, retry]
   );
+
+  /*
+   * NOTHING HEARD AT ALL.
+   *
+   * "Starting liveness check…" used to be shown for as long as the page said
+   * nothing, which on a phone that could not run the page was forever. The page
+   * now reports and times its own failures, so silence this long means it
+   * never ran -- and the employee gets the same three ways out the page would
+   * have offered, instead of a spinner.
+   */
+  useEffect(() => {
+    if (heard || !permission?.granted || useFallback) return;
+    const id = setTimeout(() => {
+      console.warn('[liveness] the page never reported in');
+      setSilent(true);
+    }, PAGE_SILENCE_MS);
+    return () => clearTimeout(id);
+  }, [heard, attempt, permission?.granted, useFallback]);
 
   /*
    * Once only, and never after a refusal: re-requesting a denied permission
@@ -177,6 +227,7 @@ export function WebViewCameraCaptureScreen({ onCaptured, onCancel }: CameraCaptu
   return (
     <View style={styles.flex}>
       <WebView
+        key={attempt}
         style={styles.flex}
         source={LIVENESS_URL ? { uri: LIVENESS_URL } : { html: LIVENESS_HTML, baseUrl: SECURE_BASE_URL }}
         // The employee's language, handed to the document BEFORE it loads.
@@ -201,7 +252,18 @@ export function WebViewCameraCaptureScreen({ onCaptured, onCancel }: CameraCaptu
         onHttpError={(e) => console.warn('[liveness] webview http error', e.nativeEvent)}
       />
 
-      {loading && (
+      {silent ? (
+        <View style={styles.loading}>
+          <Text style={styles.failTitle}>{t('live.modelFailTitle')}</Text>
+          <Text style={styles.failBody}>{t('live.modelFailBody')}</Text>
+          <Text style={styles.failDetail}>The check's page did not load.</Text>
+          <View style={styles.failActions}>
+            <Button title={t('common.retry')} onPress={retry} />
+            <Button title={t('live.continueWithout')} variant="outline" onPress={() => setUseFallback(true)} />
+            <Button title={t('common.cancel')} variant="outline" onPress={onCancel} />
+          </View>
+        </View>
+      ) : loading && (
         <View style={styles.loading}>
           <ActivityIndicator color="#FFFFFF" size="large" />
           <Text style={styles.loadingText}>{stage}</Text>
@@ -237,6 +299,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#0B0F1A',
   },
   loadingCancel: { marginTop: 18, paddingHorizontal: 18, paddingVertical: 10 },
+  failTitle: { color: '#FFFFFF', fontSize: 17, fontWeight: '800', textAlign: 'center', paddingHorizontal: 26 },
+  failBody: { color: 'rgba(255,255,255,0.75)', fontSize: 13.5, lineHeight: 20, textAlign: 'center', paddingHorizontal: 26 },
+  failDetail: { color: 'rgba(255,255,255,0.45)', fontSize: 11, textAlign: 'center', paddingHorizontal: 26 },
+  failActions: { alignSelf: 'stretch', gap: 10, paddingHorizontal: 26, marginTop: 8 },
   loadingCancelText: { color: '#FFFFFF', fontSize: 12.5, fontWeight: '800', opacity: 0.9 },
   loadingText: {
     color: '#FFFFFF',

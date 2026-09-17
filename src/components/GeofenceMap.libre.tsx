@@ -41,7 +41,8 @@ import {
  * non-interactive, but the scroll has to be protected before the touch gets
  * that far.
  */
-const GIVE_UP_MS = 45_000;
+/** How long the page may take to show any sign of life at all. */
+const BOOT_GIVE_UP_MS = 15_000;
 
 export function LibreGeofenceMap({
   siteLat,
@@ -72,6 +73,7 @@ export function LibreGeofenceMap({
   const t = useT();
 
   const web = useRef<WebView>(null);
+  const [booted, setBooted] = useState(false);
   const [ready, setReady] = useState(false);
   const [shown, setShown] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -86,6 +88,7 @@ export function LibreGeofenceMap({
   // A new page starts from nothing: it has to say ready again before it is sent
   // anything, and the drawn fence covers it again until it has drawn.
   useEffect(() => {
+    setBooted(false);
     setReady(false);
     setShown(false);
   }, [html, attempt]);
@@ -133,20 +136,30 @@ export function LibreGeofenceMap({
     web.current?.injectJavaScript('window.__fence && window.__fence(' + payload + '); true;');
   }, [ready, failed, payload]);
 
-  // Covers the one wait the page cannot time for itself: its own script
-  // never arriving. From 'ready' on, the page times the style download and
-  // deliberately nothing after it (see libreMapPage.ts).
+  // Covers the one wait the page cannot time for itself: the page never
+  // running at all. From 'boot' on, the page times each library mirror and
+  // the style download itself, and deliberately nothing after that (see
+  // libreMapPage.ts) -- so this only has to see a first sign of life.
   useEffect(() => {
-    if (ready || failed) return;
-    const id = setTimeout(() => setFailed(true), GIVE_UP_MS);
+    if (booted || failed) return;
+    const id = setTimeout(() => {
+      console.warn('[map] the map page never started; drawing the fence instead');
+      setFailed(true);
+    }, BOOT_GIVE_UP_MS);
     return () => clearTimeout(id);
-  }, [ready, failed, html, attempt]);
+  }, [booted, failed, html, attempt]);
 
   const onMessage = (e: WebViewMessageEvent) => {
     const msg = e.nativeEvent.data;
-    if (msg === 'ready') setReady(true);
+    if (msg === 'boot') setBooted(true);
+    else if (msg === 'ready') setReady(true);
     else if (msg === 'shown') setShown(true);
-    else if (msg === 'failed') setFailed(true);
+    else if (msg.startsWith('failed')) {
+      // The why rides after the colon: which mirrors failed, no WebGL, the
+      // style host. Logged, because the drawn fence is the answer on screen.
+      console.warn('[map] no map on this device:', msg.slice('failed:'.length) || 'unknown');
+      setFailed(true);
+    }
   };
 
   if (failed) return fallback;
