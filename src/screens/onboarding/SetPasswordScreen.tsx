@@ -10,6 +10,7 @@ import { changeOwnPassword } from '../../api/auth.api';
 import { getApiErrorMessage } from '../../api/client';
 import { useAuthStore } from '../../stores/authStore';
 import { useT } from '../../i18n';
+import { LanguageChips } from '../../components/LanguageChips';
 
 /**
  * Replace a password an administrator handed over.
@@ -70,6 +71,12 @@ export function SetPasswordScreen() {
     <SafeAreaView style={styles.flex}>
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+          {/* The first screen after a first sign-in, so the language is
+              offered here too -- before the password, the profile, KYC and
+              the policies that follow, all of which read from it. */}
+          <View style={styles.languageRow}>
+            <LanguageChips />
+          </View>
           <View style={styles.badge}>
             <Ionicons name="key-outline" size={22} color={colors.brand[700]} />
           </View>
@@ -126,6 +133,7 @@ function makeStyles(colors: ColorScheme) {
   return StyleSheet.create({
     flex: { flex: 1, backgroundColor: colors.bgLight },
     scroll: { flexGrow: 1, justifyContent: 'center', padding: 24 },
+    languageRow: { marginBottom: 20 },
     badge: {
       alignSelf: 'center', width: 46, height: 46, borderRadius: radii.pill,
       alignItems: 'center', justifyContent: 'center',

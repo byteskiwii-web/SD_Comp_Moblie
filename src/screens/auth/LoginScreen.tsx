@@ -13,6 +13,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { loginSchema } from '../../schemas/auth.schema';
 import { useT } from '../../i18n';
 import { LegalLinks } from '../../components/LegalLinks';
+import { LanguageChips } from '../../components/LanguageChips';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
@@ -79,6 +80,11 @@ export function LoginScreen({ navigation }: Props) {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        {/* First thing on the first screen: the language. Everything below it
+            re-renders in the one picked, and the choice is kept. */}
+        <View style={styles.languageRow}>
+          <LanguageChips />
+        </View>
         <View style={styles.header}>
           <View style={styles.logoDot}>
             <Text style={styles.logoDotText}>Z</Text>
@@ -156,6 +162,7 @@ function makeStyles(colors: ColorScheme) {
   return StyleSheet.create({
     flex: { flex: 1, backgroundColor: colors.bgLight },
     scroll: { flexGrow: 1, justifyContent: 'center', padding: 24 },
+    languageRow: { marginBottom: 20 },
     header: { alignItems: 'center', marginBottom: 32 },
     logoDot: {
       width: 52, height: 52, borderRadius: 16, backgroundColor: colors.brand[700], marginBottom: 14,
