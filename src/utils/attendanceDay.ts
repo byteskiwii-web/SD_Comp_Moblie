@@ -177,6 +177,64 @@ export function punctuality(
 }
 
 /**
+ * What is wrong with a finished day, if anything -- the same two rules the
+ * server's register applies, so the phone and the console agree.
+ *
+ *   breakOverrunMinutes  closed break time beyond the shift's allowance
+ *   shortByMinutes       rostered hours (shift length minus the allowance)
+ *                        the effective time fell short of, by more than the
+ *                        tolerance -- nobody leaves to the minute
+ *
+ * Both are 0 unless the day is complete (both punches) and the person is on
+ * a shift: an open day is regularisation's problem, and no shift means no
+ * expectation to fall short of.
+ */
+export const SHORT_DAY_TOLERANCE_MIN = 30;
+
+export function dayDiscrepancies(
+  day: Pick<DaySummary, 'grossMinutes' | 'effectiveMinutes' | 'breakMinutes' | 'openEnded'>,
+  shift: { shiftStart: string | null | undefined; shiftEnd: string | null | undefined; breakAllowanceMinutes: number | null | undefined }
+): { breakOverrunMinutes: number; shortByMinutes: number; expectedMinutes: number | null } {
+  const start = minutesOfDay(shift.shiftStart);
+  const end = minutesOfDay(shift.shiftEnd);
+  const allowance = shift.breakAllowanceMinutes ?? null;
+  const expectedMinutes =
+    start === null || end === null ? null : ((end - start + 1440) % 1440) - (allowance ?? 0);
+  if (day.openEnded || day.effectiveMinutes === null) return { breakOverrunMinutes: 0, shortByMinutes: 0, expectedMinutes };
+  const breakOverrunMinutes = allowance !== null && day.breakMinutes > allowance ? day.breakMinutes - allowance : 0;
+  const shortByMinutes =
+    expectedMinutes !== null && expectedMinutes - day.effectiveMinutes > SHORT_DAY_TOLERANCE_MIN
+      ? expectedMinutes - day.effectiveMinutes
+      : 0;
+  return { breakOverrunMinutes, shortByMinutes, expectedMinutes };
+}
+
+/**
+ * Where "now" sits against the shift, for the Clock In button: open, not yet
+ * (with when it opens), or over. Mirrors the server's rule; the server is
+ * still the one that refuses. null when there is no shift -- never gated.
+ */
+export function clockInWindow(
+  shiftStart: string | null | undefined,
+  shiftEnd: string | null | undefined,
+  now: Date = new Date(),
+  leadInMinutes = 30
+): { state: 'open' | 'not-started' | 'over'; opensAt: string | null } | null {
+  const start = minutesOfDay(shiftStart);
+  const end = minutesOfDay(shiftEnd);
+  if (start === null || end === null) return null;
+  const openMin = (start - leadInMinutes + 1440) % 1440;
+  const span = (end - openMin + 1440) % 1440;
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  const elapsed = (nowMin - openMin + 1440) % 1440;
+  const opensAt = `${String(Math.floor(openMin / 60)).padStart(2, '0')}:${String(openMin % 60).padStart(2, '0')}`;
+  if (elapsed <= span) return { state: 'open', opensAt };
+  const sinceEnd = elapsed - span;
+  const untilOpen = (openMin - nowMin + 1440) % 1440;
+  return { state: untilOpen < sinceEnd ? 'not-started' : 'over', opensAt };
+}
+
+/**
  * Is the rostered shift window open right now?
  *
  * The geo-fence is a question about a punch that is about to happen. Off

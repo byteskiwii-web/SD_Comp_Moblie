@@ -13,7 +13,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { getAttendanceHistory } from '../../api/attendance.api';
 import { getApiErrorMessage } from '../../api/client';
 import { formatTime, formatTimeWithSeconds, toLocalDateKey, formatClockTime } from '../../utils/datetime';
-import { formatDuration, punctuality, summariseDay } from '../../utils/attendanceDay';
+import { dayDiscrepancies, formatDuration, punctuality, summariseDay } from '../../utils/attendanceDay';
 import { useTicker } from '../../hooks/useTicker';
 import type { AttendanceStackParamList } from '../../navigation/types';
 import { t as tr, useT, type TKey } from '../../i18n';
@@ -91,6 +91,13 @@ export function DayDetailScreen() {
    * and leaves the judgement to whoever has their roster.
    */
   const status = viewingSomeoneElse ? null : punctuality(day.firstIn, profile?.shiftStart ?? null);
+  const issues = viewingSomeoneElse
+    ? { breakOverrunMinutes: 0, shortByMinutes: 0, expectedMinutes: null }
+    : dayDiscrepancies(day, {
+        shiftStart: profile?.shiftStart, shiftEnd: profile?.shiftEnd,
+        breakAllowanceMinutes: profile?.shift?.breakAllowanceMinutes,
+      });
+  const hasIssue = issues.breakOverrunMinutes > 0 || issues.shortByMinutes > 0;
 
   const window = useMemo(() => {
     const from = rosterTime(profile?.shiftStart ?? null);
@@ -170,6 +177,30 @@ export function DayDetailScreen() {
                 <Text style={styles.hoursValue}>{formatDuration(day.grossMinutes)}</Text>
               </View>
             </View>
+
+            {/* ON TIME at the top and 3 h 9 m below it said nothing was wrong
+                with a day that had an 8-hour break in it. What is short, by how
+                much, and what to do about it -- before the logs, because it is
+                the reason to read them. */}
+            {hasIssue ? (
+              <View style={styles.issue}>
+                <View style={styles.issueHead}>
+                  <Ionicons name="alert-circle" size={16} color={colors.warningText} />
+                  <Text style={styles.issueTitle}>{t('day.issueTitle')}</Text>
+                </View>
+                {issues.breakOverrunMinutes > 0 ? (
+                  <Text style={styles.issueLine}>
+                    {t('day.issueBreak', { taken: formatDuration(day.breakMinutes), over: formatDuration(issues.breakOverrunMinutes), allowed: formatDuration(profile?.shift?.breakAllowanceMinutes ?? 0) })}
+                  </Text>
+                ) : null}
+                {issues.shortByMinutes > 0 ? (
+                  <Text style={styles.issueLine}>
+                    {t('day.issueShort', { worked: formatDuration(day.effectiveMinutes), expected: formatDuration(issues.expectedMinutes), short: formatDuration(issues.shortByMinutes) })}
+                  </Text>
+                ) : null}
+                <Text style={styles.issueHint}>{t('day.issueHint')}</Text>
+              </View>
+            ) : null}
 
             <View style={styles.divider} />
 
@@ -285,6 +316,11 @@ function makeStyles(colors: ColorScheme) {
   divider: { height: 1, backgroundColor: colors.slate100 },
 
   hoursRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  issue: { marginTop: 12, padding: 12, borderRadius: radii.md, backgroundColor: colors.warningBg, gap: 4 },
+  issueHead: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 },
+  issueTitle: { fontSize: 12.5, fontWeight: '800', color: colors.warningText },
+  issueLine: { fontSize: 12, color: colors.slate700, lineHeight: 17 },
+  issueHint: { fontSize: 11, color: colors.slate500, fontWeight: '600', marginTop: 4 },
   hoursRight: { alignItems: 'flex-end' },
   hoursLabel: { fontSize: 10.5, color: colors.slate400, fontWeight: '700' },
   hoursValue: { fontSize: 13, fontWeight: '800', color: colors.textLight, marginTop: 2 },

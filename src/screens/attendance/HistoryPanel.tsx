@@ -11,7 +11,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { getAttendanceHistory } from '../../api/attendance.api';
 import { getApiErrorMessage } from '../../api/client';
 import { formatTime, toLocalDateKey } from '../../utils/datetime';
-import { formatDuration, punctuality, summariseDay, summariseDays, type DaySummary } from '../../utils/attendanceDay';
+import { dayDiscrepancies, formatDuration, punctuality, summariseDay, summariseDays, type DaySummary } from '../../utils/attendanceDay';
 import { SkeletonRows } from '../../components/Skeleton';
 import { useTicker } from '../../hooks/useTicker';
 import { TourTarget } from '../../components/tour/TourTarget';
@@ -149,6 +149,8 @@ export function HistoryPanel() {
                 <DayRow
                   day={day}
                   shiftStart={profile?.shiftStart ?? null}
+                  shiftEnd={profile?.shiftEnd ?? null}
+                  breakAllowanceMinutes={profile?.shift?.breakAllowanceMinutes ?? null}
                   first={i === 0 && newMonth}
                   onPress={() => navigation.navigate('AttendanceDay', { date: day.date })}
                 />
@@ -207,17 +209,23 @@ export function HistoryPanel() {
 function DayRow({
   day,
   shiftStart,
+  shiftEnd,
+  breakAllowanceMinutes,
   first,
   onPress,
 }: {
   day: DaySummary;
   shiftStart: string | null;
+  shiftEnd: string | null;
+  breakAllowanceMinutes: number | null;
   first: boolean;
   onPress: () => void;
 }) {
   const colors = useThemeStore((s) => s.colors);
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const status = punctuality(day.firstIn, shiftStart);
+  const issues = dayDiscrepancies(day, { shiftStart, shiftEnd, breakAllowanceMinutes });
+  const flagged = issues.breakOverrunMinutes > 0 || issues.shortByMinutes > 0;
   const d = new Date(`${day.date}T00:00:00`);
 
   return (
@@ -251,6 +259,13 @@ function DayRow({
           {day.openEnded && (
             <Text style={styles.flag} numberOfLines={1}>
               · {tr('history.noClockOut')}
+            </Text>
+          )}
+          {!day.openEnded && flagged && (
+            <Text style={styles.flag} numberOfLines={1}>
+              · {issues.shortByMinutes > 0
+                  ? tr('history.short', { duration: formatDuration(issues.shortByMinutes) })
+                  : tr('history.longBreak', { duration: formatDuration(issues.breakOverrunMinutes) })}
             </Text>
           )}
         </View>

@@ -8,7 +8,7 @@ import { ColorScheme, radii } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useAuthStore } from '../../stores/authStore';
-import { isWithinShiftWindow, summariseDay } from '../../utils/attendanceDay';
+import { clockInWindow, formatDuration, isWithinShiftWindow, summariseDay } from '../../utils/attendanceDay';
 import { Skeleton } from '../../components/Skeleton';
 import { useShiftStore } from '../../stores/shiftStore';
 import { haversineDistance } from '../../utils/haversine';
@@ -259,6 +259,17 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
   const now = useTicker();
   const dayFinishedToday = !isCurrentlyClockedIn && !!lastClockOut;
   const shiftWindowOpen = isWithinShiftWindow(profile?.shiftStart, profile?.shiftEnd, now);
+  /* The Clock In button follows the shift: closed before the window opens
+     and once the shift is over, with the reason on screen. The server
+     enforces the same rule, so this is the polite version, not the lock. */
+  const clockWindow = !isCurrentlyClockedIn && !dayFinishedToday ? clockInWindow(profile?.shiftStart, profile?.shiftEnd, now) : null;
+  const clockInBlocked = clockWindow !== null && clockWindow.state !== 'open';
+  const clockInBlockedText =
+    clockWindow?.state === 'not-started'
+      ? t('clock.notYet', { shift: profile?.shift?.name ?? '', opensAt: formatClockTime(clockWindow.opensAt) })
+      : clockWindow?.state === 'over'
+        ? t('clock.shiftOver')
+        : null;
   const fenceMatters =
     !dayFinishedToday && (isCurrentlyClockedIn || shiftWindowOpen !== false);
   const lastBreakStart = marks.find((m) => m.mark_type === 'break-start');
@@ -410,14 +421,22 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
         ? ''
         : ' ' + tr('clock.noMidShift', { runtime: runtimeLabel });
       const tone = isPending || !supportsBackgroundLocation ? 'warning' : 'success';
+      // Told now, not found by HR later: how late the clock-in was, or how
+      // far past the rostered end the clock-out is.
+      const late = pendingAction === 'clock-in' && (result.lateByMinutes ?? 0) > 0
+        ? ' ' + tr('clock.lateBy', { duration: formatDuration(result.lateByMinutes ?? 0) })
+        : '';
+      const over = pendingAction === 'clock-out' && (result.pastEndMinutes ?? 0) > 0
+        ? ' ' + tr('clock.pastEnd', { duration: formatDuration(result.pastEndMinutes ?? 0) })
+        : '';
       const text =
         (isPending
           ? tr('clock.outsidePending')
           : pendingAction === 'clock-in'
             ? tr('clock.shiftStarted')
-            : tr('clock.shiftEnded')) + unverified;
-      setBanner({ tone, text });
-      setToast({ tone, text });
+            : tr('clock.shiftEnded')) + late + over + unverified;
+      setBanner({ tone: late ? 'warning' : tone, text });
+      setToast({ tone: late ? 'warning' : tone, text });
       setPendingAction(null);
     },
     onError: (err) => {
@@ -725,6 +744,12 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
 
       {/* BOTH ENDS OF THE SHIFT, side by side. The finished one keeps its
           answer on screen instead of disappearing -- see PunchTiles. */}
+      {clockInBlockedText ? (
+        <View style={[styles.banner, styles.bannerMuted]}>
+          <Text style={styles.bannerText}>{clockInBlockedText}</Text>
+        </View>
+      ) : null}
+
       <TourTarget id="clock-action">
       <PunchTiles
         clockedIn={isCurrentlyClockedIn}
@@ -736,7 +761,7 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
         // judged on, so it waits for one. A clock-out is not judged on
         // location and must not wait: the one thing worse than a late clock-out
         // is one that cannot be made because the GPS is slow indoors.
-        clockInDisabled={!coords}
+        clockInDisabled={!coords || clockInBlocked}
         // A break must be ended before the shift can be.
         clockOutDisabled={isCurrentlyClockedIn && isCurrentlyOnBreak}
         labels={{
@@ -863,6 +888,7 @@ function makeStyles(colors: ColorScheme) {
   banner: { borderRadius: radii.md, padding: 12 },
   bannerSuccess: { backgroundColor: colors.successBg },
   bannerWarning: { backgroundColor: colors.warningBg },
+  bannerMuted: { backgroundColor: colors.slate100 },
   bannerText: { fontSize: 11, fontWeight: '600', color: colors.slate800 },
   geoCard: { alignItems: 'center' },
   geoActions: { alignSelf: 'stretch', gap: 8, marginTop: 12 },

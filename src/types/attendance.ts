@@ -37,6 +37,10 @@ export type GeofenceResult = {
 export type PunchResult = {
   attendance: AttendanceMark;
   geofence: GeofenceResult;
+  /** Clock-in only: minutes past the shift start beyond the grace; 0 when on time. */
+  lateByMinutes?: number;
+  /** Clock-out only: minutes past the rostered end; 0 within the shift. */
+  pastEndMinutes?: number;
 };
 
 export type LocationCheckResult = {
