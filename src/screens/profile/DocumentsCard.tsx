@@ -25,6 +25,7 @@ import {
 import { formatDate } from '../../utils/datetime';
 import { t as tr, useT, type TKey } from '../../i18n';
 import { useAuthStore } from '../../stores/authStore';
+import { useAuthedImage } from '../../hooks/useAuthedImage';
 
 /**
  * Supporting documents.
@@ -105,6 +106,12 @@ export function DocumentsCard() {
    */
   const token = useAuthStore((st) => st.token);
   const [viewing, setViewing] = useState<EmployeeDocument | null>(null);
+  /* Fetched with the bearer into the cache and drawn from there: Android's
+     image loader does not reliably send the header itself. */
+  const { uri: viewingUri } = useAuthedImage(
+    viewing ? documentViewUrl(viewing.id) : null,
+    viewing ? `document-${viewing.id}-${viewing.uploadedAt}.img` : null
+  );
   const [opening, setOpening] = useState<string | null>(null);
 
   const openDocument = async (doc: EmployeeDocument) => {
@@ -297,16 +304,13 @@ export function DocumentsCard() {
 
       {/* Full screen, dark, dismissed by a tap anywhere: an identity document
           is read by zooming into a corner of it, not by admiring it in a card.
-          The header goes on the request because this URL is proxied through
-          the API and carries no session of its own. */}
+          The URL is proxied through the API and carries no session of its
+          own, so the bytes come via useAuthedImage. */}
       <Modal visible={!!viewing} transparent animationType="fade" onRequestClose={() => setViewing(null)}>
         <Pressable style={styles.viewerBackdrop} onPress={() => setViewing(null)}>
-          {viewing ? (
+          {viewing && viewingUri ? (
             <Image
-              source={{
-                uri: documentViewUrl(viewing.id),
-                headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-              }}
+              source={{ uri: viewingUri }}
               style={styles.viewerImage}
               resizeMode="contain"
               accessibilityIgnoresInvertColors
