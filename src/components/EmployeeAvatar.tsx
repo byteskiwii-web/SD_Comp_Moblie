@@ -50,6 +50,10 @@ export function EmployeeAvatar({
   // A small local copy; see profilePhotoFile.ts. No version is known for a
   // colleague, so the copy is refreshed on age.
   const photo = useProfilePhotoFile(employeeId, null, Boolean(token));
+  // The local copy failed to draw: use the direct load instead. A 404 means
+  // there is no picture, and the direct load would only find the same.
+  const [localFailed, setLocalFailed] = useState(false);
+  const tryRemote = photo.useRemote || localFailed || (photo.error !== null && photo.status !== 404);
 
   const initials =
     (name ?? employeeId)
@@ -71,19 +75,21 @@ export function EmployeeAvatar({
     >
       {failed || !token ? (
         <Text style={[styles.initials, { fontSize: size * 0.36 }]}>{initials}</Text>
-      ) : photo.uri ? (
+      ) : photo.uri && !localFailed ? (
         <Image
+          key="local"
           source={{ uri: photo.uri }}
           style={StyleSheet.absoluteFill}
-          onError={() => setFailed(true)}
+          onError={() => setLocalFailed(true)}
           accessibilityIgnoresInvertColors
         />
-      ) : !photo.useRemote ? (
+      ) : !tryRemote ? (
         // Loading, or no photo on file (a 404 is the common case here).
         <Text style={[styles.initials, { fontSize: size * 0.36 }]}>{initials}</Text>
       ) : (
-        // The local pipeline broke: fall back to the old remote load.
+        // The local copy could not be made or drawn: load it directly.
         <Image
+          key="remote"
           source={{
             uri: profilePhotoUrl(employeeId),
             headers: { Authorization: `Bearer ${token}` },

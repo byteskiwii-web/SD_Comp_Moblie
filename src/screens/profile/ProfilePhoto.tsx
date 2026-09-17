@@ -10,6 +10,7 @@ import { profilePhotoUrl, removeProfilePhoto, uploadProfilePhoto } from '../../a
 import type { PickedFile } from '../../api/documents.api';
 import { t as tr, useT } from '../../i18n';
 import { forgetProfilePhoto, useProfilePhotoFile } from '../../components/profilePhotoFile';
+import { File } from 'expo-file-system';
 
 /**
  * The avatar, and the way to change it.
@@ -177,24 +178,42 @@ export function ProfilePhoto() {
   const photo = useProfilePhotoFile(employee?.id, profile?.photoUpdatedAt ?? null, photoOnFile);
   const hasPhoto = photoOnFile && !failed;
 
+  /*
+   * THE LOCAL COPY IS AN IMPROVEMENT, NOT A REQUIREMENT.
+   *
+   * It was introduced for Android, and on an iPhone that had shown the picture
+   * perfectly well it then reported "the local copy could not be drawn". So a
+   * local copy that fails -- to download, to convert, or to draw -- no longer
+   * ends the attempt: the picture is loaded straight from the server, the way
+   * that already worked there. Only when that fails too is anything said, and
+   * then it says both.
+   *
+   * Except a 404: the server has no picture, and asking it again the other
+   * way will not find one.
+   */
+  const [localProblem, setLocalProblem] = useState<string | null>(null);
+  const localFailedToDownload = photo.error !== null && photo.status !== 404;
+  const showLocal = Boolean(photo.uri) && localProblem === null;
+  const showRemote = !showLocal && (photo.useRemote || localFailedToDownload || localProblem !== null);
+
   // A new version is a fresh start.
   useEffect(() => {
     setFailed(false);
+    setLocalProblem(null);
   }, [profile?.photoUpdatedAt]);
 
-  /*
-   * WHY IT IS NOT SHOWING, NOW FROM THE DOWNLOAD ITSELF.
-   *
-   * The local copy is fetched by the app, so the reason is known first-hand
-   * instead of being reconstructed with a second request: the HTTP status for
-   * a refusal, or what was wrong with the bytes.
-   */
+  // Only a 404 is reported straight away; see above for everything else.
   useEffect(() => {
-    if (!photoOnFile || !photo.error || photo.useRemote) return;
-    setPhotoError(
-      tr('profile.photoUnreadable') + ' (' + (photo.status ? 'HTTP ' + photo.status : photo.error) + ')'
-    );
-  }, [photoOnFile, photo.error, photo.status, photo.useRemote]);
+    if (!photoOnFile || photo.status !== 404) return;
+    setPhotoError(tr('profile.photoUnreadable') + ' (HTTP 404)');
+  }, [photoOnFile, photo.status]);
+
+  /** What went wrong with the local copy, for the message if the fallback fails too. */
+  const localReason = (): string => {
+    if (localProblem) return localProblem;
+    if (photo.error) return photo.status ? 'HTTP ' + photo.status : photo.error;
+    return 'local copy not used';
+  };
   const busy = upload.isPending || remove.isPending;
 
   const choose = () => {
@@ -238,26 +257,40 @@ export function ProfilePhoto() {
     >
       <View style={styles.avatarSlot}>
       <View style={styles.avatar}>
-        {hasPhoto && employee && (photo.uri || photo.useRemote) ? (
+        {hasPhoto && employee && (showLocal || showRemote) ? (
           <Image
+            // Keyed on the source, so switching to the fallback is a fresh
+            // image view rather than the failed one being handed a new uri.
+            key={showLocal ? 'local' : 'remote'}
             source={
-              photo.uri
-                ? { uri: photo.uri }
+              showLocal
+                ? { uri: photo.uri! }
                 : {
-                    // The local pipeline broke; the old remote load is the fallback.
                     uri: profilePhotoUrl(employee.id, profile?.photoUpdatedAt ?? null),
                     headers: token ? { Authorization: `Bearer ${token}` } : undefined,
                   }
             }
             style={styles.image}
-            // Matters for the remote fallback: Android would otherwise decode
-            // it at full size and refuse to draw it. Android-only.
+            // Matters for the direct load: Android would otherwise decode it
+            // at full size and refuse to draw it. Android-only.
             resizeMethod="resize"
             onError={() => {
+              if (showLocal) {
+                // Missing and unreadable are different faults; say which.
+                let present: boolean | null = null;
+                try {
+                  present = new File(photo.uri!).exists;
+                } catch {
+                  present = null;
+                }
+                forgetProfilePhoto(employee.id);
+                setLocalProblem(
+                  present === false ? 'local copy missing' : present ? 'local copy unreadable' : 'local copy not drawn'
+                );
+                return;
+              }
               setFailed(true);
-              setPhotoError(
-                tr('profile.photoUnreadable') + (photo.uri ? ' (the local copy could not be drawn)' : '')
-              );
+              setPhotoError(tr('profile.photoUnreadable') + ' (' + localReason() + '; direct load failed too)');
             }}
             accessibilityIgnoresInvertColors
           />

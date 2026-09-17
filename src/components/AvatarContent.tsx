@@ -25,6 +25,8 @@ export function AvatarContent({ initialsStyle }: { initialsStyle: StyleProp<Text
   const profile = useAuthStore((s) => s.profile);
   const token = useAuthStore((s) => s.token);
   const [failed, setFailed] = useState(false);
+  // The local copy failed to draw: use the direct load instead (see ProfilePhoto).
+  const [localFailed, setLocalFailed] = useState(false);
   const photo = useProfilePhotoFile(
     employee?.id,
     profile?.photoUpdatedAt ?? null,
@@ -32,7 +34,10 @@ export function AvatarContent({ initialsStyle }: { initialsStyle: StyleProp<Text
   );
 
   // A new picture deserves a fresh attempt, whatever the last one did.
-  useEffect(() => setFailed(false), [photo.uri, profile?.photoUpdatedAt]);
+  useEffect(() => {
+    setFailed(false);
+    setLocalFailed(false);
+  }, [photo.uri, profile?.photoUpdatedAt]);
 
   const initials =
     `${employee?.first_name?.[0] ?? ''}${employee?.last_name?.[0] ?? ''}`.toUpperCase() || '?';
@@ -41,22 +46,25 @@ export function AvatarContent({ initialsStyle }: { initialsStyle: StyleProp<Text
     return <Text style={initialsStyle}>{initials}</Text>;
   }
 
-  if (photo.uri) {
+  if (photo.uri && !localFailed) {
     return (
       <Image
+        key="local"
         source={{ uri: photo.uri }}
         style={StyleSheet.absoluteFill}
-        onError={() => setFailed(true)}
+        onError={() => setLocalFailed(true)}
         accessibilityIgnoresInvertColors
       />
     );
   }
 
-  // The local pipeline itself broke: the old remote load is still better
-  // than initials.
-  if (photo.useRemote && token) {
+  // The local copy could not be made or drawn: the direct load is still
+  // better than initials. A 404 means there is no picture at all.
+  const tryRemote = photo.useRemote || localFailed || (photo.error !== null && photo.status !== 404);
+  if (tryRemote && token) {
     return (
       <Image
+        key="remote"
         source={{
           uri: profilePhotoUrl(employee.id, profile.photoUpdatedAt ?? null),
           headers: { Authorization: `Bearer ${token}` },
