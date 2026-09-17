@@ -698,6 +698,7 @@ export const ta: Catalogue = {
   'auth.backToSignIn': 'உள்நுழைவுக்குத் திரும்பு',
   'auth.verifyEmailTitle': 'உங்கள் மின்னஞ்சலைச் சரிபார்க்கவும்',
   'auth.codeSentTo': '{length} இலக்கக் குறியீட்டை இங்கே அனுப்பினோம்',
+  'auth.checkSpam': "இன்பாக்ஸில் இல்லையா? Spam அல்லது Junk கோப்புறையைப் பாருங்கள் — குறியீடு அடிக்கடி அங்கே செல்கிறது.",
   'auth.needCode': '{length} இலக்கக் குறியீட்டை உள்ளிடவும்.',
   'auth.verify': 'சரிபார்',
   'auth.changeEmployeeId': 'ஊழியர் ஐடியை மாற்று',

@@ -698,6 +698,7 @@ export const kn: Catalogue = {
   'auth.backToSignIn': 'ಸೈನ್ ಇನ್‌ಗೆ ಹಿಂತಿರುಗಿ',
   'auth.verifyEmailTitle': 'ನಿಮ್ಮ ಇಮೇಲ್ ಪರಿಶೀಲಿಸಿ',
   'auth.codeSentTo': '{length} ಅಂಕಿಗಳ ಕೋಡ್ ಅನ್ನು ಇಲ್ಲಿಗೆ ಕಳುಹಿಸಿದ್ದೇವೆ',
+  'auth.checkSpam': "ಇನ್‌ಬಾಕ್ಸ್‌ನಲ್ಲಿ ಇಲ್ಲವೇ? Spam ಅಥವಾ Junk ಫೋಲ್ಡರ್ ನೋಡಿ — ಕೋಡ್ ಆಗಾಗ ಅಲ್ಲಿಗೆ ಹೋಗುತ್ತದೆ.",
   'auth.needCode': '{length} ಅಂಕಿಗಳ ಕೋಡ್ ನಮೂದಿಸಿ.',
   'auth.verify': 'ಪರಿಶೀಲಿಸಿ',
   'auth.changeEmployeeId': 'ಉದ್ಯೋಗಿ ಐಡಿ ಬದಲಾಯಿಸಿ',

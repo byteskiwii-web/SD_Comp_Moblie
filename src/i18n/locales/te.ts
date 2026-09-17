@@ -698,6 +698,7 @@ export const te: Catalogue = {
   'auth.backToSignIn': 'సైన్ ఇన్‌కు తిరిగి',
   'auth.verifyEmailTitle': 'మీ ఇమెయిల్ ధృవీకరించండి',
   'auth.codeSentTo': '{length} అంకెల కోడ్‌ను ఇక్కడికి పంపాం',
+  'auth.checkSpam': "ఇన్‌బాక్స్‌లో లేదా? Spam లేదా Junk ఫోల్డర్ చూడండి — కోడ్ తరచుగా అక్కడికి వెళ్తుంది.",
   'auth.needCode': '{length} అంకెల కోడ్ నమోదు చేయండి.',
   'auth.verify': 'ధృవీకరించు',
   'auth.changeEmployeeId': 'ఉద్యోగి ఐడీ మార్చు',

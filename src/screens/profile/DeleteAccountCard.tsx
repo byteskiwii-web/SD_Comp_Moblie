@@ -117,6 +117,7 @@ export function DeleteAccountCard() {
               {sentTo ? (
                 <>
                   <Text style={styles.sentTo}>{t('del.codeSent', { email: sentTo })}</Text>
+                  <Text style={styles.spamHint}>{t('auth.checkSpam')}</Text>
                   <TextInput
                     value={code}
                     onChangeText={setCode}
@@ -214,7 +215,8 @@ const makeStyles = (colors: ColorScheme) =>
     bulletText: { flex: 1, fontSize: 14, lineHeight: 20, color: colors.textLight },
     why: { fontSize: 12.5, lineHeight: 18, color: colors.slate500, marginTop: 10, fontStyle: 'italic' },
 
-    sentTo: { fontSize: 13.5, color: colors.textLight, marginTop: 20, marginBottom: 10 },
+    sentTo: { fontSize: 13.5, color: colors.textLight, marginTop: 20, marginBottom: 4 },
+    spamHint: { fontSize: 11.5, color: colors.slate400, fontWeight: '600', marginBottom: 10 },
     codeInput: {
       borderWidth: 1, borderColor: colors.slate300, borderRadius: radii.md,
       paddingHorizontal: 14, paddingVertical: 12, fontSize: 22, letterSpacing: 8,

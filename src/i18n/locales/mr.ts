@@ -694,6 +694,7 @@ export const mr: Catalogue = {
   'auth.backToSignIn': 'साइन इनकडे परत जा',
   'auth.verifyEmailTitle': 'तुमचा ईमेल पडताळा',
   'auth.codeSentTo': 'आम्ही एक {length}-अंकी कोड पाठवला आहे',
+  'auth.checkSpam': "इनबॉक्समध्ये नाही? Spam किंवा Junk फोल्डर तपासा — कोड बरेचदा तिथे जातो.",
   'auth.needCode': '{length}-अंकी कोड टाका.',
   'auth.verify': 'पडताळा',
   'auth.changeEmployeeId': 'एम्प्लॉई आयडी बदला',

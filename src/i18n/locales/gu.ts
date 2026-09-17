@@ -694,6 +694,7 @@ export const gu: Catalogue = {
   'auth.backToSignIn': 'સાઇન ઇન પર પાછા જાઓ',
   'auth.verifyEmailTitle': 'તમારો ઈમેલ ચકાસો',
   'auth.codeSentTo': 'અમે {length}-અંકનો કોડ મોકલ્યો છે',
+  'auth.checkSpam': "ઇનબોક્સમાં નથી? Spam કે Junk ફોલ્ડર તપાસો — કોડ ઘણીવાર ત્યાં જાય છે.",
   'auth.needCode': '{length}-અંકનો કોડ દાખલ કરો.',
   'auth.verify': 'ચકાસો',
   'auth.changeEmployeeId': 'એમ્પ્લોયી આઈડી બદલો',

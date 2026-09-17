@@ -56,6 +56,11 @@ export function ForgotPasswordVerifyScreen({ navigation, route }: Props) {
           <OtpBoxes value={otp} onChange={(v) => { setOtp(v); setError(''); }} autoFocus />
         </View>
 
+        {/* The code is sent from an address most mail providers have never
+            seen, and it lands in Spam often enough that "I never got it" is
+            the first support question. Say where to look before they ask. */}
+        <Text style={styles.spamHint}>{t('auth.checkSpam')}</Text>
+
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
         <View style={styles.buttonGap}>
@@ -79,7 +84,8 @@ function makeStyles(colors: ColorScheme) {
     title: { fontSize: 17.5, fontWeight: '800', color: colors.textLight, textAlign: 'center' },
     subtitle: { fontSize: 11, color: colors.slate500, textAlign: 'center', marginTop: 8, marginBottom: 24, lineHeight: 18 },
     bold: { fontWeight: '700', color: colors.slate700 },
-    otpWrap: { marginBottom: 20 },
+    otpWrap: { marginBottom: 12 },
+    spamHint: { fontSize: 11, color: colors.slate400, fontWeight: '600', textAlign: 'center', marginBottom: 16, lineHeight: 16 },
     errorText: { color: colors.dangerText, fontSize: 11, fontWeight: '600', marginBottom: 12, textAlign: 'center' },
     buttonGap: { marginBottom: 12 },
   });

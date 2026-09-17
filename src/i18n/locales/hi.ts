@@ -705,6 +705,7 @@ export const hi: Catalogue = {
   'auth.backToSignIn': 'साइन इन पर वापस',
   'auth.verifyEmailTitle': 'अपना ईमेल सत्यापित करें',
   'auth.codeSentTo': 'हमने {length} अंकों का कोड यहाँ भेजा है',
+  'auth.checkSpam': "इनबॉक्स में नहीं मिला? Spam या Junk फ़ोल्डर देखें — कोड अक्सर वहीं जाता है।",
   'auth.needCode': '{length} अंकों का कोड भरें।',
   'auth.verify': 'सत्यापित करें',
   'auth.changeEmployeeId': 'कर्मचारी आईडी बदलें',

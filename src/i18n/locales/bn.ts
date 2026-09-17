@@ -694,6 +694,7 @@ export const bn: Catalogue = {
   'auth.backToSignIn': 'সাইন ইনে ফিরে যান',
   'auth.verifyEmailTitle': 'আপনার ইমেল যাচাই করুন',
   'auth.codeSentTo': 'আমরা একটি {length}-সংখ্যার কোড পাঠিয়েছি',
+  'auth.checkSpam': "ইনবক্সে নেই? Spam বা Junk ফোল্ডার দেখুন — কোড প্রায়ই সেখানে যায়।",
   'auth.needCode': '{length}-সংখ্যার কোড লিখুন।',
   'auth.verify': 'যাচাই করুন',
   'auth.changeEmployeeId': 'এমপ্লয়ি আইডি পরিবর্তন করুন',

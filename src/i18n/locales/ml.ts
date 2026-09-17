@@ -698,6 +698,7 @@ export const ml: Catalogue = {
   'auth.backToSignIn': 'സൈൻ ഇന്നിലേക്ക് മടങ്ങുക',
   'auth.verifyEmailTitle': 'നിങ്ങളുടെ ഇമെയിൽ പരിശോധിക്കുക',
   'auth.codeSentTo': '{length} അക്ക കോഡ് ഇവിടേക്ക് അയച്ചു',
+  'auth.checkSpam': "ഇൻബോക്സിൽ ഇല്ലേ? Spam അല്ലെങ്കിൽ Junk ഫോൾഡർ നോക്കുക — കോഡ് പലപ്പോഴും അവിടെയാണ് എത്തുന്നത്.",
   'auth.needCode': '{length} അക്ക കോഡ് നൽകുക.',
   'auth.verify': 'പരിശോധിക്കുക',
   'auth.changeEmployeeId': 'ജീവനക്കാരൻ ഐഡി മാറ്റുക',

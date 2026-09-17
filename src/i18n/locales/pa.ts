@@ -694,6 +694,7 @@ export const pa: Catalogue = {
   'auth.backToSignIn': 'ਸਾਈਨ ਇਨ ਤੇ ਵਾਪਸ ਜਾਓ',
   'auth.verifyEmailTitle': 'ਆਪਣੀ ਈਮੇਲ ਤਸਦੀਕ ਕਰੋ',
   'auth.codeSentTo': 'ਅਸੀਂ {length}-ਅੰਕਾਂ ਦਾ ਕੋਡ ਭੇਜਿਆ ਹੈ',
+  'auth.checkSpam': "ਇਨਬਾਕਸ ਵਿੱਚ ਨਹੀਂ? Spam ਜਾਂ Junk ਫੋਲਡਰ ਦੇਖੋ — ਕੋਡ ਅਕਸਰ ਉੱਥੇ ਜਾਂਦਾ ਹੈ।",
   'auth.needCode': '{length}-ਅੰਕਾਂ ਦਾ ਕੋਡ ਦਰਜ ਕਰੋ।',
   'auth.verify': 'ਤਸਦੀਕ ਕਰੋ',
   'auth.changeEmployeeId': 'ਇੰਪਲਾਈ ਆਈਡੀ ਬਦਲੋ',

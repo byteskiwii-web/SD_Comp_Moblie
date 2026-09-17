@@ -716,6 +716,7 @@ export const en = {
   'auth.backToSignIn': 'Back to sign in',
   'auth.verifyEmailTitle': 'Verify your email',
   'auth.codeSentTo': 'We sent a {length}-digit code to',
+  'auth.checkSpam': "Not in your inbox? Check your Spam or Junk folder — the code often lands there.",
   'auth.needCode': 'Enter the {length}-digit code.',
   'auth.verify': 'Verify',
   'auth.changeEmployeeId': 'Change employee ID',
