@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -8,21 +8,17 @@ import { Card } from '../../components/ui';
 import { ColorScheme, radii } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
 import { usePreferencesStore } from '../../stores/preferencesStore';
-import { ThemeToggle } from '../../components/ThemeToggle';
 import { useAuthStore } from '../../stores/authStore';
 import { getAttendanceHistory } from '../../api/attendance.api';
 import { getLatestMarkOfTypes, SHIFT_TYPES } from '../../utils/attendanceStatus';
 import { formatDateLong, formatTime, toLocalDateKey } from '../../utils/datetime';
-import { getUnreadCount, NOTIFICATION_POLL_MS } from '../../api/notifications.api';
-import { NotificationsSheet } from '../notifications/NotificationsSheet';
+import { GreetingHeader } from '../../components/GreetingHeader';
 import { AppreciationCard } from './AppreciationCard';
 import { PoliciesCard } from './PoliciesCard';
 import { MonthlyStatsCard } from './MonthlyStatsCard';
 import { FestivalCard } from './FestivalCard';
 import { TourTarget } from '../../components/tour/TourTarget';
-import { useTourStore } from '../../stores/tourStore';
 import { Skeleton, SkeletonRows } from '../../components/Skeleton';
-import { AvatarContent } from '../../components/AvatarContent';
 import { TeamLeaveCard } from './TeamLeaveCard';
 import { useT } from '../../i18n';
 
@@ -35,29 +31,12 @@ export function HomeScreen() {
   const employee = useAuthStore((s) => s.employee);
   const store = useAuthStore((s) => s.store);
   const navigation = useNavigation<any>();
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const startTour = useTourStore((s) => s.start);
   const colors = useThemeStore((s) => s.colors);
   // Subscribed purely so a change to the 12/24-hour setting re-renders the
   // times on this screen; the formatters read the store outside React.
   usePreferencesStore((s) => s.clock);
   const t = useT();
   const styles = useMemo(() => makeStyles(colors), [colors]);
-
-  // The badge number. Polled rather than pushed: expo-notifications remote push
-  // does not work in Expo Go at all, so a periodic read is the only way the
-  // count moves without the user opening the sheet.
-  const { data: counts } = useQuery({
-    queryKey: ['notifications-unread'],
-    queryFn: getUnreadCount,
-    enabled: !!employee,
-    refetchInterval: NOTIFICATION_POLL_MS,
-  });
-  const unread = counts?.unread ?? 0;
-  /* Something the employee still owes -- a policy to acknowledge, an
-     onboarding step. It outranks the plain count on the bell: an unread FYI
-     and an unsigned mandatory policy should not look the same. */
-  const needsAction = counts?.needsAction ?? 0;
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['attendance-today', employee?.id],
@@ -117,56 +96,9 @@ export function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.flex} edges={['top']}>
+      {/* The shared bar -- outside the scroll, same as every other tab. */}
+      <GreetingHeader />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Avatar leads the row, matching the reference build: identity first,
-            then the greeting, with actions pushed to the trailing edge. */}
-        <View style={styles.headerRow}>
-          <Pressable
-            style={({ pressed }) => [styles.avatar, pressed && styles.avatarPressed]}
-            onPress={() => navigation.navigate('Profile')}
-            accessibilityRole="button"
-            accessibilityLabel={t('profile.title')}
-          >
-            <AvatarContent initialsStyle={styles.avatarInitial} />
-          </Pressable>
-          <View style={styles.headerText}>
-            <Text style={styles.welcome}>{t('home.welcome')}</Text>
-            <Text style={styles.name} numberOfLines={1}>
-              {employee?.first_name ?? 'there'}
-            </Text>
-          </View>
-          <ThemeToggle />
-          <Pressable
-            style={styles.iconButton}
-            hitSlop={8}
-            accessibilityRole="button"
-            accessibilityLabel={t('home.replayTour')}
-            onPress={startTour}
-          >
-            <Ionicons name="help-circle-outline" size={20} color={colors.slate600} />
-          </Pressable>
-
-          <Pressable
-            style={styles.iconButton}
-            hitSlop={8}
-            accessibilityRole="button"
-            accessibilityLabel={t('home.notifications')}
-            onPress={() => setNotificationsOpen(true)}
-          >
-            <Ionicons name="notifications-outline" size={20} color={colors.slate600} />
-            {/* Counts unread, but falls back to the outstanding count so an
-                acknowledgement that was read and not signed still shows a
-                number -- rendering a bare "0" was the alternative. */}
-            {(unread > 0 || needsAction > 0) && (
-              <View style={[styles.badge, needsAction > 0 && styles.badgeAction]}>
-                <Text style={styles.badgeText}>
-                  {(() => { const n = unread || needsAction; return n > 9 ? '9+' : n; })()}
-                </Text>
-              </View>
-            )}
-          </Pressable>
-        </View>
-
         <TourTarget
           id="home-hero"
           style={[
@@ -346,7 +278,6 @@ export function HomeScreen() {
         <AppreciationCard />
       </ScrollView>
 
-      <NotificationsSheet visible={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
     </SafeAreaView>
   );
 }
@@ -360,36 +291,6 @@ function makeStyles(colors: ColorScheme) {
   return StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.bgLight },
   content: { padding: 20, paddingTop: 8, gap: 16 },
-
-  headerRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  headerText: { flex: 1 },
-  welcome: { fontSize: 11, color: colors.slate500, fontWeight: '600' },
-  name: { fontSize: 17.5, fontWeight: '800', color: colors.textLight, marginTop: 2, letterSpacing: -0.3 },
-  avatar: {
-    width: 44, height: 44, borderRadius: 22, backgroundColor: colors.brand[700],
-    alignItems: 'center', justifyContent: 'center',
-    // The photo fills this circle, so it has to be clipped to it.
-    overflow: 'hidden',
-  },
-  avatarPressed: { opacity: 0.75 },
-  avatarInitial: { color: colors.white, fontSize: 13, fontWeight: '800', letterSpacing: 0.3 },
-  iconButton: {
-    width: 38, height: 38, borderRadius: 19, backgroundColor: colors.slate100,
-    alignItems: 'center', justifyContent: 'center',
-    shadowColor: colors.black, shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: colors.scheme === 'dark' ? 0 : 0.06, shadowRadius: 4, elevation: colors.scheme === 'dark' ? 0 : 1,
-  },
-
-  badge: {
-    position: 'absolute', top: -2, right: -2, minWidth: 18, height: 18, borderRadius: 9,
-    backgroundColor: colors.danger, alignItems: 'center', justifyContent: 'center',
-    paddingHorizontal: 4, borderWidth: 2, borderColor: colors.bgLight,
-  },
-  // Amber, not red, when the badge is standing for something owed rather than
-  // something unseen: one is a task, the other is news, and they should not
-  // read as the same urgency.
-  badgeAction: { backgroundColor: colors.warning },
-  badgeText: { color: colors.white, fontSize: 10, fontWeight: '800' },
 
   hero: { borderRadius: radii.xl, padding: 20, overflow: 'hidden' },
   // The active state's own colour, not a plain hex -- readable at a glance

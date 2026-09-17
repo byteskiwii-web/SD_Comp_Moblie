@@ -22,6 +22,7 @@ import {
   type LeaveStatus,
 } from '../../api/leave.api';
 import { ApplyLeaveSheet } from './ApplyLeaveSheet';
+import { GreetingHeader } from '../../components/GreetingHeader';
 import { t as tr, useT, type TKey } from '../../i18n';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 
@@ -184,6 +185,7 @@ export function LeaveScreen() {
         }}
       />
 
+      <GreetingHeader />
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{t('leave.title')}</Text>
         <TourTarget id="leave-apply">
@@ -428,7 +430,7 @@ function makeStyles(colors: ColorScheme) {
     flex: { flex: 1, backgroundColor: colors.bgLight },
     header: {
       flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-      paddingHorizontal: 20, paddingTop: 12, paddingBottom: 4,
+      paddingHorizontal: 20, paddingTop: 6, paddingBottom: 4,
     },
     headerTitle: { fontSize: 21, fontWeight: '800', color: colors.textLight, letterSpacing: -0.3 },
     applyBtn: {

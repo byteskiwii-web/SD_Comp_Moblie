@@ -10,7 +10,6 @@ import { HistoryPanel } from './HistoryPanel';
 import { RegularisePanel } from './RegularisePanel';
 import { useT } from '../../i18n';
 import { GreetingHeader } from '../../components/GreetingHeader';
-import { NotificationsSheet } from '../notifications/NotificationsSheet';
 
 type Tab = 'clock' | 'history' | 'regularise';
 
@@ -31,7 +30,6 @@ export function AttendanceScreen() {
   const colors = useThemeStore((s) => s.colors);
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const t = useT();
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const params = useRoute<RouteProp<AttendanceStackParamList, 'AttendanceHome'>>().params;
   const [tab, setTab] = useState<Tab>(params?.tab ?? 'clock');
 
@@ -55,9 +53,7 @@ export function AttendanceScreen() {
 
   return (
     <SafeAreaView style={styles.flex} edges={['top']}>
-      <View style={styles.header}>
-        <GreetingHeader onNotifications={() => setNotificationsOpen(true)} />
-      </View>
+      <GreetingHeader />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.segment}>
           {(['clock', 'history', 'regularise'] as Tab[]).map((id) => (
@@ -81,7 +77,6 @@ export function AttendanceScreen() {
           <RegularisePanel initialDate={params?.date} />
         )}
       </ScrollView>
-      <NotificationsSheet visible={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
     </SafeAreaView>
   );
 }
@@ -89,8 +84,6 @@ export function AttendanceScreen() {
 function makeStyles(colors: ColorScheme) {
   return StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.bgLight },
-  header: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 4 },
-  headerTitle: { fontSize: 21, fontWeight: '800', color: colors.textLight, letterSpacing: -0.3 },
   content: { padding: 20, paddingTop: 12, gap: 14 },
   segment: {
     flexDirection: 'row', backgroundColor: colors.slate100, borderRadius: radii.md, padding: 4,

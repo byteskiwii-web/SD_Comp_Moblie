@@ -12,6 +12,7 @@ import { useThemeStore } from '../../stores/themeStore';
 import { useAuthStore } from '../../stores/authStore';
 import { useT, type TKey } from '../../i18n';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { GreetingHeader } from '../../components/GreetingHeader';
 import { BuildStamp } from '../../components/BuildStamp';
 import { useProfileSummary, type SetupTask, type Summary } from './useProfileSummary';
 import type { ProfileStackParamList } from '../../navigation/types';
@@ -115,6 +116,7 @@ export function ProfileScreen() {
         onConfirm={() => { setSignOutOpen(false); void signOut(); }}
       />
 
+      <GreetingHeader />
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{t('profile.title')}</Text>
       </View>
@@ -337,7 +339,7 @@ function makeStyles(colors: ColorScheme) {
     : { shadowOpacity: 0.06, elevation: 2, borderWidth: 0 };
   return StyleSheet.create({
     flex: { flex: 1, backgroundColor: colors.bgLight },
-    header: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 4 },
+    header: { paddingHorizontal: 20, paddingTop: 6, paddingBottom: 4 },
     headerTitle: { fontSize: 21, fontWeight: '800', color: colors.textLight, letterSpacing: -0.3 },
     content: { padding: 20, paddingTop: 12, gap: 18, paddingBottom: 32 },
     pressed: { opacity: 0.6 },
