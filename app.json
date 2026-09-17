@@ -91,11 +91,11 @@
       "expo-font",
       "./plugins/withMonitoringTool"
     ],
+    "owner": "contactkiwis-team",
     "extra": {
       "eas": {
-        "projectId": "fb842050-3b20-40aa-ad5b-3400e2a05ae7"
+        "projectId": "1b235d14-6d40-40d8-a047-4a43cc965ccd"
       }
-    },
-    "owner": "kiwi-bytes"
+    }
   }
 }
