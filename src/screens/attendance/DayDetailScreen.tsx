@@ -139,10 +139,13 @@ export function DayDetailScreen() {
               <Text style={styles.window} numberOfLines={1}>
                 {window ?? t('shift.noRoster')}
               </Text>
+              {/* A green ON TIME over an 8-hour break said "all good" above
+                  a warning. A flagged day wears CHECK instead; arrival is
+                  still judged in the card below. */}
               {status && (
-                <View style={[styles.pill, status === 'on-time' ? styles.pillOk : styles.pillLate]}>
-                  <Text style={[styles.pillText, status === 'on-time' ? styles.pillTextOk : styles.pillTextLate]}>
-                    {status === 'on-time' ? t('day.onTime') : t('day.late')}
+                <View style={[styles.pill, status === 'on-time' && !hasIssue ? styles.pillOk : styles.pillLate]}>
+                  <Text style={[styles.pillText, status === 'on-time' && !hasIssue ? styles.pillTextOk : styles.pillTextLate]}>
+                    {hasIssue ? t('day.check') : status === 'on-time' ? t('day.onTime') : t('day.late')}
                   </Text>
                 </View>
               )}
