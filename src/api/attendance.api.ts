@@ -38,6 +38,51 @@ type PunchInput = {
  */
 const PUNCH_TIMEOUT_MS = 60000;
 
+/**
+ * The selfie, shrunk before it leaves the phone.
+ *
+ * A camera frame is 2-5 MB and 3000+ px on a side; the review screen shows
+ * it at a few hundred px, and Drive was filling up with originals. 1280 px
+ * on the long side at JPEG 0.72 is ~150-300 KB -- more than enough to
+ * recognise a face -- and uploads in a fraction of the time on shop-floor
+ * data, which is where punches used to time out.
+ *
+ * Every camera path lands here (VisionCamera, expo-camera, the WebView
+ * liveness check), so this is the one place to do it. Best effort: an APK
+ * built before expo-image-manipulator had a native half cannot shrink and
+ * uploads the original, exactly as before. A file already under the size
+ * cap is sent as is rather than re-encoded.
+ */
+const SELFIE_MAX_PX = 1280;
+const SELFIE_QUALITY = 0.72;
+const SELFIE_SMALL_ENOUGH_BYTES = 400 * 1024;
+
+async function shrinkSelfie(uri: string): Promise<string> {
+  try {
+    const { File } = require('expo-file-system') as typeof import('expo-file-system');
+    const size = new File(uri).size;
+    if (typeof size === 'number' && size > 0 && size <= SELFIE_SMALL_ENOUGH_BYTES) return uri;
+  } catch {
+    // Unknown size: shrink anyway; it is cheap and the upload is not.
+  }
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { ImageManipulator, SaveFormat } = require('expo-image-manipulator') as typeof import('expo-image-manipulator');
+    const probe = await ImageManipulator.manipulate(uri).renderAsync();
+    const { width, height } = probe;
+    const context = ImageManipulator.manipulate(uri);
+    if (Math.max(width, height) > SELFIE_MAX_PX) {
+      context.resize(width >= height ? { width: SELFIE_MAX_PX } : { height: SELFIE_MAX_PX });
+    }
+    const image = await context.renderAsync();
+    const saved = await image.saveAsync({ format: SaveFormat.JPEG, compress: SELFIE_QUALITY });
+    return saved.uri;
+  } catch (err) {
+    console.warn('[punch] could not shrink the selfie; uploading the original', err);
+    return uri;
+  }
+}
+
 async function buildPunchFormData(input: PunchInput): Promise<FormData> {
   const form = new FormData();
   form.append('employee_id', input.employee_id);
@@ -63,9 +108,10 @@ async function buildPunchFormData(input: PunchInput): Promise<FormData> {
     return form;
   }
 
-  const uri = input.selfieFilePath.startsWith('file://')
+  const original = input.selfieFilePath.startsWith('file://')
     ? input.selfieFilePath
     : `file://${input.selfieFilePath}`;
+  const uri = await shrinkSelfie(original);
   // React Native's multipart file shape — not a real Blob/File, but this is
   // the documented convention RN's networking layer expects.
   form.append('selfie', {
