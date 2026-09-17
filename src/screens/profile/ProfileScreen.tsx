@@ -1,32 +1,19 @@
 import React from 'react';
-import { Alert, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useFocusEffect } from '@react-navigation/native';
-import { useQuery } from '@tanstack/react-query';
-import { getPolicies, type Policy as PolicyType } from '../../api/policies.api';
-import { PolicyReaderSheet } from './PolicyReaderSheet';
-import { ProfilePhoto } from './ProfilePhoto';
-import { LegalLinks } from '../../components/LegalLinks';
-import { DeleteAccountCard } from './DeleteAccountCard';
-import { getKycStatus, KYC_STATUS_KEY, KycCheckStatus, kycStatusTone } from '../../api/verification.api';
 import { useNavigation } from '@react-navigation/native';
-import { formatDate, newestFirst } from '../../utils/datetime';
+import { ProfilePhoto } from './ProfilePhoto';
 import { TourTarget } from '../../components/tour/TourTarget';
 import { useTourStore } from '../../stores/tourStore';
 import { useShiftStore } from '../../stores/shiftStore';
-import { KitCard } from './KitCard';
-import { DocumentsCard } from './DocumentsCard';
-import { DeptManagerCard } from './DeptManagerCard';
-import { ReportingCard } from './ReportingCard';
-import { PersonalCard } from './PersonalCard';
-import { PreferencesCard } from './PreferencesCard';
-import { Button, Card } from '../../components/ui';
 import { ColorScheme, radii } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
 import { useAuthStore } from '../../stores/authStore';
 import { useT, type TKey } from '../../i18n';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { useProfileSummary, type Summary } from './useProfileSummary';
+import type { ProfileStackParamList } from '../../navigation/types';
 
 const ROLE_LABEL: Record<string, string> = {
   'field-employee': 'role.field-employee',
@@ -37,62 +24,75 @@ const ROLE_LABEL: Record<string, string> = {
   'super-admin': 'role.super-admin',
 };
 
+type Route = keyof ProfileStackParamList;
+
+/**
+ * Profile: the hub.
+ *
+ * This used to be one page with twelve cards on it — contact rows, policies,
+ * nine language tiles, gender, two managers, three KYC checks, eight document
+ * uploads, the shirt size, the tour, sign out, legal, deletion — and its own
+ * comments record cards being "moved up because nobody scrolled far enough
+ * to see it". Now it is who you are, then a settings-style list: one row per
+ * topic, each opening a screen that holds the same card it always did.
+ *
+ * WHAT THE ROWS SAY. Moving a topic off the page must not move its problem
+ * out of sight, so each row carries the one word that matters — Pending,
+ * 2 to upload, 1 to read — from useProfileSummary, and a strip above the
+ * list counts what needs the person. The list itself needs only the counts;
+ * the heavy reads happen when a section opens, and they share cache keys
+ * with the hub so nothing is fetched twice.
+ *
+ * The tour's `profile-top` target stays on the hero, unchanged.
+ */
 export function ProfileScreen() {
   const employee = useAuthStore((s) => s.employee);
   const store = useAuthStore((s) => s.store);
-  const signOut = useAuthStore((s) => s.signOut);
-  const isClockedIn = useShiftStore((s) => s.isClockedIn);
   const profile = useAuthStore((s) => s.profile);
+  const signOut = useAuthStore((s) => s.signOut);
   const refreshProfile = useAuthStore((s) => s.refreshProfile);
-  const [refreshing, setRefreshing] = React.useState(false);
-  /**
-   * The policy open for reading, or null.
-   *
-   * Held HERE rather than inside PolicyLibrary because the sheet it drives has
-   * to be mounted at the screen root — see the note where it is rendered.
-   */
-  const [readingPolicy, setReadingPolicy] = React.useState<PolicyType | null>(null);
-
+  const isClockedIn = useShiftStore((s) => s.isClockedIn);
   const startTour = useTourStore((s) => s.start);
+  const navigation = useNavigation<any>();
   const colors = useThemeStore((s) => s.colors);
   const styles = React.useMemo(() => makeStyles(colors), [colors]);
   const t = useT();
+  const summary = useProfileSummary();
+  const [refreshing, setRefreshing] = React.useState(false);
 
   /**
-   * Signing out mid-shift throws the shift away.
+   * Always asks, in the app's own dialog rather than the operating system's.
    *
-   * Clock-in is held on the device until the matching clock-out is filed, so
-   * signing out first leaves a shift that was started and never ended — and
-   * the employee finds out on payday rather than here. The warning is
-   * deliberately only shown while a shift is open: a confirmation on every
-   * sign-out is one people learn to dismiss without reading, which is exactly
-   * the habit that makes this one useless.
-   *
-   * Destructive on the sign-out option, cancel-styled on Cancel, so the safe
-   * choice is the one the thumb lands on by default.
-   */
-  /**
-   * Always asks now, and asks in the app's own dialog rather than the
-   * operating system's.
-   *
-   * It used to sign out silently unless a shift was open, on the reasoning
-   * that signing back in is cheap. It is not cheap here: this app binds an
-   * account to a single device, so signing out on a shared store phone can
-   * leave somebody unable to get back in without HR. The clocked-in case
-   * still gets the stronger wording, because that one also abandons an open
-   * shift — but it is no longer the only case that stops and asks.
+   * Signing back in is not cheap here: this app binds an account to a single
+   * device, so signing out on a shared store phone can leave somebody unable
+   * to get back in without HR. The clocked-in case gets the stronger wording,
+   * because that one also abandons an open shift — clock-in is held on the
+   * device until the matching clock-out is filed, and the employee would find
+   * out on payday rather than here.
    */
   const [signOutOpen, setSignOutOpen] = React.useState(false);
-  const confirmSignOut = React.useCallback(() => setSignOutOpen(true), []);
 
-  // Pull to refresh: the automatic read happens at boot, and somebody whose
-  // details were changed while the app was open needs a way to ask again
-  // without signing out.
   const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
     await refreshProfile();
     setRefreshing(false);
   }, [refreshProfile]);
+
+  const go = (route: Route) => navigation.navigate(route);
+
+  /** The first row that needs the person — where the attention strip goes. */
+  const firstAttention: Route | null =
+    summary.identity && summary.identity.tone !== 'success' ? 'Identity'
+    : summary.documents && summary.documents.tone === 'danger' ? 'Documents'
+    : summary.documents && summary.documents.state === 'missing' ? 'Documents'
+    : summary.policy && summary.policy.tone !== 'success' ? 'Policies'
+    : summary.kit && summary.kit.state === 'chooseSize' ? 'Kit'
+    : null;
+
+  const roleLabel = employee?.role
+    ? ROLE_LABEL[employee.role] ? t(ROLE_LABEL[employee.role] as TKey) : employee.role
+    : '—';
+  const posting = [store?.store_code, store?.name, profile?.shift?.name].filter(Boolean).join(' · ');
 
   return (
     <SafeAreaView style={styles.flex} edges={['top']}>
@@ -126,415 +126,198 @@ export function ProfileScreen() {
               <Text style={styles.pillText}>{employee?.id}</Text>
             </View>
             <View style={[styles.pill, styles.pillBrand]}>
-              <Text style={[styles.pillText, styles.pillTextBrand]}>
-                {employee?.role
-                  ? ROLE_LABEL[employee.role]
-                    ? t(ROLE_LABEL[employee.role] as TKey)
-                    : employee.role
-                  : '—'}
-              </Text>
+              <Text style={[styles.pillText, styles.pillTextBrand]}>{roleLabel}</Text>
             </View>
           </View>
+          {posting ? (
+            <Text style={styles.posting} numberOfLines={1}>{posting}</Text>
+          ) : null}
         </TourTarget>
 
-        <Card>
-          <Text style={styles.cardTitle}>{t('profile.contact')}</Text>
-          <Row icon="call-outline" label={t('common.phone')} value={employee?.phone ?? '—'} />
-          <Row icon="mail-outline" label={t('common.email')} value={employee?.email ?? '—'} />
-          <Row icon="business-outline" label={t('profile.assignedSite')} value={store?.name ?? '—'} />
-          <Row
-            icon="pricetag-outline"
-            label={t('profile.siteCode')}
-            value={store?.store_code ?? employee?.store_code ?? '—'}
-          />
-          <Row
-            icon="navigate-outline"
-            label={t('profile.geofence')}
-            value={
-              store?.geofence_radius_m
-                ? t('profile.geofenceRadius', { metres: store.geofence_radius_m })
-                : '—'
-            }
-          />
-          {/* The rostered shift, named. '10:00 - 19:00' alone does not say
-              which shift somebody is on. Break allowance used to live here
-              too, but it's an attendance fact, not an identity one -- moved
-              to the Attendance screen, next to where a break is actually
-              taken. */}
-          <Row
-            icon="albums-outline"
-            label={t('profile.shift')}
-            value={profile?.shift?.name ?? (profile?.shiftStart && profile?.shiftEnd ? profile.shiftStart + ' – ' + profile.shiftEnd : '—')}
-          />
-          {/* The manager moved to its own card -- three read-only rows could
-              show it and nothing could set it. */}
-          <Row
-            icon="calendar-outline"
-            label={t('profile.joined')}
-            value={profile?.dateOfJoining ? formatDate(profile.dateOfJoining) : '—'}
+        {/* Only while something needs the person. A strip that is always
+            there is wallpaper by the second day. */}
+        {summary.attention > 0 && firstAttention ? (
+          <Pressable
+            onPress={() => go(firstAttention)}
+            style={({ pressed }) => [styles.attention, pressed && styles.pressed]}
+            accessibilityRole="button"
+          >
+            <Ionicons name="alert-circle" size={18} color={colors.warningText} />
+            <Text style={styles.attentionText}>
+              {summary.attention === 1
+                ? t('profile.attentionOne')
+                : t('profile.attentionMany', { count: summary.attention })}
+            </Text>
+            <Ionicons name="chevron-forward" size={16} color={colors.warningText} />
+          </Pressable>
+        ) : null}
+
+        <Group title={t('profile.group.work')}>
+          <MenuRow icon="business-outline" label={t('profile.menu.work')} hint={t('profile.menu.workHint')} onPress={() => go('WorkDetails')} last />
+        </Group>
+
+        <Group title={t('profile.group.identity')}>
+          {summary.worksAtSite ? (
+            <MenuRow
+              icon="shield-checkmark-outline"
+              label={t('kyc.title')}
+              status={summary.identity}
+              statusText={summaryText(summary.identity, t)}
+              onPress={() => go('Identity')}
+            />
+          ) : null}
+          <MenuRow
+            icon="folder-open-outline"
+            label={t('docs.title')}
+            status={summary.documents}
+            statusText={summaryText(summary.documents, t)}
+            onPress={() => go('Documents')}
             last
           />
-        </Card>
+        </Group>
 
-        {/* Moved up from the very bottom of the screen -- six cards below it
-            (Preferences through Kit) meant almost nobody scrolled far enough
-            to see it was there at all. */}
-        <PolicyLibrary onOpen={setReadingPolicy} />
+        <Group title={t('profile.group.about')}>
+          <MenuRow icon="person-outline" label={t('personal.title')} onPress={() => go('Personal')} />
+          <MenuRow
+            icon="shirt-outline"
+            label={t('kit.title')}
+            status={summary.kit}
+            statusText={summaryText(summary.kit, t, summary.shirtSize)}
+            onPress={() => go('Kit')}
+            last
+          />
+        </Group>
 
-        <PreferencesCard />
+        <Group title={t('profile.group.company')}>
+          <MenuRow
+            icon="document-text-outline"
+            label={t('profile.policies')}
+            status={summary.policy}
+            statusText={summaryText(summary.policy, t)}
+            onPress={() => go('Policies')}
+            last
+          />
+        </Group>
 
-        <PersonalCard />
+        <Group title={t('profile.group.app')}>
+          <MenuRow icon="language-outline" label={t('profile.menu.prefs')} value={summary.languageLabel} onPress={() => go('Preferences')} />
+          <MenuRow icon="sparkles-outline" label={t('home.replayTour')} onPress={startTour} last />
+        </Group>
 
-        <DeptManagerCard />
-
-        {/* Below the department manager, because they answer adjacent questions
-            and reading them together is what makes the difference between the
-            two obvious. */}
-        <ReportingCard />
-
-        <KycCard />
-
-        <DocumentsCard />
-
-        <KitCard />
-
-        <Button title={t('home.replayTour')} variant="outline" onPress={startTour} />
-        <Button title={t('common.signOut')} variant="danger" onPress={confirmSignOut} />
-
-        {/* Play requires the privacy policy to be reachable from inside the
-            app for anything handling sensitive data. Profile is where someone
-            looks for it after the fact; the sign-in screen covers first use. */}
-        <LegalLinks />
-
-        {/* Last on the page, under the legal links, because that is where
-            somebody looking for it expects it and nowhere near the controls
-            they use daily. Both stores require this route to exist inside the
-            app, and the privacy policy already pointed here. */}
-        <DeleteAccountCard />
-
+        <Group title={t('profile.group.account')}>
+          <MenuRow icon="lock-closed-outline" label={t('profile.menu.account')} hint={t('profile.menu.accountHint')} onPress={() => go('Account')} />
+          <MenuRow icon="log-out-outline" label={t('common.signOut')} danger onPress={() => setSignOutOpen(true)} last />
+        </Group>
       </ScrollView>
-
-      {/* Outside the ScrollView, deliberately. A React Native Modal nested in
-          scrolling content has its full-screen backdrop laid out inside that
-          content, which on Android paints as a black overlay while you scroll.
-          Every other sheet in this app is mounted here at the screen root for
-          the same reason. */}
-      <PolicyReaderSheet policy={readingPolicy} onClose={() => setReadingPolicy(null)} />
     </SafeAreaView>
   );
 }
 
-function Row({
-  icon,
-  label,
-  value,
-  last,
-}: {
-  icon: keyof typeof Ionicons.glyphMap;
-  label: string;
-  value: string;
-  last?: boolean;
-}) {
+/** The word a row shows, from the summary's state. Null summary, no word. */
+function summaryText(s: Summary | null, t: ReturnType<typeof useT>, shirtSize?: string | null): string | null {
+  if (!s) return null;
+  switch (s.state) {
+    case 'verified': return t('status.verified');
+    case 'pending': return t('status.pending');
+    case 'failed': return t('status.failed');
+    case 'rejected': return t('profile.badge.rejected', { count: s.count ?? 0 });
+    case 'missing': return t('profile.badge.toUpload', { count: s.count ?? 0 });
+    case 'inReview': return t('status.inReview');
+    case 'complete': return t('profile.badge.complete');
+    case 'toRead': return t('profile.badge.toRead', { count: s.count ?? 0 });
+    case 'allRead': return t('profile.badge.allRead');
+    case 'chooseSize': return t('profile.badge.chooseSize');
+    case 'submitted': return shirtSize ? `${shirtSize} · ${t('kit.submitted')}` : t('kit.submitted');
+    case 'issued': return shirtSize ? `${shirtSize} · ${t('kit.issued')}` : t('kit.issued');
+    default: return null;
+  }
+}
+
+function Group({ title, children }: { title: string; children: React.ReactNode }) {
   const colors = useThemeStore((s) => s.colors);
   const styles = React.useMemo(() => makeStyles(colors), [colors]);
-  const t = useT();
   return (
-    <View style={[styles.row, last && styles.rowLast]}>
-      <Ionicons name={icon} size={15} color={colors.slate400} style={styles.rowIcon} />
-      <Text style={styles.rowLabel}>{label}</Text>
-      <Text style={styles.rowValue} numberOfLines={1}>
-        {value}
-      </Text>
+    <View>
+      <Text style={styles.groupTitle}>{title}</Text>
+      <View style={styles.group}>{children}</View>
     </View>
   );
 }
 
 /**
- * Identity-verification status: PAN, Aadhaar, bank.
- *
- * Reads GET /verification/status directly, NOT the gate check useKycGate.ts
- * uses -- they answer different questions. The gate asks "should Attendance be
- * blocked right now", which stays fail-open while verification is toggled off;
- * this card asks "what has this employee verified", which does not stop being
- * true when new verifications happen to be disabled. That route is mounted on
- * the backend unconditionally for exactly this reason.
- *
- * Rebuilt after the SDK 57 Profile rewrite dropped it: once KYC completes the
- * gate disappears, and without this there is nowhere in the app left to see
- * verification status.
- *
- * Shown to anyone POSTED TO A SITE, which is the real question -- not to a
- * named role, which is what this used to test and what quietly hid the whole
- * card from the first new on-site role that appeared (team-lead). KYC is
- * about having a PAN and an account that payroll pays into, and a team lead
- * has both exactly as a field employee does.
- *
- * store_code is the signal because it is the one that stays true: office
- * roles -- admin, HR, cluster manager -- carry no store, and a role list has
- * to be remembered every time somebody adds a role. The backend
- * scopes the subject to the caller regardless.
+ * One line of the menu: icon, name, then either a value (the current
+ * language), a status chip (Pending), or a hint under the name — and a
+ * chevron, unless the row is an action rather than a place.
  */
-function KycCard() {
-  const employee = useAuthStore((s) => s.employee);
-  const worksAtSite = Boolean(employee?.store_code);
-  // Above the early return below: a hook after a conditional `return null`
-  // changes the hook count between renders the moment the role resolves.
-  const navigation = useNavigation<any>();
-  const colors = useThemeStore((s) => s.colors);
-  const styles = React.useMemo(() => makeStyles(colors), [colors]);
-  const t = useT();
-
-  const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ['profile-kyc-status', employee?.id],
-    queryFn: getKycStatus,
-    enabled: worksAtSite,
-    retry: false,
-  });
-
-  // Bottom-tab screens stay mounted, so without this the card would only ever
-  // reflect what it saw once per app session. Refetch whenever Profile regains
-  // focus, to catch KYC finished via the gate flow (or by HR) while this sat
-  // in the background.
-  useFocusEffect(
-    React.useCallback(() => {
-      if (worksAtSite) refetch();
-    }, [worksAtSite, refetch])
-  );
-
-  if (!worksAtSite) return null;
-
-  const kyc = data?.kyc ?? null;
-
-  return (
-    <Card>
-      <Text style={styles.cardTitle}>{t('kyc.title')}</Text>
-      {isLoading && !kyc ? (
-        <Text style={styles.kycMuted}>{t('common.loading')}</Text>
-      ) : isError ? (
-        <Text style={styles.kycMuted}>{t('kyc.statusFailed')}</Text>
-      ) : kyc ? (
-        <>
-          {/* Every check that is not yet verified offers a way to finish it.
-              A status nobody can act on is just a reminder that something is
-              wrong -- and for two of these three, the KYC gate that used to be
-              the only route in is gone by the time anyone reaches Profile. */}
-          <KycRow
-            icon="card-outline"
-            label={t('kyc.panShort')}
-            status={kyc.pan.status}
-            detail={kyc.pan.masked}
-            onPress={kyc.pan.status === 'verified' ? undefined : () => navigation.navigate('PanVerify')}
-          />
-
-          <KycRow
-            icon="finger-print-outline"
-            label={t('kyc.aadhaarShort')}
-            status={kyc.aadhaar.status}
-            onPress={
-              kyc.aadhaar.status === 'verified'
-                ? undefined
-                : () => navigation.navigate('AadhaarOtpRequest')
-            }
-          />
-          {/* A row of its own, at the same level as the checks around it.
-              It was previously indented underneath PAN, which stacked a second
-              line of chips and actions inside one row and made the card look
-              cramped and nested for what is really just a fourth status.
-
-              Placed after Aadhaar rather than after PAN because it is a fact
-              about BOTH of them, so it reads as following from the pair. */}
-          <LinkRow
-            linked={kyc.pan.aadhaarLinked ?? null}
-            onCheck={
-              kyc.pan.aadhaarLinked === true ? undefined : () => navigation.navigate('PanVerify')
-            }
-          />
-          <KycRow
-            icon="wallet-outline"
-            label={t('bank.title')}
-            status={kyc.bank.status}
-            detail={kyc.bank.masked}
-            last
-            onPress={
-              kyc.bank.status === 'verified'
-                ? undefined
-                : () => navigation.navigate('BankVerify')
-            }
-          />
-        </>
-      ) : (
-        <Text style={styles.kycMuted}>{t('kyc.none')}</Text>
-      )}
-    </Card>
-  );
-}
-
-function KycRow({
+function MenuRow({
   icon,
   label,
+  hint,
+  value,
   status,
-  detail,
-  last,
-  noDivider,
+  statusText,
+  danger,
   onPress,
+  last,
 }: {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
-  status: KycCheckStatus;
-  detail?: string | null;
+  hint?: string;
+  value?: string;
+  status?: Summary | null;
+  statusText?: string | null;
+  danger?: boolean;
+  onPress: () => void;
   last?: boolean;
-  /** Suppress the rule when the row below is a continuation of this one. */
-  noDivider?: boolean;
-  onPress?: () => void;
 }) {
   const colors = useThemeStore((s) => s.colors);
   const styles = React.useMemo(() => makeStyles(colors), [colors]);
-  const t = useT();
-  const tone = kycStatusTone(status, colors);
-  const body = (
-    <>
-      <Ionicons name={icon} size={15} color={colors.slate400} style={styles.rowIcon} />
-      <Text style={styles.rowLabel}>{label}</Text>
-      {detail ? <Text style={styles.kycDetail}>{detail}</Text> : null}
-      <View style={[styles.kycChip, { backgroundColor: tone.bg }]}>
-        <Text style={[styles.kycChipText, { color: tone.fg }]}>{t(KYC_STATUS_KEY[status])}</Text>
-      </View>
-      {/* An actionable row says what to do as well as what is wrong. The chip
-          stays -- "Failed" and "Pending" mean different things and both are
-          worth keeping -- and this is what to do about either. Without it,
-          people tap a Pending badge hoping something happens. */}
-      {onPress ? (
-        <View style={styles.kycAction}>
-          <Text style={styles.kycActionText}>{t('kyc.verifyNow')}</Text>
-          <Ionicons name="chevron-forward" size={13} color={colors.brand[700]} />
-        </View>
-      ) : null}
-    </>
-  );
-
-  if (!onPress) return <View style={[styles.row, (last || noDivider) && styles.rowLast]}>{body}</View>;
+  const chip = status && statusText ? chipTone(status.tone, colors) : null;
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [styles.row, (last || noDivider) && styles.rowLast, pressed && styles.rowPressed]}
       accessibilityRole="button"
+      accessibilityLabel={statusText ? `${label}, ${statusText}` : label}
+      style={({ pressed }) => [styles.menuRow, last && styles.menuRowLast, pressed && styles.pressed]}
     >
-      {body}
-    </Pressable>
-  );
-}
-
-/**
- * The PAN-Aadhaar linkage line.
- *
- * A row of its own, drawn exactly like the checks around it -- same icon
- * size, same label weight, same chip, same action. It used to sit indented
- * under PAN, which stacked a second line of chips and actions inside one row
- * and read as cramped and nested for what is really just a fourth status.
- *
- * The three states stay genuinely three. NOT CHECKED is grey and is not a
- * failure -- it means nobody has asked yet -- while "not linked" is amber and
- * is a real finding. Collapsing them would either invent a problem or hide
- * one, and the provider's enum is undocumented past yes and no.
- */
-function LinkRow({ linked, onCheck }: { linked: boolean | null; onCheck?: () => void }) {
-  const colors = useThemeStore((s) => s.colors);
-  const styles = React.useMemo(() => makeStyles(colors), [colors]);
-  const t = useT();
-
-  const state =
-    linked === true
-      ? { icon: 'link' as const, tint: colors.successText, label: t('kyc.linked'), bg: colors.successBg }
-      : linked === false
-        ? { icon: 'unlink' as const, tint: colors.warningText, label: t('kyc.notLinked'), bg: colors.warningBg }
-        : // PENDING, not "Not checked". Every other row in this card says
-          // Pending while it is outstanding, and this one said something
-          // different in a grey that reads as disabled -- so the one check
-          // nobody had run looked like the one check that was unavailable.
-          // It is the same state as the others: not done yet, and there is a
-          // button right beside it to do it.
-          { icon: 'link-outline' as const, tint: colors.warningText, label: t('status.pending'), bg: colors.warningBg };
-
-  const body = (
-    <>
-      <Ionicons name={state.icon} size={15} color={colors.slate400} style={styles.rowIcon} />
-      <Text style={styles.rowLabel}>{t('kyc.panAadhaarLink')}</Text>
-      <View style={[styles.kycChip, { backgroundColor: state.bg }]}>
-        <Text style={[styles.kycChipText, { color: state.tint }]}>{state.label}</Text>
+      <View style={[styles.menuIcon, danger && styles.menuIconDanger]}>
+        <Ionicons name={icon} size={17} color={danger ? colors.dangerText : colors.brand[700]} />
       </View>
-      {onCheck ? (
-        <View style={styles.kycAction}>
-          <Text style={styles.kycActionText}>{t('kyc.checkNow')}</Text>
-          <Ionicons name="chevron-forward" size={13} color={colors.brand[700]} />
+      <View style={styles.menuText}>
+        <Text style={[styles.menuLabel, danger && styles.menuLabelDanger]} numberOfLines={1}>{label}</Text>
+        {hint ? <Text style={styles.menuHint} numberOfLines={1}>{hint}</Text> : null}
+      </View>
+      {chip ? (
+        <View style={[styles.chip, { backgroundColor: chip.bg }]}>
+          <Text style={[styles.chipText, { color: chip.fg }]} numberOfLines={1}>{statusText}</Text>
         </View>
+      ) : value ? (
+        <Text style={styles.menuValue} numberOfLines={1}>{value}</Text>
       ) : null}
-    </>
-  );
-
-  if (!onCheck) return <View style={styles.row}>{body}</View>;
-  return (
-    <Pressable
-      style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
-      onPress={onCheck}
-      accessibilityRole="button"
-      accessibilityLabel={t('kyc.linkRowLabel', { state: state.label })}
-    >
-      {body}
+      {danger ? null : <Ionicons name="chevron-forward" size={16} color={colors.slate300} style={styles.chevron} />}
     </Pressable>
   );
 }
 
-function PolicyLibrary({ onOpen }: { onOpen: (p: PolicyType) => void }) {
-  const { data } = useQuery({ queryKey: ['policies-library'], queryFn: () => getPolicies(50) });
-  const colors = useThemeStore((s) => s.colors);
-  const styles = React.useMemo(() => makeStyles(colors), [colors]);
-  const t = useT();
-  const items = newestFirst(data?.items ?? [], 'publishedAt', 'updatedAt', 'createdAt');
-  if (items.length === 0) return null;
-
-  const signed = items.filter((p) => p.acknowledgedByMe).length;
-  return (
-    <Card>
-      <Text style={styles.cardTitle}>{t('profile.policies')}</Text>
-      <Text style={styles.policySummary}>
-        {t('policy.summary', { total: items.length, signed })}
-      </Text>
-      {items.slice(0, 6).map((p, i) => (
-        <Pressable
-          key={p.id}
-          onPress={() => onOpen(p)}
-          accessibilityRole="button"
-          accessibilityLabel={p.title}
-          accessibilityHint={t('policy.tapToRead')}
-          style={({ pressed }) => [
-            styles.row,
-            i === Math.min(items.length, 6) - 1 && styles.rowLast,
-            pressed && { opacity: 0.6 },
-          ]}
-        >
-          <Ionicons
-            name={p.acknowledgedByMe ? 'checkmark-circle' : 'ellipse-outline'}
-            size={16}
-            color={p.acknowledgedByMe ? colors.success : colors.slate300}
-            style={styles.rowIcon}
-          />
-          <Text style={styles.rowLabel} numberOfLines={1}>
-            {p.title}
-          </Text>
-          <Text style={styles.rowValue}>v{p.version}</Text>
-          <Ionicons name="chevron-forward" size={14} color={colors.slate300} style={{ marginLeft: 6 }} />
-        </Pressable>
-      ))}
-    </Card>
-  );
+function chipTone(tone: Summary['tone'], colors: ColorScheme) {
+  switch (tone) {
+    case 'success': return { bg: colors.successBg, fg: colors.successText };
+    case 'warning': return { bg: colors.warningBg, fg: colors.warningText };
+    case 'danger': return { bg: colors.dangerBg, fg: colors.dangerText };
+    default: return { bg: colors.slate100, fg: colors.slate600 };
+  }
 }
 
 function makeStyles(colors: ColorScheme) {
+  const cardShadow = colors.scheme === 'dark'
+    ? { shadowOpacity: 0, elevation: 0, borderWidth: 1, borderColor: colors.slate200 }
+    : { shadowOpacity: 0.06, elevation: 2, borderWidth: 0 };
   return StyleSheet.create({
     flex: { flex: 1, backgroundColor: colors.bgLight },
     header: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 4 },
     headerTitle: { fontSize: 21, fontWeight: '800', color: colors.textLight, letterSpacing: -0.3 },
-    content: { padding: 20, paddingTop: 12, gap: 16 },
+    content: { padding: 20, paddingTop: 12, gap: 18, paddingBottom: 32 },
+    pressed: { opacity: 0.6 },
 
     heroCard: { alignItems: 'center', paddingVertical: 8 },
     name: { fontSize: 16.5, fontWeight: '800', color: colors.textLight },
@@ -543,25 +326,36 @@ function makeStyles(colors: ColorScheme) {
     pillBrand: { backgroundColor: colors.brand[50] },
     pillText: { fontSize: 11, fontWeight: '700', color: colors.slate600 },
     pillTextBrand: { color: colors.brand[700] },
+    posting: { marginTop: 10, fontSize: 11.5, fontWeight: '600', color: colors.slate500 },
 
-    cardTitle: { fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4, color: colors.slate500, marginBottom: 4 },
-    row: {
-      flexDirection: 'row', alignItems: 'center', paddingVertical: 10,
+    attention: {
+      flexDirection: 'row', alignItems: 'center', gap: 10,
+      backgroundColor: colors.warningBg, borderRadius: radii.lg, paddingHorizontal: 14, paddingVertical: 12,
+    },
+    attentionText: { flex: 1, fontSize: 12.5, fontWeight: '700', color: colors.warningText },
+
+    groupTitle: { fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4, color: colors.slate500, marginBottom: 8, marginLeft: 4 },
+    group: {
+      backgroundColor: colors.surface, borderRadius: radii.lg, paddingHorizontal: 14,
+      shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowRadius: 3, ...cardShadow,
+    },
+    menuRow: {
+      flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 13,
       borderBottomWidth: 1, borderBottomColor: colors.slate100,
     },
-    rowLast: { borderBottomWidth: 0 },
-    rowIcon: { marginRight: 8 },
-    rowChevron: { marginLeft: 6 },
-    kycAction: { flexDirection: 'row', alignItems: 'center', gap: 1, marginLeft: 8 },
-    kycActionText: { fontSize: 11, fontWeight: '800', color: colors.brand[700] },
-    rowPressed: { opacity: 0.6 },
-    rowLabel: { flex: 1, fontSize: 11, fontWeight: '600', color: colors.slate500 },
-    policySummary: { fontSize: 11, color: colors.slate400, fontWeight: '600', marginBottom: 6 },
-    rowValue: { fontSize: 11.5, fontWeight: '700', color: colors.textLight },
-
-    kycMuted: { fontSize: 11, color: colors.slate400, fontWeight: '600', paddingVertical: 8 },
-    kycDetail: { fontSize: 11, color: colors.slate400, fontWeight: '600', marginRight: 8 },
-    kycChip: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: radii.pill },
-    kycChipText: { fontSize: 11, fontWeight: '800' },
+    menuRowLast: { borderBottomWidth: 0 },
+    menuIcon: {
+      width: 32, height: 32, borderRadius: radii.md, backgroundColor: colors.brand[50],
+      alignItems: 'center', justifyContent: 'center',
+    },
+    menuIconDanger: { backgroundColor: colors.dangerBg },
+    menuText: { flex: 1, minWidth: 0 },
+    menuLabel: { fontSize: 13.5, fontWeight: '700', color: colors.textLight },
+    menuLabelDanger: { color: colors.dangerText },
+    menuHint: { fontSize: 11, fontWeight: '600', color: colors.slate400, marginTop: 2 },
+    menuValue: { fontSize: 12, fontWeight: '600', color: colors.slate500, maxWidth: '40%' },
+    chip: { paddingHorizontal: 9, paddingVertical: 4, borderRadius: radii.pill, maxWidth: '45%' },
+    chipText: { fontSize: 11, fontWeight: '800' },
+    chevron: { marginLeft: -4 },
   });
 }

@@ -53,6 +53,16 @@ export type HomeStackParamList = {
 
 export type ProfileStackParamList = {
   ProfileHome: undefined;
+  // One screen per topic, reached from the hub's menu. Each holds the card
+  // (or two) that used to sit on the long Profile page.
+  WorkDetails: undefined;
+  Identity: undefined;
+  Documents: undefined;
+  Personal: undefined;
+  Kit: undefined;
+  Policies: undefined;
+  Preferences: undefined;
+  Account: undefined;
   BankVerify: undefined;
   // The same three screens KycStack hosts, by the same route names. A check
   // that is still pending has to be completable from Profile, and once the
