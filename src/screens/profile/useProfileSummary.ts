@@ -22,6 +22,11 @@ import { useAuthStore } from '../../stores/authStore';
  */
 export type SummaryTone = 'success' | 'warning' | 'danger' | 'slate';
 export type Summary = { tone: SummaryTone; count?: number; state: string };
+export type SetupTask = {
+  key: 'identity' | 'documents' | 'policies' | 'kit';
+  route: 'Identity' | 'Documents' | 'Policies' | 'Kit';
+  done: boolean;
+};
 
 /**
  * The documents a person is expected to have. `other` is a catch-all and
@@ -100,13 +105,21 @@ export function useProfileSummary() {
 
     const languageLabel = LANGUAGES.find((l) => l.code === language)?.native ?? language;
 
-    /** Everything that needs the person, for the strip at the top. */
-    const attention =
-      (identity && identity.tone !== 'success' ? 1 : 0) +
-      (documents && documents.tone !== 'success' && documents.state !== 'inReview' ? 1 : 0) +
-      (policy && policy.tone !== 'success' ? 1 : 0) +
-      (kit && kit.state === 'chooseSize' ? 1 : 0);
+    /**
+     * The set-up checklist: every task that applies to this person, and
+     * whether it is done. A fixed list, so "2 of 4 done" means the same
+     * thing tomorrow as today -- a count that only said "3 things" gave
+     * nobody a sense of a list shrinking, just a number changing. Each open
+     * task carries where it is finished, so the strip can name it and take
+     * the person straight there.
+     */
+    const tasks: SetupTask[] = [];
+    if (identity) tasks.push({ key: 'identity', route: 'Identity', done: identity.tone === 'success' });
+    if (documents) tasks.push({ key: 'documents', route: 'Documents', done: documents.tone === 'success' || documents.state === 'inReview' });
+    if (policy) tasks.push({ key: 'policies', route: 'Policies', done: policy.tone === 'success' });
+    if (kit) tasks.push({ key: 'kit', route: 'Kit', done: kit.state !== 'chooseSize' });
+    const attention = tasks.filter((t) => !t.done).length;
 
-    return { worksAtSite, identity, documents, policy, kit, languageLabel, attention, shirtSize: profile?.shirtSize ?? null };
+    return { worksAtSite, identity, documents, policy, kit, languageLabel, tasks, attention, shirtSize: profile?.shirtSize ?? null };
   }, [worksAtSite, kyc.data, docsEnabled, docs.data, policies.data, profile, language]);
 }

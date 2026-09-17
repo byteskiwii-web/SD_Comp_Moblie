@@ -13,7 +13,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { useT, type TKey } from '../../i18n';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { BuildStamp } from '../../components/BuildStamp';
-import { useProfileSummary, type Summary } from './useProfileSummary';
+import { useProfileSummary, type SetupTask, type Summary } from './useProfileSummary';
 import type { ProfileStackParamList } from '../../navigation/types';
 
 const ROLE_LABEL: Record<string, string> = {
@@ -81,14 +81,20 @@ export function ProfileScreen() {
 
   const go = (route: Route) => navigation.navigate(route);
 
-  /** The first row that needs the person — where the attention strip goes. */
-  const firstAttention: Route | null =
-    summary.identity && summary.identity.tone !== 'success' ? 'Identity'
-    : summary.documents && summary.documents.tone === 'danger' ? 'Documents'
-    : summary.documents && summary.documents.state === 'missing' ? 'Documents'
-    : summary.policy && summary.policy.tone !== 'success' ? 'Policies'
-    : summary.kit && summary.kit.state === 'chooseSize' ? 'Kit'
-    : null;
+  /** What each open set-up task says on the strip. */
+  const taskLine = (task: SetupTask): string => {
+    switch (task.key) {
+      case 'identity': return t('profile.task.identity');
+      case 'documents': return summary.documents?.count
+        ? t('profile.task.documents', { count: summary.documents.count })
+        : t('profile.task.documentsFix');
+      case 'policies': return t('profile.task.policies', { count: summary.policy?.count ?? 0 });
+      case 'kit': return t('profile.task.kit');
+      default: return '';
+    }
+  };
+  const openTasks = summary.tasks.filter((task) => !task.done);
+  const doneCount = summary.tasks.length - openTasks.length;
 
   const roleLabel = employee?.role
     ? ROLE_LABEL[employee.role] ? t(ROLE_LABEL[employee.role] as TKey) : employee.role
@@ -135,22 +141,34 @@ export function ProfileScreen() {
           ) : null}
         </TourTarget>
 
-        {/* Only while something needs the person. A strip that is always
-            there is wallpaper by the second day. */}
-        {summary.attention > 0 && firstAttention ? (
-          <Pressable
-            onPress={() => go(firstAttention)}
-            style={({ pressed }) => [styles.attention, pressed && styles.pressed]}
-            accessibilityRole="button"
-          >
-            <Ionicons name="alert-circle" size={18} color={colors.warningText} />
-            <Text style={styles.attentionText}>
-              {summary.attention === 1
-                ? t('profile.attentionOne')
-                : t('profile.attentionMany', { count: summary.attention })}
-            </Text>
-            <Ionicons name="chevron-forward" size={16} color={colors.warningText} />
-          </Pressable>
+        {/* THE SET-UP CHECKLIST. Only while something is open -- a strip that
+            is always there is wallpaper by the second day. It names each
+            task and takes the person straight to it, and the count is over
+            a fixed list, so finishing one visibly moves it: "1 of 4 done",
+            then "2 of 4". It used to say "3 things need your attention" and
+            open one page, which read as being sent somewhere at random. */}
+        {openTasks.length > 0 ? (
+          <View style={styles.attention}>
+            <View style={styles.attentionHead}>
+              <Ionicons name="alert-circle" size={18} color={colors.warningText} />
+              <Text style={styles.attentionTitle}>{t('profile.setupTitle')}</Text>
+              <Text style={styles.attentionCount}>
+                {t('profile.setupProgress', { done: doneCount, total: summary.tasks.length })}
+              </Text>
+            </View>
+            {openTasks.map((task) => (
+              <Pressable
+                key={task.key}
+                onPress={() => go(task.route)}
+                style={({ pressed }) => [styles.attentionRow, pressed && styles.pressed]}
+                accessibilityRole="button"
+              >
+                <View style={styles.attentionDot} />
+                <Text style={styles.attentionText} numberOfLines={1}>{taskLine(task)}</Text>
+                <Ionicons name="chevron-forward" size={15} color={colors.warningText} />
+              </Pressable>
+            ))}
+          </View>
         ) : null}
 
         <Group title={t('profile.group.work')}>
@@ -333,11 +351,13 @@ function makeStyles(colors: ColorScheme) {
     pillTextBrand: { color: colors.brand[700] },
     posting: { marginTop: 10, fontSize: 11.5, fontWeight: '600', color: colors.slate500 },
 
-    attention: {
-      flexDirection: 'row', alignItems: 'center', gap: 10,
-      backgroundColor: colors.warningBg, borderRadius: radii.lg, paddingHorizontal: 14, paddingVertical: 12,
-    },
-    attentionText: { flex: 1, fontSize: 12.5, fontWeight: '700', color: colors.warningText },
+    attention: { backgroundColor: colors.warningBg, borderRadius: radii.lg, paddingHorizontal: 14, paddingVertical: 10 },
+    attentionHead: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 4 },
+    attentionTitle: { flex: 1, fontSize: 12.5, fontWeight: '800', color: colors.warningText },
+    attentionCount: { fontSize: 11.5, fontWeight: '800', color: colors.warningText, opacity: 0.85 },
+    attentionRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, paddingLeft: 4 },
+    attentionDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.warningText },
+    attentionText: { flex: 1, fontSize: 12.5, fontWeight: '700', color: colors.textLight },
 
     groupTitle: { fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4, color: colors.slate500, marginBottom: 8, marginLeft: 4 },
     group: {
