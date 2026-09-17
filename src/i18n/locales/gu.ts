@@ -775,4 +775,9 @@ export const gu: Catalogue = {
   'setPassword.tooShort': 'નવા પાસવર્ડમાં ઓછામાં ઓછા {min} અક્ષર જોઈએ.',
   'setPassword.sameAsIssued': 'અપાયેલા પાસવર્ડથી અલગ કંઈક પસંદ કરો.',
   'setPassword.mismatch': 'બંને નવા પાસવર્ડ મળતા નથી.',
+  'build.checking': 'અપડેટ તપાસી રહ્યા છીએ…',
+  'build.upToDate': 'તમારી પાસે નવીનતમ આવૃત્તિ છે.',
+  'build.applying': 'અપડેટ મળ્યું. ફરી શરૂ થઈ રહ્યું છે…',
+  'build.checkFailed': 'અપડેટ તપાસી શકાયું નહીં.',
+  'build.tapToUpdate': 'અપડેટ માટે ટૅપ કરો',
 } as const;

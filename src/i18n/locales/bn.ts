@@ -775,4 +775,9 @@ export const bn: Catalogue = {
   'setPassword.tooShort': 'নতুন পাসওয়ার্ডে কমপক্ষে {min} অক্ষর লাগবে।',
   'setPassword.sameAsIssued': 'দেওয়া পাসওয়ার্ড থেকে আলাদা কিছু বেছে নিন।',
   'setPassword.mismatch': 'দুটি নতুন পাসওয়ার্ড মিলছে না।',
+  'build.checking': 'আপডেট দেখা হচ্ছে…',
+  'build.upToDate': 'আপনার কাছে সর্বশেষ সংস্করণ আছে।',
+  'build.applying': 'আপডেট পাওয়া গেছে। আবার চালু হচ্ছে…',
+  'build.checkFailed': 'আপডেট দেখা গেল না।',
+  'build.tapToUpdate': 'আপডেট দেখতে ট্যাপ করুন',
 } as const;

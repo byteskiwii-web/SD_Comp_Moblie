@@ -12,6 +12,7 @@ import { useThemeStore } from '../../stores/themeStore';
 import { useAuthStore } from '../../stores/authStore';
 import { useT, type TKey } from '../../i18n';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { BuildStamp } from '../../components/BuildStamp';
 import { useProfileSummary, type Summary } from './useProfileSummary';
 import type { ProfileStackParamList } from '../../navigation/types';
 
@@ -208,6 +209,10 @@ export function ProfileScreen() {
           <MenuRow icon="lock-closed-outline" label={t('profile.menu.account')} hint={t('profile.menu.accountHint')} onPress={() => go('Account')} />
           <MenuRow icon="log-out-outline" label={t('common.signOut')} danger onPress={() => setSignOutOpen(true)} last />
         </Group>
+
+        {/* Which code this phone is running, and on an installed app a way
+            to pull the latest now. See BuildStamp. */}
+        <BuildStamp />
       </ScrollView>
     </SafeAreaView>
   );

@@ -792,4 +792,9 @@ export const hi: Catalogue = {
   'setPassword.tooShort': 'नए पासवर्ड में कम से कम {min} अक्षर चाहिए।',
   'setPassword.sameAsIssued': 'दिए गए पासवर्ड से अलग कुछ चुनें।',
   'setPassword.mismatch': 'दोनों नए पासवर्ड मेल नहीं खाते।',
+  'build.checking': 'अपडेट देखा जा रहा है…',
+  'build.upToDate': 'आपके पास नया संस्करण है।',
+  'build.applying': 'अपडेट मिला। ऐप फिर से शुरू हो रहा है…',
+  'build.checkFailed': 'अपडेट नहीं देख पाए।',
+  'build.tapToUpdate': 'अपडेट देखने के लिए टैप करें',
 };

@@ -775,4 +775,9 @@ export const pa: Catalogue = {
   'setPassword.tooShort': 'ਨਵੇਂ ਪਾਸਵਰਡ ਵਿੱਚ ਘੱਟੋ-ਘੱਟ {min} ਅੱਖਰ ਚਾਹੀਦੇ ਹਨ।',
   'setPassword.sameAsIssued': 'ਦਿੱਤੇ ਪਾਸਵਰਡ ਤੋਂ ਵੱਖਰਾ ਕੁਝ ਚੁਣੋ।',
   'setPassword.mismatch': 'ਦੋਵੇਂ ਨਵੇਂ ਪਾਸਵਰਡ ਮੇਲ ਨਹੀਂ ਖਾਂਦੇ।',
+  'build.checking': 'ਅੱਪਡੇਟ ਦੇਖਿਆ ਜਾ ਰਿਹਾ ਹੈ…',
+  'build.upToDate': 'ਤੁਹਾਡੇ ਕੋਲ ਨਵਾਂ ਸੰਸਕਰਣ ਹੈ।',
+  'build.applying': 'ਅੱਪਡੇਟ ਮਿਲਿਆ। ਮੁੜ ਸ਼ੁਰੂ ਹੋ ਰਿਹਾ ਹੈ…',
+  'build.checkFailed': 'ਅੱਪਡੇਟ ਨਹੀਂ ਦੇਖ ਸਕੇ।',
+  'build.tapToUpdate': 'ਅੱਪਡੇਟ ਲਈ ਟੈਪ ਕਰੋ',
 } as const;

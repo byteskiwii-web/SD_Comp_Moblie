@@ -775,4 +775,9 @@ export const mr: Catalogue = {
   'setPassword.tooShort': 'नव्या पासवर्डमध्ये किमान {min} अक्षरे हवीत.',
   'setPassword.sameAsIssued': 'दिलेल्या पासवर्डपेक्षा वेगळे काहीतरी निवडा.',
   'setPassword.mismatch': 'दोन्ही नवे पासवर्ड जुळत नाहीत.',
+  'build.checking': 'अपडेट तपासत आहे…',
+  'build.upToDate': 'तुमच्याकडे नवीनतम आवृत्ती आहे.',
+  'build.applying': 'अपडेट मिळाले. पुन्हा सुरू होत आहे…',
+  'build.checkFailed': 'अपडेट तपासता आले नाही.',
+  'build.tapToUpdate': 'अपडेटसाठी टॅप करा',
 } as const;

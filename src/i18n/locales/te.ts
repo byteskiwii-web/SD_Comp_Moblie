@@ -785,4 +785,9 @@ export const te: Catalogue = {
   'setPassword.tooShort': 'కొత్త పాస్\u200cవర్డ్\u200cకు కనీసం {min} అక్షరాలు కావాలి.',
   'setPassword.sameAsIssued': 'ఇచ్చిన పాస్\u200cవర్డ్ కంటే వేరేది ఎంచుకోండి.',
   'setPassword.mismatch': 'రెండు కొత్త పాస్\u200cవర్డ్\u200cలు సరిపోలడం లేదు.',
+  'build.checking': 'అప్‌డేట్ కోసం చూస్తోంది…',
+  'build.upToDate': 'మీ వద్ద తాజా వెర్షన్ ఉంది.',
+  'build.applying': 'అప్‌డేట్ దొరికింది. మళ్లీ ప్రారంభిస్తోంది…',
+  'build.checkFailed': 'అప్‌డేట్ కోసం చూడలేకపోయాం.',
+  'build.tapToUpdate': 'అప్‌డేట్‌ల కోసం ట్యాప్ చేయండి',
 };

@@ -803,4 +803,9 @@ export const en = {
   'setPassword.tooShort': 'Your new password needs at least {min} characters.',
   'setPassword.sameAsIssued': 'Choose something different from the password you were given.',
   'setPassword.mismatch': 'The two new passwords do not match.',
+  'build.checking': 'Checking for an update…',
+  'build.upToDate': 'You have the latest version.',
+  'build.applying': 'Update found. Restarting…',
+  'build.checkFailed': 'Could not check for an update.',
+  'build.tapToUpdate': 'Tap to check for updates',
 } as const;

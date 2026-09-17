@@ -785,4 +785,9 @@ export const ml: Catalogue = {
   'setPassword.tooShort': 'പുതിയ പാസ്\u200cവേഡിന് കുറഞ്ഞത് {min} അക്ഷരങ്ങൾ വേണം.',
   'setPassword.sameAsIssued': 'നൽകിയ പാസ്\u200cവേഡിൽ നിന്ന് വ്യത്യസ്തമായത് തിരഞ്ഞെടുക്കുക.',
   'setPassword.mismatch': 'രണ്ട് പുതിയ പാസ്\u200cവേഡുകളും ഒത്തുപോകുന്നില്ല.',
+  'build.checking': 'അപ്‌ഡേറ്റ് പരിശോധിക്കുന്നു…',
+  'build.upToDate': 'നിങ്ങളുടെ പക്കൽ ഏറ്റവും പുതിയ പതിപ്പാണ്.',
+  'build.applying': 'അപ്‌ഡേറ്റ് കിട്ടി. വീണ്ടും തുടങ്ങുന്നു…',
+  'build.checkFailed': 'അപ്‌ഡേറ്റ് പരിശോധിക്കാനായില്ല.',
+  'build.tapToUpdate': 'അപ്‌ഡേറ്റിനായി ടാപ്പ് ചെയ്യുക',
 };

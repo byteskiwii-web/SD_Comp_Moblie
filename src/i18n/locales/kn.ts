@@ -785,4 +785,9 @@ export const kn: Catalogue = {
   'setPassword.tooShort': 'ಹೊಸ ಪಾಸ್\u200cವರ್ಡ್\u200cಗೆ ಕನಿಷ್ಠ {min} ಅಕ್ಷರಗಳು ಬೇಕು.',
   'setPassword.sameAsIssued': 'ನೀಡಿದ ಪಾಸ್\u200cವರ್ಡ್\u200cಗಿಂತ ಬೇರೆಯದನ್ನು ಆಯ್ಕೆಮಾಡಿ.',
   'setPassword.mismatch': 'ಎರಡು ಹೊಸ ಪಾಸ್\u200cವರ್ಡ್\u200cಗಳು ಹೊಂದುತ್ತಿಲ್ಲ.',
+  'build.checking': 'ಅಪ್‌ಡೇಟ್ ಪರಿಶೀಲಿಸಲಾಗುತ್ತಿದೆ…',
+  'build.upToDate': 'ನಿಮ್ಮಲ್ಲಿ ಇತ್ತೀಚಿನ ಆವೃತ್ತಿ ಇದೆ.',
+  'build.applying': 'ಅಪ್‌ಡೇಟ್ ಸಿಕ್ಕಿದೆ. ಮರುಪ್ರಾರಂಭಿಸಲಾಗುತ್ತಿದೆ…',
+  'build.checkFailed': 'ಅಪ್‌ಡೇಟ್ ಪರಿಶೀಲಿಸಲು ಆಗಲಿಲ್ಲ.',
+  'build.tapToUpdate': 'ಅಪ್‌ಡೇಟ್‌ಗಾಗಿ ಟ್ಯಾಪ್ ಮಾಡಿ',
 };

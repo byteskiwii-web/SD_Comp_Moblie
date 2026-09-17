@@ -156,9 +156,16 @@ async function fetchPhoto(employeeId: string, version: string | null | undefined
   }
 
   // Older copies of this person's picture, whatever version they were.
+  //
+  // Compared by NAME, never by uri. iOS lists a directory through
+  // contentsOfDirectory, which can hand back the same file under another
+  // spelling of its path (/private/var for /var) -- so a uri comparison said
+  // the file just written was "some other copy" and deleted it, and the
+  // picture failed to draw the moment it was saved. Names are unique in this
+  // directory and come back exactly as written.
   const idPrefix = employeeId.replace(/[^\w-]/g, '_') + '-';
   for (const old of filesStartingWith(dir, idPrefix)) {
-    if (old.uri !== dest.uri) {
+    if (old.name !== dest.name) {
       try { old.delete(); } catch { /* in use or gone; the next pass gets it */ }
     }
   }

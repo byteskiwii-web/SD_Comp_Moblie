@@ -119,8 +119,29 @@ module.exports = ({ config }) => {
     ? { ...config.android, googleServicesFile: googleServices }
     : config.android;
 
+  /**
+   * WHICH COMMIT THIS IS, for the build stamp at the bottom of Profile.
+   *
+   * Evaluated wherever the config is: at EAS build (which provides the hash,
+   * and may not have a .git), at eas update publish, and when the dev server
+   * serves a manifest to Expo Go. Null rather than a throw when there is no
+   * git to ask -- a missing stamp must never be a failed build.
+   */
+  const buildCommit = (() => {
+    if (process.env.EAS_BUILD_GIT_COMMIT_HASH) return process.env.EAS_BUILD_GIT_COMMIT_HASH.slice(0, 7);
+    try {
+      return require('child_process')
+        .execSync('git rev-parse --short HEAD', { cwd: __dirname, stdio: ['ignore', 'pipe', 'ignore'] })
+        .toString()
+        .trim();
+    } catch {
+      return null;
+    }
+  })();
+
   return {
     ...config,
+    extra: { ...config.extra, buildCommit },
     plugins,
     android,
     updates: {
