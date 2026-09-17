@@ -58,11 +58,49 @@ async function pickImage(from: 'camera' | 'library'): Promise<PickedFile | null>
 
   if (res.canceled || !res.assets?.length) return null;
   const a = res.assets[0];
+  const shrunk = await shrinkForAvatar(a.uri, a.width, a.height);
+  if (shrunk) {
+    return { uri: shrunk, name: `profile-${Date.now()}.jpg`, mimeType: 'image/jpeg' };
+  }
   return {
     uri: a.uri,
     name: a.fileName ?? `profile-${Date.now()}.jpg`,
     mimeType: a.mimeType ?? 'image/jpeg',
   };
+}
+
+/**
+ * THE LARGEST PICTURE ANY SCREEN NEEDS.
+ *
+ * The picker hands back the camera's full resolution, and a square crop from
+ * a 50 MP Android camera is roughly 6000 x 6000. Android would not draw that
+ * at all -- "Saved, but it could not be displayed" -- and every team list
+ * that shows the face downloaded all of it to paint a 34 px circle.
+ *
+ * 1024 px is several times the largest avatar on the densest screen.
+ *
+ * Loaded lazily and allowed to fail: expo-image-manipulator is in Expo Go,
+ * but an APK built before it was added does not have the native half, and
+ * requiring it there throws. Such a build uploads the original, as before;
+ * the display side copes with that on its own (resizeMethod on the Image).
+ */
+const AVATAR_MAX_PX = 1024;
+
+async function shrinkForAvatar(uri: string, width?: number, height?: number): Promise<string | null> {
+  // The picker reports 0 when the system did not say; only skip when it did.
+  if (width && height && Math.max(width, height) <= AVATAR_MAX_PX) return null;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { ImageManipulator, SaveFormat } = require('expo-image-manipulator') as typeof import('expo-image-manipulator');
+    const context = ImageManipulator.manipulate(uri);
+    context.resize((width ?? 0) >= (height ?? 0) ? { width: AVATAR_MAX_PX } : { height: AVATAR_MAX_PX });
+    const image = await context.renderAsync();
+    const saved = await image.saveAsync({ format: SaveFormat.JPEG, compress: 0.82 });
+    return saved.uri;
+  } catch (err) {
+    console.warn('[profile photo] could not shrink the picture; uploading the original', err);
+    return null;
+  }
 }
 
 export function ProfilePhoto() {
@@ -178,6 +216,11 @@ export function ProfilePhoto() {
               headers: token ? { Authorization: `Bearer ${token}` } : undefined,
             }}
             style={styles.image}
+        // Android decodes a remote image at full size unless told otherwise,
+        // and refuses to draw a bitmap that large: a square crop from a 50 MP
+        // camera is ~150 MB. "resize" samples it down to this view first.
+        // Android-only; iOS ignores it.
+        resizeMethod="resize"
             onError={async () => {
               setFailed(true);
               /*
@@ -195,8 +238,14 @@ export function ProfilePhoto() {
                 // wrong", which is the one answer that identifies nothing. The
                 // success path returning unparsed bytes does not matter here --
                 // this request exists only to learn why the failure happened.
-                await apiClient.get(`/users/${encodeURIComponent(employee.id)}/photo`);
-                setPhotoError(tr('profile.photoUnreadable'));
+                const res = await apiClient.get(`/users/${encodeURIComponent(employee.id)}/photo`);
+                // The server answered, so the picture itself is the problem.
+                // Type and rough size say which way: a huge JPEG, or something
+                // that is not an image at all.
+                const type = String(res.headers?.['content-type'] ?? 'unknown type');
+                const length = typeof res.data === 'string' ? res.data.length : 0;
+                const size = length ? ', ' + (length / (1024 * 1024)).toFixed(1) + ' MB' : '';
+                setPhotoError(tr('profile.photoUnreadable') + ' (' + type + size + ')');
               } catch (err) {
                 // The STATUS is the diagnostic: 403 is the guard, 404 is a record
                 // with no photo on it, 5xx is the storage behind it. The message

@@ -40,6 +40,11 @@ export function AvatarContent({ initialsStyle }: { initialsStyle: StyleProp<Text
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       }}
       style={StyleSheet.absoluteFill}
+      // Android decodes a remote image at full size unless told otherwise,
+      // and refuses to draw a bitmap that large: a square crop from a 50 MP
+      // camera is ~150 MB. "resize" samples it down to this view first.
+      // Android-only; iOS ignores it.
+      resizeMethod="resize"
       onError={() => setFailed(true)}
       accessibilityIgnoresInvertColors
     />
