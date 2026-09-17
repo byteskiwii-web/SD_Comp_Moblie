@@ -1,15 +1,15 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ActionSheetIOS, Alert, Image, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ColorScheme } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
 import { useAuthStore } from '../../stores/authStore';
-import axios from 'axios';
-import { apiClient, getApiErrorMessage } from '../../api/client';
+import { getApiErrorMessage } from '../../api/client';
 import { profilePhotoUrl, removeProfilePhoto, uploadProfilePhoto } from '../../api/photo.api';
 import type { PickedFile } from '../../api/documents.api';
 import { t as tr, useT } from '../../i18n';
+import { forgetProfilePhoto, useProfilePhotoFile } from '../../components/profilePhotoFile';
 
 /**
  * The avatar, and the way to change it.
@@ -139,6 +139,7 @@ export function ProfilePhoto() {
     onSuccess: async () => {
       setFailed(false);
       setPhotoError(null);
+      forgetProfilePhoto(employee!.id);
       await refreshProfile();
       queryClient.invalidateQueries({ queryKey: ['employee'] });
       // The server took the file. If the record still says there is no photo,
@@ -155,6 +156,8 @@ export function ProfilePhoto() {
     mutationFn: () => removeProfilePhoto(employee!.id),
     onSuccess: async () => {
       setFailed(false);
+      setPhotoError(null);
+      forgetProfilePhoto(employee!.id);
       await refreshProfile();
     },
     onError: (err) => Alert.alert(t('profile.photoFailed'), getApiErrorMessage(err)),
@@ -165,22 +168,48 @@ export function ProfilePhoto() {
     if (file) upload.mutate(file);
   };
 
-  const hasPhoto = Boolean(profile?.hasPhoto) && !failed;
+  /*
+   * On file vs. drawable. "Remove photo" follows the first: a picture that
+   * will not display is exactly the one somebody wants to take down, and
+   * hiding the option because it failed left no way to do that.
+   */
+  const photoOnFile = Boolean(profile?.hasPhoto);
+  const photo = useProfilePhotoFile(employee?.id, profile?.photoUpdatedAt ?? null, photoOnFile);
+  const hasPhoto = photoOnFile && !failed;
+
+  // A new version is a fresh start.
+  useEffect(() => {
+    setFailed(false);
+  }, [profile?.photoUpdatedAt]);
+
+  /*
+   * WHY IT IS NOT SHOWING, NOW FROM THE DOWNLOAD ITSELF.
+   *
+   * The local copy is fetched by the app, so the reason is known first-hand
+   * instead of being reconstructed with a second request: the HTTP status for
+   * a refusal, or what was wrong with the bytes.
+   */
+  useEffect(() => {
+    if (!photoOnFile || !photo.error || photo.useRemote) return;
+    setPhotoError(
+      tr('profile.photoUnreadable') + ' (' + (photo.status ? 'HTTP ' + photo.status : photo.error) + ')'
+    );
+  }, [photoOnFile, photo.error, photo.status, photo.useRemote]);
   const busy = upload.isPending || remove.isPending;
 
   const choose = () => {
     if (busy || !employee) return;
     const options = [t('profile.photoCamera'), t('profile.photoLibrary')];
-    if (hasPhoto) options.push(t('profile.photoRemove'));
+    if (photoOnFile) options.push(t('profile.photoRemove'));
     options.push(t('common.cancel'));
 
     const cancelIndex = options.length - 1;
-    const destructiveIndex = hasPhoto ? 2 : undefined;
+    const destructiveIndex = photoOnFile ? 2 : undefined;
 
     const act = (i: number) => {
       if (i === 0) void run('camera');
       else if (i === 1) void run('library');
-      else if (hasPhoto && i === 2) remove.mutate();
+      else if (photoOnFile && i === 2) remove.mutate();
     };
 
     if (Platform.OS === 'ios') {
@@ -195,7 +224,7 @@ export function ProfilePhoto() {
     Alert.alert(t('profile.photoTitle'), undefined, [
       { text: options[0], onPress: () => void run('camera') },
       { text: options[1], onPress: () => void run('library') },
-      ...(hasPhoto ? [{ text: options[2], style: 'destructive' as const, onPress: () => remove.mutate() }] : []),
+      ...(photoOnFile ? [{ text: options[2], style: 'destructive' as const, onPress: () => remove.mutate() }] : []),
       { text: t('common.cancel'), style: 'cancel' as const },
     ]);
   };
@@ -209,50 +238,26 @@ export function ProfilePhoto() {
     >
       <View style={styles.avatarSlot}>
       <View style={styles.avatar}>
-        {hasPhoto && employee ? (
+        {hasPhoto && employee && (photo.uri || photo.useRemote) ? (
           <Image
-            source={{
-              uri: profilePhotoUrl(employee.id, profile?.photoUpdatedAt ?? null),
-              headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-            }}
+            source={
+              photo.uri
+                ? { uri: photo.uri }
+                : {
+                    // The local pipeline broke; the old remote load is the fallback.
+                    uri: profilePhotoUrl(employee.id, profile?.photoUpdatedAt ?? null),
+                    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+                  }
+            }
             style={styles.image}
-        // Android decodes a remote image at full size unless told otherwise,
-        // and refuses to draw a bitmap that large: a square crop from a 50 MP
-        // camera is ~150 MB. "resize" samples it down to this view first.
-        // Android-only; iOS ignores it.
-        resizeMethod="resize"
-            onError={async () => {
+            // Matters for the remote fallback: Android would otherwise decode
+            // it at full size and refuse to draw it. Android-only.
+            resizeMethod="resize"
+            onError={() => {
               setFailed(true);
-              /*
-               * Ask again WITH the session attached, purely to find out why.
-               * <Image> reports that it failed and never what the server
-               * said, so this is the only way to tell a refusal from a file
-               * that is there but unreadable -- and the difference decides
-               * who can fix it.
-               */
-              try {
-                // NOT responseType arraybuffer. That was the first attempt at this
-                // and it defeated itself: axios then hands back the ERROR body as
-                // an ArrayBuffer too, so getApiErrorMessage could not read the
-                // server message out of it and fell through to "Something went
-                // wrong", which is the one answer that identifies nothing. The
-                // success path returning unparsed bytes does not matter here --
-                // this request exists only to learn why the failure happened.
-                const res = await apiClient.get(`/users/${encodeURIComponent(employee.id)}/photo`);
-                // The server answered, so the picture itself is the problem.
-                // Type and rough size say which way: a huge JPEG, or something
-                // that is not an image at all.
-                const type = String(res.headers?.['content-type'] ?? 'unknown type');
-                const length = typeof res.data === 'string' ? res.data.length : 0;
-                const size = length ? ', ' + (length / (1024 * 1024)).toFixed(1) + ' MB' : '';
-                setPhotoError(tr('profile.photoUnreadable') + ' (' + type + size + ')');
-              } catch (err) {
-                // The STATUS is the diagnostic: 403 is the guard, 404 is a record
-                // with no photo on it, 5xx is the storage behind it. The message
-                // alone cannot separate those.
-                const status = axios.isAxiosError(err) ? err.response?.status : undefined;
-                setPhotoError(status ? getApiErrorMessage(err) + ' (' + status + ')' : getApiErrorMessage(err));
-              }
+              setPhotoError(
+                tr('profile.photoUnreadable') + (photo.uri ? ' (the local copy could not be drawn)' : '')
+              );
             }}
             accessibilityIgnoresInvertColors
           />
