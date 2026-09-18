@@ -13,6 +13,37 @@ function parseHHMMSS(t: string): { h: number; m: number; s: number } {
 }
 
 /**
+ * Cancel a reminder BY WHAT IT IS, not only by the id we filed it under.
+ *
+ * Reported from a real shift: clocked out at 5:22 PM, still got "Don't forget
+ * to clock out" at 8. The app knew he was off shift -- his own Home screen
+ * said so -- so the pending notification was one nothing could reach:
+ * cancelling by a fixed identifier only removes a reminder still filed under
+ * that identifier, and an OS that assigned its own, or a reminder left by an
+ * earlier build, survives every cancel this app makes and fires hours later.
+ *
+ * So the id is tried first (cheap, exact) and then every pending notification
+ * carrying this `kind` is swept. Reminders are the one class of notification
+ * where a stale one is worse than none: it tells somebody to do a thing they
+ * already did, which teaches them to ignore the next one.
+ */
+async function cancelByKind(kind: string, identifier: string): Promise<void> {
+  const Notifications = getNotifications();
+  if (!Notifications) return;
+  await Notifications.cancelScheduledNotificationAsync(identifier).catch(() => {});
+  try {
+    const pending = await Notifications.getAllScheduledNotificationsAsync();
+    await Promise.all(
+      pending
+        .filter((n: any) => n?.content?.data?.kind === kind)
+        .map((n: any) => Notifications.cancelScheduledNotificationAsync(n.identifier).catch(() => {}))
+    );
+  } catch {
+    // Listing is best-effort; the identifier cancel above already ran.
+  }
+}
+
+/**
  * Schedules (or reschedules) a single local reminder for shiftEnd, today.
  *
  * If shiftEnd has already passed today, rolls forward one day once -- this
@@ -24,7 +55,17 @@ function parseHHMMSS(t: string): { h: number; m: number; s: number } {
  * The fixed CLOCK_OUT_REMINDER_ID means only one of these is ever pending:
  * cancel-then-schedule leaves nothing to accumulate across repeated clock-ins.
  */
-export async function scheduleClockOutReminder(shiftEnd: string): Promise<void> {
+export async function scheduleClockOutReminder(
+  shiftEnd: string,
+  /**
+   * Checked again at the last moment, because everything between here and the
+   * scheduling call is awaited -- permission reads can show a system dialog
+   * and take as long as somebody takes to answer it. A shift that ended during
+   * that wait would otherwise get a reminder filed for it afterwards, which no
+   * later cancel is coming to remove.
+   */
+  isStillOnShift?: () => boolean
+): Promise<void> {
   const { h, m, s } = parseHHMMSS(shiftEnd);
   const now = new Date();
   let target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, s);
@@ -43,6 +84,7 @@ export async function scheduleClockOutReminder(shiftEnd: string): Promise<void> 
   }
 
   await cancelClockOutReminder();
+  if (isStillOnShift && !isStillOnShift()) return;
   await Notifications.scheduleNotificationAsync({
     identifier: CLOCK_OUT_REMINDER_ID,
     content: {
@@ -94,14 +136,11 @@ export async function scheduleBreakReminder(dueAt: Date): Promise<void> {
 }
 
 export async function cancelBreakReminder(): Promise<void> {
-  const Notifications = getNotifications();
-  if (!Notifications) return;
-  await Notifications.cancelScheduledNotificationAsync(BREAK_REMINDER_ID).catch(() => {});
+  await cancelByKind('break-reminder', BREAK_REMINDER_ID);
 }
+
 export async function cancelClockOutReminder(): Promise<void> {
-  const Notifications = getNotifications();
-  if (!Notifications) return;
-  await Notifications.cancelScheduledNotificationAsync(CLOCK_OUT_REMINDER_ID).catch(() => {});
+  await cancelByKind('clock-out-reminder', CLOCK_OUT_REMINDER_ID);
 }
 
 /**

@@ -29,7 +29,12 @@ export function useClockOutReminderEffect() {
 
   useEffect(() => {
     if (isClockedIn && shiftEnd) {
-      scheduleClockOutReminder(shiftEnd).catch((err) => console.warn('[useClockOutReminderEffect]', err));
+      // The guard reads the store live rather than closing over `isClockedIn`:
+      // the punch that ends the shift can land while this call is still
+      // awaiting a permission answer.
+      scheduleClockOutReminder(shiftEnd, () => useShiftStore.getState().isClockedIn).catch((err) =>
+        console.warn('[useClockOutReminderEffect]', err)
+      );
     } else if (!isClockedIn) {
       cancelClockOutReminder().catch(() => {});
     }
