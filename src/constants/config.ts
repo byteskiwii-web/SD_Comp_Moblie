@@ -4,6 +4,16 @@ export const API_V1 = `${API_BASE_URL}/api/v1`;
 
 export const OTP_LENGTH = 6;
 
+/**
+ * The holiday/festival calendar, hidden for this client.
+ *
+ * Off rather than deleted: the screen, its card and the backend's holiday
+ * feed all still work, and the calendar is expected back when the product is
+ * sold as SaaS to customers who want it. One flag, so turning it on is a
+ * one-line change rather than restoring deleted files.
+ */
+export const SHOW_FESTIVALS = false;
+
 // How often the shift-timer pings /attendance/location-check while clocked in.
 export const LOCATION_POLL_INTERVAL_MS = 12 * 60 * 1000; // 12 min (within the agreed 10-15 min window)
 

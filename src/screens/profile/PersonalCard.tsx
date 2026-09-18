@@ -8,6 +8,7 @@ import { getApiErrorMessage } from '../../api/client';
 import { useAuthStore } from '../../stores/authStore';
 import { GENDERS, updateMyProfile, type Gender } from '../../api/auth.api';
 import { useT, type TKey } from '../../i18n';
+import { formatDate } from '../../utils/datetime';
 
 /**
  * Personal details the employee maintains about themselves.
@@ -55,7 +56,15 @@ export function PersonalCard() {
     <Card>
       <Text style={styles.cardTitle}>{t('personal.title')}</Text>
 
-      <Text style={styles.label}>{t('personal.gender')}</Text>
+      {/* Read-only: date of birth is an identity fact HR owns, collected once
+          at onboarding and never edited from the phone -- the same rule gender
+          follows once it has been set. Shown because it was being collected
+          and then displayed nowhere, so nobody could check what was on file. */}
+      <Text style={styles.label}>{t('personal.dob')}</Text>
+      <Text style={styles.readOnly}>{formatDate(profile?.dateOfBirth ?? '')}</Text>
+      <Text style={styles.hint}>{t('personal.dobNote')}</Text>
+
+      <Text style={[styles.label, styles.labelSpaced]}>{t('personal.gender')}</Text>
       <View style={styles.options}>
         {GENDERS.map((g) => {
           const selected = current === g;
@@ -92,6 +101,8 @@ export function PersonalCard() {
 
 const makeStyles = (colors: ColorScheme) =>
   StyleSheet.create({
+    readOnly: { fontSize: 14, fontWeight: '700', color: colors.textLight, marginTop: 2 },
+    labelSpaced: { marginTop: 18 },
     cardTitle: {
       fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4,
       color: colors.slate500, marginBottom: 10,
