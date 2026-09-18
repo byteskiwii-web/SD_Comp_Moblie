@@ -36,6 +36,8 @@ export type DaySummary = {
   /** Any punch the server flagged as outside the fence. */
   hasOutsideFence: boolean;
   storeName: string | null;
+  /** Kept beside the name so the day can be labelled "Name (CODE)". */
+  storeCode: string | null;
 };
 
 const SHIFT_IN = 'clock-in';
@@ -129,6 +131,7 @@ export function summariseDay(date: string, dayMarks: AttendanceMark[], asOf?: Da
     openEnded,
     hasOutsideFence: marks.some((m) => m.inside_geofence === false),
     storeName: marks.find((m) => m.store_name)?.store_name ?? null,
+    storeCode: marks.find((m) => m.store_code)?.store_code ?? null,
   };
 }
 

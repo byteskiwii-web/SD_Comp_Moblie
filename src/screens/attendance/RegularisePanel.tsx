@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { storeLabel } from '../../utils/store';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Badge, Button, Card, TextField } from '../../components/ui';
@@ -382,7 +383,7 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
               </Text>
 
               <View style={styles.stampBox}>
-                <Text style={styles.stampBoxTitle}>{day.storeName ?? store.name}</Text>
+                <Text style={styles.stampBoxTitle}>{day.storeName ? storeLabel({ name: day.storeName, store_code: day.storeCode }) : storeLabel(store)}</Text>
                 {rows.map((row) => (
                   <View key={row.key} style={styles.stampRow}>
                     <Ionicons name="arrow-down-outline" size={15} color={colors.success} />

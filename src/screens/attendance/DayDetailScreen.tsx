@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { storeLabel } from '../../utils/store';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useQuery } from '@tanstack/react-query';
@@ -210,7 +211,7 @@ export function DayDetailScreen() {
             <Text style={styles.logsTitle}>{t('day.timeLogs')}</Text>
             {day.storeName && (
               <View style={styles.storeChip}>
-                <Text style={styles.storeChipText}>{day.storeName}</Text>
+                <Text style={styles.storeChipText}>{storeLabel({ name: day.storeName, store_code: day.storeCode })}</Text>
               </View>
             )}
             <View style={styles.logs}>

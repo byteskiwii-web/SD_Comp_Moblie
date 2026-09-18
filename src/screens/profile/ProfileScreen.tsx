@@ -5,6 +5,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import { ProfilePhoto } from './ProfilePhoto';
 import { TourScrollView, TourTarget } from '../../components/tour/TourTarget';
+import { storeLabel } from '../../utils/store';
 import { useTourStore } from '../../stores/tourStore';
 import { useShiftStore } from '../../stores/shiftStore';
 import { ColorScheme, radii } from '../../theme/tokens';
@@ -100,7 +101,7 @@ export function ProfileScreen() {
   const roleLabel = employee?.role
     ? ROLE_LABEL[employee.role] ? t(ROLE_LABEL[employee.role] as TKey) : employee.role
     : '—';
-  const posting = [store?.store_code, store?.name, profile?.shift?.name].filter(Boolean).join(' · ');
+  const posting = [storeLabel(store, ''), profile?.shift?.name].filter(Boolean).join(' · ');
 
   return (
     <SafeAreaView style={styles.flex} edges={['top']}>

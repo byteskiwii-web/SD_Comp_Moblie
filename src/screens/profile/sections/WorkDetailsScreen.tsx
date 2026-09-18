@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { storeLabel } from '../../../utils/store';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Card } from '../../../components/ui';
 import { DeptManagerCard } from '../DeptManagerCard';
@@ -33,7 +34,7 @@ export function WorkDetailsScreen() {
         <Text style={styles.cardTitle}>{t('profile.contact')}</Text>
         <Row icon="call-outline" label={t('common.phone')} value={employee?.phone ?? '—'} />
         <Row icon="mail-outline" label={t('common.email')} value={employee?.email ?? '—'} />
-        <Row icon="business-outline" label={t('profile.assignedSite')} value={store?.name ?? '—'} />
+        <Row icon="business-outline" label={t('profile.assignedSite')} value={storeLabel(store)} />
         <Row icon="pricetag-outline" label={t('profile.siteCode')} value={store?.store_code ?? employee?.store_code ?? '—'} />
         <Row
           icon="navigate-outline"
