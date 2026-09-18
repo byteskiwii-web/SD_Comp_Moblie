@@ -271,6 +271,14 @@ export type OnboardingStatus = {
   /** everything but HR's approval is done */
   selfComplete: boolean;
   steps: Record<OnboardingStep, boolean>;
+  /**
+   * The steps this deployment actually enforces. The four KYC rows drop out
+   * when the server has verification switched off -- nobody can complete a
+   * check whose routes are not mounted, so showing those rows would be four
+   * lines that never tick. Absent on a server older than this field, which is
+   * why every reader falls back to the full list.
+   */
+  required?: OnboardingStep[];
   missing: OnboardingStep[];
   approvalStatus: string | null;
   approvalRejectionReason: string | null;

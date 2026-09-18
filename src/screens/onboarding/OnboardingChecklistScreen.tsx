@@ -55,10 +55,17 @@ export function OnboardingChecklistScreen() {
   const ROUTE = React.useMemo(() => routesFor(kyc.data?.capabilities.combinedPanAadhaar ?? false), [kyc.data]);
 
   const steps = status?.steps;
-  const done = ORDER.filter((s) => steps?.[s]).length;
+  /* Only what the server is holding them to, in checklist order. A server with
+     verification switched off enforces profile and HR approval alone, and the
+     four KYC rows would otherwise sit here forever with no way to tick them. */
+  const rows = React.useMemo(
+    () => (status?.required ? ORDER.filter((s) => status.required!.includes(s)) : ORDER),
+    [status?.required]
+  );
+  const done = rows.filter((s) => steps?.[s]).length;
   const rejected = status?.approvalStatus === 'rejected';
   /* The next thing to do, so the big button at the bottom always goes somewhere. */
-  const next = ORDER.find((s) => !steps?.[s] && ROUTE[s]);
+  const next = rows.find((s) => !steps?.[s] && ROUTE[s]);
 
   return (
     <SafeAreaView style={styles.flex} edges={['top']}>
@@ -80,11 +87,11 @@ export function OnboardingChecklistScreen() {
         ) : (
           <Card>
             <View style={styles.progressRow}>
-              <Text style={styles.progressText}>{t('checklist.progress', { done, total: ORDER.length })}</Text>
-              <View style={styles.bar}><View style={[styles.barFill, { width: `${(done / ORDER.length) * 100}%` }]} /></View>
+              <Text style={styles.progressText}>{t('checklist.progress', { done, total: rows.length })}</Text>
+              <View style={styles.bar}><View style={[styles.barFill, { width: `${(done / Math.max(1, rows.length)) * 100}%` }]} /></View>
             </View>
 
-            {ORDER.map((step, i) => {
+            {rows.map((step, i) => {
               const ok = Boolean(steps?.[step]);
               const isApproval = step === 'approval';
               const route = ROUTE[step];
@@ -112,7 +119,7 @@ export function OnboardingChecklistScreen() {
                   </View>
                 </>
               );
-              const rowStyle = [styles.row, i === ORDER.length - 1 && styles.rowLast];
+              const rowStyle = [styles.row, i === rows.length - 1 && styles.rowLast];
               return ok || !route ? (
                 <View key={step} style={rowStyle}>{inner}</View>
               ) : (
