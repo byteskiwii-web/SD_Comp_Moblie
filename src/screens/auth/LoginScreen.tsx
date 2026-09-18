@@ -102,7 +102,11 @@ export function LoginScreen({ navigation }: Props) {
             Its own label, not the shared auth.employeeId: Forgot password
             posts to an endpoint that still validates the employee ID pattern
             alone, so the two screens genuinely accept different things. */}
+        {/* testIDs, not the placeholder, are what automation locates these by:
+            the placeholder and the label are translated, so a locator on
+            either matches only while the app is in English. */}
         <TextField
+          testID="login-employee-id"
           label={t('auth.idOrEmail')}
           placeholder={t('auth.idOrEmailPlaceholder')}
           autoCapitalize="none"
@@ -112,6 +116,7 @@ export function LoginScreen({ navigation }: Props) {
           onChangeText={(t) => { setEmployeeId(t); setError(''); }}
         />
         <TextField
+          testID="login-password"
           label={t('auth.password')}
           placeholder="••••••••"
           secureTextEntry
