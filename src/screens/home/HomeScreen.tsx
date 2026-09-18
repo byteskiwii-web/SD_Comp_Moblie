@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useQuery } from '@tanstack/react-query';
@@ -16,7 +16,7 @@ import { AppreciationCard } from './AppreciationCard';
 import { PoliciesCard } from './PoliciesCard';
 import { MonthlyStatsCard } from './MonthlyStatsCard';
 import { FestivalCard } from './FestivalCard';
-import { TourTarget } from '../../components/tour/TourTarget';
+import { TourScrollView, TourTarget } from '../../components/tour/TourTarget';
 import { Skeleton, SkeletonRows } from '../../components/Skeleton';
 import { TeamLeaveCard } from './TeamLeaveCard';
 import { useT } from '../../i18n';
@@ -94,7 +94,7 @@ export function HomeScreen() {
     <SafeAreaView style={styles.flex} edges={['top']}>
       {/* The shared bar -- outside the scroll, same as every other tab. */}
       <GreetingHeader />
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <TourScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <TourTarget
           id="home-hero"
           style={[
@@ -272,7 +272,7 @@ export function HomeScreen() {
         </Card>
 
         <AppreciationCard />
-      </ScrollView>
+      </TourScrollView>
 
     </SafeAreaView>
   );

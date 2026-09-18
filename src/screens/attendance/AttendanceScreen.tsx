@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, type RouteProp } from '@react-navigation/native';
 import type { AttendanceStackParamList } from '../../navigation/types';
@@ -10,6 +10,7 @@ import { HistoryPanel } from './HistoryPanel';
 import { RegularisePanel } from './RegularisePanel';
 import { useT } from '../../i18n';
 import { GreetingHeader } from '../../components/GreetingHeader';
+import { TourScrollView } from '../../components/tour/TourTarget';
 
 type Tab = 'clock' | 'history' | 'regularise';
 
@@ -54,7 +55,7 @@ export function AttendanceScreen() {
   return (
     <SafeAreaView style={styles.flex} edges={['top']}>
       <GreetingHeader />
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <TourScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.segment}>
           {(['clock', 'history', 'regularise'] as Tab[]).map((id) => (
             <Pressable
@@ -76,7 +77,7 @@ export function AttendanceScreen() {
         ) : (
           <RegularisePanel initialDate={params?.date} />
         )}
-      </ScrollView>
+      </TourScrollView>
     </SafeAreaView>
   );
 }

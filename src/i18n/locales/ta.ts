@@ -840,4 +840,5 @@ export const ta: Catalogue = {
   'checklist.hint.link': 'PAN ஆதாருடன் இணைக்கப்பட்டுள்ளதா எனச் சரிபார்க்கவும்',
   'checklist.hint.bank': 'கணக்கு எண் மற்றும் IFSC',
   'checklist.hint.approval': 'HR உங்கள் விவரங்களைச் சரிபார்க்கிறது',
+  'tour.stepOf': 'படி {current} / {total}',
 };

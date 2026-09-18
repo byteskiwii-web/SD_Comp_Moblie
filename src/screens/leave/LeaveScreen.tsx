@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -8,7 +8,7 @@ import { useThemeStore } from '../../stores/themeStore';
 import { useAuthStore } from '../../stores/authStore';
 import { Card } from '../../components/ui';
 import { SkeletonList, SkeletonRows } from '../../components/Skeleton';
-import { TourTarget } from '../../components/tour/TourTarget';
+import { TourScrollView, TourTarget } from '../../components/tour/TourTarget';
 import { getApiErrorMessage } from '../../api/client';
 import { newestFirst } from '../../utils/datetime';
 import {
@@ -200,7 +200,7 @@ export function LeaveScreen() {
         </TourTarget>
       </View>
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <TourScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Card>
           {/* The month leads, and can be stepped through. A bare figure with no
               month attached is the thing people misread. */}
@@ -376,7 +376,7 @@ export function LeaveScreen() {
             );
           })
         )}
-      </ScrollView>
+      </TourScrollView>
 
       {/* Which day, chosen from the ones the leave actually covers -- the
           server refuses anything outside the range, so offering a free date

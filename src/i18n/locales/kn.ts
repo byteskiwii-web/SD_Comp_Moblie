@@ -840,4 +840,5 @@ export const kn: Catalogue = {
   'checklist.hint.link': 'PAN ಆಧಾರ್‌ಗೆ ಲಿಂಕ್ ಆಗಿದೆಯೇ ಪರಿಶೀಲಿಸಿ',
   'checklist.hint.bank': 'ಖಾತೆ ಸಂಖ್ಯೆ ಮತ್ತು IFSC',
   'checklist.hint.approval': 'HR ನಿಮ್ಮ ವಿವರಗಳನ್ನು ಪರಿಶೀಲಿಸುತ್ತದೆ',
+  'tour.stepOf': 'ಹಂತ {current} / {total}',
 };

@@ -830,4 +830,5 @@ export const gu: Catalogue = {
   'checklist.hint.link': 'તપાસો કે PAN આધાર સાથે લિંક છે',
   'checklist.hint.bank': 'ખાતા નંબર અને IFSC',
   'checklist.hint.approval': 'HR તમારી વિગતો તપાસે છે',
+  'tour.stepOf': 'સ્ટેપ {current} / {total}',
 } as const;

@@ -830,4 +830,5 @@ export const bn: Catalogue = {
   'checklist.hint.link': 'PAN আধারের সাথে লিঙ্ক আছে কিনা দেখুন',
   'checklist.hint.bank': 'অ্যাকাউন্ট নম্বর ও IFSC',
   'checklist.hint.approval': 'HR আপনার তথ্য যাচাই করে',
+  'tour.stepOf': 'ধাপ {current} / {total}',
 } as const;

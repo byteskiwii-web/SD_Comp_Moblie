@@ -1,12 +1,12 @@
 import React, { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigation } from '@react-navigation/native';
 import { Card } from '../../components/ui';
 import { SkeletonList, SkeletonRows } from '../../components/Skeleton';
-import { TourTarget } from '../../components/tour/TourTarget';
+import { TourScrollView, TourTarget } from '../../components/tour/TourTarget';
 import { EmployeeAvatar } from '../../components/EmployeeAvatar';
 import { ColorScheme, radii } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
@@ -78,7 +78,7 @@ export function TeamScreen() {
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <TourScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <TourTarget id="team-tabs">
         <View style={styles.segment}>
           {(['today', 'register', 'requests', 'leave'] as Tab[]).map((id) => (
@@ -104,7 +104,7 @@ export function TeamScreen() {
         ) : (
           <TeamLeave />
         )}
-      </ScrollView>
+      </TourScrollView>
     </SafeAreaView>
   );
 }

@@ -859,4 +859,5 @@ export const en = {
   'checklist.hint.link': 'Check that your PAN is linked to Aadhaar',
   'checklist.hint.bank': 'Account number and IFSC',
   'checklist.hint.approval': 'HR checks your details',
+  'tour.stepOf': 'STEP {current} OF {total}',
 } as const;

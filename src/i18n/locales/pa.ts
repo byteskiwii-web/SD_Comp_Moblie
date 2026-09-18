@@ -830,4 +830,5 @@ export const pa: Catalogue = {
   'checklist.hint.link': 'ਜਾਂਚੋ ਕਿ PAN ਆਧਾਰ ਨਾਲ ਲਿੰਕ ਹੈ',
   'checklist.hint.bank': 'ਖਾਤਾ ਨੰਬਰ ਅਤੇ IFSC',
   'checklist.hint.approval': 'HR ਤੁਹਾਡੀ ਜਾਣਕਾਰੀ ਜਾਂਚਦਾ ਹੈ',
+  'tour.stepOf': 'ਸਟੈਪ {current} / {total}',
 } as const;

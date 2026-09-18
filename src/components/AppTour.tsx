@@ -1,12 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Dimensions, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import { ColorScheme, radii } from '../theme/tokens';
 import { useThemeStore } from '../stores/themeStore';
 import { useAuthStore } from '../stores/authStore';
-import { useTourRegistry, type Rect } from './tour/TourTarget';
+import { useTourRegistry, type Band, type Reveal } from './tour/TourTarget';
 import { useT, type TKey } from '../i18n';
 
 /**
@@ -59,6 +60,8 @@ type Step = {
    * steps this person is actually getting.
    */
   role?: 'team-lead';
+  /** Dropped for anyone who already has a profile photo — see AppTour. */
+  skipWhenPhotoSet?: boolean;
 };
 
 const STEPS: Step[] = [
@@ -71,6 +74,7 @@ const STEPS: Step[] = [
     bodyKey: 'tour.addPhotoBody',
     to: { tab: 'Profile' },
     target: 'profile-top',
+    skipWhenPhotoSet: true,
   },
   {
     icon: 'phone-portrait-outline',
@@ -179,6 +183,28 @@ export async function markTourSeen(): Promise<void> {
 
 const PAD = 8;
 
+/**
+ * The tab bar the tour runs inside, whose height AppTabs sets to 62 plus the
+ * home indicator. Subtracted from the band because a spotlight drawn under the
+ * bar highlights something the person cannot see, and because the tour's own
+ * card must not sit under it either.
+ */
+const TAB_BAR_BASE = 62;
+
+/**
+ * The shortest the card is ever likely to be: header, three lines of body,
+ * dots and a row of buttons. Used only to decide whether the free strip beside
+ * a spotlight can hold the card at all -- when it cannot, the step drops the
+ * spotlight rather than laying the card over the thing it is describing.
+ */
+const MIN_CARD_SPACE = 250;
+
+/** The close button's own height plus a gap, so a top-anchored card clears it. */
+const ESCAPE_CLEARANCE = 44;
+
+/** Below this much of the target actually on screen, a hole is a lie. */
+const MIN_VISIBLE = 0.6;
+
 export function AppTour({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const navigation = useNavigation<any>();
   const registry = useTourRegistry();
@@ -188,12 +214,31 @@ export function AppTour({ visible, onClose }: { visible: boolean; onClose: () =>
   const [index, setIndex] = useState(0);
   // The employee's own role decides which steps exist at all -- see Step.role.
   const role = useAuthStore((st) => st.employee?.role);
+  /* Somebody who already has a photo should not be asked for one -- the step
+     reads as a chore they have done, and it costs them a tap to dismiss
+     advice that does not apply. Dropped from the list rather than skipped
+     during the walk, so "1 of 10" counts what they are actually getting. */
+  const hasPhoto = Boolean(useAuthStore((st) => st.profile?.photoUpdatedAt));
   const steps = useMemo(
-    () => STEPS.filter((st: Step) => !st.role || st.role === role),
-    [role]
+    () => STEPS.filter((st: Step) => (!st.role || st.role === role) && !(st.skipWhenPhotoSet && hasPhoto)),
+    [role, hasPhoto]
   );
-  const [spot, setSpot] = useState<Rect | null>(null);
+  const [spot, setSpot] = useState<Reveal | null>(null);
   const cancelled = useRef(false);
+  // Live, not read once: a rotation or a fold changes both, and a band
+  // computed from stale numbers puts the hole and the card in the wrong place.
+  const screen = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+
+  /* The strip of screen a spotlight is allowed to live in: under the status
+     bar / notch, above the tab bar and home indicator. */
+  const band: Band = useMemo(
+    () => ({
+      top: insets.top + 8,
+      bottom: screen.height - (TAB_BAR_BASE + insets.bottom) - 8,
+    }),
+    [insets.top, insets.bottom, screen.height]
+  );
 
   // Clamped: a role change between renders must not index past the end.
   const step = steps[Math.min(index, steps.length - 1)];
@@ -238,9 +283,11 @@ export function AppTour({ visible, onClose }: { visible: boolean; onClose: () =>
     let attempt = 0;
     const tick = async () => {
       if (cancelled.current) return;
-      const rect = await registry.measure(step.target!);
+      // reveal, not measure: it scrolls the target into the band first, so the
+      // rectangle it hands back is somewhere the person can actually look.
+      const found = await registry.reveal(step.target!, band);
       if (cancelled.current) return;
-      if (rect) return setSpot(rect);
+      if (found) return setSpot(found);
       if (attempt++ < 6) setTimeout(tick, 90);
     };
     const first = setTimeout(tick, 140);
@@ -249,42 +296,74 @@ export function AppTour({ visible, onClose }: { visible: boolean; onClose: () =>
       cancelled.current = true;
       clearTimeout(first);
     };
-  }, [visible, index, step, navigation, registry]);
+  }, [visible, index, step, navigation, registry, band]);
 
   if (!visible) return null;
 
-  const screen = Dimensions.get('window');
-  const hole = spot
+  /*
+   * THE HOLE IS WHAT IS VISIBLE OF THE TARGET, NOT WHERE THE TARGET CLAIMS TO BE.
+   *
+   * measureInWindow answers for a view scrolled off screen exactly as
+   * confidently as for one in front of you, and every misplaced spotlight
+   * reported came from trusting that answer: a bright rectangle over the
+   * greeting bar while the card it described sat scrolled away above, and a
+   * clipped sliver behind the tab bar for one below the fold. `reveal` has
+   * already tried to scroll it into the band; this clamps what it reports to
+   * the band and then checks how much of the target actually survived. A
+   * target mostly outside the band gets no hole at all -- a centred card that
+   * says the right words is better than a ring around the wrong thing.
+   */
+  const padded = spot
     ? {
-        x: Math.max(0, spot.x - PAD),
-        y: Math.max(0, spot.y - PAD),
-        width: spot.width + PAD * 2,
-        height: spot.height + PAD * 2,
+        top: spot.rect.y - PAD,
+        bottom: spot.rect.y + spot.rect.height + PAD,
+        left: spot.rect.x - PAD,
+        right: spot.rect.x + spot.rect.width + PAD,
       }
     : null;
 
-  // Below the hole when there is room, above it otherwise, centred when
-  // neither fits -- which is the case the old two-way choice had no answer
-  // for, and is exactly what an anchor near the bottom of a long screen
-  // produces. A card that covers the thing it is pointing at is worse than
-  // one that is merely centred.
-  /*
-   * WHICH HALF IS THE SPOTLIGHT IN -- and nothing more than that.
-   *
-   * This used to measure the card and work out whether it fit above or below
-   * the hole. Measuring is a frame behind: when the step changes, the position
-   * is computed from the PREVIOUS card's height, and a step whose body is two
-   * lines longer than the last one is placed as though it were short. That is
-   * how a card ended up anchored near the bottom of the screen with its
-   * buttons past the edge -- and a tour whose Next button cannot be reached is
-   * one somebody is stuck inside.
-   *
-   * So: no height, no arithmetic, no measurement. The card lives in a
-   * full-screen flex container and is pushed to whichever end is away from the
-   * spotlight. Flexbox cannot place it outside its parent, so it cannot be cut
-   * off, whatever its content turns out to be.
-   */
-  const holeInTopHalf = hole ? hole.y + hole.height / 2 < screen.height / 2 : false;
+  const clamped = padded && spot
+    ? {
+        top: Math.max(spot.viewport.top, padded.top),
+        bottom: Math.min(spot.viewport.bottom, padded.bottom),
+        left: Math.max(0, padded.left),
+        right: Math.min(screen.width, padded.right),
+      }
+    : null;
+
+  const visibleFraction =
+    clamped && padded && padded.bottom > padded.top
+      ? Math.max(0, clamped.bottom - clamped.top) / (padded.bottom - padded.top)
+      : 0;
+
+  /* Which side of the spotlight the card goes, and whether there is room for
+     it there at all. No measuring of the card -- a measured height is always
+     one render behind, which is how a card once ended up with its buttons past
+     the bottom of the screen. Only "is this strip taller than a card can be". */
+  const roomAbove = clamped ? clamped.top - (band.top + ESCAPE_CLEARANCE) : 0;
+  const roomBelow = clamped ? band.bottom - clamped.bottom : 0;
+  const cardBelow = roomBelow >= roomAbove;
+  const cardSpace = cardBelow ? roomBelow : roomAbove;
+
+  const hole =
+    clamped && visibleFraction >= MIN_VISIBLE && cardSpace >= MIN_CARD_SPACE
+      ? {
+          x: clamped.left,
+          y: clamped.top,
+          width: Math.max(0, clamped.right - clamped.left),
+          height: Math.max(0, clamped.bottom - clamped.top),
+        }
+      : null;
+
+  /* The card is confined to the strip beside the hole, so it cannot overlap
+     it however tall its text turns out to be, and is confined to the safe band
+     otherwise, so it never hides under a notch or the tab bar. */
+  const topOfCardArea = band.top + ESCAPE_CLEARANCE;
+  const cardBounds = hole
+    ? cardBelow
+      ? { top: hole.y + hole.height + 12, bottom: screen.height - band.bottom + 8 }
+      : { top: topOfCardArea, bottom: screen.height - hole.y + 12 }
+    : { top: topOfCardArea, bottom: screen.height - band.bottom + 8 };
 
   /*
    * statusBarTranslucent, or ANDROID DRAWS EVERYTHING TOO LOW.
@@ -325,7 +404,7 @@ export function AppTour({ visible, onClose }: { visible: boolean; onClose: () =>
 
       <Pressable
         onPress={finish}
-        style={styles.escape}
+        style={[styles.escape, { top: insets.top + 8 }]}
         hitSlop={8}
         accessibilityRole="button"
         accessibilityLabel={t('common.skip')}
@@ -336,7 +415,8 @@ export function AppTour({ visible, onClose }: { visible: boolean; onClose: () =>
       <View
         style={[
           styles.cardWrap,
-          hole ? (holeInTopHalf ? styles.cardToBottom : styles.cardToTop) : styles.cardCentred,
+          cardBounds,
+          hole ? (cardBelow ? styles.cardToTop : styles.cardToBottom) : styles.cardCentred,
         ]}
         pointerEvents="box-none"
       >
@@ -347,7 +427,7 @@ export function AppTour({ visible, onClose }: { visible: boolean; onClose: () =>
             </View>
             <View style={styles.headerText}>
               <Text style={styles.stepCount}>
-                STEP {index + 1} OF {steps.length}
+                {t('tour.stepOf', { current: index + 1, total: steps.length })}
               </Text>
               <Text style={styles.title}>{t(step.titleKey)}</Text>
             </View>
@@ -410,26 +490,23 @@ function makeStyles(colors: ColorScheme) {
 
     /* A full-screen box in every case. Where the card sits inside it is a
        flex decision, which is why it can never be placed off the edge. */
+    /* `top` and `bottom` are supplied per step (cardBounds): the card is
+       confined to the strip beside the spotlight, so flexbox alone keeps it
+       off the thing being highlighted and inside the safe area. */
     cardWrap: {
       position: 'absolute',
-      top: 0,
       left: 0,
       right: 0,
-      bottom: 0,
       paddingHorizontal: 16,
-      // Generous, because this has to clear a notch at one end and a home
-      // indicator at the other without measuring either.
-      paddingTop: 72,
-      paddingBottom: 48,
     },
     cardToTop: { justifyContent: 'flex-start' },
     cardToBottom: { justifyContent: 'flex-end' },
     cardCentred: { justifyContent: 'center' },
     /* Pinned to the overlay, not to the card. Whatever else goes wrong with
        the layout, there is always something on screen that ends the tour. */
+    /* `top` comes from the safe-area inset at the call site. */
     escape: {
       position: 'absolute',
-      top: 44,
       right: 16,
       width: 34,
       height: 34,

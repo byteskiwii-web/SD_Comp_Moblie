@@ -840,4 +840,5 @@ export const te: Catalogue = {
   'checklist.hint.link': 'PAN ఆధార్‌తో లింక్ అయిందో లేదో చూడండి',
   'checklist.hint.bank': 'ఖాతా నంబర్ మరియు IFSC',
   'checklist.hint.approval': 'HR మీ వివరాలను తనిఖీ చేస్తుంది',
+  'tour.stepOf': 'దశ {current} / {total}',
 };

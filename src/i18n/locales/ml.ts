@@ -840,4 +840,5 @@ export const ml: Catalogue = {
   'checklist.hint.link': 'PAN ആധാറുമായി ലിങ്ക് ചെയ്തിട്ടുണ്ടോ എന്ന് പരിശോധിക്കുക',
   'checklist.hint.bank': 'അക്കൗണ്ട് നമ്പറും IFSC-യും',
   'checklist.hint.approval': 'HR നിങ്ങളുടെ വിവരങ്ങൾ പരിശോധിക്കുന്നു',
+  'tour.stepOf': 'ഘട്ടം {current} / {total}',
 };

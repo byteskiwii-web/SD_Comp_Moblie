@@ -830,4 +830,5 @@ export const mr: Catalogue = {
   'checklist.hint.link': 'PAN आधारशी लिंक आहे का ते तपासा',
   'checklist.hint.bank': 'खाते क्रमांक आणि IFSC',
   'checklist.hint.approval': 'HR तुमची माहिती तपासते',
+  'tour.stepOf': 'स्टेप {current} / {total}',
 } as const;

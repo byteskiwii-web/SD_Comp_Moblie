@@ -1,10 +1,10 @@
 import React from 'react';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import { ProfilePhoto } from './ProfilePhoto';
-import { TourTarget } from '../../components/tour/TourTarget';
+import { TourScrollView, TourTarget } from '../../components/tour/TourTarget';
 import { useTourStore } from '../../stores/tourStore';
 import { useShiftStore } from '../../stores/shiftStore';
 import { ColorScheme, radii } from '../../theme/tokens';
@@ -120,7 +120,7 @@ export function ProfileScreen() {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{t('profile.title')}</Text>
       </View>
-      <ScrollView
+      <TourScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.brand[700]} />}
@@ -233,7 +233,7 @@ export function ProfileScreen() {
         {/* Which code this phone is running, and on an installed app a way
             to pull the latest now. See BuildStamp. */}
         <BuildStamp />
-      </ScrollView>
+      </TourScrollView>
     </SafeAreaView>
   );
 }
