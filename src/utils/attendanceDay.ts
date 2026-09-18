@@ -232,9 +232,23 @@ export function clockInWindow(
   const elapsed = (nowMin - openMin + 1440) % 1440;
   const opensAt = `${String(Math.floor(openMin / 60)).padStart(2, '0')}:${String(openMin % 60).padStart(2, '0')}`;
   if (elapsed <= span) return { state: 'open', opensAt };
+  /*
+   * Closed -- but for which shift? For a shift that runs inside one day
+   * (11:00-20:00) the closed stretch runs OVER MIDNIGHT, so the calendar day
+   * decides, not whichever edge is nearer in minutes: at 00:33 the nearer
+   * edge is last night's ending, which had the app announcing "your shift for
+   * today is over" ten hours before that day's shift opened. A night shift
+   * (22:00-06:00) has its closed stretch inside one day, with no midnight in
+   * it to be wrong about, so there the nearer edge still answers.
+   *
+   * Mirrors assertClockInAllowed on the server, which is the rule that
+   * actually refuses -- this is only what the screen says.
+   */
   const sinceEnd = elapsed - span;
   const untilOpen = (openMin - nowMin + 1440) % 1440;
-  return { state: untilOpen < sinceEnd ? 'not-started' : 'over', opensAt };
+  const runsInOneDay = start < end;
+  const notStarted = runsInOneDay ? nowMin < openMin : untilOpen < sinceEnd;
+  return { state: notStarted ? 'not-started' : 'over', opensAt };
 }
 
 /**
