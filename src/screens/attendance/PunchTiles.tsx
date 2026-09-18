@@ -108,27 +108,42 @@ function Tile({
 }) {
   const live = kind === 'active' && !disabled;
 
+  /*
+   * WHAT IT LOOKS LIKE IS NOT ALWAYS WHAT IT IS.
+   *
+   * An `active` tile that is disabled -- waiting on a location fix, or outside
+   * the shift window -- took the dark ACTIVE background only on the pressable
+   * branch, while its text and icon took the active WHITE regardless. So a
+   * disabled Punch In rendered white-on-white: in light mode the tile was
+   * blank, with no icon, no label and no hint, and in dark mode the bug was
+   * invisible because the plain surface happens to be dark there too.
+   *
+   * So the look is derived once, here, and every colour below reads from it:
+   * a tile you cannot press looks like one you cannot press, in both schemes.
+   */
+  const visual: 'active' | 'done' | 'idle' = kind === 'active' && disabled ? 'idle' : kind;
+
   const body = (
     <>
       <View
         style={[
           styles.iconWrap,
-          kind === 'active' && styles.iconWrapActive,
-          kind === 'done' && styles.iconWrapDone,
+          visual === 'active' && styles.iconWrapActive,
+          visual === 'done' && styles.iconWrapDone,
         ]}
       >
         <Ionicons
           name={icon}
           size={17}
           color={
-            kind === 'active' ? colors.white : kind === 'done' ? colors.successText : colors.slate400
+            visual === 'active' ? colors.white : visual === 'done' ? colors.successText : colors.slate400
           }
         />
       </View>
-      <Text style={[styles.title, kind === 'active' && styles.titleActive]} numberOfLines={1}>
+      <Text style={[styles.title, visual === 'active' && styles.titleActive]} numberOfLines={1}>
         {title}
       </Text>
-      <Text style={[styles.sub, kind === 'active' && styles.subActive]} numberOfLines={1}>
+      <Text style={[styles.sub, visual === 'active' && styles.subActive]} numberOfLines={1}>
         {sub}
       </Text>
     </>
@@ -137,7 +152,7 @@ function Tile({
   if (!live) {
     return (
       <View
-        style={[styles.tile, kind === 'done' && styles.tileDone, kind === 'idle' && styles.tileIdle]}
+        style={[styles.tile, visual === 'done' && styles.tileDone, visual === 'idle' && styles.tileIdle]}
         // Announced as text: a receipt is not something to tab to.
         accessibilityRole="text"
         accessibilityLabel={title + '. ' + sub}
