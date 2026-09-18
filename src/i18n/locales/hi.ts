@@ -848,4 +848,8 @@ export const hi: Catalogue = {
   'checklist.hint.bank': 'खाता नंबर और IFSC',
   'checklist.hint.approval': 'HR आपकी जानकारी जाँचता है',
   'tour.stepOf': 'चरण {current} / {total}',
+  'punch.in': 'पंच इन',
+  'punch.out': 'पंच आउट',
+  'personal.dob': 'जन्म तिथि',
+  'personal.dobNote': 'यह HR के पास है। सुधार चाहिए तो उनसे कहें।',
 };

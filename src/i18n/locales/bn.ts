@@ -831,4 +831,8 @@ export const bn: Catalogue = {
   'checklist.hint.bank': 'অ্যাকাউন্ট নম্বর ও IFSC',
   'checklist.hint.approval': 'HR আপনার তথ্য যাচাই করে',
   'tour.stepOf': 'ধাপ {current} / {total}',
+  'punch.in': 'পাঞ্চ ইন',
+  'punch.out': 'পাঞ্চ আউট',
+  'personal.dob': 'জন্মতারিখ',
+  'personal.dobNote': 'এটি HR-এর কাছে আছে। সংশোধন দরকার হলে তাদের বলুন।',
 } as const;

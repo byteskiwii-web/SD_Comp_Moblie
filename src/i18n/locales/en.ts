@@ -860,4 +860,8 @@ export const en = {
   'checklist.hint.bank': 'Account number and IFSC',
   'checklist.hint.approval': 'HR checks your details',
   'tour.stepOf': 'STEP {current} OF {total}',
+  'punch.in': 'Punch In',
+  'punch.out': 'Punch Out',
+  'personal.dob': 'Date of birth',
+  'personal.dobNote': 'HR holds this. Ask them if it needs correcting.',
 } as const;

@@ -47,6 +47,20 @@ type Props = {
   // unrelated re-render is indistinguishable from a fresh request to
   // auto-punch again.
   onAutoPunchStarted?: () => void;
+  /**
+   * 'compact' is the Home copy: the punch itself and the two things that
+   * decide whether it can land, and nothing else. Punching is the reason
+   * almost everybody opens this app, so it lives on the first screen rather
+   * than one tab away -- but the map, the break allowance, the rules note and
+   * today's marks belong to the Attendance tab, which is where somebody goes
+   * to READ about their day rather than to record it.
+   *
+   * The same component both times on purpose: the permissions, the camera,
+   * the liveness step, the geofence read and the mutations are one flow with
+   * one set of edge cases, and a second implementation on Home would be a
+   * second set of bugs.
+   */
+  variant?: 'full' | 'compact';
 };
 
 /** Metres are unreadable past a few hundred; 438636m is 439 km. */
@@ -56,7 +70,8 @@ function formatDistance(metres: number): string {
   return `${km < 10 ? km.toFixed(1) : Math.round(km)} km`;
 }
 
-export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
+export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: Props = {}) {
+  const compact = variant === 'compact';
   const colors = useThemeStore((s) => s.colors);
   const t = useT();
   // Whether the server can be reached. Read from what the API client has
@@ -361,9 +376,12 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
   // amber ring and a warning tint for a state that is merely unknown.
   const insideForMap = insideFence === true;
 
-  // Home's one-tap shortcut: open the camera the moment it is safe to, rather
-  // than landing here and making the employee press Start/End Shift a second
-  // time for a decision they already made by tapping the CTA.
+  // A deep link that already knows the direction: open the camera the moment
+  // it is safe to, rather than landing here and asking for a decision the
+  // caller has made. Home used to be the only caller and now punches in place,
+  // so nothing passes this today -- kept because the param is part of the
+  // Attendance route's contract and a notification or shortcut is the obvious
+  // next caller.
   //
   // "Safe to" is exactly the condition the button below disables itself on --
   // this mirrors that check rather than skipping it, so autoPunch can never
@@ -617,7 +635,9 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
 
       {/* Kept, but folded into the shift line below the tiles rather than
           leading the screen -- which shift you are on is context, not the
-          question you opened the page to answer. */}
+          question you opened the page to answer. On Home the hero above
+          already says both, so this would be the same sentence twice. */}
+      {compact ? null : (
       <View style={[styles.hero, isCurrentlyClockedIn && styles.heroOn, styles.heroCompact]}>
         <View style={styles.heroTop}>
           <View style={[styles.heroDot, isCurrentlyClockedIn ? styles.heroDotOn : styles.heroDotOff]} />
@@ -638,7 +658,9 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
           </Text>
         ) : null}
       </View>
+      )}
 
+      {compact ? null : (
       <TourTarget id="clock-location">
       <View style={styles.geoBlock}>
         {/* The error outranks the fence, but only while a fix still buys
@@ -716,6 +738,7 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
         )}
       </View>
       </TourTarget>
+      )}
 
       {/* What the break allowance is, and what it has cost so far. Shown
           whenever a policy exists -- an employee who has not taken a break
@@ -724,7 +747,7 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
           attendance fact, read where a break is actually taken, not a
           three-part breakdown (lunch/tea/tea) that reads as furniture on a
           profile page nobody opens mid-shift. */}
-      {breakUsage && (
+      {breakUsage && !compact && (
         <View style={[styles.breakCard, breakUsage.overrun > 0 && styles.breakCardOver]}>
           <View style={styles.breakCardRow}>
             <Text style={styles.breakCardLabel}>
@@ -757,7 +780,11 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
         </View>
       ) : null}
 
-      <TourTarget id="clock-action">
+      {/* One registration only: Home and Attendance can both be mounted, and
+          two views claiming `clock-action` would leave the tour spotlighting
+          whichever registered last -- possibly the one on the other tab. */}
+      {compact ? (
+        <View>
       <PunchTiles
         clockedIn={isCurrentlyClockedIn}
         clockInAt={lastClockIn ? formatTime(lastClockIn.timestamp) : null}
@@ -772,14 +799,45 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
         // A break must be ended before the shift can be.
         clockOutDisabled={isCurrentlyClockedIn && isCurrentlyOnBreak}
         labels={{
-          clockIn: t('day.clockIn'),
-          clockOut: t('day.clockOut'),
+          /* The BUTTONS say punch; the day detail keeps clock-in/clock-out
+             for the marks themselves, which is what the stored mark_type is
+             called and what a dispute is read out from. */
+          clockIn: t('punch.in'),
+          clockOut: t('punch.out'),
           doneAt: (time) => t('clock.doneAt', { time }),
           startHint: t('clock.startHint'),
           endHint: t('clock.endHint'),
         }}
       />
-      </TourTarget>
+        </View>
+      ) : (
+        <TourTarget id="clock-action">
+      <PunchTiles
+        clockedIn={isCurrentlyClockedIn}
+        clockInAt={lastClockIn ? formatTime(lastClockIn.timestamp) : null}
+        clockOutAt={lastClockOut ? formatTime(lastClockOut.timestamp) : null}
+        onClockIn={() => setPendingAction('clock-in')}
+        onClockOut={() => setPendingAction('clock-out')}
+        // A clock-in with no fix would be submitted without the location it is
+        // judged on, so it waits for one. A clock-out is not judged on
+        // location and must not wait: the one thing worse than a late clock-out
+        // is one that cannot be made because the GPS is slow indoors.
+        clockInDisabled={!coords || clockInBlocked}
+        // A break must be ended before the shift can be.
+        clockOutDisabled={isCurrentlyClockedIn && isCurrentlyOnBreak}
+        labels={{
+          /* The BUTTONS say punch; the day detail keeps clock-in/clock-out
+             for the marks themselves, which is what the stored mark_type is
+             called and what a dispute is read out from. */
+          clockIn: t('punch.in'),
+          clockOut: t('punch.out'),
+          doneAt: (time) => t('clock.doneAt', { time }),
+          startHint: t('clock.startHint'),
+          endHint: t('clock.endHint'),
+        }}
+      />
+        </TourTarget>
+      )}
 
       {isCurrentlyClockedIn && (
         <View style={styles.actionsRow}>
@@ -803,10 +861,12 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
           therefore follows whether this employee actually has a break
           allowance, rather than repeating a line that would be wrong for
           anyone on a template. */}
-      <InfoNote
-        lead={breakUsage ? t('clock.noteLeadBreaks') : t('clock.noteLead')}
-        body={t('clock.note', { tab: t('attendance.regularise') })}
-      />
+      {compact ? null : (
+        <InfoNote
+          lead={breakUsage ? t('clock.noteLeadBreaks') : t('clock.noteLead')}
+          body={t('clock.note', { tab: t('attendance.regularise') })}
+        />
+      )}
 
       {/* TODAY'S MARKS, laid out the way the day detail screen lays them out.
           This was four sentences of running text under a screen made of
@@ -817,7 +877,7 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted }: Props = {}) {
           Seconds stay. The tiles above already say "Done at 6:36 PM"; being
           able to see 6:36:51 is the entire reason this card exists, and it is
           what somebody reads out when a mark is disputed. */}
-      {(lastClockIn || lastClockOut || lastBreakStart || lastBreakEnd) && (
+      {!compact && (lastClockIn || lastClockOut || lastBreakStart || lastBreakEnd) && (
         <Card style={styles.marksCard}>
           {(lastClockIn || lastClockOut) && (
             <View style={styles.markRow}>

@@ -841,4 +841,8 @@ export const ta: Catalogue = {
   'checklist.hint.bank': 'கணக்கு எண் மற்றும் IFSC',
   'checklist.hint.approval': 'HR உங்கள் விவரங்களைச் சரிபார்க்கிறது',
   'tour.stepOf': 'படி {current} / {total}',
+  'punch.in': 'பஞ்ச் இன்',
+  'punch.out': 'பஞ்ச் அவுட்',
+  'personal.dob': 'பிறந்த தேதி',
+  'personal.dobNote': 'இது HR-இடம் உள்ளது. திருத்தம் தேவைப்பட்டால் அவர்களிடம் கேளுங்கள்.',
 };

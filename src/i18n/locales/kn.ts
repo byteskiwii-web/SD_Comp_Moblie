@@ -841,4 +841,8 @@ export const kn: Catalogue = {
   'checklist.hint.bank': 'ಖಾತೆ ಸಂಖ್ಯೆ ಮತ್ತು IFSC',
   'checklist.hint.approval': 'HR ನಿಮ್ಮ ವಿವರಗಳನ್ನು ಪರಿಶೀಲಿಸುತ್ತದೆ',
   'tour.stepOf': 'ಹಂತ {current} / {total}',
+  'punch.in': 'ಪಂಚ್ ಇನ್',
+  'punch.out': 'ಪಂಚ್ ಔಟ್',
+  'personal.dob': 'ಹುಟ್ಟಿದ ದಿನಾಂಕ',
+  'personal.dobNote': 'ಇದು HR ಬಳಿ ಇದೆ. ತಿದ್ದುಪಡಿ ಬೇಕಿದ್ದರೆ ಅವರನ್ನು ಕೇಳಿ.',
 };

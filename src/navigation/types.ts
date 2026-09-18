@@ -34,10 +34,9 @@ export type KycStackParamList = OnboardingStackParamList;
  * is asking somebody to re-pick the date they were just looking at.
  */
 export type AttendanceStackParamList = {
-  // autoPunch is Home's shortcut: it already knows, from its own attendance
-  // query, which direction the CTA means (start or end), and passes it here
-  // so arriving on this screen is equivalent to arriving AND then tapping
-  // the button -- not a second decision the employee has already made once.
+  // autoPunch makes arriving here equivalent to arriving AND tapping the
+  // button, for a caller that already knows the direction. Home used to pass
+  // it; it now punches in place, so nothing sets it today -- see ClockPanel.
   AttendanceHome:
     | { tab?: 'clock' | 'history' | 'regularise'; date?: string; autoPunch?: 'clock-in' | 'clock-out' }
     | undefined;

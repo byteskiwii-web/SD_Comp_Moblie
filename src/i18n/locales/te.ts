@@ -841,4 +841,8 @@ export const te: Catalogue = {
   'checklist.hint.bank': 'ఖాతా నంబర్ మరియు IFSC',
   'checklist.hint.approval': 'HR మీ వివరాలను తనిఖీ చేస్తుంది',
   'tour.stepOf': 'దశ {current} / {total}',
+  'punch.in': 'పంచ్ ఇన్',
+  'punch.out': 'పంచ్ అవుట్',
+  'personal.dob': 'పుట్టిన తేదీ',
+  'personal.dobNote': 'ఇది HR వద్ద ఉంది. సవరణ కావాలంటే వారిని అడగండి.',
 };

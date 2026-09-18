@@ -841,4 +841,8 @@ export const ml: Catalogue = {
   'checklist.hint.bank': 'അക്കൗണ്ട് നമ്പറും IFSC-യും',
   'checklist.hint.approval': 'HR നിങ്ങളുടെ വിവരങ്ങൾ പരിശോധിക്കുന്നു',
   'tour.stepOf': 'ഘട്ടം {current} / {total}',
+  'punch.in': 'പഞ്ച് ഇൻ',
+  'punch.out': 'പഞ്ച് ഔട്ട്',
+  'personal.dob': 'ജനനത്തീയതി',
+  'personal.dobNote': 'ഇത് HR-ന്റെ പക്കലാണ്. തിരുത്തൽ വേണമെങ്കിൽ അവരോട് പറയുക.',
 };

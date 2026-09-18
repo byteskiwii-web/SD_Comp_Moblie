@@ -831,4 +831,8 @@ export const pa: Catalogue = {
   'checklist.hint.bank': 'ਖਾਤਾ ਨੰਬਰ ਅਤੇ IFSC',
   'checklist.hint.approval': 'HR ਤੁਹਾਡੀ ਜਾਣਕਾਰੀ ਜਾਂਚਦਾ ਹੈ',
   'tour.stepOf': 'ਸਟੈਪ {current} / {total}',
+  'punch.in': 'ਪੰਚ ਇਨ',
+  'punch.out': 'ਪੰਚ ਆਊਟ',
+  'personal.dob': 'ਜਨਮ ਤਾਰੀਖ',
+  'personal.dobNote': 'ਇਹ HR ਕੋਲ ਹੈ। ਸੁਧਾਰ ਚਾਹੀਦਾ ਹੋਵੇ ਤਾਂ ਉਨ੍ਹਾਂ ਨੂੰ ਕਹੋ।',
 } as const;

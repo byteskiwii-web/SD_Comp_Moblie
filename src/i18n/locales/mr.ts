@@ -831,4 +831,8 @@ export const mr: Catalogue = {
   'checklist.hint.bank': 'खाते क्रमांक आणि IFSC',
   'checklist.hint.approval': 'HR तुमची माहिती तपासते',
   'tour.stepOf': 'स्टेप {current} / {total}',
+  'punch.in': 'पंच इन',
+  'punch.out': 'पंच आउट',
+  'personal.dob': 'जन्मतारीख',
+  'personal.dobNote': 'हे HR कडे आहे. दुरुस्ती हवी असल्यास त्यांना सांगा.',
 } as const;

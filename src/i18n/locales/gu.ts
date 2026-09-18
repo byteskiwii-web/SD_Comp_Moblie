@@ -831,4 +831,8 @@ export const gu: Catalogue = {
   'checklist.hint.bank': 'ખાતા નંબર અને IFSC',
   'checklist.hint.approval': 'HR તમારી વિગતો તપાસે છે',
   'tour.stepOf': 'સ્ટેપ {current} / {total}',
+  'punch.in': 'પંચ ઇન',
+  'punch.out': 'પંચ આઉટ',
+  'personal.dob': 'જન્મ તારીખ',
+  'personal.dobNote': 'આ HR પાસે છે. સુધારો જોઈએ તો તેમને કહો.',
 } as const;
