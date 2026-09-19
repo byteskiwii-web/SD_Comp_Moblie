@@ -60,6 +60,7 @@ export function PunchTiles({
   return (
     <View style={styles.row}>
       <Tile
+        tone="in"
         kind={clockInAt ? 'done' : clockedIn ? 'done' : 'active'}
         icon={clockInAt ? 'checkmark' : 'log-in-outline'}
         title={labels.clockIn}
@@ -70,6 +71,7 @@ export function PunchTiles({
         colors={colors}
       />
       <Tile
+        tone="out"
         kind={dayFinished ? 'done' : clockedIn ? 'active' : 'idle'}
         icon={dayFinished ? 'checkmark' : 'log-out-outline'}
         title={labels.clockOut}
@@ -88,6 +90,7 @@ export function PunchTiles({
  * `done` is a receipt. `idle` is a step not yet reachable.
  */
 function Tile({
+  tone,
   kind,
   icon,
   title,
@@ -97,6 +100,8 @@ function Tile({
   styles,
   colors,
 }: {
+  /** Which end of the shift this is. Decides the hue at every state but `done`. */
+  tone: 'in' | 'out';
   kind: 'active' | 'done' | 'idle';
   icon: keyof typeof Ionicons.glyphMap;
   title: string;
@@ -123,12 +128,32 @@ function Tile({
    */
   const visual: 'active' | 'done' | 'idle' = kind === 'active' && disabled ? 'idle' : kind;
 
+  /*
+   * Colour carries which button this is, at every state.
+   *
+   * Two identical grey cards make somebody read both labels to find the one
+   * they want, on a shop floor, one-handed. Green starts a shift and red ends
+   * it -- the convention every attendance board already uses.
+   *
+   * The live one is FILLED and the waiting one is a soft tint of the same
+   * hue, so the pair still says "in" and "out" before the shift opens, and
+   * the one you can actually press becomes obvious the moment it does. `done`
+   * stays neutral whichever end it was: a receipt is not an action, and a red
+   * receipt for a completed shift would read as a fault.
+   */
+  const isIn = tone === 'in';
+  const fill = isIn ? styles.tileFillIn : styles.tileFillOut;
+  const soft = isIn ? styles.tileSoftIn : styles.tileSoftOut;
+  const softText = isIn ? styles.textSoftIn : styles.textSoftOut;
+  const softIconColor = isIn ? colors.successText : colors.dangerText;
+
   const body = (
     <>
       <View
         style={[
           styles.iconWrap,
           visual === 'active' && styles.iconWrapActive,
+          visual === 'idle' && styles.iconWrapSoft,
           visual === 'done' && styles.iconWrapDone,
         ]}
       >
@@ -136,14 +161,20 @@ function Tile({
           name={icon}
           size={17}
           color={
-            visual === 'active' ? colors.white : visual === 'done' ? colors.successText : colors.slate400
+            visual === 'active' ? colors.white : visual === 'done' ? colors.successText : softIconColor
           }
         />
       </View>
-      <Text style={[styles.title, visual === 'active' && styles.titleActive]} numberOfLines={1}>
+      <Text
+        style={[styles.title, visual === 'active' && styles.titleActive, visual === 'idle' && softText]}
+        numberOfLines={1}
+      >
         {title}
       </Text>
-      <Text style={[styles.sub, visual === 'active' && styles.subActive]} numberOfLines={1}>
+      <Text
+        style={[styles.sub, visual === 'active' && styles.subActive, visual === 'idle' && styles.subSoft]}
+        numberOfLines={1}
+      >
         {sub}
       </Text>
     </>
@@ -152,7 +183,7 @@ function Tile({
   if (!live) {
     return (
       <View
-        style={[styles.tile, visual === 'done' && styles.tileDone, visual === 'idle' && styles.tileIdle]}
+        style={[styles.tile, visual === 'done' && styles.tileDone, visual === 'idle' && soft]}
         // Announced as text: a receipt is not something to tab to.
         accessibilityRole="text"
         accessibilityLabel={title + '. ' + sub}
@@ -165,7 +196,7 @@ function Tile({
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [styles.tile, styles.tileActive, pressed && styles.pressed]}
+      style={({ pressed }) => [styles.tile, fill, pressed && styles.pressed]}
       accessibilityRole="button"
       accessibilityLabel={title + '. ' + sub}
     >
@@ -187,15 +218,22 @@ const makeStyles = (colors: ColorScheme) =>
       borderColor: colors.slate200,
       backgroundColor: colors.surface,
     },
-    // The one live action is the only dark block on the screen, which is what
-    // makes it findable without reading anything.
-    // heroInactive is the app's existing "dark card carrying white text" token,
-    // and it stays dark navy under BOTH schemes -- which is what this tile
-    // needs. A slate would have inverted with the neutral ramp and put white
-    // text on a near-white block in dark mode.
-    tileActive: { backgroundColor: colors.heroInactive, borderColor: colors.heroInactive },
+    /* FILLED = you can press this now. punchIn / punchOut are fixed deep
+       shades in both schemes precisely so this white text is readable in
+       either -- see tokens.ts. */
+    tileFillIn: { backgroundColor: colors.punchIn, borderColor: colors.punchIn },
+    tileFillOut: { backgroundColor: colors.punchOut, borderColor: colors.punchOut },
+
+    /* SOFT = the right button, not yet pressable. Same hue at a tint, with a
+       border in the vivid shade so the card has an edge rather than fading
+       into the screen. Both tints invert with the scheme, so this is a pale
+       green on white and a deep green on near-black. */
+    tileSoftIn: { backgroundColor: colors.successBg, borderColor: colors.success },
+    tileSoftOut: { backgroundColor: colors.dangerBg, borderColor: colors.danger },
+
+    /* A receipt is not an action, and stays neutral whichever end it was: a
+       red card for a shift somebody finished would read as a fault. */
     tileDone: { backgroundColor: colors.slate50, borderColor: colors.slate100 },
-    tileIdle: { backgroundColor: colors.slate50, borderColor: colors.slate100, opacity: 0.7 },
     pressed: { opacity: 0.85 },
 
     iconWrap: {
@@ -208,10 +246,18 @@ const makeStyles = (colors: ColorScheme) =>
       marginBottom: 10,
     },
     iconWrapActive: { backgroundColor: 'rgba(255,255,255,0.18)' },
+    /* The surface, not a tint of the tile: a chip a shade off its own
+       background disappears, and this one is carrying the only icon. */
+    iconWrapSoft: { backgroundColor: colors.surface },
     iconWrapDone: { backgroundColor: colors.successBg },
 
     title: { fontSize: 14, fontWeight: '800', color: colors.textLight },
     titleActive: { color: colors.white },
+    textSoftIn: { color: colors.successText },
+    textSoftOut: { color: colors.dangerText },
     sub: { fontSize: 10.5, fontWeight: '600', color: colors.slate400, marginTop: 3 },
     subActive: { color: colors.white, opacity: 0.72 },
+    /* Dimmed rather than recoloured: the hint is secondary at every state, and
+       a second saturated line would compete with the label above it. */
+    subSoft: { color: colors.slate600, opacity: 0.85 },
   });

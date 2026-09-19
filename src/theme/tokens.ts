@@ -45,6 +45,22 @@ export type ColorScheme = {
    *  near-white card. A themed neutral was never the right source for a
    *  card that is not neutral; it needed its own token. */
   heroInactive: string;
+
+  /** The two ends of a shift, as colour.
+   *
+   *  Punching in and punching out are opposite acts and the buttons should
+   *  not be two identical grey cards -- somebody glancing at their phone on
+   *  a shop floor should find the right one by colour before they read the
+   *  label. Green starts, red ends, the same convention every attendance
+   *  board in a store already uses.
+   *
+   *  FIXED IN BOTH SCHEMES, like heroInactive, and deliberately the DEEP end
+   *  of each family: these carry white text, and `success`/`danger` are light
+   *  enough in dark mode that white on them is unreadable. The soft tints
+   *  (successBg / dangerBg) are what the same buttons wear while they cannot
+   *  be pressed, and those do invert with the scheme. */
+  punchIn: string;
+  punchOut: string;
   bgLight: string; bgDark: string;
   textLight: string; textDark: string;
   slate50: string; slate100: string; slate200: string; slate300: string; slate400: string;
@@ -99,6 +115,8 @@ export const lightColors: ColorScheme = {
   accentViolet: '#7C3AED', accentVioletBg: '#F1E9FE',
   heroActive: '#0F9D58',
   heroInactive: '#1E293B',
+  punchIn: '#0B7A4C',
+  punchOut: '#B3123A',
   bgLight: '#F3F4FA',
   bgDark: '#0B0F1A',
   textLight: '#0F172A',
@@ -123,6 +141,11 @@ export const darkColors: ColorScheme = {
   // (bgLight, below, is near-black), which is what makes it still read as a
   // raised card rather than disappearing into the screen behind it.
   heroInactive: '#1E293B',
+  // Same two as the light scheme, for the reason the type declares: they are
+  // the only shades in each family dark enough to carry white text, and a
+  // shift's start and end must read the same way whichever theme is on.
+  punchIn: '#0B7A4C',
+  punchOut: '#B3123A',
   // The role, not the literal shade: "the screen background" is near-black.
   bgLight: '#0B0F1A',
   bgDark: '#141A2A',
