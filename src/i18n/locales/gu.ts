@@ -839,4 +839,6 @@ export const gu: Catalogue = {
   'target.of': '{target}માંથી',
   'target.asOf': '{date} સુધી',
   'target.noSales': 'હજી વેચાણનો આંકડો અપલોડ થયો નથી.',
+  'docs.statusTitle': 'દસ્તાવેજની સ્થિતિ',
+  'docs.uploadOnWeb': 'દસ્તાવેજ અપલોડ કરવાની લિંક તમારી HR ટીમે મોકલી છે. બાકી કે સુધારેલો દસ્તાવેજ મોકલવા તેને બ્રાઉઝરમાં ખોલો.',
 } as const;

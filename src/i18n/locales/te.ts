@@ -849,4 +849,6 @@ export const te: Catalogue = {
   'target.of': '{target}లో',
   'target.asOf': '{date} వరకు',
   'target.noSales': 'ఇంకా అమ్మకాల సంఖ్య అప్‌లోడ్ కాలేదు.',
+  'docs.statusTitle': 'పత్రాల స్థితి',
+  'docs.uploadOnWeb': 'పత్రాలు అప్‌లోడ్ చేయడానికి మీ HR బృందం పంపిన లింక్‌ను బ్రౌజర్‌లో తెరవండి. మిగిలిన లేదా సరిచేసిన పత్రాన్ని దాని ద్వారా పంపండి.',
 };

@@ -5,7 +5,6 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigation } from '@react-navigation/native';
 import { Button, TextField, Card } from '../../components/ui';
 import { DatePickerField } from '../../components/PickerField';
-import { DocumentsCard } from '../profile/DocumentsCard';
 import { ColorScheme } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
 import { useAuthStore } from '../../stores/authStore';
@@ -119,9 +118,6 @@ export function CompleteProfileScreen() {
             />
           </Card>
 
-          {/* Same card Profile uses -- it already shows the right thing
-              whether Drive storage is on or still switched off. */}
-          <DocumentsCard />
 
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
 

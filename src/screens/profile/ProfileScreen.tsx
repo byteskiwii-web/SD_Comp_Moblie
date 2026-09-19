@@ -190,7 +190,7 @@ export function ProfileScreen() {
           ) : null}
           <MenuRow
             icon="folder-open-outline"
-            label={t('docs.title')}
+            label={t('docs.statusTitle')}
             status={summary.documents}
             statusText={summaryText(summary.documents, t)}
             onPress={() => go('Documents')}

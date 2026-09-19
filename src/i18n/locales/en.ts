@@ -868,4 +868,6 @@ export const en = {
   'target.of': 'of {target}',
   'target.asOf': 'as of {date}',
   'target.noSales': 'No sales figure uploaded yet.',
+  'docs.statusTitle': 'Document status',
+  'docs.uploadOnWeb': 'Your HR team sent you a link to upload documents. Open it in your browser to send a missing or corrected document.',
 } as const;

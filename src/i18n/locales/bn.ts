@@ -839,4 +839,6 @@ export const bn: Catalogue = {
   'target.of': '{target}-এর মধ্যে',
   'target.asOf': '{date} পর্যন্ত',
   'target.noSales': 'এখনও বিক্রির হিসাব আপলোড হয়নি।',
+  'docs.statusTitle': 'নথির অবস্থা',
+  'docs.uploadOnWeb': 'নথি আপলোডের লিঙ্ক আপনার HR টিম পাঠিয়েছে। বাকি বা সংশোধিত নথি পাঠাতে সেটি ব্রাউজারে খুলুন।',
 } as const;

@@ -2,25 +2,21 @@ import React, { useMemo, useState } from 'react';
 import { ActivityIndicator, Image, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import * as Sharing from 'expo-sharing';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { Card } from '../../components/ui';
 import { SkeletonRows } from '../../components/Skeleton';
-import { FilePickerSheet } from '../../components/FilePickerSheet';
 import { ColorScheme, radii } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
 import { getApiErrorMessage } from '../../api/client';
 import { getHealthDeps } from '../../api/verification.api';
 import {
   DOC_TYPE_KEY,
-  deleteDocument,
   documentViewUrl,
   downloadDocumentToCache,
   getMyDocuments,
-  uploadDocument,
   type DocType,
   type DocumentStatus,
   type EmployeeDocument,
-  type PickedFile,
 } from '../../api/documents.api';
 import { formatDate } from '../../utils/datetime';
 import { t as tr, useT, type TKey } from '../../i18n';
@@ -28,16 +24,22 @@ import { useAuthStore } from '../../stores/authStore';
 import { useAuthedImage } from '../../hooks/useAuthedImage';
 
 /**
- * Supporting documents.
+ * Where each of your documents has got to. READ ONLY.
  *
- * Every type the server accepts, so nothing an employee is asked for has to
- * be emailed instead. The four KYC ones lead; `photo`, `address_proof` and
- * `other` follow, which is roughly the order they get requested in.
+ * Uploading moved to the web page HR sends with the joining credentials, and
+ * this app no longer collects identity documents at all -- a deliberate
+ * narrowing, so the Play Store listing does not have to justify collecting
+ * PAN and Aadhaar images on a phone.
  *
- * The whole documents router is mounted only where Drive storage is
- * configured, so this asks `/health/deps` first and says plainly when the
- * feature is off. Offering an upload button that 404s would read as a broken
- * app rather than as something nobody has switched on yet.
+ * What stays is the answer to the question the phone is actually good for:
+ * did it arrive, was it accepted, and if not, why. An employee who learns
+ * their Aadhaar was rejected needs the reason here, then goes to the same web
+ * page to send a better photograph. Viewing what was already sent stays too
+ * -- it is a read, and it is how somebody checks they sent the right side of
+ * a passbook.
+ *
+ * The documents router is mounted only where Drive storage is configured, so
+ * this asks `/health/deps` first and says plainly when the feature is off.
  */
 
 const OFFERED: DocType[] = [
@@ -64,8 +66,6 @@ function statusTone(colors: ColorScheme): Record<DocumentStatus, { bg: string; f
 }
 
 export function DocumentsCard() {
-  const queryClient = useQueryClient();
-  const [picking, setPicking] = useState<DocType | null>(null);
   const [error, setError] = useState<string | null>(null);
   const colors = useThemeStore((s) => s.colors);
   const styles = useMemo(() => makeStyles(colors), [colors]);
@@ -80,16 +80,6 @@ export function DocumentsCard() {
     queryFn: getMyDocuments,
     enabled,
     retry: false,
-  });
-
-  const upload = useMutation({
-    mutationFn: (input: { file: PickedFile; docType: DocType }) =>
-      uploadDocument({ file: input.file, docType: input.docType }),
-    onSuccess: () => {
-      setError(null);
-      queryClient.invalidateQueries({ queryKey: ['my-documents'] });
-    },
-    onError: (err) => setError(getApiErrorMessage(err)),
   });
 
   /*
@@ -139,12 +129,6 @@ export function DocumentsCard() {
     }
   };
 
-  const remove = useMutation({
-    mutationFn: (id: string) => deleteDocument(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['my-documents'] }),
-    onError: (err) => setError(getApiErrorMessage(err)),
-  });
-
   // Newest per type. Re-uploading after a rejection should show the new file,
   // not the one that was turned down.
   const latest = useMemo(() => {
@@ -156,10 +140,17 @@ export function DocumentsCard() {
     return byType;
   }, [docsQuery.data]);
 
+  /* Missing or turned down -- the two states the employee can still do
+     something about, and the only reason to point them at the web page. */
+  const outstanding = OFFERED.some((type) => {
+    const doc = latest.get(type);
+    return !doc || doc.status === 'rejected';
+  });
+
   if (deps.isLoading) {
     return (
       <Card>
-        <Text style={styles.cardTitle}>{t('docs.title')}</Text>
+        <Text style={styles.cardTitle}>{t('docs.statusTitle')}</Text>
         <SkeletonRows count={3} />
       </Card>
     );
@@ -168,7 +159,7 @@ export function DocumentsCard() {
   if (!enabled) {
     return (
       <Card>
-        <Text style={styles.cardTitle}>{t('docs.title')}</Text>
+        <Text style={styles.cardTitle}>{t('docs.statusTitle')}</Text>
         <Text style={styles.off}>
           {t('docs.disabled')}
         </Text>
@@ -179,7 +170,7 @@ export function DocumentsCard() {
   return (
     <>
     <Card>
-      <Text style={styles.cardTitle}>{t('docs.title')}</Text>
+      <Text style={styles.cardTitle}>{t('docs.statusTitle')}</Text>
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
@@ -192,7 +183,6 @@ export function DocumentsCard() {
           // than read off the end of the map: an unknown value added server-side
           // must not be able to blank the screen.
           const tone = doc ? STATUS_TONE[doc.status] ?? null : null;
-          const busy = upload.isPending && picking === type;
 
           return (
             <View key={type} style={[styles.row, i === OFFERED.length - 1 && styles.rowLast]}>
@@ -239,67 +229,20 @@ export function DocumentsCard() {
                 </Pressable>
               ) : null}
 
-              {/* A verified document is HR's record now -- replacing it is a
-                  conversation, not a button. Everything else can be redone. */}
-              {doc?.status === 'verified' ? null : (
-                <Pressable
-                  onPress={() => {
-                    setError(null);
-                    setPicking(type);
-                  }}
-                  disabled={busy}
-                  style={({ pressed }) => [styles.action, pressed && styles.actionPressed]}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('docs.actionLabel', {
-                    action: doc ? t('docs.replace') : t('docs.upload'),
-                    name: t(DOC_TYPE_KEY[type]),
-                  })}
-                >
-                  <Ionicons
-                    name={busy ? 'cloud-upload-outline' : doc ? 'refresh-outline' : 'add-circle-outline'}
-                    size={17}
-                    color={colors.brand[700]}
-                  />
-                  <Text style={styles.actionText}>
-                    {busy ? t('common.sending') : doc ? t('docs.replace') : t('docs.upload')}
-                  </Text>
-                </Pressable>
-              )}
-
-              {doc && doc.status !== 'verified' ? (
-                <Pressable
-                  onPress={() => remove.mutate(doc.id)}
-                  hitSlop={8}
-                  style={styles.removeBtn}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('docs.remove', { name: t(DOC_TYPE_KEY[type]) })}
-                >
-                  <Ionicons name="trash-outline" size={15} color={colors.slate400} />
-                </Pressable>
-              ) : null}
+              {/* Nothing here uploads any more. A document that is missing or
+                  was turned down is fixed on the web page HR sent with the
+                  joining credentials -- said once at the foot of the card
+                  rather than as a dead button on every row. */}
             </View>
           );
         })
       )}
 
-      <Text style={styles.consent}>
-        {t('docs.consent')}
-      </Text>
+      {/* The one instruction this screen still needs to carry: where the
+          uploading happens now. Shown whenever anything is outstanding, so a
+          complete set is not nagged at. */}
+      {outstanding ? <Text style={styles.consent}>{t('docs.uploadOnWeb')}</Text> : null}
 
-      <FilePickerSheet
-        visible={picking !== null}
-        title={
-          picking
-            ? t('docs.attachNamed', { name: t(DOC_TYPE_KEY[picking]) })
-            : t('file.attach')
-        }
-        onClose={() => setPicking(null)}
-        onPicked={(file) => {
-          const type = picking;
-          setPicking(null);
-          if (type) upload.mutate({ file, docType: type });
-        }}
-      />
     </Card>
 
       {/* Full screen, dark, dismissed by a tap anywhere: an identity document

@@ -839,4 +839,6 @@ export const mr: Catalogue = {
   'target.of': '{target} पैकी',
   'target.asOf': '{date} पर्यंत',
   'target.noSales': 'अजून विक्रीचा आकडा अपलोड झालेला नाही.',
+  'docs.statusTitle': 'कागदपत्रांची स्थिती',
+  'docs.uploadOnWeb': 'कागदपत्रे अपलोड करण्याची लिंक तुमच्या HR टीमने पाठवली आहे. राहिलेले किंवा दुरुस्त कागदपत्र पाठवण्यासाठी ती ब्राउझरमध्ये उघडा.',
 } as const;

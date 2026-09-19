@@ -839,4 +839,6 @@ export const pa: Catalogue = {
   'target.of': '{target} ਵਿੱਚੋਂ',
   'target.asOf': '{date} ਤੱਕ',
   'target.noSales': 'ਹਾਲੇ ਵਿਕਰੀ ਦਾ ਅੰਕੜਾ ਅਪਲੋਡ ਨਹੀਂ ਹੋਇਆ।',
+  'docs.statusTitle': 'ਦਸਤਾਵੇਜ਼ ਦੀ ਸਥਿਤੀ',
+  'docs.uploadOnWeb': 'ਦਸਤਾਵੇਜ਼ ਅਪਲੋਡ ਕਰਨ ਦਾ ਲਿੰਕ ਤੁਹਾਡੀ HR ਟੀਮ ਨੇ ਭੇਜਿਆ ਹੈ। ਰਹਿੰਦਾ ਜਾਂ ਸੁਧਾਰਿਆ ਦਸਤਾਵੇਜ਼ ਭੇਜਣ ਲਈ ਇਸਨੂੰ ਬ੍ਰਾਊਜ਼ਰ ਵਿੱਚ ਖੋਲ੍ਹੋ।',
 } as const;

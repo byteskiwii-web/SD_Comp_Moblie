@@ -7,7 +7,7 @@ import { useT } from '../../../i18n';
 export function DocumentsScreen() {
   const t = useT();
   return (
-    <SectionScreen title={t('docs.title')}>
+    <SectionScreen title={t('docs.statusTitle')}>
       <DocumentsCard />
     </SectionScreen>
   );

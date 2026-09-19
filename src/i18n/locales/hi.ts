@@ -856,4 +856,6 @@ export const hi: Catalogue = {
   'target.of': '{target} में से',
   'target.asOf': '{date} तक',
   'target.noSales': 'अभी बिक्री का आँकड़ा अपलोड नहीं हुआ।',
+  'docs.statusTitle': 'दस्तावेज़ की स्थिति',
+  'docs.uploadOnWeb': 'दस्तावेज़ अपलोड करने का लिंक आपकी HR टीम ने भेजा है। छूटा हुआ या सही दस्तावेज़ भेजने के लिए उसे ब्राउज़र में खोलें।',
 };
