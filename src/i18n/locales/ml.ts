@@ -845,4 +845,8 @@ export const ml: Catalogue = {
   'punch.out': 'പഞ്ച് ഔട്ട്',
   'personal.dob': 'ജനനത്തീയതി',
   'personal.dobNote': 'ഇത് HR-ന്റെ പക്കലാണ്. തിരുത്തൽ വേണമെങ്കിൽ അവരോട് പറയുക.',
+  'target.title': 'വിൽപ്പന ലക്ഷ്യം',
+  'target.of': '{target}ൽ',
+  'target.asOf': '{date} വരെ',
+  'target.noSales': 'ഇതുവരെ വിൽപ്പന കണക്ക് അപ്‌ലോഡ് ചെയ്തിട്ടില്ല.',
 };

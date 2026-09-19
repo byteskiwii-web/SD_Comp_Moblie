@@ -852,4 +852,8 @@ export const hi: Catalogue = {
   'punch.out': 'पंच आउट',
   'personal.dob': 'जन्म तिथि',
   'personal.dobNote': 'यह HR के पास है। सुधार चाहिए तो उनसे कहें।',
+  'target.title': 'बिक्री लक्ष्य',
+  'target.of': '{target} में से',
+  'target.asOf': '{date} तक',
+  'target.noSales': 'अभी बिक्री का आँकड़ा अपलोड नहीं हुआ।',
 };

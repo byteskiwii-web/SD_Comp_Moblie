@@ -288,3 +288,29 @@ export async function getMyOnboarding() {
   const res = await apiClient.get<{ success: true; data: OnboardingStatus }>('/auth/me/onboarding');
   return res.data.data;
 }
+
+/**
+ * This month's sales target, and the achieved figure if one has been uploaded.
+ *
+ * `null` is a real answer — no target filed — and the card simply does not
+ * appear. `achievedAmount` and `percent` are null until a figure is uploaded:
+ * zero would claim a sales count nobody has reported, and a bar at 0% for
+ * three weeks reads as failure rather than as silence.
+ */
+export type SalesTarget = {
+  employeeId: string;
+  month: string;
+  targetAmount: number;
+  achievedAmount: number | null;
+  /** When the achieved figure was uploaded. Shown as "as of <date>". */
+  achievedAt: string | null;
+  percent: number | null;
+  updatedAt: string | null;
+};
+
+export async function getMyTarget(month?: string) {
+  const res = await apiClient.get<{ success: true; data: SalesTarget | null }>('/targets/me', {
+    params: month ? { month } : undefined,
+  });
+  return res.data.data;
+}

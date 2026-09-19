@@ -14,6 +14,7 @@ import { GreetingHeader } from '../../components/GreetingHeader';
 import { AppreciationCard } from './AppreciationCard';
 import { PoliciesCard } from './PoliciesCard';
 import { MonthlyStatsCard } from './MonthlyStatsCard';
+import { SalesTargetCard } from './SalesTargetCard';
 import { FestivalCard } from './FestivalCard';
 import { SHOW_FESTIVALS } from '../../constants/config';
 import { storeLabel } from '../../utils/store';
@@ -169,6 +170,8 @@ export function HomeScreen() {
         <TeamLeaveCard />
 
         {SHOW_FESTIVALS ? <FestivalCard /> : null}
+
+        <SalesTargetCard />
 
         <MonthlyStatsCard />
 

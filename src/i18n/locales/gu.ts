@@ -835,4 +835,8 @@ export const gu: Catalogue = {
   'punch.out': 'પંચ આઉટ',
   'personal.dob': 'જન્મ તારીખ',
   'personal.dobNote': 'આ HR પાસે છે. સુધારો જોઈએ તો તેમને કહો.',
+  'target.title': 'વેચાણ લક્ષ્ય',
+  'target.of': '{target}માંથી',
+  'target.asOf': '{date} સુધી',
+  'target.noSales': 'હજી વેચાણનો આંકડો અપલોડ થયો નથી.',
 } as const;

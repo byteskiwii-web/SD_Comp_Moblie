@@ -845,4 +845,8 @@ export const kn: Catalogue = {
   'punch.out': 'ಪಂಚ್ ಔಟ್',
   'personal.dob': 'ಹುಟ್ಟಿದ ದಿನಾಂಕ',
   'personal.dobNote': 'ಇದು HR ಬಳಿ ಇದೆ. ತಿದ್ದುಪಡಿ ಬೇಕಿದ್ದರೆ ಅವರನ್ನು ಕೇಳಿ.',
+  'target.title': 'ಮಾರಾಟ ಗುರಿ',
+  'target.of': '{target}ರಲ್ಲಿ',
+  'target.asOf': '{date} ವರೆಗೆ',
+  'target.noSales': 'ಇನ್ನೂ ಮಾರಾಟದ ಅಂಕಿ ಅಪ್‌ಲೋಡ್ ಆಗಿಲ್ಲ.',
 };
