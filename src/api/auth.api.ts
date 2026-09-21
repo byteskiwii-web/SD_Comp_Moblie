@@ -261,8 +261,8 @@ export async function confirmDeletion(otp: string, reason?: string) {
   return res.data.data;
 }
 
-/** The six steps that stand between a new field employee and their first clock-in. */
-export type OnboardingStep = 'profile' | 'pan' | 'aadhaar' | 'link' | 'bank' | 'approval';
+/** The seven steps that stand between a new field employee and their first clock-in. */
+export type OnboardingStep = 'profile' | 'pan' | 'aadhaar' | 'link' | 'bank' | 'face' | 'approval';
 
 export type OnboardingStatus = {
   /** false for office roles, who never clock in and are never onboarding */

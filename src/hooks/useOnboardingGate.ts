@@ -11,8 +11,9 @@ import { getMyOnboarding, type OnboardingStatus } from '../api/auth.api';
  * between them checked some of the steps, for some roles, only while the
  * verification provider happened to be switched on. The server now owns the
  * definition (GET /auth/me/onboarding): profile, PAN, Aadhaar, PAN–Aadhaar
- * link, bank, HR approval -- and the same rule refuses a clock-in, so
- * nothing here is a security boundary, only the screen that explains it.
+ * link, bank, a face photo, HR approval -- and the same rule refuses a
+ * clock-in, so nothing here is a security boundary, only the screen that
+ * explains it.
  *
  * Shares its cache key with the old KYC gate on purpose: every verification
  * screen already invalidates that key on success, and the checklist updates

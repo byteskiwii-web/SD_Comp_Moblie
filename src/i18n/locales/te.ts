@@ -365,6 +365,13 @@ export const te: Catalogue = {
   'pan.verifiedWith': 'PAN {masked} ధృవీకరించబడింది',
   'pan.combinedVerified': 'PAN మరియు ఆధార్ ధృవీకరించబడ్డాయి',
 
+  'face.title': 'ముఖ ధృవీకరణ',
+  'face.intro': 'మీరు క్లాక్-ఇన్ చేసే ప్రతిసారీ మీ లైవ్ ముఖ ఫొటోను దీనితో పోలుస్తాము, తద్వారా మీ స్థానంలో మరెవరూ పంచ్ చేయలేరు. మీ ముఖం యొక్క గణిత సారాంశం మాత్రమే నిల్వ చేయబడుతుంది — ఫొటో ఎప్పటికీ కాదు.',
+  'face.consent': 'ప్రతి క్లాక్-ఇన్‌లో నా గుర్తింపును ధృవీకరించడానికి నా ముఖ ఫొటో ఉపయోగించడానికి నేను సమ్మతిస్తున్నాను.',
+  'face.alreadyRegistered': 'మీ ముఖం ఇప్పటికే నమోదైంది. కొత్త ఫొటో తీయడం దానిని మారుస్తుంది.',
+  'face.openCamera': 'కెమెరా తెరవండి',
+  'face.success': 'ముఖం నమోదైంది',
+
   'bank.title': 'బ్యాంక్ ఖాతా',
   'bank.intro': 'మీ జీతం జమ అయ్యే ఖాతా ఇదే. ఇది మీ సొంత పేరు మీద ఉండాలి.',
   'bank.ifsc': 'IFSC',
@@ -656,6 +663,7 @@ export const te: Catalogue = {
 
   'kyc.verifyOtp': 'OTP ధృవీకరించు',
   'kyc.panShort': 'PAN',
+  'kyc.faceShort': 'ముఖం',
 
 
   'bank.digitsRange': '6 నుండి 18 అంకెలు',
@@ -833,12 +841,14 @@ export const te: Catalogue = {
   'checklist.step.aadhaar': 'ఆధార్',
   'checklist.step.link': 'PAN–ఆధార్ లింక్',
   'checklist.step.bank': 'బ్యాంక్ ఖాతా',
+  'checklist.step.face': 'ముఖ ఫొటో',
   'checklist.step.approval': 'HR ఆమోదం',
   'checklist.hint.profile': 'పుట్టిన తేదీ మరియు ఇంటి చిరునామా',
   'checklist.hint.pan': 'మీ PAN నంబర్ నమోదు చేయండి',
   'checklist.hint.aadhaar': 'ఆధార్‌తో లింక్ అయిన మొబైల్‌కు OTP',
   'checklist.hint.link': 'PAN ఆధార్‌తో లింక్ అయిందో లేదో చూడండి',
   'checklist.hint.bank': 'ఖాతా నంబర్ మరియు IFSC',
+  'checklist.hint.face': 'హాజరు కోసం స్పష్టమైన సెల్ఫీ తీయండి',
   'checklist.hint.approval': 'HR మీ వివరాలను తనిఖీ చేస్తుంది',
   'tour.stepOf': 'దశ {current} / {total}',
   'punch.in': 'పంచ్ ఇన్',

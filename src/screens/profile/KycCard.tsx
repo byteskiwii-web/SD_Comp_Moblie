@@ -144,10 +144,19 @@ export function KycCard() {
               label={t('bank.title')}
               status={kyc.bank.status}
               detail={kyc.bank.masked}
-              last
               onPress={kyc.bank.status === 'verified' ? undefined : action('BankVerify')}
             />
           ) : null}
+
+          {/* Self-hosted, so not gated on verificationEnabled -- there is no
+              vendor toggle to disable, unlike the three rows above it. */}
+          <KycRow
+            icon="scan-outline"
+            label={t('kyc.faceShort')}
+            status={kyc.face.status === 'registered' ? 'verified' : kyc.face.status}
+            last
+            onPress={kyc.face.status === 'registered' ? undefined : () => navigation.navigate('FaceRegister')}
+          />
         </>
       ) : (
         <Text style={styles.kycMuted}>{t('kyc.none')}</Text>

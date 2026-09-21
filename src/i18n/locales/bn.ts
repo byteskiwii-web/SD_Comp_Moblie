@@ -372,6 +372,13 @@ export const bn: Catalogue = {
   'pan.verifiedWith': 'PAN {masked} যাচাই হয়েছে',
   'pan.combinedVerified': 'PAN এবং আধার যাচাই হয়েছে',
 
+  'face.title': 'মুখ যাচাইকরণ',
+  'face.intro': 'আপনি যখনই ক্লক-ইন করবেন, আমরা আপনার লাইভ মুখের ছবি এটির সাথে মিলিয়ে দেখব, যাতে আপনার জায়গায় অন্য কেউ পাঞ্চ করতে না পারে। শুধু আপনার মুখের একটি গাণিতিক সারাংশ সংরক্ষণ করা হয় — ছবি কখনও নয়।',
+  'face.consent': 'প্রতিটি ক্লক-ইনে আমার পরিচয় যাচাই করতে আমার মুখের ছবি ব্যবহার করতে আমি সম্মত।',
+  'face.alreadyRegistered': 'আপনার মুখ ইতিমধ্যে নিবন্ধিত। নতুন ছবি তুললে এটি পরিবর্তিত হবে।',
+  'face.openCamera': 'ক্যামেরা খুলুন',
+  'face.success': 'মুখ নিবন্ধিত হয়েছে',
+
   'bank.title': 'ব্যাংক অ্যাকাউন্ট',
   'bank.intro': 'এটি সেই অ্যাকাউন্ট যেখানে আপনার বেতন জমা হয়। এটি অবশ্যই আপনার নিজের নামে হতে হবে।',
   'bank.ifsc': 'IFSC',
@@ -658,6 +665,7 @@ export const bn: Catalogue = {
 
   'kyc.verifyOtp': 'OTP যাচাই করুন',
   'kyc.panShort': 'PAN',
+  'kyc.faceShort': 'মুখ',
 
   'bank.digitsRange': '৬ থেকে ১৮ সংখ্যা',
   'bank.tenDigits': '১০ সংখ্যা',
@@ -823,12 +831,14 @@ export const bn: Catalogue = {
   'checklist.step.aadhaar': 'আধার',
   'checklist.step.link': 'PAN–আধার লিঙ্ক',
   'checklist.step.bank': 'ব্যাংক অ্যাকাউন্ট',
+  'checklist.step.face': 'মুখের ছবি',
   'checklist.step.approval': 'HR-এর অনুমোদন',
   'checklist.hint.profile': 'জন্মতারিখ ও বাড়ির ঠিকানা',
   'checklist.hint.pan': 'আপনার PAN নম্বর দিন',
   'checklist.hint.aadhaar': 'আধারের সাথে যুক্ত মোবাইলে OTP',
   'checklist.hint.link': 'PAN আধারের সাথে লিঙ্ক আছে কিনা দেখুন',
   'checklist.hint.bank': 'অ্যাকাউন্ট নম্বর ও IFSC',
+  'checklist.hint.face': 'হাজিরার জন্য স্পষ্ট সেলফি তুলুন',
   'checklist.hint.approval': 'HR আপনার তথ্য যাচাই করে',
   'tour.stepOf': 'ধাপ {current} / {total}',
   'punch.in': 'পাঞ্চ ইন',

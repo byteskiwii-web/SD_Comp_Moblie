@@ -17,15 +17,15 @@ import { useT, type TKey } from '../../i18n';
 /**
  * The one screen a new employee sees until they can clock in.
  *
- * Six rows, in the order they are done: profile, PAN, Aadhaar, the
- * PAN–Aadhaar link, bank, HR approval. Each open row is a button to the
- * screen that completes it; the last one is HR's and says so. The line at
- * the top says plainly why the rest of the app is not here yet.
+ * Seven rows, in the order they are done: profile, PAN, Aadhaar, the
+ * PAN–Aadhaar link, bank, a face photo, HR approval. Each open row is a
+ * button to the screen that completes it; the last one is HR's and says so.
+ * The line at the top says plainly why the rest of the app is not here yet.
  *
  * Replaces the profile-completion gate and the KYC gate, which showed one
  * step at a time with no sense of how many were left.
  */
-const ORDER: OnboardingStep[] = ['profile', 'pan', 'aadhaar', 'link', 'bank', 'approval'];
+const ORDER: OnboardingStep[] = ['profile', 'pan', 'aadhaar', 'link', 'bank', 'face', 'approval'];
 
 /**
  * Where each open row goes. Aadhaar depends on the provider: under a
@@ -39,6 +39,7 @@ function routesFor(combinedPanAadhaar: boolean): Partial<Record<OnboardingStep, 
     aadhaar: combinedPanAadhaar ? 'PanVerify' : 'AadhaarOtpRequest',
     link: 'PanVerify',
     bank: 'BankVerify',
+    face: 'FaceRegister',
   };
 }
 

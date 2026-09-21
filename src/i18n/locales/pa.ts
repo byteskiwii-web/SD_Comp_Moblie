@@ -372,6 +372,13 @@ export const pa: Catalogue = {
   'pan.verifiedWith': 'PAN {masked} ਤਸਦੀਕ ਹੋ ਗਿਆ',
   'pan.combinedVerified': 'PAN ਅਤੇ ਆਧਾਰ ਤਸਦੀਕ ਹੋ ਗਏ',
 
+  'face.title': 'ਚਿਹਰਾ ਤਸਦੀਕ',
+  'face.intro': 'ਹਰ ਵਾਰ ਜਦੋਂ ਤੁਸੀਂ ਕਲਾਕ-ਇਨ ਕਰੋਗੇ, ਅਸੀਂ ਤੁਹਾਡੇ ਚਿਹਰੇ ਦੀ ਲਾਈਵ ਫੋਟੋ ਨੂੰ ਇਸ ਨਾਲ ਮਿਲਾਵਾਂਗੇ, ਤਾਂ ਜੋ ਤੁਹਾਡੀ ਥਾਂ ਕੋਈ ਹੋਰ ਪੰਚ ਨਾ ਕਰ ਸਕੇ। ਸਿਰਫ਼ ਤੁਹਾਡੇ ਚਿਹਰੇ ਦਾ ਗਣਿਤਕ ਸਾਰ ਸੰਭਾਲਿਆ ਜਾਂਦਾ ਹੈ — ਫੋਟੋ ਕਦੇ ਨਹੀਂ।',
+  'face.consent': 'ਹਰ ਕਲਾਕ-ਇਨ ਤੇ ਮੇਰੀ ਪਛਾਣ ਤਸਦੀਕ ਕਰਨ ਲਈ ਮੇਰੇ ਚਿਹਰੇ ਦੀ ਫੋਟੋ ਵਰਤਣ ਲਈ ਮੈਂ ਸਹਿਮਤ ਹਾਂ।',
+  'face.alreadyRegistered': 'ਤੁਹਾਡਾ ਚਿਹਰਾ ਪਹਿਲਾਂ ਹੀ ਦਰਜ ਹੈ। ਨਵੀਂ ਫੋਟੋ ਲੈਣ ਨਾਲ ਇਹ ਬਦਲ ਜਾਵੇਗਾ।',
+  'face.openCamera': 'ਕੈਮਰਾ ਖੋਲ੍ਹੋ',
+  'face.success': 'ਚਿਹਰਾ ਦਰਜ ਹੋਇਆ',
+
   'bank.title': 'ਬੈਂਕ ਖਾਤਾ',
   'bank.intro': 'ਇਹ ਉਹ ਖਾਤਾ ਹੈ ਜਿਸ ਵਿੱਚ ਤੁਹਾਡੀ ਤਨਖਾਹ ਜਮ੍ਹਾਂ ਹੁੰਦੀ ਹੈ। ਇਹ ਤੁਹਾਡੇ ਆਪਣੇ ਨਾਮ ਤੇ ਹੋਣਾ ਚਾਹੀਦਾ ਹੈ।',
   'bank.ifsc': 'IFSC',
@@ -658,6 +665,7 @@ export const pa: Catalogue = {
 
   'kyc.verifyOtp': 'OTP ਤਸਦੀਕ ਕਰੋ',
   'kyc.panShort': 'PAN',
+  'kyc.faceShort': 'ਚਿਹਰਾ',
 
   'bank.digitsRange': '੬ ਤੋਂ ੧੮ ਅੰਕ',
   'bank.tenDigits': '੧੦ ਅੰਕ',
@@ -823,12 +831,14 @@ export const pa: Catalogue = {
   'checklist.step.aadhaar': 'ਆਧਾਰ',
   'checklist.step.link': 'PAN–ਆਧਾਰ ਲਿੰਕ',
   'checklist.step.bank': 'ਬੈਂਕ ਖਾਤਾ',
+  'checklist.step.face': 'ਚਿਹਰੇ ਦੀ ਫੋਟੋ',
   'checklist.step.approval': 'HR ਦੀ ਮਨਜ਼ੂਰੀ',
   'checklist.hint.profile': 'ਜਨਮ ਤਾਰੀਖ ਅਤੇ ਘਰ ਦਾ ਪਤਾ',
   'checklist.hint.pan': 'ਆਪਣਾ PAN ਨੰਬਰ ਭਰੋ',
   'checklist.hint.aadhaar': 'ਆਧਾਰ ਨਾਲ ਜੁੜੇ ਮੋਬਾਈਲ ’ਤੇ OTP',
   'checklist.hint.link': 'ਜਾਂਚੋ ਕਿ PAN ਆਧਾਰ ਨਾਲ ਲਿੰਕ ਹੈ',
   'checklist.hint.bank': 'ਖਾਤਾ ਨੰਬਰ ਅਤੇ IFSC',
+  'checklist.hint.face': 'ਹਾਜ਼ਰੀ ਲਈ ਸਾਫ਼ ਸੈਲਫੀ ਲਓ',
   'checklist.hint.approval': 'HR ਤੁਹਾਡੀ ਜਾਣਕਾਰੀ ਜਾਂਚਦਾ ਹੈ',
   'tour.stepOf': 'ਸਟੈਪ {current} / {total}',
   'punch.in': 'ਪੰਚ ਇਨ',

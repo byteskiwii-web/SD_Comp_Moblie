@@ -365,6 +365,13 @@ export const ta: Catalogue = {
   'pan.verifiedWith': 'PAN {masked} சரிபார்க்கப்பட்டது',
   'pan.combinedVerified': 'PAN மற்றும் ஆதார் சரிபார்க்கப்பட்டன',
 
+  'face.title': 'முக சரிபார்ப்பு',
+  'face.intro': 'நீங்கள் கிளாக்-இன் செய்யும் ஒவ்வொரு முறையும் உங்கள் நேரடி முக புகைப்படத்தை இதனுடன் ஒப்பிடுவோம், இதனால் உங்களுக்குப் பதிலாக வேறு யாரும் பஞ்ச் செய்ய முடியாது. உங்கள் முகத்தின் கணித சுருக்கம் மட்டுமே சேமிக்கப்படும் — புகைப்படம் ஒருபோதும் இல்லை.',
+  'face.consent': 'ஒவ்வொரு கிளாக்-இனிலும் என் அடையாளத்தை சரிபார்க்க என் முக புகைப்படம் பயன்படுத்தப்பட ஒப்புக்கொள்கிறேன்.',
+  'face.alreadyRegistered': 'உங்கள் முகம் ஏற்கனவே பதிவு செய்யப்பட்டுள்ளது. புதிய புகைப்படம் எடுப்பது அதை மாற்றும்.',
+  'face.openCamera': 'கேமராவைத் திற',
+  'face.success': 'முகம் பதிவு செய்யப்பட்டது',
+
   'bank.title': 'வங்கிக் கணக்கு',
   'bank.intro': 'உங்கள் ஊதியம் வரும் கணக்கு இதுதான். இது உங்கள் சொந்தப் பெயரில் இருக்க வேண்டும்.',
   'bank.ifsc': 'IFSC',
@@ -656,6 +663,7 @@ export const ta: Catalogue = {
 
   'kyc.verifyOtp': 'OTP சரிபார்',
   'kyc.panShort': 'PAN',
+  'kyc.faceShort': 'முகம்',
 
 
   'bank.digitsRange': '6 முதல் 18 இலக்கங்கள்',
@@ -833,12 +841,14 @@ export const ta: Catalogue = {
   'checklist.step.aadhaar': 'ஆதார்',
   'checklist.step.link': 'PAN–ஆதார் இணைப்பு',
   'checklist.step.bank': 'வங்கிக் கணக்கு',
+  'checklist.step.face': 'முக புகைப்படம்',
   'checklist.step.approval': 'HR ஒப்புதல்',
   'checklist.hint.profile': 'பிறந்த தேதி மற்றும் வீட்டு முகவரி',
   'checklist.hint.pan': 'உங்கள் PAN எண்ணை உள்ளிடவும்',
   'checklist.hint.aadhaar': 'ஆதாருடன் இணைந்த மொபைலில் OTP',
   'checklist.hint.link': 'PAN ஆதாருடன் இணைக்கப்பட்டுள்ளதா எனச் சரிபார்க்கவும்',
   'checklist.hint.bank': 'கணக்கு எண் மற்றும் IFSC',
+  'checklist.hint.face': 'வருகைப் பதிவுக்கு தெளிவான செல்ஃபி எடுக்கவும்',
   'checklist.hint.approval': 'HR உங்கள் விவரங்களைச் சரிபார்க்கிறது',
   'tour.stepOf': 'படி {current} / {total}',
   'punch.in': 'பஞ்ச் இன்',

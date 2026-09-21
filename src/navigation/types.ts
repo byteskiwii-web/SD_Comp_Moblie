@@ -17,6 +17,7 @@ export type OnboardingStackParamList = {
   AadhaarOtpRequest: undefined;
   AadhaarOtpVerify: { referenceId: string };
   BankVerify: undefined;
+  FaceRegister: undefined;
 };
 
 /** @deprecated the KYC gate is now part of OnboardingStack; kept for the verification screens' typings. */
@@ -79,4 +80,5 @@ export type ProfileStackParamList = {
   PanVerify: undefined;
   AadhaarOtpRequest: undefined;
   AadhaarOtpVerify: { referenceId: string };
+  FaceRegister: undefined;
 };

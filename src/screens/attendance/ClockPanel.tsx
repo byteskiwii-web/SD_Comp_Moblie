@@ -464,11 +464,32 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
       const text = getApiErrorMessage(err);
       setBanner({ tone: 'warning', text });
       setToast({ tone: 'warning', text });
-      setPendingAction(null);
+
+      /**
+       * FACE_NOT_DETECTED and FACE_NOT_RECOGNISED are the two outcomes a
+       * same-second retry can plausibly fix -- bad light, a face out of
+       * frame, an angle the model didn't like. Reopening the camera at once
+       * (by clearing `captured` while leaving pendingAction set) saves the
+       * employee from tapping Clock In again and re-acquiring GPS.
+       *
+       * FACE_LOCKED_OUT and FACE_CHECK_UNAVAILABLE are NOT included: a
+       * lockout only clears via HR's reset, and an engine outage will not
+       * resolve itself in the second it takes to reopen a camera. Both fall
+       * through to the normal close below, where the banner (already set
+       * above, with the server's own explanation) is what's left to read.
+       */
+      const code = getApiErrorCode(err);
+      const retryable = code === 'FACE_NOT_DETECTED' || code === 'FACE_NOT_RECOGNISED';
+      if (retryable && pendingAction) {
+        setCaptured(false);
+      } else {
+        setPendingAction(null);
+      }
+
       // Onboarding regressed since the tabs opened (HR un-approved the
       // record, a check was reset). Re-asking the gate swaps the tabs for
       // the checklist, which is the screen that says what to do about it.
-      if (getApiErrorCode(err) === 'ONBOARDING_INCOMPLETE') {
+      if (code === 'ONBOARDING_INCOMPLETE') {
         queryClient.invalidateQueries({ queryKey: onboardingGateQueryKey(employee?.id) });
       }
     },

@@ -372,6 +372,13 @@ export const hi: Catalogue = {
   'pan.verifiedWith': 'PAN {masked} सत्यापित हो गया',
   'pan.combinedVerified': 'PAN और आधार सत्यापित हो गए',
 
+  'face.title': 'चेहरा सत्यापन',
+  'face.intro': 'हर बार क्लॉक-इन करते समय हम आपके चेहरे की लाइव फ़ोटो को इससे मिलाएँगे, ताकि आपकी जगह कोई और पंच न कर सके। केवल आपके चेहरे का गणितीय सारांश सुरक्षित रखा जाता है — फ़ोटो कभी नहीं।',
+  'face.consent': 'मैं हर क्लॉक-इन पर अपनी पहचान सत्यापित करने के लिए अपने चेहरे की फ़ोटो इस्तेमाल किए जाने की सहमति देता/देती हूँ।',
+  'face.alreadyRegistered': 'आपका चेहरा पहले से दर्ज है। नई फ़ोटो लेने से यह बदल जाएगा।',
+  'face.openCamera': 'कैमरा खोलें',
+  'face.success': 'चेहरा दर्ज हो गया',
+
   'bank.title': 'बैंक खाता',
   'bank.intro': 'इसी खाते में आपका वेतन आएगा। यह आपके अपने नाम पर होना चाहिए।',
   'bank.ifsc': 'IFSC',
@@ -663,6 +670,7 @@ export const hi: Catalogue = {
 
   'kyc.verifyOtp': 'OTP सत्यापित करें',
   'kyc.panShort': 'PAN',
+  'kyc.faceShort': 'चेहरा',
 
 
   'bank.digitsRange': '6 से 18 अंक',
@@ -840,12 +848,14 @@ export const hi: Catalogue = {
   'checklist.step.aadhaar': 'आधार',
   'checklist.step.link': 'PAN–आधार लिंक',
   'checklist.step.bank': 'बैंक खाता',
+  'checklist.step.face': 'चेहरे की फ़ोटो',
   'checklist.step.approval': 'HR की मंज़ूरी',
   'checklist.hint.profile': 'जन्म तिथि और घर का पता',
   'checklist.hint.pan': 'अपना PAN नंबर डालें',
   'checklist.hint.aadhaar': 'आधार से जुड़े मोबाइल पर OTP',
   'checklist.hint.link': 'जाँचें कि PAN आधार से लिंक है',
   'checklist.hint.bank': 'खाता नंबर और IFSC',
+  'checklist.hint.face': 'हाज़िरी के लिए साफ़ सेल्फ़ी लें',
   'checklist.hint.approval': 'HR आपकी जानकारी जाँचता है',
   'tour.stepOf': 'चरण {current} / {total}',
   'punch.in': 'पंच इन',

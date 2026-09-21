@@ -52,12 +52,18 @@ const PUNCH_TIMEOUT_MS = 60000;
  * built before expo-image-manipulator had a native half cannot shrink and
  * uploads the original, exactly as before. A file already under the size
  * cap is sent as is rather than re-encoded.
+ *
+ * Exported for face.api.ts's enrolment upload too: the recognition model
+ * compares an enrolment embedding against a punch embedding, and differing
+ * compression between the two would shift both and cost accuracy for no
+ * reason -- so the same shrink, at the same size and quality, runs before
+ * either leaves the phone.
  */
 const SELFIE_MAX_PX = 1280;
 const SELFIE_QUALITY = 0.72;
 const SELFIE_SMALL_ENOUGH_BYTES = 400 * 1024;
 
-async function shrinkSelfie(uri: string): Promise<string> {
+export async function shrinkSelfie(uri: string): Promise<string> {
   try {
     const { File } = require('expo-file-system') as typeof import('expo-file-system');
     const size = new File(uri).size;

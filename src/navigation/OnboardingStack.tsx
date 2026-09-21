@@ -7,6 +7,7 @@ import { PanVerifyScreen } from '../screens/kyc/PanVerifyScreen';
 import { AadhaarOtpRequestScreen } from '../screens/kyc/AadhaarOtpRequestScreen';
 import { AadhaarOtpVerifyScreen } from '../screens/kyc/AadhaarOtpVerifyScreen';
 import { BankVerifyScreen } from '../screens/kyc/BankVerifyScreen';
+import { FaceRegisterScreen } from '../screens/face/FaceRegisterScreen';
 
 const Stack = createNativeStackNavigator<OnboardingStackParamList>();
 
@@ -25,6 +26,7 @@ export function OnboardingStack() {
       <Stack.Screen name="AadhaarOtpRequest" component={AadhaarOtpRequestScreen} />
       <Stack.Screen name="AadhaarOtpVerify" component={AadhaarOtpVerifyScreen} />
       <Stack.Screen name="BankVerify" component={BankVerifyScreen} />
+      <Stack.Screen name="FaceRegister" component={FaceRegisterScreen} />
     </Stack.Navigator>
   );
 }

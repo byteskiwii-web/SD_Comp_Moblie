@@ -365,6 +365,13 @@ export const ml: Catalogue = {
   'pan.verifiedWith': 'PAN {masked} പരിശോധിച്ചു',
   'pan.combinedVerified': 'PAN ഉം ആധാറും പരിശോധിച്ചു',
 
+  'face.title': 'മുഖ പരിശോധന',
+  'face.intro': 'നിങ്ങൾ ക്ലോക്ക്-ഇൻ ചെയ്യുമ്പോഴെല്ലാം നിങ്ങളുടെ തത്സമയ മുഖ ഫോട്ടോ ഇതുമായി ഒത്തുനോക്കും, അതിനാൽ നിങ്ങൾക്ക് പകരം മറ്റാർക്കും പഞ്ച് ചെയ്യാൻ കഴിയില്ല. നിങ്ങളുടെ മുഖത്തിന്റെ ഗണിത സംഗ്രഹം മാത്രമേ സൂക്ഷിക്കൂ — ഫോട്ടോ ഒരിക്കലും ഇല്ല.',
+  'face.consent': 'ഓരോ ക്ലോക്ക്-ഇനിലും എന്റെ ഐഡന്റിറ്റി പരിശോധിക്കാൻ എന്റെ മുഖ ഫോട്ടോ ഉപയോഗിക്കാൻ ഞാൻ സമ്മതിക്കുന്നു.',
+  'face.alreadyRegistered': 'നിങ്ങളുടെ മുഖം ഇതിനകം രജിസ്റ്റർ ചെയ്തിട്ടുണ്ട്. പുതിയ ഫോട്ടോ എടുക്കുന്നത് അത് മാറ്റും.',
+  'face.openCamera': 'ക്യാമറ തുറക്കുക',
+  'face.success': 'മുഖം രജിസ്റ്റർ ചെയ്തു',
+
   'bank.title': 'ബാങ്ക് അക്കൗണ്ട്',
   'bank.intro': 'നിങ്ങളുടെ ശമ്പളം വരുന്ന അക്കൗണ്ട് ഇതാണ്. ഇത് നിങ്ങളുടെ സ്വന്തം പേരിലായിരിക്കണം.',
   'bank.ifsc': 'IFSC',
@@ -656,6 +663,7 @@ export const ml: Catalogue = {
 
   'kyc.verifyOtp': 'OTP പരിശോധിക്കുക',
   'kyc.panShort': 'PAN',
+  'kyc.faceShort': 'മുഖം',
 
 
   'bank.digitsRange': '6 മുതൽ 18 അക്കങ്ങൾ',
@@ -833,12 +841,14 @@ export const ml: Catalogue = {
   'checklist.step.aadhaar': 'ആധാർ',
   'checklist.step.link': 'PAN–ആധാർ ലിങ്ക്',
   'checklist.step.bank': 'ബാങ്ക് അക്കൗണ്ട്',
+  'checklist.step.face': 'മുഖ ഫോട്ടോ',
   'checklist.step.approval': 'HR അംഗീകാരം',
   'checklist.hint.profile': 'ജനനത്തീയതിയും വീട്ടുവിലാസവും',
   'checklist.hint.pan': 'നിങ്ങളുടെ PAN നമ്പർ നൽകുക',
   'checklist.hint.aadhaar': 'ആധാറുമായി ബന്ധിപ്പിച്ച മൊബൈലിൽ OTP',
   'checklist.hint.link': 'PAN ആധാറുമായി ലിങ്ക് ചെയ്തിട്ടുണ്ടോ എന്ന് പരിശോധിക്കുക',
   'checklist.hint.bank': 'അക്കൗണ്ട് നമ്പറും IFSC-യും',
+  'checklist.hint.face': 'ഹാജർ രേഖപ്പെടുത്താൻ വ്യക്തമായ സെൽഫി എടുക്കുക',
   'checklist.hint.approval': 'HR നിങ്ങളുടെ വിവരങ്ങൾ പരിശോധിക്കുന്നു',
   'tour.stepOf': 'ഘട്ടം {current} / {total}',
   'punch.in': 'പഞ്ച് ഇൻ',

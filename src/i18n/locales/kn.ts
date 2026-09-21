@@ -365,6 +365,13 @@ export const kn: Catalogue = {
   'pan.verifiedWith': 'PAN {masked} ಪರಿಶೀಲಿಸಲಾಗಿದೆ',
   'pan.combinedVerified': 'PAN ಮತ್ತು ಆಧಾರ್ ಪರಿಶೀಲಿಸಲಾಗಿದೆ',
 
+  'face.title': 'ಮುಖ ಪರಿಶೀಲನೆ',
+  'face.intro': 'ನೀವು ಪ್ರತಿ ಬಾರಿ ಕ್ಲಾಕ್-ಇನ್ ಮಾಡಿದಾಗ ನಿಮ್ಮ ಲೈವ್ ಮುಖದ ಫೋಟೋವನ್ನು ಇದರೊಂದಿಗೆ ಹೋಲಿಸುತ್ತೇವೆ, ಇದರಿಂದ ನಿಮ್ಮ ಬದಲು ಬೇರೆ ಯಾರೂ ಪಂಚ್ ಮಾಡಲು ಸಾಧ್ಯವಿಲ್ಲ. ನಿಮ್ಮ ಮುಖದ ಗಣಿತೀಯ ಸಾರಾಂಶ ಮಾತ್ರ ಸಂಗ್ರಹಿಸಲಾಗುತ್ತದೆ — ಫೋಟೋ ಎಂದಿಗೂ ಅಲ್ಲ.',
+  'face.consent': 'ಪ್ರತಿ ಕ್ಲಾಕ್-ಇನ್‌ನಲ್ಲಿ ನನ್ನ ಗುರುತನ್ನು ಪರಿಶೀಲಿಸಲು ನನ್ನ ಮುಖದ ಫೋಟೋ ಬಳಸಲು ನಾನು ಸಮ್ಮತಿಸುತ್ತೇನೆ.',
+  'face.alreadyRegistered': 'ನಿಮ್ಮ ಮುಖ ಈಗಾಗಲೇ ನೋಂದಣಿಯಾಗಿದೆ. ಹೊಸ ಫೋಟೋ ತೆಗೆಯುವುದು ಅದನ್ನು ಬದಲಾಯಿಸುತ್ತದೆ.',
+  'face.openCamera': 'ಕ್ಯಾಮೆರಾ ತೆರೆಯಿರಿ',
+  'face.success': 'ಮುಖ ನೋಂದಣಿಯಾಗಿದೆ',
+
   'bank.title': 'ಬ್ಯಾಂಕ್ ಖಾತೆ',
   'bank.intro': 'ನಿಮ್ಮ ಸಂಬಳ ಜಮೆಯಾಗುವ ಖಾತೆ ಇದೇ. ಇದು ನಿಮ್ಮದೇ ಹೆಸರಿನಲ್ಲಿರಬೇಕು.',
   'bank.ifsc': 'IFSC',
@@ -656,6 +663,7 @@ export const kn: Catalogue = {
 
   'kyc.verifyOtp': 'OTP ಪರಿಶೀಲಿಸಿ',
   'kyc.panShort': 'PAN',
+  'kyc.faceShort': 'ಮುಖ',
 
 
   'bank.digitsRange': '6 ರಿಂದ 18 ಅಂಕಿಗಳು',
@@ -833,12 +841,14 @@ export const kn: Catalogue = {
   'checklist.step.aadhaar': 'ಆಧಾರ್',
   'checklist.step.link': 'PAN–ಆಧಾರ್ ಲಿಂಕ್',
   'checklist.step.bank': 'ಬ್ಯಾಂಕ್ ಖಾತೆ',
+  'checklist.step.face': 'ಮುಖದ ಫೋಟೋ',
   'checklist.step.approval': 'HR ಅನುಮೋದನೆ',
   'checklist.hint.profile': 'ಹುಟ್ಟಿದ ದಿನಾಂಕ ಮತ್ತು ಮನೆ ವಿಳಾಸ',
   'checklist.hint.pan': 'ನಿಮ್ಮ PAN ಸಂಖ್ಯೆ ನಮೂದಿಸಿ',
   'checklist.hint.aadhaar': 'ಆಧಾರ್‌ಗೆ ಲಿಂಕ್ ಆದ ಮೊಬೈಲ್‌ಗೆ OTP',
   'checklist.hint.link': 'PAN ಆಧಾರ್‌ಗೆ ಲಿಂಕ್ ಆಗಿದೆಯೇ ಪರಿಶೀಲಿಸಿ',
   'checklist.hint.bank': 'ಖಾತೆ ಸಂಖ್ಯೆ ಮತ್ತು IFSC',
+  'checklist.hint.face': 'ಹಾಜರಾತಿಗಾಗಿ ಸ್ಪಷ್ಟ ಸೆಲ್ಫಿ ತೆಗೆಯಿರಿ',
   'checklist.hint.approval': 'HR ನಿಮ್ಮ ವಿವರಗಳನ್ನು ಪರಿಶೀಲಿಸುತ್ತದೆ',
   'tour.stepOf': 'ಹಂತ {current} / {total}',
   'punch.in': 'ಪಂಚ್ ಇನ್',

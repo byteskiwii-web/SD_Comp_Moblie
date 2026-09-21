@@ -372,6 +372,13 @@ export const mr: Catalogue = {
   'pan.verifiedWith': 'PAN {masked} पडताळले',
   'pan.combinedVerified': 'PAN आणि आधार पडताळले',
 
+  'face.title': 'चेहरा पडताळणी',
+  'face.intro': 'तुम्ही प्रत्येक वेळी क्लॉक-इन करता तेव्हा आम्ही तुमच्या चेहऱ्याचा लाइव्ह फोटो याच्याशी जुळवू, जेणेकरून तुमच्याऐवजी दुसरे कोणी पंच करू शकणार नाही. फक्त तुमच्या चेहऱ्याचा गणितीय सारांश साठवला जातो — फोटो कधीच नाही.',
+  'face.consent': 'प्रत्येक क्लॉक-इनवर माझी ओळख पडताळण्यासाठी माझा चेहऱ्याचा फोटो वापरण्यास मी सहमत आहे.',
+  'face.alreadyRegistered': 'तुमचा चेहरा आधीच नोंदवला आहे. नवीन फोटो घेतल्यास तो बदलेल.',
+  'face.openCamera': 'कॅमेरा उघडा',
+  'face.success': 'चेहरा नोंदवला गेला',
+
   'bank.title': 'बँक खाते',
   'bank.intro': 'हे तेच खाते आहे ज्यात तुमचा पगार जमा होतो. ते तुमच्याच नावावर असणे आवश्यक आहे.',
   'bank.ifsc': 'IFSC',
@@ -658,6 +665,7 @@ export const mr: Catalogue = {
 
   'kyc.verifyOtp': 'OTP पडताळा',
   'kyc.panShort': 'PAN',
+  'kyc.faceShort': 'चेहरा',
 
   'bank.digitsRange': '६ ते १८ अंक',
   'bank.tenDigits': '१० अंक',
@@ -823,12 +831,14 @@ export const mr: Catalogue = {
   'checklist.step.aadhaar': 'आधार',
   'checklist.step.link': 'PAN–आधार लिंक',
   'checklist.step.bank': 'बँक खाते',
+  'checklist.step.face': 'चेहऱ्याचा फोटो',
   'checklist.step.approval': 'HR ची मंजुरी',
   'checklist.hint.profile': 'जन्मतारीख आणि घरचा पत्ता',
   'checklist.hint.pan': 'तुमचा PAN नंबर टाका',
   'checklist.hint.aadhaar': 'आधारशी जोडलेल्या मोबाइलवर OTP',
   'checklist.hint.link': 'PAN आधारशी लिंक आहे का ते तपासा',
   'checklist.hint.bank': 'खाते क्रमांक आणि IFSC',
+  'checklist.hint.face': 'हजेरीसाठी स्पष्ट सेल्फी घ्या',
   'checklist.hint.approval': 'HR तुमची माहिती तपासते',
   'tour.stepOf': 'स्टेप {current} / {total}',
   'punch.in': 'पंच इन',

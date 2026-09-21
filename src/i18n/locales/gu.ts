@@ -372,6 +372,13 @@ export const gu: Catalogue = {
   'pan.verifiedWith': 'PAN {masked} ચકાસાયું',
   'pan.combinedVerified': 'PAN અને આધાર ચકાસાયા',
 
+  'face.title': 'ચહેરો ચકાસણી',
+  'face.intro': 'તમે દર વખતે ક્લોક-ઇન કરો ત્યારે અમે તમારા ચહેરાનો લાઇવ ફોટો આની સાથે સરખાવીશું, જેથી તમારા બદલે બીજું કોઈ પંચ ન કરી શકે. ફક્ત તમારા ચહેરાનો ગાણિતિક સારાંશ સંગ્રહાય છે — ફોટો ક્યારેય નહીં.',
+  'face.consent': 'દરેક ક્લોક-ઇન વખતે મારી ઓળખ ચકાસવા માટે મારા ચહેરાનો ફોટો વાપરવા હું સંમત છું.',
+  'face.alreadyRegistered': 'તમારો ચહેરો પહેલેથી નોંધાયેલ છે. નવો ફોટો લેવાથી તે બદલાશે.',
+  'face.openCamera': 'કેમેરો ખોલો',
+  'face.success': 'ચહેરો નોંધાયો',
+
   'bank.title': 'બેંક ખાતું',
   'bank.intro': 'આ તે ખાતું છે જેમાં તમારો પગાર જમા થાય છે. તે તમારા પોતાના નામે હોવું જોઈએ.',
   'bank.ifsc': 'IFSC',
@@ -658,6 +665,7 @@ export const gu: Catalogue = {
 
   'kyc.verifyOtp': 'OTP ચકાસો',
   'kyc.panShort': 'PAN',
+  'kyc.faceShort': 'ચહેરો',
 
   'bank.digitsRange': '૬ થી ૧૮ અંક',
   'bank.tenDigits': '૧૦ અંક',
@@ -823,12 +831,14 @@ export const gu: Catalogue = {
   'checklist.step.aadhaar': 'આધાર',
   'checklist.step.link': 'PAN–આધાર લિંક',
   'checklist.step.bank': 'બેંક ખાતું',
+  'checklist.step.face': 'ચહેરાનો ફોટો',
   'checklist.step.approval': 'HRની મંજૂરી',
   'checklist.hint.profile': 'જન્મ તારીખ અને ઘરનું સરનામું',
   'checklist.hint.pan': 'તમારો PAN નંબર નાખો',
   'checklist.hint.aadhaar': 'આધાર સાથે જોડાયેલા મોબાઇલ પર OTP',
   'checklist.hint.link': 'તપાસો કે PAN આધાર સાથે લિંક છે',
   'checklist.hint.bank': 'ખાતા નંબર અને IFSC',
+  'checklist.hint.face': 'હાજરી માટે સ્પષ્ટ સેલ્ફી લો',
   'checklist.hint.approval': 'HR તમારી વિગતો તપાસે છે',
   'tour.stepOf': 'સ્ટેપ {current} / {total}',
   'punch.in': 'પંચ ઇન',

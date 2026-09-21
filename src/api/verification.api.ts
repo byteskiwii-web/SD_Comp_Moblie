@@ -22,6 +22,15 @@ export type KycStatus = {
   };
   aadhaar: { status: KycCheckStatus; verifiedAt: string | null };
   bank: { status: KycCheckStatus; verifiedAt: string | null; masked: string | null; ifsc: string | null };
+  /**
+   * Self-hosted, not a vendor check (src/face/) -- a different status
+   * vocabulary from the three above on purpose: `registered` reads honestly
+   * for "a template exists" where `verified` would imply a third party
+   * confirmed something, which nothing here does. KycCard.tsx maps it onto
+   * the shared `verified` tone/label for display rather than this app
+   * inventing a fourth chip colour for one row.
+   */
+  face: { status: 'pending' | 'registered' | 'failed'; registeredAt: string | null };
 };
 
 // Shared label/tone for a KYC check's status -- one source of truth, consumed

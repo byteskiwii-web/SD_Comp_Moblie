@@ -389,6 +389,13 @@ export const en = {
   'pan.verifiedWith': 'PAN {masked} verified',
   'pan.combinedVerified': 'PAN and Aadhaar verified',
 
+  'face.title': 'Face verification',
+  'face.intro': "We'll match a live photo of your face against this one every time you clock in, so nobody else can punch in for you. Only a mathematical summary of your face is stored — never the photo itself.",
+  'face.consent': 'I consent to a photo of my face being used to verify my identity at every clock-in.',
+  'face.alreadyRegistered': 'Your face is already registered. Taking a new photo will replace it.',
+  'face.openCamera': 'Open camera',
+  'face.success': 'Face registered',
+
   'bank.title': 'Bank account',
   'bank.intro': 'This is the account your salary is paid into. It must be in your own name.',
   'bank.ifsc': 'IFSC',
@@ -675,6 +682,7 @@ export const en = {
 
   'kyc.verifyOtp': 'Verify OTP',
   'kyc.panShort': 'PAN',
+  'kyc.faceShort': 'Face',
 
 
   'bank.digitsRange': '6 to 18 digits',
@@ -852,12 +860,14 @@ export const en = {
   'checklist.step.aadhaar': 'Aadhaar',
   'checklist.step.link': 'PAN–Aadhaar link',
   'checklist.step.bank': 'Bank account',
+  'checklist.step.face': 'Face photo',
   'checklist.step.approval': 'HR approval',
   'checklist.hint.profile': 'Date of birth and home address',
   'checklist.hint.pan': 'Enter your PAN number',
   'checklist.hint.aadhaar': 'OTP on your Aadhaar mobile number',
   'checklist.hint.link': 'Check that your PAN is linked to Aadhaar',
   'checklist.hint.bank': 'Account number and IFSC',
+  'checklist.hint.face': 'Take a clear selfie for attendance',
   'checklist.hint.approval': 'HR checks your details',
   'tour.stepOf': 'STEP {current} OF {total}',
   'punch.in': 'Punch In',
