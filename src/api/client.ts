@@ -170,6 +170,15 @@ export type ApiErrorBody = {
      * valid." -- true, and useless: it names neither the field nor the shape.
      * Somebody signing in as TL-0001 instead of TL-00001 was told only that
      * something was wrong, and read that as a wrong password.
+     *
+     * NOT EVERY ERROR'S `details` IS THIS SHAPE. AppError.toClientPayload()
+     * (backend) passes whatever object a caller gave it straight through --
+     * ONBOARDING_INCOMPLETE sends `{ missing: [...] }`, FACE_NOT_RECOGNISED
+     * sends `{ attemptsRemaining }`, and there is no server-side guarantee
+     * that this array shape is the only one that will ever exist. Typed here
+     * as the VALIDATION_FAILED case because that is the one caller below
+     * that actually reads it -- getApiErrorMessage below does NOT trust this
+     * type and checks Array.isArray() before ever touching it.
      */
     details?: { field?: string; message?: string }[];
   };
@@ -188,8 +197,21 @@ export function getApiErrorMessage(err: unknown, fallback = 'Something went wron
      *
      * Only the first: the forms these come from show one line, and a list of
      * every fault at once reads as a wall rather than an instruction.
+     *
+     * Array.isArray() GUARDS THIS, DELIBERATELY. `details` is only ever this
+     * {field,message}[] shape for VALIDATION_FAILED -- every other error code
+     * that carries `details` (ONBOARDING_INCOMPLETE's `{missing}`,
+     * FACE_NOT_RECOGNISED's `{attemptsRemaining}`, and any future one) sends
+     * a plain object. `details?.find` on a plain object is `undefined`, and
+     * `undefined(...)` throws "TypeError: undefined is not a function" --
+     * uncaught, since this runs inside a mutation's onError handler with
+     * nothing downstream to catch it. That crashed the app on a real device
+     * the moment a face check correctly refused a mismatch, which is a worse
+     * outcome than the punch failure it was reporting.
      */
-    const detail = body?.error?.details?.find((d) => d?.message)?.message;
+    const detail = Array.isArray(body?.error?.details)
+      ? body.error.details.find((d) => d?.message)?.message
+      : undefined;
     if (detail) return detail;
     if (body?.error?.message) return body.error.message;
     if (err.message === 'Network Error') {
