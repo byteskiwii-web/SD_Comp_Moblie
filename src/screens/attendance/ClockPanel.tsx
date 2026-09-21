@@ -466,30 +466,28 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
       setToast({ tone: 'warning', text });
 
       /**
-       * FACE_NOT_DETECTED and FACE_NOT_RECOGNISED are the two outcomes a
-       * same-second retry can plausibly fix -- bad light, a face out of
-       * frame, an angle the model didn't like. Reopening the camera at once
-       * (by clearing `captured` while leaving pendingAction set) saves the
-       * employee from tapping Clock In again and re-acquiring GPS.
+       * Always the full close, for every error code including
+       * FACE_NOT_DETECTED/FACE_NOT_RECOGNISED -- same as every punch
+       * failure before face verification existed.
        *
-       * FACE_LOCKED_OUT and FACE_CHECK_UNAVAILABLE are NOT included: a
-       * lockout only clears via HR's reset, and an engine outage will not
-       * resolve itself in the second it takes to reopen a camera. Both fall
-       * through to the normal close below, where the banner (already set
-       * above, with the server's own explanation) is what's left to read.
+       * This used to reopen the camera immediately on those two codes
+       * (clearing `captured` while leaving `pendingAction` set), reasoning
+       * that a same-second retry can plausibly fix a bad-light or wrong-
+       * angle mismatch. Reverted: that remounts CameraCaptureScreen right
+       * behind the previous instance's teardown, on Android, with no delay
+       * -- a real camera-resource race, and the one plausible explanation
+       * for a crash a live device test hit immediately after a face
+       * mismatch. The saved tap is not worth a flow that can crash instead
+       * of showing the refusal. The banner already set above still tells
+       * the employee why, and tapping Clock In again is the same one extra
+       * step every other punch failure already asks for.
        */
-      const code = getApiErrorCode(err);
-      const retryable = code === 'FACE_NOT_DETECTED' || code === 'FACE_NOT_RECOGNISED';
-      if (retryable && pendingAction) {
-        setCaptured(false);
-      } else {
-        setPendingAction(null);
-      }
+      setPendingAction(null);
 
       // Onboarding regressed since the tabs opened (HR un-approved the
       // record, a check was reset). Re-asking the gate swaps the tabs for
       // the checklist, which is the screen that says what to do about it.
-      if (code === 'ONBOARDING_INCOMPLETE') {
+      if (getApiErrorCode(err) === 'ONBOARDING_INCOMPLETE') {
         queryClient.invalidateQueries({ queryKey: onboardingGateQueryKey(employee?.id) });
       }
     },
