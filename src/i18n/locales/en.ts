@@ -390,8 +390,8 @@ export const en = {
   'pan.combinedVerified': 'PAN and Aadhaar verified',
 
   'face.title': 'Face verification',
-  'face.intro': "We'll match a live photo of your face against this one every time you clock in, so nobody else can punch in for you. Only a mathematical summary of your face is stored — never the photo itself.",
-  'face.consent': 'I consent to a photo of my face being used to verify my identity at every clock-in.',
+  'face.intro': "We'll match a live photo of your face against this one every time you clock in or out, so nobody else can punch in or out for you. Only a mathematical summary of your face is stored — never the photo itself.",
+  'face.consent': 'I consent to a photo of my face being used to verify my identity at every clock-in and clock-out.',
   'face.alreadyRegistered': 'Your face is already registered. Taking a new photo will replace it.',
   'face.openCamera': 'Open camera',
   'face.success': 'Face registered',
