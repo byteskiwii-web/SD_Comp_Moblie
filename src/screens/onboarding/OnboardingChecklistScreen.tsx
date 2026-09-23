@@ -17,9 +17,9 @@ import { useT, type TKey } from '../../i18n';
 /**
  * The one screen a new employee sees until they can clock in.
  *
- * Seven rows, in the order they are done: profile, PAN, Aadhaar, the
- * PAN–Aadhaar link, bank, a face photo, HR approval. Each open row is a
- * button to the screen that completes it; the last one is HR's and says so.
+ * In the order they are done: profile, PAN + Aadhaar verification (one row --
+ * see toDisplayRows below), bank, a face photo, HR approval. Each open row is
+ * a button to the screen that completes it; the last one is HR's and says so.
  * The line at the top says plainly why the rest of the app is not here yet.
  *
  * Replaces the profile-completion gate and the KYC gate, which showed one
@@ -28,9 +28,9 @@ import { useT, type TKey } from '../../i18n';
 const ORDER: OnboardingStep[] = ['profile', 'pan', 'aadhaar', 'link', 'bank', 'face', 'approval'];
 
 /**
- * Where each open row goes. Aadhaar depends on the provider: under a
- * combined PAN+Aadhaar provider (SurePass) there is no separate OTP step and
- * the PAN screen verifies both, so the row points there instead.
+ * Where each open row goes. Both providers verify PAN and Aadhaar together
+ * (capabilities.combinedPanAadhaar), so there is no separate OTP step and
+ * the PAN screen verifies both, and the row points there instead.
  */
 function routesFor(combinedPanAadhaar: boolean): Partial<Record<OnboardingStep, string>> {
   return {
@@ -43,6 +43,39 @@ function routesFor(combinedPanAadhaar: boolean): Partial<Record<OnboardingStep, 
   };
 }
 
+/**
+ * A row on screen, which is either a real onboarding step or the merged
+ * PAN+Aadhaar row below.
+ */
+type DisplayStep = OnboardingStep | 'panAadhaar';
+
+/** The three server-side steps a single PAN-screen submission satisfies together. */
+const PAN_GROUP: OnboardingStep[] = ['pan', 'aadhaar', 'link'];
+
+/**
+ * Collapses `pan` + `aadhaar` + `link` into one row: under
+ * capabilities.combinedPanAadhaar they are the same screen and the same
+ * submission, so three separate rows all leading to an identical form read
+ * as broken, not thorough. Steps this employee's `required` list does not
+ * include are already absent from `rows` and stay absent here.
+ */
+function toDisplayRows(rows: OnboardingStep[], combinedPanAadhaar: boolean): DisplayStep[] {
+  if (!combinedPanAadhaar) return rows;
+  const result: DisplayStep[] = [];
+  let mergedIn = false;
+  for (const step of rows) {
+    if (PAN_GROUP.includes(step)) {
+      if (!mergedIn) {
+        result.push('panAadhaar');
+        mergedIn = true;
+      }
+    } else {
+      result.push(step);
+    }
+  }
+  return result;
+}
+
 export function OnboardingChecklistScreen() {
   const navigation = useNavigation<any>();
   const signOut = useAuthStore((s) => s.signOut);
@@ -53,7 +86,8 @@ export function OnboardingChecklistScreen() {
   const t = useT();
   // Same query Profile's KYC card uses, for the provider's capabilities only.
   const kyc = useQuery({ queryKey: ['profile-kyc-status', employee?.id], queryFn: getKycStatus, enabled: !!employee, retry: false });
-  const ROUTE = React.useMemo(() => routesFor(kyc.data?.capabilities.combinedPanAadhaar ?? false), [kyc.data]);
+  const combinedPanAadhaar = kyc.data?.capabilities.combinedPanAadhaar ?? false;
+  const ROUTE = React.useMemo(() => routesFor(combinedPanAadhaar), [combinedPanAadhaar]);
 
   const steps = status?.steps;
   /* Only what the server is holding them to, in checklist order. A server with
@@ -63,10 +97,15 @@ export function OnboardingChecklistScreen() {
     () => (status?.required ? ORDER.filter((s) => status.required!.includes(s)) : ORDER),
     [status?.required]
   );
-  const done = rows.filter((s) => steps?.[s]).length;
+  const displayRows = React.useMemo(() => toDisplayRows(rows, combinedPanAadhaar), [rows, combinedPanAadhaar]);
+  /** The merged row is done only once every underlying step it stands in for is done. */
+  const isDisplayDone = (step: DisplayStep): boolean =>
+    step === 'panAadhaar' ? PAN_GROUP.every((s) => !rows.includes(s) || Boolean(steps?.[s])) : Boolean(steps?.[step]);
+  const displayRoute = (step: DisplayStep): string | undefined => (step === 'panAadhaar' ? ROUTE.pan : ROUTE[step]);
+  const done = displayRows.filter((s) => isDisplayDone(s)).length;
   const rejected = status?.approvalStatus === 'rejected';
   /* The next thing to do, so the big button at the bottom always goes somewhere. */
-  const next = rows.find((s) => !steps?.[s] && ROUTE[s]);
+  const next = displayRows.find((s) => !isDisplayDone(s) && displayRoute(s));
 
   return (
     <SafeAreaView style={styles.flex} edges={['top']}>
@@ -88,14 +127,14 @@ export function OnboardingChecklistScreen() {
         ) : (
           <Card>
             <View style={styles.progressRow}>
-              <Text style={styles.progressText}>{t('checklist.progress', { done, total: rows.length })}</Text>
-              <View style={styles.bar}><View style={[styles.barFill, { width: `${(done / Math.max(1, rows.length)) * 100}%` }]} /></View>
+              <Text style={styles.progressText}>{t('checklist.progress', { done, total: displayRows.length })}</Text>
+              <View style={styles.bar}><View style={[styles.barFill, { width: `${(done / Math.max(1, displayRows.length)) * 100}%` }]} /></View>
             </View>
 
-            {rows.map((step, i) => {
-              const ok = Boolean(steps?.[step]);
+            {displayRows.map((step, i) => {
+              const ok = isDisplayDone(step);
               const isApproval = step === 'approval';
-              const route = ROUTE[step];
+              const route = displayRoute(step);
               const waiting = isApproval && !ok;
               const inner = (
                 <>
@@ -120,7 +159,7 @@ export function OnboardingChecklistScreen() {
                   </View>
                 </>
               );
-              const rowStyle = [styles.row, i === rows.length - 1 && styles.rowLast];
+              const rowStyle = [styles.row, i === displayRows.length - 1 && styles.rowLast];
               return ok || !route ? (
                 <View key={step} style={rowStyle}>{inner}</View>
               ) : (
@@ -139,7 +178,7 @@ export function OnboardingChecklistScreen() {
 
         {next ? (
           <View style={styles.cta}>
-            <Button title={t('checklist.continue')} onPress={() => navigation.navigate(ROUTE[next]!)} />
+            <Button title={t('checklist.continue')} onPress={() => navigation.navigate(displayRoute(next)!)} />
           </View>
         ) : status?.selfComplete && !status.complete ? (
           <View style={styles.waitCard}>

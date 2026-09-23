@@ -51,9 +51,8 @@ export function kycStatusTone(status: KycCheckStatus, colors: ColorScheme): { bg
 
 /**
  * What the ACTIVE KYC provider can do right now -- read this instead of
- * hardcoding which screens exist. `sandbox` (today's default) reports
- * `{ combinedPanAadhaar: false, aadhaarOtp: true, bank: true }`, so nothing
- * visible changes for a deployment that never switches provider.
+ * hardcoding which screens exist. Both providers report
+ * `{ combinedPanAadhaar: true, aadhaarOtp: false, bank: true }` today.
  */
 export type KycCapabilities = {
   /** PAN and Aadhaar are verified together from one PAN screen submission. */
