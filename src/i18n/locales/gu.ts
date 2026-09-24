@@ -382,7 +382,6 @@ export const gu: Catalogue = {
   'bank.title': 'બેંક ખાતું',
   'bank.intro': 'આ તે ખાતું છે જેમાં તમારો પગાર જમા થાય છે. તે તમારા પોતાના નામે હોવું જોઈએ.',
   'bank.ifsc': 'IFSC',
-  'bank.findBranch': 'શાખા શોધો',
   'bank.account': 'ખાતા નંબર',
   'bank.confirmAccount': 'ખાતા નંબરની પુષ્ટિ કરો',
   'bank.typeAgain': 'ફરીથી ટાઈપ કરો',

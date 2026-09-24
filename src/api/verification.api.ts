@@ -183,31 +183,6 @@ export async function verifyAadhaarOtp(input: AadhaarOtpVerifyInput): Promise<Aa
   return res.data.data;
 }
 
-export type IfscLookupResult = {
-  ifsc: string;
-  bank: string | null;
-  branch: string | null;
-  city: string | null;
-  district: string | null;
-  state: string | null;
-  address: string | null;
-};
-
-/**
- * Resolves an IFSC to its bank and branch.
- *
- * Free — public reference data, no quota, no money. Worth calling before the
- * verify: it turns a typo in the IFSC into "no such code" rather than into a
- * failed account check that has already spent quota (or, in penny-drop mode, a
- * rupee sent somewhere unintended).
- */
-export async function lookupIfsc(ifsc: string): Promise<IfscLookupResult> {
-  const res = await apiClient.post<{ success: true; data: IfscLookupResult }>('/verification/bank/ifsc', {
-    ifsc,
-  });
-  return res.data.data;
-}
-
 /** `penniless` checks without moving money. `pennydrop` deposits ₹1 to prove the account is live. */
 export type BankVerifyMode = 'penniless' | 'pennydrop';
 

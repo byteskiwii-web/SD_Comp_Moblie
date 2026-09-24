@@ -382,7 +382,6 @@ export const pa: Catalogue = {
   'bank.title': 'ਬੈਂਕ ਖਾਤਾ',
   'bank.intro': 'ਇਹ ਉਹ ਖਾਤਾ ਹੈ ਜਿਸ ਵਿੱਚ ਤੁਹਾਡੀ ਤਨਖਾਹ ਜਮ੍ਹਾਂ ਹੁੰਦੀ ਹੈ। ਇਹ ਤੁਹਾਡੇ ਆਪਣੇ ਨਾਮ ਤੇ ਹੋਣਾ ਚਾਹੀਦਾ ਹੈ।',
   'bank.ifsc': 'IFSC',
-  'bank.findBranch': 'ਸ਼ਾਖਾ ਲੱਭੋ',
   'bank.account': 'ਖਾਤਾ ਨੰਬਰ',
   'bank.confirmAccount': 'ਖਾਤਾ ਨੰਬਰ ਦੀ ਪੁਸ਼ਟੀ ਕਰੋ',
   'bank.typeAgain': 'ਦੁਬਾਰਾ ਟਾਈਪ ਕਰੋ',

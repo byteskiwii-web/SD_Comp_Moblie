@@ -20,11 +20,9 @@ import { useThemeStore } from '../../stores/themeStore';
 import { useAuthStore } from '../../stores/authStore';
 import {
   getKycStatus,
-  lookupIfsc,
   verifyBankAccount,
   type BankVerifyMode,
   type BankVerifyResult,
-  type IfscLookupResult,
 } from '../../api/verification.api';
 import { getApiErrorMessage } from '../../api/client';
 import { onboardingGateQueryKey as kycGateQueryKey } from '../../hooks/useOnboardingGate';
@@ -75,27 +73,13 @@ export function BankVerifyScreen() {
     staleTime: 5 * 60 * 1000,
   });
   const pennyDropAvailable = status?.capabilities.bankPennyDrop ?? true;
-  const ifscLookupAvailable = status?.capabilities.bankIfscLookup ?? true;
 
   const [ifsc, setIfsc] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
   const [confirmAccount, setConfirmAccount] = useState('');
   const [mode, setMode] = useState<BankVerifyMode>('penniless');
-  const [branch, setBranch] = useState<IfscLookupResult | null>(null);
   const [error, setError] = useState('');
   const [result, setResult] = useState<BankVerifyResult | null>(null);
-
-  const branchLookup = useMutation({
-    mutationFn: () => lookupIfsc(ifsc.trim().toUpperCase()),
-    onSuccess: (data) => {
-      setBranch(data);
-      setError('');
-    },
-    onError: (err) => {
-      setBranch(null);
-      setError(getApiErrorMessage(err));
-    },
-  });
 
   const verify = useMutation({
     mutationFn: () =>
@@ -142,7 +126,7 @@ export function BankVerifyScreen() {
         t('bank.pennyConfirmBody', {
           amount: PENNY_DROP_AMOUNT,
           last4: accountNumber.trim().slice(-4),
-          bank: branch?.bank ?? ifsc.trim().toUpperCase(),
+          bank: ifsc.trim().toUpperCase(),
         }),
         [
           { text: t('common.cancel'), style: 'cancel' },
@@ -178,36 +162,12 @@ export function BankVerifyScreen() {
             value={ifsc}
             onChangeText={(t) => {
               setIfsc(t.toUpperCase());
-              setBranch(null);
               setError('');
             }}
             autoCapitalize="characters"
             maxLength={11}
             placeholder="HDFC0001234"
           />
-
-          {ifscLookupAvailable && (
-            <View style={styles.lookupRow}>
-              <Button
-                title={branchLookup.isPending ? t('common.checking') : t('bank.findBranch')}
-                variant="outline"
-                onPress={() => branchLookup.mutate()}
-                disabled={ifsc.trim().length !== 11 || branchLookup.isPending}
-              />
-            </View>
-          )}
-
-          {branch && (
-            <View style={styles.branchCard}>
-              <Ionicons name="business-outline" size={16} color={colors.brand[700]} />
-              <View style={styles.branchText}>
-                <Text style={styles.branchBank}>{branch.bank ?? '—'}</Text>
-                <Text style={styles.branchBranch}>
-                  {[branch.branch, branch.city].filter(Boolean).join(' · ') || '—'}
-                </Text>
-              </View>
-            </View>
-          )}
 
           <TextField
             label={t('bank.account')}
@@ -360,15 +320,6 @@ function makeStyles(colors: ColorScheme) {
       marginTop: 8, marginBottom: 20, lineHeight: 18,
     },
 
-    lookupRow: { marginBottom: 12 },
-    branchCard: {
-      flexDirection: 'row', alignItems: 'center', gap: 10,
-      backgroundColor: colors.brand[50], borderRadius: radii.md,
-      padding: 12, marginBottom: 16,
-    },
-    branchText: { flex: 1 },
-    branchBank: { fontSize: 12.5, fontWeight: '800', color: colors.brand[700] },
-    branchBranch: { fontSize: 11, color: colors.slate600, marginTop: 2 },
 
     fieldLabel: {
       fontSize: 10.5, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.3,

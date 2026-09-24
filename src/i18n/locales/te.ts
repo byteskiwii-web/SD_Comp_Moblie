@@ -375,7 +375,6 @@ export const te: Catalogue = {
   'bank.title': 'బ్యాంక్ ఖాతా',
   'bank.intro': 'మీ జీతం జమ అయ్యే ఖాతా ఇదే. ఇది మీ సొంత పేరు మీద ఉండాలి.',
   'bank.ifsc': 'IFSC',
-  'bank.findBranch': 'బ్రాంచ్ వెతుకు',
   'bank.account': 'ఖాతా నంబర్',
   'bank.confirmAccount': 'ఖాతా నంబర్ నిర్ధారించు',
   'bank.typeAgain': 'మళ్లీ టైప్ చేయండి',

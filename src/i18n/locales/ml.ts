@@ -375,7 +375,6 @@ export const ml: Catalogue = {
   'bank.title': 'ബാങ്ക് അക്കൗണ്ട്',
   'bank.intro': 'നിങ്ങളുടെ ശമ്പളം വരുന്ന അക്കൗണ്ട് ഇതാണ്. ഇത് നിങ്ങളുടെ സ്വന്തം പേരിലായിരിക്കണം.',
   'bank.ifsc': 'IFSC',
-  'bank.findBranch': 'ബ്രാഞ്ച് കണ്ടെത്തുക',
   'bank.account': 'അക്കൗണ്ട് നമ്പർ',
   'bank.confirmAccount': 'അക്കൗണ്ട് നമ്പർ ഉറപ്പിക്കുക',
   'bank.typeAgain': 'വീണ്ടും ടൈപ്പ് ചെയ്യുക',

@@ -399,7 +399,6 @@ export const en = {
   'bank.title': 'Bank account',
   'bank.intro': 'This is the account your salary is paid into. It must be in your own name.',
   'bank.ifsc': 'IFSC',
-  'bank.findBranch': 'Find branch',
   'bank.account': 'Account number',
   'bank.confirmAccount': 'Confirm account number',
   'bank.typeAgain': 'Type it again',

@@ -375,7 +375,6 @@ export const kn: Catalogue = {
   'bank.title': 'ಬ್ಯಾಂಕ್ ಖಾತೆ',
   'bank.intro': 'ನಿಮ್ಮ ಸಂಬಳ ಜಮೆಯಾಗುವ ಖಾತೆ ಇದೇ. ಇದು ನಿಮ್ಮದೇ ಹೆಸರಿನಲ್ಲಿರಬೇಕು.',
   'bank.ifsc': 'IFSC',
-  'bank.findBranch': 'ಶಾಖೆ ಹುಡುಕಿ',
   'bank.account': 'ಖಾತೆ ಸಂಖ್ಯೆ',
   'bank.confirmAccount': 'ಖಾತೆ ಸಂಖ್ಯೆ ದೃಢಪಡಿಸಿ',
   'bank.typeAgain': 'ಮತ್ತೊಮ್ಮೆ ಟೈಪ್ ಮಾಡಿ',

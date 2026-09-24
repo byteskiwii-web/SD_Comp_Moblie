@@ -382,7 +382,6 @@ export const bn: Catalogue = {
   'bank.title': 'ব্যাংক অ্যাকাউন্ট',
   'bank.intro': 'এটি সেই অ্যাকাউন্ট যেখানে আপনার বেতন জমা হয়। এটি অবশ্যই আপনার নিজের নামে হতে হবে।',
   'bank.ifsc': 'IFSC',
-  'bank.findBranch': 'শাখা খুঁজুন',
   'bank.account': 'অ্যাকাউন্ট নম্বর',
   'bank.confirmAccount': 'অ্যাকাউন্ট নম্বর নিশ্চিত করুন',
   'bank.typeAgain': 'আবার টাইপ করুন',

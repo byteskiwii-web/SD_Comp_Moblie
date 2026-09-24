@@ -382,7 +382,6 @@ export const hi: Catalogue = {
   'bank.title': 'बैंक खाता',
   'bank.intro': 'इसी खाते में आपका वेतन आएगा। यह आपके अपने नाम पर होना चाहिए।',
   'bank.ifsc': 'IFSC',
-  'bank.findBranch': 'शाखा खोजें',
   'bank.account': 'खाता नंबर',
   'bank.confirmAccount': 'खाता नंबर दोबारा भरें',
   'bank.typeAgain': 'दोबारा टाइप करें',

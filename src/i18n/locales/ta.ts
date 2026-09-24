@@ -375,7 +375,6 @@ export const ta: Catalogue = {
   'bank.title': 'வங்கிக் கணக்கு',
   'bank.intro': 'உங்கள் ஊதியம் வரும் கணக்கு இதுதான். இது உங்கள் சொந்தப் பெயரில் இருக்க வேண்டும்.',
   'bank.ifsc': 'IFSC',
-  'bank.findBranch': 'கிளையைத் தேடு',
   'bank.account': 'கணக்கு எண்',
   'bank.confirmAccount': 'கணக்கு எண்ணை உறுதி செய்',
   'bank.typeAgain': 'மீண்டும் உள்ளிடவும்',

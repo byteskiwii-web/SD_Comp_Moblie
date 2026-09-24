@@ -382,7 +382,6 @@ export const mr: Catalogue = {
   'bank.title': 'बँक खाते',
   'bank.intro': 'हे तेच खाते आहे ज्यात तुमचा पगार जमा होतो. ते तुमच्याच नावावर असणे आवश्यक आहे.',
   'bank.ifsc': 'IFSC',
-  'bank.findBranch': 'शाखा शोधा',
   'bank.account': 'खाते क्रमांक',
   'bank.confirmAccount': 'खाते क्रमांक निश्चित करा',
   'bank.typeAgain': 'पुन्हा टाइप करा',
