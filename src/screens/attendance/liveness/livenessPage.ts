@@ -333,7 +333,7 @@ function paintBlinks() {
   }
 }
 
-// Step 0 aligning, 1 blinking, 2 turning. Anything before the current step is
+// Step 0 aligning, 1 turning, 2 blinking. Anything before the current step is
 // finished, which is the whole reason the rail exists.
 function setStep(n) {
   for (var i = 0; i < stepEls.length; i++) {
@@ -583,33 +583,19 @@ function loop() {
           // where this person's head actually rests rather than from zero.
           var base = yawPitchDeg(mtx.data);
           baseYaw = base.yaw; basePitch = base.pitch;
-          phase = "blink";
-          setStep(1);
-          blinksEl.classList.remove("hide");
-          send({ type: "status", phase: "blink" });
-        }
-      }
-
-    } else if (phase === "blink") {
-      // Counted on the OPENING edge, not on the closing one: a shut eye is a
-      // state that persists for many frames, and counting frames would let
-      // somebody pass by closing their eyes once and waiting.
-      var lb = blendshape(lastRes, "eyeBlinkLeft"), rb = blendshape(lastRes, "eyeBlinkRight");
-      if (lb > BLINK_SHUT && rb > BLINK_SHUT) {
-        blinkShut = true;
-      } else if (blinkShut && lb < BLINK_OPEN && rb < BLINK_OPEN) {
-        blinkShut = false;
-        blinks++;
-        paintBlinks();
-        if (blinks >= BLINKS_NEEDED) {
+          // Turn BEFORE blink, not after. pass() fires as soon as blinking is
+          // done, so whichever challenge runs last is the one whose pose the
+          // captured selfie inherits -- blinking doesn't move the head, a
+          // turn does. Turning first, ending on blinks, means the capture is
+          // never taken mid-turn without needing an extra "face forward and
+          // wait" pause tacked onto the end. Found from a real device: face
+          // checks were failing not on identity, but because the previous
+          // blink-then-turn order captured every clock-in selfie side-on.
           phase = "turn";
-          setStep(2);
-          blinksEl.classList.add("hide");
+          setStep(1);
           send({ type: "status", phase: "turn" });
         }
       }
-      promptEl.textContent = S("live.blink", "Blink {count} times", { count: BLINKS_NEEDED });
-      subEl.textContent = S("live.blinkProgress", "{done} of {count}", { done: blinks, count: BLINKS_NEEDED });
 
     } else if (phase === "turn") {
       var want = turnOrder[turnIndex];
@@ -629,18 +615,41 @@ function loop() {
         if (!recentred) {
           // Between the two turns the head must come back through the middle.
           // Without this, a single sweep from far left to far right satisfies
-          // both directions on the way past.
+          // both directions on the way past. Also the last thing checked
+          // before the turn phase hands off to blink, so blinking always
+          // starts from a face that has already come back to centre.
           subEl.textContent = S("live.faceForward", "Face forward again");
           if (turned < RECENTRE_DEG && !side) recentred = true;
         } else if (turned > TURN_DEG && side === want) {
           turnIndex++;
           recentred = false;
           subEl.textContent = "";
-          if (turnIndex >= turnOrder.length) { pass(); return; }
+          if (turnIndex >= turnOrder.length) {
+            phase = "blink";
+            setStep(2);
+            blinksEl.classList.remove("hide");
+            send({ type: "status", phase: "blink" });
+          }
         } else {
           subEl.textContent = S("live.step", "{done} of {count}", { done: turnIndex + 1, count: 2 });
         }
       }
+
+    } else if (phase === "blink") {
+      // Counted on the OPENING edge, not on the closing one: a shut eye is a
+      // state that persists for many frames, and counting frames would let
+      // somebody pass by closing their eyes once and waiting.
+      var lb = blendshape(lastRes, "eyeBlinkLeft"), rb = blendshape(lastRes, "eyeBlinkRight");
+      if (lb > BLINK_SHUT && rb > BLINK_SHUT) {
+        blinkShut = true;
+      } else if (blinkShut && lb < BLINK_OPEN && rb < BLINK_OPEN) {
+        blinkShut = false;
+        blinks++;
+        paintBlinks();
+        if (blinks >= BLINKS_NEEDED) { pass(); return; }
+      }
+      promptEl.textContent = S("live.blink", "Blink {count} times", { count: BLINKS_NEEDED });
+      subEl.textContent = S("live.blinkProgress", "{done} of {count}", { done: blinks, count: BLINKS_NEEDED });
     }
   }
 

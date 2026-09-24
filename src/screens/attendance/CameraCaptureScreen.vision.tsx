@@ -46,7 +46,7 @@ export function VisionCameraCaptureScreen({ onCaptured, onCancel }: Props) {
     }
   }, [photoOutput, onCaptured]);
 
-  const { state, challenge, onFacesDetected, reset } = useLiveness(takePhoto);
+  const { state, onFacesDetected, reset } = useLiveness(takePhoto);
 
   const faceDetectorOutput = useFaceDetectorOutput({
     performanceMode: 'fast',
