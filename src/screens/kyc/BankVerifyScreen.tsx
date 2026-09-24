@@ -80,8 +80,6 @@ export function BankVerifyScreen() {
   const [ifsc, setIfsc] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
   const [confirmAccount, setConfirmAccount] = useState('');
-  const [name, setName] = useState('');
-  const [mobile, setMobile] = useState('');
   const [mode, setMode] = useState<BankVerifyMode>('penniless');
   const [branch, setBranch] = useState<IfscLookupResult | null>(null);
   const [error, setError] = useState('');
@@ -104,8 +102,6 @@ export function BankVerifyScreen() {
       verifyBankAccount({
         account_number: accountNumber.trim(),
         ifsc: ifsc.trim().toUpperCase(),
-        name: name.trim() || undefined,
-        mobile: mobile.trim() || undefined,
         mode,
       }),
     onSuccess: (data) => {
@@ -132,8 +128,6 @@ export function BankVerifyScreen() {
       ifsc,
       account_number: accountNumber,
       confirm_account_number: confirmAccount,
-      name,
-      mobile,
     });
     if (!parsed.success) {
       setError(parsed.error.issues[0]?.message ?? t('bank.checkDetails'));
@@ -234,22 +228,6 @@ export function BankVerifyScreen() {
             keyboardType="number-pad"
             maxLength={18}
             placeholder={t('bank.typeAgain')}
-          />
-
-          <TextField
-            label={t('bank.nameOptional')}
-            value={name}
-            onChangeText={setName}
-            placeholder={t('bank.nameHint')}
-          />
-
-          <TextField
-            label={t('bank.mobileOptional')}
-            value={mobile}
-            onChangeText={(t) => setMobile(t.replace(/\D/g, ''))}
-            keyboardType="number-pad"
-            maxLength={10}
-            placeholder={t('bank.tenDigits')}
           />
 
           {/* Hidden, not shown-and-disabled: under SurePass this mode is not

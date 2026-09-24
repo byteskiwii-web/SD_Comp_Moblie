@@ -214,8 +214,6 @@ export type BankVerifyMode = 'penniless' | 'pennydrop';
 export type BankVerifyInput = {
   account_number: string;
   ifsc: string;
-  name?: string;
-  mobile?: string;
   mode?: BankVerifyMode;
 };
 

@@ -379,9 +379,6 @@ export const kn: Catalogue = {
   'bank.account': 'ಖಾತೆ ಸಂಖ್ಯೆ',
   'bank.confirmAccount': 'ಖಾತೆ ಸಂಖ್ಯೆ ದೃಢಪಡಿಸಿ',
   'bank.typeAgain': 'ಮತ್ತೊಮ್ಮೆ ಟೈಪ್ ಮಾಡಿ',
-  'bank.nameOptional': 'ಬ್ಯಾಂಕ್ ಪ್ರಕಾರ ಹೆಸರು (ಐಚ್ಛಿಕ)',
-  'bank.nameHint': 'ಖಾತೆ ಹೊಂದಿಸಲು ಬ್ಯಾಂಕಿಗೆ ಸಹಾಯ ಮಾಡುತ್ತದೆ',
-  'bank.mobileOptional': 'ಬ್ಯಾಂಕಿನಲ್ಲಿ ನೋಂದಾಯಿತ ಮೊಬೈಲ್ (ಐಚ್ಛಿಕ)',
   'bank.howToVerify': 'ಹೇಗೆ ಪರಿಶೀಲಿಸುವುದು',
   'bank.standard': 'ಸಾಮಾನ್ಯ ಪರಿಶೀಲನೆ',
   'bank.standardNote': 'ಹಣ ಕಳುಹಿಸದೆಯೇ ಖಾತೆಯನ್ನು ಖಚಿತಪಡಿಸುತ್ತದೆ. ಇದನ್ನೇ ಶಿಫಾರಸು ಮಾಡಲಾಗಿದೆ.',
@@ -667,7 +664,6 @@ export const kn: Catalogue = {
 
 
   'bank.digitsRange': '6 ರಿಂದ 18 ಅಂಕಿಗಳು',
-  'bank.tenDigits': '10 ಅಂಕಿಗಳು',
   'bank.pennyMode': 'ಪರೀಕ್ಷಾ ಠೇವಣಿ ({amount})',
   'bank.pennyModeNote': 'ಖಾತೆ ನಿಜವಾಗಿಯೂ ಹಣ ಸ್ವೀಕರಿಸಬಲ್ಲದೆಂದು ಸಾಬೀತುಪಡಿಸಲು {amount} ಜಮೆ ಮಾಡಲಾಗುತ್ತದೆ. ಇದನ್ನು ಹಿಂಪಡೆಯಲಾಗದು.',
   'bank.pennyConfirmBody': '{bank} ನಲ್ಲಿ {last4} ರಿಂದ ಕೊನೆಗೊಳ್ಳುವ ಖಾತೆಗೆ {amount} ಜಮೆ ಮಾಡಲಾಗುತ್ತದೆ, ಅದು ಹಣ ಸ್ವೀಕರಿಸಬಲ್ಲದೆಂದು ಸಾಬೀತುಪಡಿಸಲು. ಇದನ್ನು ಹಿಂಪಡೆಯಲಾಗದು ಮತ್ತು ಪುನರಾವರ್ತಿಸಬಾರದು.',

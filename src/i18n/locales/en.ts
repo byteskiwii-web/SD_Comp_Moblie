@@ -403,9 +403,6 @@ export const en = {
   'bank.account': 'Account number',
   'bank.confirmAccount': 'Confirm account number',
   'bank.typeAgain': 'Type it again',
-  'bank.nameOptional': 'Name as per bank (optional)',
-  'bank.nameHint': 'Helps the bank match the account',
-  'bank.mobileOptional': 'Mobile registered with the bank (optional)',
   'bank.howToVerify': 'How to verify',
   'bank.standard': 'Standard check',
   'bank.standardNote': 'Confirms the account without moving any money. Recommended.',
@@ -686,7 +683,6 @@ export const en = {
 
 
   'bank.digitsRange': '6 to 18 digits',
-  'bank.tenDigits': '10 digits',
   'bank.pennyMode': 'Test deposit ({amount})',
   'bank.pennyModeNote': 'Deposits {amount} to prove the account can actually receive money. Cannot be undone.',
   'bank.pennyConfirmBody': '{amount} will be deposited into account ending {last4} at {bank} to prove it can receive money. This cannot be undone and must not be repeated.',

@@ -386,9 +386,6 @@ export const mr: Catalogue = {
   'bank.account': 'खाते क्रमांक',
   'bank.confirmAccount': 'खाते क्रमांक निश्चित करा',
   'bank.typeAgain': 'पुन्हा टाइप करा',
-  'bank.nameOptional': 'बँकेनुसार नाव (ऐच्छिक)',
-  'bank.nameHint': 'बँकेला खाते जुळवण्यास मदत करते',
-  'bank.mobileOptional': 'बँकेत नोंदणीकृत मोबाइल (ऐच्छिक)',
   'bank.howToVerify': 'पडताळणी कशी करावी',
   'bank.standard': 'मानक तपासणी',
   'bank.standardNote': 'कोणतेही पैसे न हलवता खाते निश्चित करते. शिफारस केलेले.',
@@ -668,7 +665,6 @@ export const mr: Catalogue = {
   'kyc.faceShort': 'चेहरा',
 
   'bank.digitsRange': '६ ते १८ अंक',
-  'bank.tenDigits': '१० अंक',
   'bank.pennyMode': 'चाचणी जमा ({amount})',
   'bank.pennyModeNote': 'खाते खरोखर पैसे मिळवू शकते हे सिद्ध करण्यासाठी {amount} जमा करते. हे पूर्ववत करता येणार नाही.',
   'bank.pennyConfirmBody': 'हे सिद्ध करण्यासाठी की ते पैसे मिळवू शकते, {last4} ने संपणाऱ्या खात्यात {bank} येथे {amount} जमा केले जाईल. हे पूर्ववत करता येणार नाही आणि पुन्हा करता येणार नाही.',

@@ -386,9 +386,6 @@ export const bn: Catalogue = {
   'bank.account': 'অ্যাকাউন্ট নম্বর',
   'bank.confirmAccount': 'অ্যাকাউন্ট নম্বর নিশ্চিত করুন',
   'bank.typeAgain': 'আবার টাইপ করুন',
-  'bank.nameOptional': 'ব্যাংক অনুযায়ী নাম (ঐচ্ছিক)',
-  'bank.nameHint': 'ব্যাংককে অ্যাকাউন্ট মেলাতে সাহায্য করে',
-  'bank.mobileOptional': 'ব্যাংকে নিবন্ধিত মোবাইল (ঐচ্ছিক)',
   'bank.howToVerify': 'যাচাই করার পদ্ধতি',
   'bank.standard': 'স্ট্যান্ডার্ড চেক',
   'bank.standardNote': 'কোনো টাকা না সরিয়ে অ্যাকাউন্ট নিশ্চিত করে। সুপারিশকৃত।',
@@ -668,7 +665,6 @@ export const bn: Catalogue = {
   'kyc.faceShort': 'মুখ',
 
   'bank.digitsRange': '৬ থেকে ১৮ সংখ্যা',
-  'bank.tenDigits': '১০ সংখ্যা',
   'bank.pennyMode': 'পরীক্ষামূলক জমা ({amount})',
   'bank.pennyModeNote': 'অ্যাকাউন্টটি সত্যিই টাকা গ্রহণ করতে পারে তা প্রমাণ করতে {amount} জমা দেয়। এটি ফেরত নেওয়া যাবে না।',
   'bank.pennyConfirmBody': '{last4}-এ শেষ হওয়া অ্যাকাউন্টে {bank}-এ {amount} জমা করা হবে যাতে এটি টাকা গ্রহণ করতে পারে তা প্রমাণিত হয়। এটি ফেরত নেওয়া যাবে না এবং পুনরাবৃত্তি করা যাবে না।',

@@ -386,9 +386,6 @@ export const pa: Catalogue = {
   'bank.account': 'ਖਾਤਾ ਨੰਬਰ',
   'bank.confirmAccount': 'ਖਾਤਾ ਨੰਬਰ ਦੀ ਪੁਸ਼ਟੀ ਕਰੋ',
   'bank.typeAgain': 'ਦੁਬਾਰਾ ਟਾਈਪ ਕਰੋ',
-  'bank.nameOptional': 'ਬੈਂਕ ਅਨੁਸਾਰ ਨਾਮ (ਵਿਕਲਪਿਕ)',
-  'bank.nameHint': 'ਬੈਂਕ ਨੂੰ ਖਾਤਾ ਮਿਲਾਉਣ ਵਿੱਚ ਮਦਦ ਕਰਦਾ ਹੈ',
-  'bank.mobileOptional': 'ਬੈਂਕ ਵਿੱਚ ਦਰਜ ਮੋਬਾਈਲ (ਵਿਕਲਪਿਕ)',
   'bank.howToVerify': 'ਤਸਦੀਕ ਕਿਵੇਂ ਕਰੀਏ',
   'bank.standard': 'ਸਟੈਂਡਰਡ ਜਾਂਚ',
   'bank.standardNote': 'ਕੋਈ ਪੈਸਾ ਹਿਲਾਏ ਬਿਨਾਂ ਖਾਤੇ ਦੀ ਪੁਸ਼ਟੀ ਕਰਦਾ ਹੈ। ਸਿਫ਼ਾਰਸ਼ੀ।',
@@ -668,7 +665,6 @@ export const pa: Catalogue = {
   'kyc.faceShort': 'ਚਿਹਰਾ',
 
   'bank.digitsRange': '੬ ਤੋਂ ੧੮ ਅੰਕ',
-  'bank.tenDigits': '੧੦ ਅੰਕ',
   'bank.pennyMode': 'ਟੈਸਟ ਜਮ੍ਹਾਂ ({amount})',
   'bank.pennyModeNote': 'ਇਹ ਸਾਬਤ ਕਰਨ ਲਈ ਕਿ ਖਾਤਾ ਅਸਲ ਵਿੱਚ ਪੈਸੇ ਪ੍ਰਾਪਤ ਕਰ ਸਕਦਾ ਹੈ {amount} ਜਮ੍ਹਾਂ ਕਰਦਾ ਹੈ। ਇਹ ਵਾਪਸ ਨਹੀਂ ਲਿਆ ਜਾ ਸਕਦਾ।',
   'bank.pennyConfirmBody': 'ਇਹ ਸਾਬਤ ਕਰਨ ਲਈ ਕਿ ਇਹ ਪੈਸੇ ਪ੍ਰਾਪਤ ਕਰ ਸਕਦਾ ਹੈ {last4} ਤੇ ਖਤਮ ਹੋਣ ਵਾਲੇ ਖਾਤੇ ਵਿੱਚ {bank} ਤੇ {amount} ਜਮ੍ਹਾਂ ਕੀਤੇ ਜਾਣਗੇ। ਇਹ ਵਾਪਸ ਨਹੀਂ ਲਿਆ ਜਾ ਸਕਦਾ ਅਤੇ ਦੁਬਾਰਾ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਦਾ।',

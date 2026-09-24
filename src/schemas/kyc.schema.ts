@@ -65,13 +65,6 @@ export const bankVerifySchema = z
       .trim()
       .regex(/^[0-9]{6,18}$/, { error: 'Account number must be 6 to 18 digits' }),
     confirm_account_number: z.string().trim(),
-    name: z.string().trim().optional(),
-    mobile: z
-      .string()
-      .trim()
-      .regex(/^[6-9][0-9]{9}$/, { error: 'Enter a 10-digit Indian mobile number' })
-      .optional()
-      .or(z.literal('')),
   })
   .refine((v) => v.account_number === v.confirm_account_number, {
     error: 'The account numbers do not match',

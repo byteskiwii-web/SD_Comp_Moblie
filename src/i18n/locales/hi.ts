@@ -386,9 +386,6 @@ export const hi: Catalogue = {
   'bank.account': 'खाता नंबर',
   'bank.confirmAccount': 'खाता नंबर दोबारा भरें',
   'bank.typeAgain': 'दोबारा टाइप करें',
-  'bank.nameOptional': 'बैंक के अनुसार नाम (वैकल्पिक)',
-  'bank.nameHint': 'बैंक को खाता मिलाने में मदद करता है',
-  'bank.mobileOptional': 'बैंक में दर्ज मोबाइल नंबर (वैकल्पिक)',
   'bank.howToVerify': 'सत्यापन कैसे करें',
   'bank.standard': 'सामान्य जाँच',
   'bank.standardNote': 'बिना कोई पैसा भेजे खाते की पुष्टि करता है। यही सुझाया जाता है।',
@@ -674,7 +671,6 @@ export const hi: Catalogue = {
 
 
   'bank.digitsRange': '6 से 18 अंक',
-  'bank.tenDigits': '10 अंक',
   'bank.pennyMode': 'परीक्षण जमा ({amount})',
   'bank.pennyModeNote': 'खाता वाकई पैसा ले सकता है, यह साबित करने के लिए {amount} जमा किया जाता है। इसे वापस नहीं लिया जा सकता।',
   'bank.pennyConfirmBody': '{bank} के {last4} पर समाप्त होने वाले खाते में {amount} जमा किया जाएगा, ताकि यह साबित हो कि वह पैसा ले सकता है। यह वापस नहीं लिया जा सकता और इसे दोहराना नहीं चाहिए।',

@@ -386,9 +386,6 @@ export const gu: Catalogue = {
   'bank.account': 'ખાતા નંબર',
   'bank.confirmAccount': 'ખાતા નંબરની પુષ્ટિ કરો',
   'bank.typeAgain': 'ફરીથી ટાઈપ કરો',
-  'bank.nameOptional': 'બેંક મુજબ નામ (વૈકલ્પિક)',
-  'bank.nameHint': 'બેંકને ખાતું મેળવવામાં મદદ કરે છે',
-  'bank.mobileOptional': 'બેંકમાં નોંધાયેલ મોબાઇલ (વૈકલ્પિક)',
   'bank.howToVerify': 'કેવી રીતે ચકાસવું',
   'bank.standard': 'સ્ટાન્ડર્ડ તપાસ',
   'bank.standardNote': 'કોઈ પૈસા ખસેડ્યા વિના ખાતાની પુષ્ટિ કરે છે. ભલામણ કરેલ.',
@@ -668,7 +665,6 @@ export const gu: Catalogue = {
   'kyc.faceShort': 'ચહેરો',
 
   'bank.digitsRange': '૬ થી ૧૮ અંક',
-  'bank.tenDigits': '૧૦ અંક',
   'bank.pennyMode': 'ટેસ્ટ ડિપોઝિટ ({amount})',
   'bank.pennyModeNote': 'ખાતું ખરેખર પૈસા મેળવી શકે છે તે સાબિત કરવા {amount} જમા કરે છે. આ પાછું લઈ શકાશે નહીં.',
   'bank.pennyConfirmBody': 'તે પૈસા મેળવી શકે છે તે સાબિત કરવા {last4} થી સમાપ્ત થતા ખાતામાં {bank} ખાતે {amount} જમા કરવામાં આવશે. આ પાછું લઈ શકાશે નહીં અને ફરીથી કરી શકાશે નહીં.',

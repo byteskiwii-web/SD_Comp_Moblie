@@ -379,9 +379,6 @@ export const te: Catalogue = {
   'bank.account': 'ఖాతా నంబర్',
   'bank.confirmAccount': 'ఖాతా నంబర్ నిర్ధారించు',
   'bank.typeAgain': 'మళ్లీ టైప్ చేయండి',
-  'bank.nameOptional': 'బ్యాంక్ ప్రకారం పేరు (ఐచ్ఛికం)',
-  'bank.nameHint': 'ఖాతాను సరిపోల్చడానికి బ్యాంకుకు సాయపడుతుంది',
-  'bank.mobileOptional': 'బ్యాంకులో నమోదైన మొబైల్ (ఐచ్ఛికం)',
   'bank.howToVerify': 'ఎలా ధృవీకరించాలి',
   'bank.standard': 'సాధారణ తనిఖీ',
   'bank.standardNote': 'డబ్బు పంపకుండానే ఖాతాను నిర్ధారిస్తుంది. ఇదే సిఫార్సు.',
@@ -667,7 +664,6 @@ export const te: Catalogue = {
 
 
   'bank.digitsRange': '6 నుండి 18 అంకెలు',
-  'bank.tenDigits': '10 అంకెలు',
   'bank.pennyMode': 'పరీక్ష డిపాజిట్ ({amount})',
   'bank.pennyModeNote': 'ఖాతా నిజంగా డబ్బు స్వీకరించగలదని నిరూపించడానికి {amount} జమ చేయబడుతుంది. దీన్ని వెనక్కి తీసుకోలేరు.',
   'bank.pennyConfirmBody': '{bank}లో {last4}తో ముగిసే ఖాతాలో {amount} జమ చేయబడుతుంది, అది డబ్బు స్వీకరించగలదని నిరూపించడానికి. దీన్ని వెనక్కి తీసుకోలేరు, మళ్లీ చేయకూడదు.',
