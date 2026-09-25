@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef } from 'react';
-import { Animated, Dimensions, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Modal, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ColorScheme, radii } from '../theme/tokens';
@@ -12,7 +12,10 @@ import { useThemeStore } from '../stores/themeStore';
 // to shrink against; a percentage on the host would face the same "percentage
 // of what" problem this is fixing. See the text style's own comment for the
 // half of this bug that actually hid the message.
-const TOAST_MAX_WIDTH = Dimensions.get('window').width - 40;
+// Read per render (useWindowDimensions below), not once at module load: the
+// portrait lock is ignored on large screens from Android 16, and a width
+// captured at startup is wrong after any fold, rotation or window resize.
+const TOAST_SIDE_GUTTER = 40;
 
 export type ToastTone = 'success' | 'warning';
 
@@ -57,6 +60,7 @@ export function Toast({ state, onHide }: { state: ToastState; onHide: () => void
   const colors = useThemeStore((s) => s.colors);
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
+  const { width: windowWidth } = useWindowDimensions();
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(12)).current;
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -90,7 +94,9 @@ export function Toast({ state, onHide }: { state: ToastState; onHide: () => void
   return (
     <Modal visible transparent animationType="none" statusBarTranslucent onRequestClose={dismiss}>
       <View style={[styles.host, { paddingBottom: insets.bottom + 16 }]} pointerEvents="box-none">
-        <Animated.View style={[styles.toastWrap, { opacity, transform: [{ translateY }] }]}>
+        <Animated.View
+          style={[{ maxWidth: windowWidth - TOAST_SIDE_GUTTER }, { opacity, transform: [{ translateY }] }]}
+        >
           <Pressable onPress={dismiss} style={[styles.toast, { backgroundColor: tone.bg }]}>
             <Ionicons name={tone.icon} size={18} color={colors.white} />
             <Text style={styles.text} numberOfLines={2}>
@@ -111,11 +117,11 @@ function makeStyles(colors: ColorScheme) {
     alignItems: 'center',
     paddingHorizontal: 20,
   },
-  // The bound flexShrink below needs. Without it the row has no width of its
+  // The toast wrapper's maxWidth (applied inline, from the window width) is
+  // the bound flexShrink below needs. Without it the row has no width of its
   // own to constrain against and simply grows to fit whatever the text
   // measures at -- which is what a one-line toast should do; this only
   // matters once a message is long enough to actually need wrapping.
-  toastWrap: { maxWidth: TOAST_MAX_WIDTH },
   toast: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -131,11 +137,11 @@ function makeStyles(colors: ColorScheme) {
   },
   // flexShrink, not flex: 1 -- flex: 1 means "grow to fill available space",
   // and this row has none of its own to grow into (nothing upstream gives it
-  // a width; see TOAST_MAX_WIDTH above). Asking a child to grow into space
+  // a width; see TOAST_SIDE_GUTTER above). Asking a child to grow into space
   // that does not exist is exactly what collapsed it to zero width in
   // practice: the icon, having a real intrinsic size, still painted, while
   // the text -- the row's one flexible child -- rendered at 0px and vanished
-  // outright. flexShrink only asks it to give way once toastWrap's maxWidth
+  // outright. flexShrink only asks it to give way once the wrapper's maxWidth
   // is actually reached, which is the one thing this needed.
   // Always white, in both schemes -- this sits on the tone's own saturated
   // pill (success/warning), not on the theme's background, so it never

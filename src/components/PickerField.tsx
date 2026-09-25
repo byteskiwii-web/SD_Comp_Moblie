@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon, IconName } from './Icon';
 import { ColorScheme, radii } from '../theme/tokens';
 import { useThemeStore } from '../stores/themeStore';
@@ -140,6 +141,8 @@ function IosPickerSheet({
   // Named for what it is; `mode` on this component is date-vs-time.
   const appTheme = useThemeStore((s) => s.mode);
   const [draft, setDraft] = useState(initial);
+  // The wheel's bottom rows otherwise sit behind the home indicator.
+  const insets = useSafeAreaInsets();
 
   // Remount on each open so the wheel starts from the current field value.
   React.useEffect(() => {
@@ -149,7 +152,7 @@ function IosPickerSheet({
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onCancel}>
       <Pressable style={styles.backdrop} onPress={onCancel} />
-      <View style={styles.sheet}>
+      <View style={[styles.sheet, { paddingBottom: Math.max(24, insets.bottom + 12) }]}>
         <View style={styles.sheetBar}>
           <Pressable onPress={onCancel} hitSlop={8}>
             <Text style={styles.sheetCancel}>Cancel</Text>

@@ -162,7 +162,10 @@ export function BankVerifyScreen() {
   const busy = verify.isPending;
 
   return (
-    <SafeAreaView style={styles.flex} edges={['top']}>
+    // 'bottom' too: in onboarding there is no tab bar, so the last button
+    // would scroll under the navigation bar. Inside Profile's tabs it pads
+    // nothing -- the native view only insets what it actually overlaps.
+    <SafeAreaView style={styles.flex} edges={['top', 'bottom']}>
       <ScreenHeader title={t('bank.title')} />
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">

@@ -76,6 +76,9 @@ export async function shrinkSelfie(uri: string): Promise<string> {
     const { ImageManipulator, SaveFormat } = require('expo-image-manipulator') as typeof import('expo-image-manipulator');
     const probe = await ImageManipulator.manipulate(uri).renderAsync();
     const { width, height } = probe;
+    // Only its size was wanted. Freed now rather than at some later GC, so the
+    // decode below is not a second full-resolution bitmap alongside this one.
+    try { probe.release(); } catch { /* best effort */ }
     const context = ImageManipulator.manipulate(uri);
     if (Math.max(width, height) > SELFIE_MAX_PX) {
       context.resize(width >= height ? { width: SELFIE_MAX_PX } : { height: SELFIE_MAX_PX });

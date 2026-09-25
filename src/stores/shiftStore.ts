@@ -21,7 +21,8 @@ type ShiftState = {
   breakStartedAt: string | null;
   setClockedIn: (storeCode: string, clockInAt: string) => void;
   setClockedOut: () => void;
-  setOnBreak: () => void;
+  /** `startedAt` is the break-start mark's own time when it is known; defaults to now. */
+  setOnBreak: (startedAt?: string) => void;
   setOffBreak: () => void;
 };
 
@@ -35,7 +36,7 @@ export const useShiftStore = create<ShiftState>()(
       breakStartedAt: null,
       setClockedIn: (storeCode, clockInAt) => set({ isClockedIn: true, storeCode, clockInAt, isOnBreak: false, breakStartedAt: null }),
       setClockedOut: () => set({ isClockedIn: false, storeCode: null, clockInAt: null, isOnBreak: false, breakStartedAt: null }),
-      setOnBreak: () => set({ isOnBreak: true, breakStartedAt: new Date().toISOString() }),
+      setOnBreak: (startedAt) => set({ isOnBreak: true, breakStartedAt: startedAt ?? new Date().toISOString() }),
       setOffBreak: () => set({ isOnBreak: false, breakStartedAt: null }),
     }),
     {

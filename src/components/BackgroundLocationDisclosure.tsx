@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ColorScheme, radii } from '../theme/tokens';
 import { useThemeStore } from '../stores/themeStore';
 import { useT } from '../i18n';
@@ -41,6 +42,9 @@ export function BackgroundLocationDisclosure({
   const colors = useThemeStore((s) => s.colors);
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const t = useT();
+  // A Modal draws under the navigation bar once edge-to-edge is on (always,
+  // from Android 15 at targetSdk 36), so the buttons clear it themselves.
+  const insets = useSafeAreaInsets();
 
   const collected = [
     t('loc.discloseDoWhen'),
@@ -85,7 +89,7 @@ export function BackgroundLocationDisclosure({
             <Text style={styles.consequence}>{t('loc.discloseDecline')}</Text>
           </ScrollView>
 
-          <View style={styles.actions}>
+          <View style={[styles.actions, { paddingBottom: Math.max(18, insets.bottom + 12) }]}>
             <Pressable
               onPress={onDecline}
               accessibilityRole="button"

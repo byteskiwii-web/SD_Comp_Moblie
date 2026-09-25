@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useMutation } from '@tanstack/react-query';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ColorScheme, radii } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
 import { Button } from '../../components/ui';
@@ -60,6 +61,9 @@ export function ApplyLeaveSheet({
   const colors = useThemeStore((s) => s.colors);
   const t = useT();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  // Send is the last thing in the scroll body, and the Modal draws under the
+  // navigation bar edge-to-edge -- the body's end has to clear it.
+  const insets = useSafeAreaInsets();
 
   // A fresh sheet every time. Reopening it with somebody's last rejected
   // reason still in the box is how a wrong request gets sent twice.
@@ -130,7 +134,10 @@ export function ApplyLeaveSheet({
             </Pressable>
           </View>
 
-          <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+          <ScrollView
+            contentContainerStyle={[styles.body, { paddingBottom: Math.max(32, insets.bottom + 12) }]}
+            keyboardShouldPersistTaps="handled"
+          >
             <Text style={styles.label}>{t('apply.type')}</Text>
             <View style={styles.types}>
               {LEAVE_TYPES.map((kind) => {

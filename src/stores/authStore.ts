@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { saveAuth, loadAuth, clearAuth } from '../utils/secureStorage';
 import { getMe, type Me } from '../api/auth.api';
+import { stopShiftTimer } from '../hooks/useLocationPollingEffect';
 
 export type Employee = {
   id: string;
@@ -222,6 +223,8 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
    * launch spend a request discovering that.
    */
   signOut: async (opts) => {
+    // Nothing the shift timer does can reach the server without a session.
+    stopShiftTimer();
     await clearAuth();
     set({
       token: null, refreshToken: null, employee: null, store: null, profile: null,
