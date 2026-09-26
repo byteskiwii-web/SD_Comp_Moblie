@@ -12,7 +12,6 @@ export const isWeb = Platform.OS === 'web';
 // StoreClient is the Expo Go app itself; a dev/standalone build reports Bare.
 export const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
 export const hasVisionCamera = !isWeb && !isExpoGo;
-export const supportsBackgroundLocation = !isWeb && !isExpoGo;
 /**
  * modules/shift-timer is a local Expo module with an android/ directory and
  * nothing else -- there is no iOS implementation. So it is missing from Expo

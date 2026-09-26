@@ -14,7 +14,7 @@ import { useShiftStore } from '../../stores/shiftStore';
 import { haversineDistance } from '../../utils/haversine';
 import { clockIn, clockOut, endBreak, getAttendanceHistory, startBreak } from '../../api/attendance.api';
 import { CameraCaptureScreen } from './CameraCaptureScreen';
-import { noMidShiftCheckLabel, supportsBackgroundLocation } from '../../native/runtime';
+import { hasShiftTimer, noMidShiftCheckLabel } from '../../native/runtime';
 import { getApiErrorCode, getApiErrorMessage } from '../../api/client';
 import { onboardingGateQueryKey } from '../../hooks/useOnboardingGate';
 import { getLatestMarkOfTypes, SHIFT_TYPES, BREAK_TYPES } from '../../utils/attendanceStatus';
@@ -532,12 +532,17 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
     },
   });
 
-  // "Allow all the time" location access is mandatory before a punch is
-  // accepted -- without it, the periodic mid-shift geofence check
-  // (useLocationPollingEffect) can't run once the employee is clocked in.
-  // Checked here (after the selfie is already captured) rather than
+  // "Allow all the time" location access powers the periodic mid-shift
+  // geofence check (useLocationPollingEffect) once the employee is clocked in.
+  // Asked for here (after the selfie is already captured) rather than
   // earlier, since Android only lets an app prompt for background access
   // after foreground access is already granted.
+  //
+  // ONLY WHERE THAT CHECK EXISTS. It runs on the Android shift timer and
+  // nowhere else, so on iOS, Expo Go and web there is nothing to disclose and
+  // nothing to ask for. Requesting "Always" on iOS for a background check the
+  // app never makes is App Review guideline 2.5.4, and app.json no longer
+  // declares iOS background location or the Always usage strings at all.
   const handleCaptured = async (filePath: string) => {
     // First statement, before anything that can await: the frame is saved, so
     // the camera has no further job and must not block what comes next.
@@ -551,26 +556,28 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
     // A runtime that cannot grant the permission has not granted it, so treat
     // the throw as a denial and fall into the same gate.
     let granted = false;
-    try {
-      // Already granted? Then there is nothing to disclose and nothing to ask.
-      const existing = await Location.getBackgroundPermissionsAsync();
-      granted = existing.status === 'granted';
+    if (hasShiftTimer) {
+      try {
+        // Already granted? Then there is nothing to disclose and nothing to ask.
+        const existing = await Location.getBackgroundPermissionsAsync();
+        granted = existing.status === 'granted';
 
-      if (!granted) {
-        // THE DISCLOSURE COMES FIRST. Play's location policy requires an
-        // in-app screen naming the background collection before the system
-        // prompt appears — not an explanation afterwards, which is what this
-        // code used to do and is a rejection on its own.
-        const agreed = await askDisclosure();
-        if (!agreed) {
-          setPendingAction(null);
-          return;
+        if (!granted) {
+          // THE DISCLOSURE COMES FIRST. Play's location policy requires an
+          // in-app screen naming the background collection before the system
+          // prompt appears — not an explanation afterwards, which is what this
+          // code used to do and is a rejection on its own.
+          const agreed = await askDisclosure();
+          if (!agreed) {
+            setPendingAction(null);
+            return;
+          }
+          const bg = await Location.requestBackgroundPermissionsAsync();
+          granted = bg.status === 'granted';
         }
-        const bg = await Location.requestBackgroundPermissionsAsync();
-        granted = bg.status === 'granted';
+      } catch (err) {
+        console.warn('[ClockPanel] background location is unavailable in this runtime', err);
       }
-    } catch (err) {
-      console.warn('[ClockPanel] background location is unavailable in this runtime', err);
     }
 
     /*
@@ -598,7 +605,7 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
      */
     punchMutation.mutate(filePath);
 
-    if (!granted && supportsBackgroundLocation) {
+    if (!granted && hasShiftTimer) {
       Alert.alert(tr('clock.bgOffTitle'), tr('clock.bgOffBody'), [
         { text: tr('common.close'), style: 'cancel' },
         { text: tr('common.openSettings'), onPress: () => Linking.openSettings() },
