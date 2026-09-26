@@ -43,6 +43,18 @@ const UNVERSIONED_TTL_MS = 60 * 60 * 1000;
 /** "No photo" answers are remembered this long, so a team list does not re-ask per mount. */
 const MISSING_TTL_MS = 10 * 60 * 1000;
 
+/**
+ * A server error (5xx) is remembered this long.
+ *
+ * Not remembering it made an outage multiply itself: with photo storage off
+ * the server answers every picture with 503, and each avatar on screen asked
+ * again on every mount and then a second time through the direct load --
+ * about a dozen requests in twenty seconds from one phone. A minute is short
+ * enough that the picture is back soon after the server is, and long enough
+ * that tab switches in between cost nothing.
+ */
+const REFUSED_TTL_MS = 60 * 1000;
+
 export type PhotoFileState = {
   /** A local file to hand the image view, once there is one. */
   uri: string | null;
@@ -56,9 +68,28 @@ export type PhotoFileState = {
 
 const EMPTY: PhotoFileState = { uri: null, error: null, status: null, useRemote: false };
 
+/**
+ * The server answered with an error of its own (5xx): it has the request and
+ * cannot serve the picture. Asking it again the direct way gets the same
+ * answer, so callers should not fall back to the remote image for this.
+ */
+export function serverRefused(state: PhotoFileState): boolean {
+  return state.status !== null && state.status >= 500;
+}
+
+/**
+ * Whether loading the picture straight from the server might succeed where
+ * the local copy did not: the pipeline broke on the phone, or the download
+ * failed in a way that was not the server's own answer. Not for a 404 (there
+ * is no picture) or a 5xx (see serverRefused).
+ */
+export function directLoadMayHelp(state: PhotoFileState): boolean {
+  return state.useRemote || (state.error !== null && state.status !== 404 && !serverRefused(state));
+}
+
 /** Latest local file per employee+version, so a remount does not touch the disk. */
 const known = new Map<string, string>();
-const missing = new Map<string, { at: number; state: PhotoFileState }>();
+const missing = new Map<string, { until: number; state: PhotoFileState }>();
 const inflight = new Map<string, Promise<string>>();
 /** With the timestamp, keeps two downloads in the same millisecond apart. */
 let downloadSeq = 0;
@@ -200,7 +231,7 @@ export function useProfilePhotoFile(
       if (version) return;
     }
     const miss = missing.get(prefix);
-    if (miss && miss.at > Date.now() - MISSING_TTL_MS) {
+    if (miss && miss.until > Date.now()) {
       setState(miss.state);
       return;
     }
@@ -222,9 +253,11 @@ export function useProfilePhotoFile(
           err instanceof PhotoHttpError
             ? { uri: null, error: err.message, status: err.status, useRemote: false }
             : { uri: null, error: String(err), status: null, useRemote: true };
-        // Only "there is no photo" is worth remembering. A network blip is
-        // not, or one bad moment would hide the face for ten minutes.
-        if (failed.status === 404) missing.set(prefix, { at: Date.now(), state: failed });
+        // "There is no photo" is worth remembering for a while, and a server
+        // error briefly. A network blip is not, or one bad moment would hide
+        // the face until the entry expired.
+        if (failed.status === 404) missing.set(prefix, { until: Date.now() + MISSING_TTL_MS, state: failed });
+        else if (serverRefused(failed)) missing.set(prefix, { until: Date.now() + REFUSED_TTL_MS, state: failed });
         if (!cancelled) setState(failed);
       }
     );

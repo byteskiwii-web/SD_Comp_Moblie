@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Image, StyleSheet, Text, type StyleProp, type TextStyle } from 'react-native';
 import { useAuthStore } from '../stores/authStore';
 import { profilePhotoUrl } from '../api/photo.api';
-import { useProfilePhotoFile } from './profilePhotoFile';
+import { directLoadMayHelp, useProfilePhotoFile } from './profilePhotoFile';
 
 /**
  * The employee's face, or their initials.
@@ -59,8 +59,9 @@ export function AvatarContent({ initialsStyle }: { initialsStyle: StyleProp<Text
   }
 
   // The local copy could not be made or drawn: the direct load is still
-  // better than initials. A 404 means there is no picture at all.
-  const tryRemote = photo.useRemote || localFailed || (photo.error !== null && photo.status !== 404);
+  // better than initials. Not after a 404 (no picture at all) or a 5xx (the
+  // server would refuse the direct load the same way).
+  const tryRemote = localFailed || directLoadMayHelp(photo);
   if (tryRemote && token) {
     return (
       <Image

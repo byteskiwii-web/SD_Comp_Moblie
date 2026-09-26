@@ -9,7 +9,7 @@ import { getApiErrorMessage } from '../../api/client';
 import { profilePhotoUrl, removeProfilePhoto, uploadProfilePhoto } from '../../api/photo.api';
 import type { PickedFile } from '../../api/documents.api';
 import { t as tr, useT } from '../../i18n';
-import { forgetProfilePhoto, useProfilePhotoFile } from '../../components/profilePhotoFile';
+import { directLoadMayHelp, forgetProfilePhoto, serverRefused, useProfilePhotoFile } from '../../components/profilePhotoFile';
 import { File } from 'expo-file-system';
 
 /**
@@ -188,13 +188,12 @@ export function ProfilePhoto() {
    * that already worked there. Only when that fails too is anything said, and
    * then it says both.
    *
-   * Except a 404: the server has no picture, and asking it again the other
-   * way will not find one.
+   * Except a 404 or a 5xx: the server has no picture, or cannot serve it
+   * right now, and asking it again the other way gets the same answer.
    */
   const [localProblem, setLocalProblem] = useState<string | null>(null);
-  const localFailedToDownload = photo.error !== null && photo.status !== 404;
   const showLocal = Boolean(photo.uri) && localProblem === null;
-  const showRemote = !showLocal && (photo.useRemote || localFailedToDownload || localProblem !== null);
+  const showRemote = !showLocal && (directLoadMayHelp(photo) || localProblem !== null);
 
   // A new version is a fresh start.
   useEffect(() => {
@@ -202,10 +201,10 @@ export function ProfilePhoto() {
     setLocalProblem(null);
   }, [profile?.photoUpdatedAt]);
 
-  // Only a 404 is reported straight away; see above for everything else.
+  // Only a 404 or a 5xx is reported straight away; see above for everything else.
   useEffect(() => {
-    if (!photoOnFile || photo.status !== 404) return;
-    setPhotoError(tr('profile.photoUnreadable') + ' (HTTP 404)');
+    if (!photoOnFile || !(photo.status === 404 || serverRefused(photo))) return;
+    setPhotoError(tr('profile.photoUnreadable') + ' (HTTP ' + photo.status + ')');
   }, [photoOnFile, photo.status]);
 
   /** What went wrong with the local copy, for the message if the fallback fails too. */
