@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -74,6 +75,8 @@ export function HistoryPanel() {
   const colors = useThemeStore((s) => s.colors);
   const t = useT();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  // The range sheet's last row would otherwise sit under the navigation bar.
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation<Nav>();
   const employee = useAuthStore((s) => s.employee);
   const profile = useAuthStore((s) => s.profile);
@@ -163,7 +166,7 @@ export function HistoryPanel() {
 
       <Modal visible={pickerOpen} transparent animationType="slide" onRequestClose={() => setPickerOpen(false)}>
         <Pressable style={styles.backdrop} onPress={() => setPickerOpen(false)} />
-        <View style={styles.sheet}>
+        <View style={[styles.sheet, { paddingBottom: Math.max(28, insets.bottom + 12) }]}>
           <View style={styles.sheetBar}>
             <Text style={styles.sheetTitle}>{t('history.pickRange')}</Text>
             <Pressable onPress={() => setPickerOpen(false)} hitSlop={10}>

@@ -71,7 +71,8 @@ export function AcceptPoliciesScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.flex} edges={['top']}>
+    // 'bottom' too: this gate shows with no tab bar under it.
+    <SafeAreaView style={styles.flex} edges={['top', 'bottom']}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <View style={styles.icon}>

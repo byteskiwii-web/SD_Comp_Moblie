@@ -19,6 +19,23 @@ function getShiftTimer(): ShiftTimerModule | null {
   return shiftTimer;
 }
 
+/**
+ * Stops the native service outright, for sign-out.
+ *
+ * The effect below never sees a sign-out: signing out unmounts the tree that
+ * holds it, and its cleanup deliberately does not stop anything (an unmount
+ * is also what Android does when the Activity goes away mid-shift). Without
+ * this the "Clocked in" notification and the 12-minute wake-ups outlived the
+ * session, every tick skipping for want of a token.
+ */
+export function stopShiftTimer(): void {
+  try {
+    getShiftTimer()?.stop();
+  } catch (err) {
+    console.warn('[stopShiftTimer]', err);
+  }
+}
+
 // Reacts to shiftStore.isClockedIn/isOnBreak transitions (set by
 // useShiftSync, and by the clock-in/out and break mutations directly) to
 // start/stop the native shift-timer service. Tracking should only run while

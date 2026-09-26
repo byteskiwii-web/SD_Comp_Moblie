@@ -14,7 +14,7 @@ import { useShiftStore } from '../../stores/shiftStore';
 import { haversineDistance } from '../../utils/haversine';
 import { clockIn, clockOut, endBreak, getAttendanceHistory, startBreak } from '../../api/attendance.api';
 import { CameraCaptureScreen } from './CameraCaptureScreen';
-import { runtimeLabel, supportsBackgroundLocation } from '../../native/runtime';
+import { noMidShiftCheckLabel, supportsBackgroundLocation } from '../../native/runtime';
 import { getApiErrorCode, getApiErrorMessage } from '../../api/client';
 import { onboardingGateQueryKey } from '../../hooks/useOnboardingGate';
 import { getLatestMarkOfTypes, SHIFT_TYPES, BREAK_TYPES } from '../../utils/attendanceStatus';
@@ -433,13 +433,13 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
         setClockedOut();
       }
       const isPending = result.attendance.approval_status === 'pending-approval';
-      // No background location in this runtime means no mid-shift geofence
-      // polling for this shift. Said on the receipt rather than left for
+      // No mid-shift geofence polling in this runtime (Expo Go, web, and iOS,
+      // which has no shift timer). Said on the receipt rather than left for
       // someone to infer later from an attendance report with holes in it.
-      const unverified = supportsBackgroundLocation
-        ? ''
-        : ' ' + tr('clock.noMidShift', { runtime: runtimeLabel });
-      const tone = isPending || !supportsBackgroundLocation ? 'warning' : 'success';
+      const unverified = noMidShiftCheckLabel
+        ? ' ' + tr('clock.noMidShift', { runtime: noMidShiftCheckLabel })
+        : '';
+      const tone = isPending || noMidShiftCheckLabel ? 'warning' : 'success';
       // Told now, not found by HR later: how late the clock-in was, or how
       // far past the rostered end the clock-out is.
       const late = pendingAction === 'clock-in' && (result.lateByMinutes ?? 0) > 0

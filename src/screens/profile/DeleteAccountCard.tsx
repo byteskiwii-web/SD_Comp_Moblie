@@ -1,6 +1,9 @@
 import React, { useMemo, useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  ActivityIndicator, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View,
+} from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { ColorScheme, radii } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
@@ -35,6 +38,8 @@ export function DeleteAccountCard() {
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const t = useT();
   const signOut = useAuthStore((s) => s.signOut);
+  // The sheet's buttons clear the navigation bar / home indicator themselves.
+  const insets = useSafeAreaInsets();
 
   const [open, setOpen] = useState(false);
   const [code, setCode] = useState('');
@@ -92,7 +97,10 @@ export function DeleteAccountCard() {
       </Pressable>
 
       <Modal visible={open} animationType="slide" transparent onRequestClose={close}>
-        <View style={styles.backdrop}>
+        {/* iOS does not move a Modal's content for the keyboard, which covered
+            the code field and the confirm button. Android keeps its own
+            handling: with no behavior this is a plain View there. */}
+        <KeyboardAvoidingView style={styles.backdrop} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <View style={styles.sheet}>
             <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
               <Text style={styles.title}>{t('del.title')}</Text>
@@ -146,7 +154,7 @@ export function DeleteAccountCard() {
               {error ? <Text style={styles.error}>{error}</Text> : null}
             </ScrollView>
 
-            <View style={styles.actions}>
+            <View style={[styles.actions, { paddingBottom: Math.max(18, insets.bottom + 12) }]}>
               <Pressable onPress={close} disabled={submit.isPending}
                 style={({ pressed }) => [styles.btn, styles.btnGhost, pressed && styles.pressed]}>
                 <Text style={styles.btnGhostText}>{t('common.cancel')}</Text>
@@ -179,7 +187,7 @@ export function DeleteAccountCard() {
               )}
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </>
   );

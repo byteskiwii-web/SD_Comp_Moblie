@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ColorScheme, radii } from '../../theme/tokens';
@@ -106,6 +106,8 @@ export function LeaveScreen() {
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const STATUS_TONE = useMemo(() => statusTone(colors), [colors]);
   const t = useT();
+  // The day-picker sheet draws under the navigation bar edge-to-edge.
+  const insets = useSafeAreaInsets();
 
   const listQuery = useQuery({
     // Keyed on the employee too: a different sign-in on the same device must
@@ -383,7 +385,7 @@ export function LeaveScreen() {
           field would invite an error it can already prevent. */}
       <Modal visible={claiming !== null} transparent animationType="slide" onRequestClose={() => setClaiming(null)}>
         <Pressable style={styles.backdrop} onPress={() => setClaiming(null)} />
-        <View style={styles.sheet}>
+        <View style={[styles.sheet, { paddingBottom: Math.max(28, insets.bottom + 12) }]}>
           <View style={styles.sheetBar}>
             <Text style={styles.sheetTitle}>{t('leave.whichDay')}</Text>
             <Pressable onPress={() => setClaiming(null)} hitSlop={12} accessibilityLabel={t('common.close')}>

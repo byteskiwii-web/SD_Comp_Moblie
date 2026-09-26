@@ -108,7 +108,8 @@ export function OnboardingChecklistScreen() {
   const next = displayRows.find((s) => !isDisplayDone(s) && displayRoute(s));
 
   return (
-    <SafeAreaView style={styles.flex} edges={['top']}>
+    // 'bottom' too: onboarding has no tab bar under it.
+    <SafeAreaView style={styles.flex} edges={['top', 'bottom']}>
       <ScrollView
         contentContainerStyle={styles.content}
         refreshControl={<RefreshControl refreshing={isFetching} onRefresh={refetch} tintColor={colors.brand[700]} />}

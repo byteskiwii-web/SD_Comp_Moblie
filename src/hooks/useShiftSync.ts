@@ -62,7 +62,10 @@ export function useShiftSync() {
         // is reconciled the same way, but only while actually on shift.
         const latestBreakMark = getLatestMarkOfTypes(marks, BREAK_TYPES);
         if (latestBreakMark?.mark_type === 'break-start') {
-          setOnBreak();
+          // The mark's own time, not now: this runs on every return to the
+          // app, and restamping the break each time pushed the "break is
+          // over" reminder (useBreakReminderEffect) later with every look.
+          setOnBreak(latestBreakMark.timestamp);
         } else {
           setOffBreak();
         }

@@ -50,3 +50,13 @@ export const hasNotifications = !isWeb && !(isExpoGo && Platform.OS === 'android
 export const hasRemotePush = !isWeb && !isExpoGo;
 
 export const runtimeLabel = isWeb ? 'web' : isExpoGo ? 'Expo Go' : 'development build';
+
+/**
+ * What a punch receipt names as having no mid-shift location check, or null
+ * where one runs.
+ *
+ * Keyed on hasShiftTimer, not supportsBackgroundLocation: an iOS build can hold
+ * the background permission, but only the Android shift timer ever re-checks
+ * presence during a shift, so an iOS receipt must not read as verified.
+ */
+export const noMidShiftCheckLabel: string | null = hasShiftTimer ? null : isWeb || isExpoGo ? runtimeLabel : 'iOS';
