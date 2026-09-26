@@ -817,6 +817,9 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
         clockInDisabled={!coords || clockInBlocked}
         // A break must be ended before the shift can be.
         clockOutDisabled={isCurrentlyClockedIn && isCurrentlyOnBreak}
+        // Set only once the camera has closed and a request is actually out --
+        // see PunchTiles' own comment for why the gap needed this at all.
+        pending={punchMutation.isPending ? pendingAction : null}
         labels={{
           /* The BUTTONS say punch; the day detail keeps clock-in/clock-out
              for the marks themselves, which is what the stored mark_type is
@@ -826,6 +829,7 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
           doneAt: (time) => t('clock.doneAt', { time }),
           startHint: t('clock.startHint'),
           endHint: t('clock.endHint'),
+          processing: t('common.checking'),
         }}
       />
         </View>
@@ -844,6 +848,9 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
         clockInDisabled={!coords || clockInBlocked}
         // A break must be ended before the shift can be.
         clockOutDisabled={isCurrentlyClockedIn && isCurrentlyOnBreak}
+        // Set only once the camera has closed and a request is actually out --
+        // see PunchTiles' own comment for why the gap needed this at all.
+        pending={punchMutation.isPending ? pendingAction : null}
         labels={{
           /* The BUTTONS say punch; the day detail keeps clock-in/clock-out
              for the marks themselves, which is what the stored mark_type is
@@ -853,6 +860,7 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
           doneAt: (time) => t('clock.doneAt', { time }),
           startHint: t('clock.startHint'),
           endHint: t('clock.endHint'),
+          processing: t('common.checking'),
         }}
       />
         </TourTarget>

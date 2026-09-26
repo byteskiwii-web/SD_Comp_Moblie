@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { ColorScheme, radii } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
@@ -25,6 +25,17 @@ export function PunchTiles({
   onClockOut,
   clockInDisabled,
   clockOutDisabled,
+  /**
+   * Which side is currently mid-flight -- the camera has already closed and a
+   * request is out, with no answer yet. Without this, the gap between the
+   * camera dismissing and the success/error banner appearing looked like
+   * nothing was happening at all. The pending side stays looking ACTIVE
+   * (filled, not greyed) with a spinner in place of its icon, so the answer
+   * to "did my tap register" is yes, visibly, right up to the outcome; the
+   * OTHER tile disables for the same window, since a second punch fired
+   * while the first is still in flight is not a thing to allow.
+   */
+  pending,
   labels,
 }: {
   clockedIn: boolean;
@@ -40,12 +51,14 @@ export function PunchTiles({
    */
   clockInDisabled?: boolean;
   clockOutDisabled?: boolean;
+  pending?: 'clock-in' | 'clock-out' | null;
   labels: {
     clockIn: string;
     clockOut: string;
     doneAt: (time: string) => string;
     startHint: string;
     endHint: string;
+    processing: string;
   };
 }) {
   const colors = useThemeStore((s) => s.colors);
@@ -61,23 +74,31 @@ export function PunchTiles({
     <View style={styles.row}>
       <Tile
         tone="in"
-        kind={clockInAt ? 'done' : clockedIn ? 'done' : 'active'}
+        kind={
+          pending === 'clock-in' ? 'pending' : clockInAt ? 'done' : clockedIn ? 'done' : 'active'
+        }
         icon={clockInAt ? 'checkmark' : 'log-in-outline'}
         title={labels.clockIn}
-        sub={clockInAt ? labels.doneAt(clockInAt) : labels.startHint}
+        sub={pending === 'clock-in' ? labels.processing : clockInAt ? labels.doneAt(clockInAt) : labels.startHint}
         onPress={onClockIn}
-        disabled={clockInDisabled}
+        disabled={clockInDisabled || !!pending}
         styles={styles}
         colors={colors}
       />
       <Tile
         tone="out"
-        kind={dayFinished ? 'done' : clockedIn ? 'active' : 'idle'}
+        kind={pending === 'clock-out' ? 'pending' : dayFinished ? 'done' : clockedIn ? 'active' : 'idle'}
         icon={dayFinished ? 'checkmark' : 'log-out-outline'}
         title={labels.clockOut}
-        sub={dayFinished && clockOutAt ? labels.doneAt(clockOutAt) : labels.endHint}
+        sub={
+          pending === 'clock-out'
+            ? labels.processing
+            : dayFinished && clockOutAt
+              ? labels.doneAt(clockOutAt)
+              : labels.endHint
+        }
         onPress={onClockOut}
-        disabled={clockOutDisabled}
+        disabled={clockOutDisabled || !!pending}
         styles={styles}
         colors={colors}
       />
@@ -87,7 +108,8 @@ export function PunchTiles({
 
 /**
  * `active` is the one thing to do next, and is the only filled tile.
- * `done` is a receipt. `idle` is a step not yet reachable.
+ * `done` is a receipt. `idle` is a step not yet reachable. `pending` is
+ * `active` frozen mid-tap: still filled, no longer pressable, spinning.
  */
 function Tile({
   tone,
@@ -102,7 +124,7 @@ function Tile({
 }: {
   /** Which end of the shift this is. Decides the hue at every state but `done`. */
   tone: 'in' | 'out';
-  kind: 'active' | 'done' | 'idle';
+  kind: 'active' | 'done' | 'idle' | 'pending';
   icon: keyof typeof Ionicons.glyphMap;
   title: string;
   sub: string;
@@ -125,8 +147,12 @@ function Tile({
    *
    * So the look is derived once, here, and every colour below reads from it:
    * a tile you cannot press looks like one you cannot press, in both schemes.
+   * `pending` is exempted: it is disabled but must NOT fall back to the idle
+   * look, or the one tile that just did something would look the same as the
+   * one that was never reachable.
    */
-  const visual: 'active' | 'done' | 'idle' = kind === 'active' && disabled ? 'idle' : kind;
+  const visual: 'active' | 'done' | 'idle' | 'pending' =
+    kind === 'pending' ? 'pending' : kind === 'active' && disabled ? 'idle' : kind;
 
   /*
    * Colour carries which button this is, at every state.
@@ -147,32 +173,38 @@ function Tile({
   const softText = isIn ? styles.textSoftIn : styles.textSoftOut;
   const softIconColor = isIn ? colors.successText : colors.dangerText;
 
+  // active and pending share every colour below (a pending tile IS an active
+  // one, just frozen mid-tap) -- only the icon slot itself differs.
+  const looksActive = visual === 'active' || visual === 'pending';
+
   const body = (
     <>
       <View
         style={[
           styles.iconWrap,
-          visual === 'active' && styles.iconWrapActive,
+          looksActive && styles.iconWrapActive,
           visual === 'idle' && styles.iconWrapSoft,
           visual === 'done' && styles.iconWrapDone,
         ]}
       >
-        <Ionicons
-          name={icon}
-          size={17}
-          color={
-            visual === 'active' ? colors.white : visual === 'done' ? colors.successText : softIconColor
-          }
-        />
+        {visual === 'pending' ? (
+          <ActivityIndicator size="small" color={colors.white} />
+        ) : (
+          <Ionicons
+            name={icon}
+            size={17}
+            color={visual === 'active' ? colors.white : visual === 'done' ? colors.successText : softIconColor}
+          />
+        )}
       </View>
       <Text
-        style={[styles.title, visual === 'active' && styles.titleActive, visual === 'idle' && softText]}
+        style={[styles.title, looksActive && styles.titleActive, visual === 'idle' && softText]}
         numberOfLines={1}
       >
         {title}
       </Text>
       <Text
-        style={[styles.sub, visual === 'active' && styles.subActive, visual === 'idle' && styles.subSoft]}
+        style={[styles.sub, looksActive && styles.subActive, visual === 'idle' && styles.subSoft]}
         numberOfLines={1}
       >
         {sub}
@@ -183,8 +215,9 @@ function Tile({
   if (!live) {
     return (
       <View
-        style={[styles.tile, visual === 'done' && styles.tileDone, visual === 'idle' && soft]}
-        // Announced as text: a receipt is not something to tab to.
+        style={[styles.tile, visual === 'pending' && fill, visual === 'done' && styles.tileDone, visual === 'idle' && soft]}
+        // Announced as text: neither a receipt nor a tile that is busy right
+        // now is something to tab to.
         accessibilityRole="text"
         accessibilityLabel={title + '. ' + sub}
       >
