@@ -4,7 +4,7 @@ import { useThemeStore } from '../stores/themeStore';
 import { useAuthStore } from '../stores/authStore';
 import { profilePhotoUrl } from '../api/photo.api';
 import type { ColorScheme } from '../theme/tokens';
-import { useProfilePhotoFile } from './profilePhotoFile';
+import { directLoadMayHelp, useProfilePhotoFile } from './profilePhotoFile';
 
 /**
  * Somebody else's face, in a list.
@@ -50,10 +50,10 @@ export function EmployeeAvatar({
   // A small local copy; see profilePhotoFile.ts. No version is known for a
   // colleague, so the copy is refreshed on age.
   const photo = useProfilePhotoFile(employeeId, null, Boolean(token));
-  // The local copy failed to draw: use the direct load instead. A 404 means
-  // there is no picture, and the direct load would only find the same.
+  // The local copy failed to draw: use the direct load instead. Not after a
+  // 404 (there is no picture) or a 5xx (the server would refuse it the same way).
   const [localFailed, setLocalFailed] = useState(false);
-  const tryRemote = photo.useRemote || localFailed || (photo.error !== null && photo.status !== 404);
+  const tryRemote = localFailed || directLoadMayHelp(photo);
 
   const initials =
     (name ?? employeeId)
