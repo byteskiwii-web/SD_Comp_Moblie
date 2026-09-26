@@ -56,11 +56,11 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Zob Connect checks your location about every 12 minutes while you are clocked in — including when the app is closed — to confirm you are at your assigned store. It stops when your shift ends.",
+          "locationAlwaysAndWhenInUsePermission": false,
           "locationWhenInUsePermission": "Zob Connect checks your location when you clock in or out, to confirm you are at your assigned store.",
-          "locationAlwaysPermission": "Zob Connect checks your location about every 12 minutes while you are clocked in — including when the app is closed — to confirm you are at your assigned store. It stops when your shift ends.",
+          "locationAlwaysPermission": false,
           "motionUsagePermission": false,
-          "isIosBackgroundLocationEnabled": true,
+          "isIosBackgroundLocationEnabled": false,
           "isAndroidBackgroundLocationEnabled": true,
           "isAndroidForegroundServiceEnabled": true
         }

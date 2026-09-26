@@ -61,6 +61,9 @@ export function useLocationPollingEffect() {
 
     async function run() {
       try {
+        // No shift timer (iOS, Expo Go, web): nothing to start or stop, and
+        // iOS no longer declares the Always permission this would read.
+        if (!hasShiftTimer) return;
         if (shouldTrack) {
           /**
            * Reads the permission; never asks for it.
