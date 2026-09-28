@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Linking, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Linking, Modal, Platform, StyleSheet, Text, View } from 'react-native';
 import * as Location from 'expo-location';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button, Card } from '../../components/ui';
@@ -29,13 +29,9 @@ import { useConnectivityStore } from '../../stores/connectivityStore';
 import { useConsentStore } from '../../stores/consentStore';
 import { useTicker } from '../../hooks/useTicker';
 import { BackgroundLocationDisclosure } from '../../components/BackgroundLocationDisclosure';
+import { useLocationReadiness, type Coords, type LocationStatus } from '../../hooks/useLocationReadiness';
 
 const today = () => toLocalDateKey();
-
-// Tighter than locationProbe.ts's 5 minutes: that is a background integrity
-// check the employee never sees, this feeds a fix they are about to submit
-// on a live punch, watching the screen while it happens.
-const CACHED_FIX_MAX_AGE_MS = 2 * 60 * 1000;
 
 type Props = {
   // Set by Home's "Start/End shift with live photo" CTA, which already knows
@@ -88,12 +84,26 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
   const setClockedOut = useShiftStore((s) => s.setClockedOut);
   const queryClient = useQueryClient();
 
-  const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
-  const [locationError, setLocationError] = useState('');
-  // 'blocked' means iOS will not show the dialog again -- the only route back
-  // is Settings. Distinguishing it matters because the recovery differs.
-  const [permission, setPermission] = useState<'unknown' | 'granted' | 'askable' | 'blocked' | 'services-off'>('unknown');
+  /*
+   * Location lives in its own hook now, and keeps itself current: it re-reads
+   * when the app returns to the foreground, every few seconds while this
+   * panel is up, and on every punch. See useLocationReadiness.
+   */
+  const location = useLocationReadiness();
+  const coords = location.coords;
   const [pendingAction, setPendingAction] = useState<'clock-in' | 'clock-out' | null>(null);
+  /*
+   * The few hundred milliseconds to few seconds between the tap and the
+   * camera, while location is re-checked. Shown on the tile as a spinner so
+   * the tap visibly registered, and blocks a second tap meanwhile.
+   */
+  const [preparing, setPreparing] = useState<'clock-in' | 'clock-out' | null>(null);
+  // The position checked at the moment Punch In was tapped -- what the punch
+  // is judged on, rather than whichever fix happens to be in state when the
+  // selfie finishes uploading.
+  const punchCoords = useRef<Coords | null>(null);
+  // The banner's fix button, while it is working (Android's dialog, a fresh fix).
+  const [fixing, setFixing] = useState(false);
   /*
    * THE CAMERA IS DONE THE MOMENT THERE IS A FRAME ON DISK.
    *
@@ -291,80 +301,41 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
   const lastBreakStart = marks.find((m) => m.mark_type === 'break-start');
   const lastBreakEnd = marks.find((m) => m.mark_type === 'break-end');
 
-  /**
-   * Ask for location, then fix a position.
+  /*
+   * WHAT IS WRONG WITH LOCATION, IN WORDS THAT FIT THIS PHONE.
    *
-   * Callable so the screen can retry after the user changes the setting,
-   * instead of making them relaunch the app. iOS shows its dialog ONCE per
-   * app ever; after that requestForegroundPermissionsAsync returns the
-   * recorded answer with no prompt, which is why a phone that has already
-   * answered appears to "not ask".
+   * The switched-off message used to give the iPhone path (Settings › Privacy
+   * & Security › Location Services) on every phone, Android included, where
+   * no such page exists. Android now gets its own sentence and a Turn on
+   * button that shows the system dialog in place; iOS keeps the path, because
+   * iOS will not let an app switch Location on or link to that page.
    */
-  const acquireLocation = useCallback(async () => {
-    setLocationError('');
-
-    // Device-wide Location Services, checked BEFORE asking for permission.
-    // While it is off iOS shows no per-app prompt at all, and an app that has
-    // never asked has no row in Settings either -- so the phone looks like it
-    // simply ignored us, and the usual "allow it in Settings" advice sends
-    // people hunting for an entry that is not there yet.
-    if (!(await Location.hasServicesEnabledAsync())) {
-      setPermission('services-off');
-      setLocationError(tr('clock.servicesOff'));
-      return;
+  const locationProblem: Exclude<LocationStatus, 'ready' | 'checking'> | null =
+    location.status === 'ready' || location.status === 'checking' ? null : location.status;
+  const locationCopy = (st: Exclude<LocationStatus, 'ready' | 'checking'>) => {
+    switch (st) {
+      case 'services-off':
+        return {
+          title: t('clock.locationOff'),
+          detail: Platform.OS === 'android' ? t('clock.servicesOffAndroid') : t('clock.servicesOff'),
+          action: Platform.OS === 'android' ? t('clock.turnOn') : t('common.openSettings'),
+        };
+      case 'denied':
+        return { title: t('clock.permissionNeeded'), detail: t('clock.locationDenied'), action: t('clock.allow') };
+      case 'blocked':
+        return { title: t('clock.permissionNeeded'), detail: t('clock.blockedSteps'), action: t('common.openSettings') };
+      default:
+        return { title: t('clock.locationUnavailable'), detail: t('clock.locationFailed'), action: t('common.retry') };
     }
-
-    const perm = await Location.requestForegroundPermissionsAsync();
-    if (perm.status !== 'granted') {
-      setPermission(perm.canAskAgain ? 'askable' : 'blocked');
-      setLocationError(
-        perm.canAskAgain
-          ? tr('clock.locationDenied')
-          : // Open Settings lands on this app's own page, so the path starts
-            // there. Naming the option matters: iOS offers four on that screen
-            // and only this one works. In Expo Go the page is Expo Go's -- there
-            // is no zip-hrms row to find -- but the steps read the same either way.
-            tr('clock.blockedSteps')
-      );
-      return;
-    }
-    setPermission('granted');
-
-    // A cached fix (Play Services' fused location, or the device's last GPS
-    // lock) resolves in milliseconds; a cold getCurrentPositionAsync call can
-    // take several seconds to acquire a signal, which is the delay this is
-    // for. Showing the cached one first unblocks the geofence read and
-    // enables Start/End Shift immediately -- it is not a lesser answer, since
-    // getCurrentPositionAsync below still runs right behind it and overwrites
-    // coords the moment a fresh fix lands, so what actually gets submitted on
-    // Start/End Shift is never worse than a live-only fetch would have given,
-    // only arrived-at sooner. locationProbe.ts's background check uses the
-    // same two-step shape for the same reason.
-    let hasFix = false;
+  };
+  const fixLocation = useCallback(async () => {
+    setFixing(true);
     try {
-      const cached = await Location.getLastKnownPositionAsync({ maxAge: CACHED_FIX_MAX_AGE_MS });
-      if (cached) {
-        setCoords({ latitude: cached.coords.latitude, longitude: cached.coords.longitude });
-        hasFix = true;
-      }
-    } catch {
-      // No cached fix to fall back on -- the live fetch below is still tried.
+      return await location.fix();
+    } finally {
+      setFixing(false);
     }
-
-    try {
-      const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-      setCoords({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
-    } catch {
-      // Only an error if the cached fix above never landed either -- a
-      // screen that is already unblocked should not be knocked back into an
-      // error state because the background refresh happened to fail.
-      if (!hasFix) setLocationError(tr('clock.locationFailed'));
-    }
-  }, []);
-
-  useEffect(() => {
-    void acquireLocation();
-  }, [acquireLocation]);
+  }, [location]);
 
   const distanceMetres =
     coords && store?.lat && store?.lng
@@ -403,6 +374,7 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
     if (wouldBeDisabled) return;
     autoPunchFired.current = true;
     onAutoPunchStarted?.();
+    punchCoords.current = coords;
     setPendingAction(autoPunch);
   }, [autoPunch, coords, historyQuery.isLoading, isCurrentlyClockedIn, isCurrentlyOnBreak, onAutoPunchStarted, pendingAction]);
 
@@ -413,12 +385,13 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
          screen says "your location when you clock in", and the server would
          discard a clock-out's coordinates regardless — so a clock-out neither
          waits for a fix nor sends one. */
-      if (pendingAction === 'clock-in' && !coords) throw new Error('Missing required data');
+      const at = punchCoords.current ?? coords;
+      if (pendingAction === 'clock-in' && !at) throw new Error('Missing required data');
       const input = {
         employee_id: employee.id,
         store_code: store.store_code,
-        ...(pendingAction === 'clock-in' && coords
-          ? { latitude: coords.latitude, longitude: coords.longitude }
+        ...(pendingAction === 'clock-in' && at
+          ? { latitude: at.latitude, longitude: at.longitude }
           : {}),
         device_id: 'mobile-app',
         selfieFilePath: filePath,
@@ -532,6 +505,80 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
     },
   });
 
+  /**
+   * A tap on Punch In or Punch Out: check Location first, THEN the camera.
+   *
+   * Checked on every tap, not trusted from the last read -- Location can be
+   * switched off from the quick-settings panel at any moment without the app
+   * hearing about it, and finding out after the selfie means taking it again.
+   *
+   * Punch In needs a position and stops without one, saying why and offering
+   * the fix; when the fix works (Android's dialog accepted, permission
+   * granted, a fix found) it carries straight on to the camera, so fixing it
+   * costs no second tap. Punch Out is not judged on position -- the server
+   * discards a clock-out's coordinates -- so Location being off is said, with
+   * the fix offered, but never stands between somebody and ending their shift.
+   */
+  const openPunch = useCallback(
+    async (action: 'clock-in' | 'clock-out') => {
+      if (preparing || pendingAction || punchMutation.isPending) return;
+      setPreparing(action);
+      try {
+        if (action === 'clock-in') {
+          const result = await location.ensureFix();
+          if (result.status === 'ready' && result.coords) {
+            punchCoords.current = result.coords;
+            setPendingAction('clock-in');
+            return;
+          }
+          const problem = result.status === 'checking' ? 'no-fix' : result.status;
+          if (problem === 'ready') return;
+          const copy = locationCopy(problem);
+          Alert.alert(
+            t('clock.inNeedsLocationTitle'),
+            t('clock.inNeedsLocationBody', { site: store?.name ?? t('clock.yourSite') }) + '\n\n' + copy.detail,
+            [
+              { text: t('common.cancel'), style: 'cancel' },
+              {
+                text: copy.action,
+                onPress: async () => {
+                  const after = await fixLocation();
+                  // Fixed in place (Android dialog, permission, a fix) -- carry
+                  // on to the camera rather than asking for another tap.
+                  if (after === 'ready') void openPunch('clock-in');
+                },
+              },
+            ]
+          );
+          return;
+        }
+
+        const access = await location.checkAccess();
+        if (access === 'ok') {
+          punchCoords.current = null;
+          setPendingAction('clock-out');
+          return;
+        }
+        const copy = locationCopy(access === 'ready' || access === 'checking' ? 'no-fix' : access);
+        Alert.alert(t('clock.outLocationOffTitle'), t('clock.outLocationOffBody'), [
+          { text: copy.action, onPress: () => void fixLocation() },
+          {
+            text: t('clock.punchOutAnyway'),
+            onPress: () => {
+              punchCoords.current = null;
+              setPendingAction('clock-out');
+            },
+          },
+        ]);
+      } finally {
+        setPreparing(null);
+      }
+    },
+    // locationCopy and t are plain render-scoped helpers, so they are always
+    // current; the state and values the handler itself reads are listed.
+    [preparing, pendingAction, punchMutation.isPending, location, fixLocation, store?.name]
+  );
+
   // "Allow all the time" location access powers the periodic mid-shift
   // geofence check (useLocationPollingEffect) once the employee is clocked in.
   // Asked for here (after the selfie is already captured) rather than
@@ -620,6 +667,46 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
     if (!pendingAction) setCaptured(false);
   }, [pendingAction]);
 
+  /*
+   * Location is worth raising while a clock-in is still on offer -- including
+   * before the window opens, so it can be fixed before it is needed -- and not
+   * once the day's punching is done or the shift is over.
+   */
+  const showLocationBanner =
+    !!locationProblem && !isCurrentlyClockedIn && !dayFinishedToday && clockWindow?.state !== 'over';
+  const locationBanner = showLocationBanner && locationProblem ? (
+    <StatusBanner
+      tone="bad"
+      icon="location-outline"
+      title={locationCopy(locationProblem).title}
+      detail={locationCopy(locationProblem).detail}
+      action={{
+        label: locationCopy(locationProblem).action,
+        onPress: () => void fixLocation(),
+        busy: fixing,
+      }}
+    />
+  ) : null;
+
+  /* What each tile says when it cannot be pressed -- the reason, not the
+     usual hint, so a greyed tile is never a mystery. */
+  const clockInNote =
+    clockWindow?.state === 'not-started'
+      ? t('clock.opensAt', { time: formatClockTime(clockWindow.opensAt) })
+      : clockWindow?.state === 'over'
+        ? t('clock.shiftOverShort')
+        : locationProblem
+          ? t('clock.tapFixLocation')
+          : null;
+  const clockOutNote = !isCurrentlyClockedIn
+    ? t('clock.punchInFirst')
+    : isCurrentlyOnBreak
+      ? t('clock.endBreakShort')
+      : null;
+  const busyAction = preparing ?? (punchMutation.isPending ? pendingAction : null);
+  const busyLabel =
+    preparing === 'clock-in' ? t('clock.locating') : t('common.checking');
+
   if (!employee || !store) return null;
 
   return (
@@ -696,25 +783,8 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
             button with no explanation is worse than the banner. Once the
             employee is clocked in nothing is waiting on a fix except the
             periodic check, which reports for itself. */}
-        {locationError && !isCurrentlyClockedIn && !dayFinishedToday ? (
-          <>
-            <StatusBanner
-              tone="bad"
-              icon="warning-outline"
-              title={t('clock.locationUnavailable')}
-              detail={locationError}
-            />
-            <View style={styles.geoFix}>
-              <Pressable onPress={() => void acquireLocation()} hitSlop={8}>
-                <Text style={styles.geoFixText}>{t('common.retry')}</Text>
-              </Pressable>
-              {permission === 'blocked' && (
-                <Pressable onPress={() => Linking.openSettings()} hitSlop={8}>
-                  <Text style={styles.geoFixText}>{t('common.settings')}</Text>
-                </Pressable>
-              )}
-            </View>
-          </>
+        {locationBanner ? (
+          locationBanner
         ) : !fenceMatters ? null : (
           <>
             <StatusBanner
@@ -798,6 +868,11 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
         </View>
       )}
 
+      {/* On Home the map and the fence block are left out, but a Location
+          problem is not: it is the reason Punch In will stop, and it has to
+          be said where Punch In is. */}
+      {compact ? locationBanner : null}
+
       {/* BOTH ENDS OF THE SHIFT, side by side. The finished one keeps its
           answer on screen instead of disappearing -- see PunchTiles. */}
       {clockInBlockedText ? (
@@ -815,18 +890,20 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
         clockedIn={isCurrentlyClockedIn}
         clockInAt={lastClockIn ? formatTime(lastClockIn.timestamp) : null}
         clockOutAt={lastClockOut ? formatTime(lastClockOut.timestamp) : null}
-        onClockIn={() => setPendingAction('clock-in')}
-        onClockOut={() => setPendingAction('clock-out')}
-        // A clock-in with no fix would be submitted without the location it is
-        // judged on, so it waits for one. A clock-out is not judged on
-        // location and must not wait: the one thing worse than a late clock-out
-        // is one that cannot be made because the GPS is slow indoors.
-        clockInDisabled={!coords || clockInBlocked}
+        // Both go through openPunch, which re-checks Location on every tap.
+        onClockIn={() => void openPunch('clock-in')}
+        onClockOut={() => void openPunch('clock-out')}
+        // Only the shift window greys Punch In out. A Location problem leaves
+        // it pressable -- the tap is how it gets fixed -- and marks it instead.
+        clockInDisabled={clockInBlocked}
+        clockInAttention={!!locationProblem}
+        clockInNote={clockInNote}
         // A break must be ended before the shift can be.
         clockOutDisabled={isCurrentlyClockedIn && isCurrentlyOnBreak}
-        // Set only once the camera has closed and a request is actually out --
-        // see PunchTiles' own comment for why the gap needed this at all.
-        pending={punchMutation.isPending ? pendingAction : null}
+        clockOutNote={clockOutNote}
+        // Busy from the tap (location check) until the request answers.
+        pending={busyAction}
+        pendingLabel={busyLabel}
         labels={{
           /* The BUTTONS say punch; the day detail keeps clock-in/clock-out
              for the marks themselves, which is what the stored mark_type is
@@ -846,18 +923,20 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
         clockedIn={isCurrentlyClockedIn}
         clockInAt={lastClockIn ? formatTime(lastClockIn.timestamp) : null}
         clockOutAt={lastClockOut ? formatTime(lastClockOut.timestamp) : null}
-        onClockIn={() => setPendingAction('clock-in')}
-        onClockOut={() => setPendingAction('clock-out')}
-        // A clock-in with no fix would be submitted without the location it is
-        // judged on, so it waits for one. A clock-out is not judged on
-        // location and must not wait: the one thing worse than a late clock-out
-        // is one that cannot be made because the GPS is slow indoors.
-        clockInDisabled={!coords || clockInBlocked}
+        // Both go through openPunch, which re-checks Location on every tap.
+        onClockIn={() => void openPunch('clock-in')}
+        onClockOut={() => void openPunch('clock-out')}
+        // Only the shift window greys Punch In out. A Location problem leaves
+        // it pressable -- the tap is how it gets fixed -- and marks it instead.
+        clockInDisabled={clockInBlocked}
+        clockInAttention={!!locationProblem}
+        clockInNote={clockInNote}
         // A break must be ended before the shift can be.
         clockOutDisabled={isCurrentlyClockedIn && isCurrentlyOnBreak}
-        // Set only once the camera has closed and a request is actually out --
-        // see PunchTiles' own comment for why the gap needed this at all.
-        pending={punchMutation.isPending ? pendingAction : null}
+        clockOutNote={clockOutNote}
+        // Busy from the tap (location check) until the request answers.
+        pending={busyAction}
+        pendingLabel={busyLabel}
         labels={{
           /* The BUTTONS say punch; the day detail keeps clock-in/clock-out
              for the marks themselves, which is what the stored mark_type is
@@ -968,6 +1047,32 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
 
       <Toast state={toast} onHide={() => setToast(null)} />
 
+      {/* THE FACE CHECK TAKES A MOMENT, AND SAYS SO.
+          Matching the selfie runs on the server and takes a second or two.
+          A small "Checking…" on the tile was easy to miss, and a punch that
+          looks frozen gets tapped again or abandoned. So the whole screen says
+          what is happening until the answer arrives. Nothing can be tapped
+          underneath it, which is also what stops a second punch. */}
+      <Modal
+        visible={punchMutation.isPending}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => {
+          /* Not dismissable: the punch is already on its way. */
+        }}
+      >
+        <View style={styles.overlay}>
+          <View style={styles.overlayCard} accessibilityLiveRegion="polite" accessible>
+            <ActivityIndicator size="large" color={colors.brand[700]} />
+            <Text style={styles.overlayTitle}>
+              {pendingAction === 'clock-out' ? t('clock.verifyingOut') : t('clock.verifyingIn')}
+            </Text>
+            <Text style={styles.overlayHint}>{t('clock.verifyingHint')}</Text>
+          </View>
+        </View>
+      </Modal>
+
       <Modal
         visible={!!pendingAction && !captured}
         animationType="slide"
@@ -1033,8 +1138,6 @@ function makeStyles(colors: ColorScheme) {
   geoTitleWarn: { fontSize: 12.5, fontWeight: '800', color: '#B45309' },
   geoTitleBad: { fontSize: 12.5, fontWeight: '800', color: colors.danger },
   geoSub: { fontSize: 10.5, color: colors.slate500, fontWeight: '600', marginTop: 2 },
-  geoFix: { flexDirection: 'row', gap: 12 },
-  geoFixText: { fontSize: 11.5, fontWeight: '800', color: colors.brand[700] },
 
   breakCard: {
     borderWidth: 1, borderColor: colors.slate200, borderRadius: radii.md,
@@ -1060,5 +1163,25 @@ function makeStyles(colors: ColorScheme) {
     letterSpacing: -0.3, fontVariant: ['tabular-nums'],
   },
   markDivider: { height: 1, backgroundColor: colors.slate100 },
+
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15,23,42,0.55)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 32,
+  },
+  overlayCard: {
+    width: '100%',
+    maxWidth: 320,
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 28,
+    paddingHorizontal: 24,
+    borderRadius: radii.xl,
+    backgroundColor: colors.surface,
+  },
+  overlayTitle: { fontSize: 16, fontWeight: '800', color: colors.textLight, textAlign: 'center', marginTop: 6 },
+  overlayHint: { fontSize: 12.5, lineHeight: 18, color: colors.slate500, textAlign: 'center' },
   });
 }

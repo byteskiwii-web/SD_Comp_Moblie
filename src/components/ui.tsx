@@ -32,6 +32,9 @@ export function Button({ title, onPress, disabled, loading, variant = 'primary' 
     <Pressable
       onPress={onPress}
       disabled={disabled || loading}
+      accessibilityRole="button"
+      accessibilityLabel={title}
+      accessibilityState={{ disabled: !!(disabled || loading), busy: !!loading }}
       style={({ pressed }) => [
         styles.button,
         isDanger ? styles.buttonDanger : isOutline ? styles.buttonOutline : styles.buttonPrimary,
@@ -216,7 +219,11 @@ function makeStyles(colors: ColorScheme) {
 
   return StyleSheet.create({
   button: {
-    height: 50,
+    // A minimum, not a fixed height: a translated label that wraps to two
+    // lines grows the button instead of spilling out of it.
+    minHeight: 50,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     borderRadius: radii.md,
     alignItems: 'center',
     justifyContent: 'center',
@@ -245,7 +252,7 @@ function makeStyles(colors: ColorScheme) {
   buttonDanger: { backgroundColor: colors.dangerBg, borderWidth: 1.5, borderColor: colors.danger + '59' },
   buttonDisabled: { opacity: 0.45, shadowOpacity: 0 },
   buttonPressed: { opacity: 0.85 },
-  buttonText: { fontSize: 13, fontWeight: '700', letterSpacing: 0.1 },
+  buttonText: { fontSize: 13, fontWeight: '700', letterSpacing: 0.1, textAlign: 'center' },
   buttonTextPrimary: { color: colors.white },
   buttonTextOutline: { color: colors.slate700 },
   buttonTextDanger: { color: colors.dangerText },

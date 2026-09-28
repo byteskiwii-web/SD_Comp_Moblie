@@ -13,9 +13,20 @@ import { useThemeStore } from '../../stores/themeStore';
  * registered this morning. Standing side by side, the finished half CARRIES
  * ITS OWN ANSWER ("Done at 10:04") instead of having vanished.
  *
- * Only one is ever live. The done one is not a disabled button, it is a
- * receipt: no press feedback, no chevron, nothing that invites a tap it would
- * have to refuse.
+ * EVERY STATE SAYS WHAT IT IS, AND WHY.
+ *
+ * A tile that could not be pressed used to wear a soft tint of its own
+ * colour with the same hint as always -- "Begin your shift" -- so a Punch In
+ * waiting on Location looked like a button that simply ignored the tap. Now:
+ *
+ *   ready      filled in its colour                      tap to punch
+ *   attention  soft tint, the problem's icon, the fix    tap to fix it
+ *   idle       grey, dashed edge, the reason             not tappable
+ *   pending    filled, spinning, what it is doing        not tappable
+ *   done       a receipt, "Done at 10:04"                not tappable
+ *
+ * Content is centred: these are two large buttons read at a glance, and a
+ * label hugging the bottom-left corner read as a card rather than a control.
  */
 export function PunchTiles({
   clockedIn,
@@ -25,17 +36,17 @@ export function PunchTiles({
   onClockOut,
   clockInDisabled,
   clockOutDisabled,
+  clockInNote,
+  clockOutNote,
+  clockInAttention,
   /**
-   * Which side is currently mid-flight -- the camera has already closed and a
-   * request is out, with no answer yet. Without this, the gap between the
-   * camera dismissing and the success/error banner appearing looked like
-   * nothing was happening at all. The pending side stays looking ACTIVE
-   * (filled, not greyed) with a spinner in place of its icon, so the answer
-   * to "did my tap register" is yes, visibly, right up to the outcome; the
-   * OTHER tile disables for the same window, since a second punch fired
-   * while the first is still in flight is not a thing to allow.
+   * Which side is currently busy: checking location before the camera, or a
+   * request out with no answer yet. The busy side stays FILLED with a
+   * spinner, so "did my tap register" is answered yes, visibly; the other
+   * side stops accepting taps for the same window.
    */
   pending,
+  pendingLabel,
   labels,
 }: {
   clockedIn: boolean;
@@ -46,12 +57,22 @@ export function PunchTiles({
   onClockOut: () => void;
   /**
    * Separate, because the two punches wait on different things: a clock-in
-   * on a location fix (it is judged on it), a clock-out only on the break
-   * being over (it is not judged on location at all).
+   * on the shift window, a clock-out on the shift having started and no
+   * break running.
    */
   clockInDisabled?: boolean;
   clockOutDisabled?: boolean;
+  /** Why the tile is unavailable, or what to do -- replaces the hint line. */
+  clockInNote?: string | null;
+  clockOutNote?: string | null;
+  /**
+   * Punch In has a problem the tap itself can fix (Location off, permission
+   * not granted). Still pressable -- pressing it is how it gets fixed.
+   */
+  clockInAttention?: boolean;
   pending?: 'clock-in' | 'clock-out' | null;
+  /** What the busy side says it is doing. Defaults to labels.processing. */
+  pendingLabel?: string | null;
   labels: {
     clockIn: string;
     clockOut: string;
@@ -69,36 +90,63 @@ export function PunchTiles({
   // alternative, re-arming Clock In, would invite a second shift nobody asked
   // for on a screen somebody is glancing at on their way out.
   const dayFinished = !clockedIn && !!clockOutAt;
+  const busy = pendingLabel || labels.processing;
+
+  const inKind: TileKind =
+    pending === 'clock-in'
+      ? 'pending'
+      : clockInAt || clockedIn
+        ? 'done'
+        : clockInDisabled || pending
+          ? 'idle'
+          : clockInAttention
+            ? 'attention'
+            : 'active';
+
+  const outKind: TileKind =
+    pending === 'clock-out'
+      ? 'pending'
+      : dayFinished
+        ? 'done'
+        : !clockedIn || clockOutDisabled || pending
+          ? 'idle'
+          : 'active';
 
   return (
     <View style={styles.row}>
       <Tile
         tone="in"
-        kind={
-          pending === 'clock-in' ? 'pending' : clockInAt ? 'done' : clockedIn ? 'done' : 'active'
-        }
-        icon={clockInAt ? 'checkmark' : 'log-in-outline'}
+        kind={inKind}
+        icon={inKind === 'done' ? 'checkmark' : inKind === 'attention' ? 'location-outline' : 'log-in-outline'}
         title={labels.clockIn}
-        sub={pending === 'clock-in' ? labels.processing : clockInAt ? labels.doneAt(clockInAt) : labels.startHint}
+        sub={
+          inKind === 'pending'
+            ? busy
+            : inKind === 'done'
+              ? clockInAt
+                ? labels.doneAt(clockInAt)
+                : labels.startHint
+              : clockInNote || labels.startHint
+        }
         onPress={onClockIn}
-        disabled={clockInDisabled || !!pending}
         styles={styles}
         colors={colors}
       />
       <Tile
         tone="out"
-        kind={pending === 'clock-out' ? 'pending' : dayFinished ? 'done' : clockedIn ? 'active' : 'idle'}
-        icon={dayFinished ? 'checkmark' : 'log-out-outline'}
+        kind={outKind}
+        icon={outKind === 'done' ? 'checkmark' : 'log-out-outline'}
         title={labels.clockOut}
         sub={
-          pending === 'clock-out'
-            ? labels.processing
-            : dayFinished && clockOutAt
+          outKind === 'pending'
+            ? busy
+            : outKind === 'done' && clockOutAt
               ? labels.doneAt(clockOutAt)
-              : labels.endHint
+              : outKind === 'idle'
+                ? clockOutNote || labels.endHint
+                : labels.endHint
         }
         onPress={onClockOut}
-        disabled={clockOutDisabled || !!pending}
         styles={styles}
         colors={colors}
       />
@@ -106,11 +154,8 @@ export function PunchTiles({
   );
 }
 
-/**
- * `active` is the one thing to do next, and is the only filled tile.
- * `done` is a receipt. `idle` is a step not yet reachable. `pending` is
- * `active` frozen mid-tap: still filled, no longer pressable, spinning.
- */
+type TileKind = 'active' | 'attention' | 'idle' | 'pending' | 'done';
+
 function Tile({
   tone,
   kind,
@@ -118,108 +163,95 @@ function Tile({
   title,
   sub,
   onPress,
-  disabled,
   styles,
   colors,
 }: {
-  /** Which end of the shift this is. Decides the hue at every state but `done`. */
+  /** Which end of the shift this is. Decides the hue of every live state. */
   tone: 'in' | 'out';
-  kind: 'active' | 'done' | 'idle' | 'pending';
+  kind: TileKind;
   icon: keyof typeof Ionicons.glyphMap;
   title: string;
   sub: string;
   onPress: () => void;
-  disabled?: boolean;
   styles: ReturnType<typeof makeStyles>;
   colors: ColorScheme;
 }) {
-  const live = kind === 'active' && !disabled;
-
   /*
-   * WHAT IT LOOKS LIKE IS NOT ALWAYS WHAT IT IS.
-   *
-   * An `active` tile that is disabled -- waiting on a location fix, or outside
-   * the shift window -- took the dark ACTIVE background only on the pressable
-   * branch, while its text and icon took the active WHITE regardless. So a
-   * disabled Punch In rendered white-on-white: in light mode the tile was
-   * blank, with no icon, no label and no hint, and in dark mode the bug was
-   * invisible because the plain surface happens to be dark there too.
-   *
-   * So the look is derived once, here, and every colour below reads from it:
-   * a tile you cannot press looks like one you cannot press, in both schemes.
-   * `pending` is exempted: it is disabled but must NOT fall back to the idle
-   * look, or the one tile that just did something would look the same as the
-   * one that was never reachable.
-   */
-  const visual: 'active' | 'done' | 'idle' | 'pending' =
-    kind === 'pending' ? 'pending' : kind === 'active' && disabled ? 'idle' : kind;
-
-  /*
-   * Colour carries which button this is, at every state.
-   *
-   * Two identical grey cards make somebody read both labels to find the one
-   * they want, on a shop floor, one-handed. Green starts a shift and red ends
-   * it -- the convention every attendance board already uses.
-   *
-   * The live one is FILLED and the waiting one is a soft tint of the same
-   * hue, so the pair still says "in" and "out" before the shift opens, and
-   * the one you can actually press becomes obvious the moment it does. `done`
-   * stays neutral whichever end it was: a receipt is not an action, and a red
-   * receipt for a completed shift would read as a fault.
+   * Colour carries which button this is. Green starts a shift and red ends
+   * it -- the convention every attendance board already uses. `done` and
+   * `idle` are neutral whichever end they are: a receipt is not an action,
+   * and a greyed tile has to look like one you cannot press.
    */
   const isIn = tone === 'in';
-  const fill = isIn ? styles.tileFillIn : styles.tileFillOut;
-  const soft = isIn ? styles.tileSoftIn : styles.tileSoftOut;
-  const softText = isIn ? styles.textSoftIn : styles.textSoftOut;
-  const softIconColor = isIn ? colors.successText : colors.dangerText;
+  const filled = kind === 'active' || kind === 'pending';
+  const pressable = kind === 'active' || kind === 'attention';
 
-  // active and pending share every colour below (a pending tile IS an active
-  // one, just frozen mid-tap) -- only the icon slot itself differs.
-  const looksActive = visual === 'active' || visual === 'pending';
+  const hueText = isIn ? colors.successText : colors.dangerText;
+  const iconColor = filled
+    ? colors.white
+    : kind === 'done'
+      ? colors.successText
+      : kind === 'attention'
+        ? hueText
+        : colors.slate400;
 
   const body = (
     <>
       <View
         style={[
           styles.iconWrap,
-          looksActive && styles.iconWrapActive,
-          visual === 'idle' && styles.iconWrapSoft,
-          visual === 'done' && styles.iconWrapDone,
+          filled && styles.iconWrapFilled,
+          kind === 'attention' && styles.iconWrapSurface,
+          kind === 'done' && styles.iconWrapDone,
         ]}
       >
-        {visual === 'pending' ? (
+        {kind === 'pending' ? (
           <ActivityIndicator size="small" color={colors.white} />
         ) : (
-          <Ionicons
-            name={icon}
-            size={17}
-            color={visual === 'active' ? colors.white : visual === 'done' ? colors.successText : softIconColor}
-          />
+          <Ionicons name={icon} size={18} color={iconColor} />
         )}
       </View>
       <Text
-        style={[styles.title, looksActive && styles.titleActive, visual === 'idle' && softText]}
+        style={[
+          styles.title,
+          filled && styles.titleFilled,
+          kind === 'attention' && { color: hueText },
+          kind === 'idle' && styles.titleIdle,
+        ]}
         numberOfLines={1}
       >
         {title}
       </Text>
       <Text
-        style={[styles.sub, looksActive && styles.subActive, visual === 'idle' && styles.subSoft]}
-        numberOfLines={1}
+        style={[
+          styles.sub,
+          filled && styles.subFilled,
+          kind === 'attention' && [styles.subAttention, { color: hueText }],
+        ]}
+        numberOfLines={2}
       >
         {sub}
       </Text>
     </>
   );
 
-  if (!live) {
+  const tileStyle = [
+    styles.tile,
+    filled && (isIn ? styles.fillIn : styles.fillOut),
+    kind === 'attention' && (isIn ? styles.softIn : styles.softOut),
+    kind === 'idle' && styles.idle,
+    kind === 'done' && styles.done,
+  ];
+
+  if (!pressable) {
     return (
       <View
-        style={[styles.tile, visual === 'pending' && fill, visual === 'done' && styles.tileDone, visual === 'idle' && soft]}
-        // Announced as text: neither a receipt nor a tile that is busy right
-        // now is something to tab to.
+        style={tileStyle}
+        // Announced as text: a receipt, a greyed tile and a busy one are not
+        // things to tab to. The reason is part of the label.
         accessibilityRole="text"
         accessibilityLabel={title + '. ' + sub}
+        accessibilityState={{ disabled: true, busy: kind === 'pending' }}
       >
         {body}
       </View>
@@ -229,7 +261,7 @@ function Tile({
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [styles.tile, fill, pressed && styles.pressed]}
+      style={({ pressed }) => [...tileStyle, pressed && styles.pressed]}
       accessibilityRole="button"
       accessibilityLabel={title + '. ' + sub}
     >
@@ -243,54 +275,58 @@ const makeStyles = (colors: ColorScheme) =>
     row: { flexDirection: 'row', gap: 10 },
     tile: {
       flex: 1,
-      minHeight: 104,
-      justifyContent: 'flex-end',
-      padding: 14,
+      minHeight: 112,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: 12,
+      paddingVertical: 14,
       borderRadius: radii.lg,
-      borderWidth: 1,
+      borderWidth: 1.5,
       borderColor: colors.slate200,
       backgroundColor: colors.surface,
     },
-    /* FILLED = you can press this now. punchIn / punchOut are fixed deep
-       shades in both schemes precisely so this white text is readable in
-       either -- see tokens.ts. */
-    tileFillIn: { backgroundColor: colors.punchIn, borderColor: colors.punchIn },
-    tileFillOut: { backgroundColor: colors.punchOut, borderColor: colors.punchOut },
+    /* FILLED = press this now. punchIn / punchOut are fixed deep shades in
+       both schemes precisely so white text is readable on either. */
+    fillIn: { backgroundColor: colors.punchIn, borderColor: colors.punchIn },
+    fillOut: { backgroundColor: colors.punchOut, borderColor: colors.punchOut },
 
-    /* SOFT = the right button, not yet pressable. Same hue at a tint, with a
-       border in the vivid shade so the card has an edge rather than fading
-       into the screen. Both tints invert with the scheme, so this is a pale
-       green on white and a deep green on near-black. */
-    tileSoftIn: { backgroundColor: colors.successBg, borderColor: colors.success },
-    tileSoftOut: { backgroundColor: colors.dangerBg, borderColor: colors.danger },
+    /* SOFT = pressable, but something needs fixing first; the tap fixes it. */
+    softIn: { backgroundColor: colors.successBg, borderColor: colors.success },
+    softOut: { backgroundColor: colors.dangerBg, borderColor: colors.danger },
 
-    /* A receipt is not an action, and stays neutral whichever end it was: a
-       red card for a shift somebody finished would read as a fault. */
-    tileDone: { backgroundColor: colors.slate50, borderColor: colors.slate100 },
-    pressed: { opacity: 0.85 },
+    /* GREY + DASHED = not available right now. The dashed edge is what makes
+       it read as "not a button" at a glance, in both schemes, without
+       leaning on opacity alone (which just looks faded, not unavailable). */
+    idle: { backgroundColor: colors.slate50, borderColor: colors.slate300, borderStyle: 'dashed' },
+
+    /* A receipt: solid, neutral, with a green tick. */
+    done: { backgroundColor: colors.slate50, borderColor: colors.slate100 },
+    pressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
 
     iconWrap: {
-      width: 30,
-      height: 30,
-      borderRadius: 15,
+      width: 34,
+      height: 34,
+      borderRadius: 17,
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: colors.slate100,
-      marginBottom: 10,
+      marginBottom: 8,
     },
-    iconWrapActive: { backgroundColor: 'rgba(255,255,255,0.18)' },
-    /* The surface, not a tint of the tile: a chip a shade off its own
-       background disappears, and this one is carrying the only icon. */
-    iconWrapSoft: { backgroundColor: colors.surface },
+    iconWrapFilled: { backgroundColor: 'rgba(255,255,255,0.18)' },
+    iconWrapSurface: { backgroundColor: colors.surface },
     iconWrapDone: { backgroundColor: colors.successBg },
 
-    title: { fontSize: 14, fontWeight: '800', color: colors.textLight },
-    titleActive: { color: colors.white },
-    textSoftIn: { color: colors.successText },
-    textSoftOut: { color: colors.dangerText },
-    sub: { fontSize: 10.5, fontWeight: '600', color: colors.slate400, marginTop: 3 },
-    subActive: { color: colors.white, opacity: 0.72 },
-    /* Dimmed rather than recoloured: the hint is secondary at every state, and
-       a second saturated line would compete with the label above it. */
-    subSoft: { color: colors.slate600, opacity: 0.85 },
+    title: { fontSize: 15, fontWeight: '800', color: colors.textLight, textAlign: 'center' },
+    titleFilled: { color: colors.white },
+    titleIdle: { color: colors.slate500 },
+    sub: {
+      fontSize: 11.5,
+      lineHeight: 15,
+      fontWeight: '600',
+      color: colors.slate500,
+      marginTop: 3,
+      textAlign: 'center',
+    },
+    subFilled: { color: colors.white, opacity: 0.8 },
+    subAttention: { fontWeight: '700' },
   });

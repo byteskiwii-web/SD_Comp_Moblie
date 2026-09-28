@@ -9,7 +9,7 @@ import { useThemeStore } from '../../stores/themeStore';
 import { useAuthStore } from '../../stores/authStore';
 import { getAttendanceHistory } from '../../api/attendance.api';
 import { getLatestMarkOfTypes, SHIFT_TYPES } from '../../utils/attendanceStatus';
-import { formatDateLong, formatTime, toLocalDateKey } from '../../utils/datetime';
+import { formatClockTime, formatDateLong, formatTime, toLocalDateKey } from '../../utils/datetime';
 import { GreetingHeader } from '../../components/GreetingHeader';
 import { AppreciationCard } from './AppreciationCard';
 import { PoliciesCard } from './PoliciesCard';
@@ -32,6 +32,7 @@ const initialsOf = (first?: string, last?: string) =>
 export function HomeScreen() {
   const employee = useAuthStore((s) => s.employee);
   const store = useAuthStore((s) => s.store);
+  const profile = useAuthStore((s) => s.profile);
   const colors = useThemeStore((s) => s.colors);
   const t = useT();
   const styles = useMemo(() => makeStyles(colors), [colors]);
@@ -73,6 +74,24 @@ export function HomeScreen() {
   const lastClockOut = marks.find((m) => m.mark_type === 'clock-out');
 
   const timelineMarks = [...marks].reverse(); // chronological (oldest first) for display
+
+  /*
+   * SHIFT START / SHIFT END SAY SOMETHING BEFORE THE PUNCH TOO.
+   *
+   * They showed only the punched times, so until somebody punched in the
+   * card read "Shift start —  Shift end —", while the Attendance tab said the
+   * shift was 11:00–20:00. Before a punch they now show the rostered time,
+   * marked Scheduled; once punched, the real time replaces it. Somebody on no
+   * roster still gets the dash -- there is nothing true to show.
+   */
+  const heroTime = (punched: string | undefined, rostered: string | null | undefined) =>
+    punched
+      ? { value: formatTime(punched), scheduled: false }
+      : rostered
+        ? { value: formatClockTime(String(rostered).slice(0, 5)), scheduled: true }
+        : { value: '—', scheduled: false };
+  const startCell = heroTime(lastClockIn?.timestamp, profile?.shiftStart);
+  const endCell = heroTime(lastClockOut?.timestamp, profile?.shiftEnd);
 
   return (
     <SafeAreaView style={styles.flex} edges={['top']}>
@@ -134,9 +153,12 @@ export function HomeScreen() {
                 {t('home.shiftStart')}
               </Text>
               {shiftKnown || shiftFailed ? (
-                <Text style={styles.heroStatValue}>
-                  {formatTime(lastClockIn?.timestamp ?? '')}
-                </Text>
+                <>
+                  <Text style={[styles.heroStatValue, startCell.scheduled && styles.heroStatScheduled]}>
+                    {startCell.value}
+                  </Text>
+                  {startCell.scheduled ? <Text style={styles.heroStatCaption}>{t('home.scheduled')}</Text> : null}
+                </>
               ) : (
                 <Skeleton width={72} height={17} radius={6} style={styles.heroStatSkeleton} />
               )}
@@ -147,9 +169,12 @@ export function HomeScreen() {
                 {t('home.shiftEnd')}
               </Text>
               {shiftKnown || shiftFailed ? (
-                <Text style={styles.heroStatValue}>
-                  {formatTime(lastClockOut?.timestamp ?? '')}
-                </Text>
+                <>
+                  <Text style={[styles.heroStatValue, endCell.scheduled && styles.heroStatScheduled]}>
+                    {endCell.value}
+                  </Text>
+                  {endCell.scheduled ? <Text style={styles.heroStatCaption}>{t('home.scheduled')}</Text> : null}
+                </>
               ) : (
                 <Skeleton width={72} height={17} radius={6} style={styles.heroStatSkeleton} />
               )}
@@ -260,6 +285,9 @@ function makeStyles(colors: ColorScheme) {
   heroStatSeparator: { width: 1, height: 28, backgroundColor: 'rgba(255,255,255,0.15)', marginHorizontal: 16 },
   heroStatLabel: { color: colors.white, opacity: 0.65, fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.3 },
   heroStatValue: { color: colors.white, fontSize: 14, fontWeight: '800', marginTop: 4 },
+  // A rostered time is a plan, not a record: same figure, quieter.
+  heroStatScheduled: { opacity: 0.75 },
+  heroStatCaption: { color: colors.white, opacity: 0.6, fontSize: 10.5, fontWeight: '700', marginTop: 1 },
 
 
   cardTitle: { fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4, color: colors.slate500, marginBottom: 4 },

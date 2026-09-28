@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useT } from '../../i18n';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card } from '../../components/ui';
@@ -76,11 +76,22 @@ export function PoliciesCard() {
           <Pressable
             onPress={() => ack.mutate(p.id)}
             disabled={ack.isPending}
-            style={({ pressed }) => [styles.ackButton, pressed && styles.ackPressed]}
+            style={({ pressed }) => [
+              styles.ackButton,
+              ack.isPending && styles.ackBusy,
+              pressed && styles.ackPressed,
+            ]}
             accessibilityRole="button"
             accessibilityLabel={`Acknowledge ${p.title}`}
+            accessibilityState={{ disabled: ack.isPending, busy: ack.isPending && ack.variables === p.id }}
           >
-            <Text style={styles.ackText}>{t('policy.acknowledge')}</Text>
+            {/* The spinner goes on the one being acknowledged; the rest just
+                grey out, since only one acknowledgement is sent at a time. */}
+            {ack.isPending && ack.variables === p.id ? (
+              <ActivityIndicator size="small" color={colors.white} />
+            ) : (
+              <Text style={styles.ackText}>{t('policy.acknowledge')}</Text>
+            )}
           </Pressable>
         </View>
       ))}
@@ -119,8 +130,11 @@ function makeStyles(colors: ColorScheme) {
     ackButton: {
       paddingHorizontal: 12, paddingVertical: 8, borderRadius: radii.sm,
       backgroundColor: colors.brand[700],
+      // Sized for the label, so swapping in the spinner does not shrink it.
+      minWidth: 96, minHeight: 34, alignItems: 'center', justifyContent: 'center',
     },
+    ackBusy: { opacity: 0.55 },
     ackPressed: { opacity: 0.85 },
-    ackText: { color: colors.white, fontSize: 11, fontWeight: '800' },
+    ackText: { color: colors.white, fontSize: 11.5, fontWeight: '800', textAlign: 'center' },
   });
 }

@@ -562,8 +562,9 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
                     hitSlop={8}
                     accessibilityRole="button"
                     accessibilityLabel={t('reg.withdraw')}
+                    accessibilityState={{ disabled: withdrawMutation.isPending, busy: withdrawMutation.isPending }}
                   >
-                    <View style={styles.withdrawBtn}>
+                    <View style={[styles.withdrawBtn, withdrawMutation.isPending && styles.withdrawBusy]}>
                       <Ionicons name="arrow-undo-outline" size={13} color={colors.dangerText} />
                       <Text style={styles.withdraw}>{t('reg.withdraw')}</Text>
                     </View>
@@ -689,6 +690,7 @@ function makeStyles(colors: ColorScheme) {
   // Understated on purpose: taking a request back is ordinary, not an alarm,
   // but it is still the only destructive control in this list.
   withdraw: { fontSize: 11, fontWeight: '700', color: colors.dangerText },
+  withdrawBusy: { opacity: 0.45 },
 
   reqRow: {
     flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12,

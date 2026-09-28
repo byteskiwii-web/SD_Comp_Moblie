@@ -344,8 +344,9 @@ export function LeaveScreen() {
                   <Pressable
                     onPress={() => setWithdrawId(r.id)}
                     disabled={withdraw.isPending}
-                    style={({ pressed }) => [styles.withdraw, pressed && styles.pressed]}
+                    style={({ pressed }) => [styles.withdraw, withdraw.isPending && styles.busy, pressed && styles.pressed]}
                     accessibilityRole="button"
+                    accessibilityState={{ disabled: withdraw.isPending, busy: withdraw.isPending }}
                   >
                     <Ionicons name="arrow-undo-outline" size={13} color={colors.dangerText} />
                     <Text style={styles.withdrawText}>{t('leave.withdraw')}</Text>
@@ -367,8 +368,9 @@ export function LeaveScreen() {
                   <Pressable
                     onPress={() => setClaiming(r)}
                     disabled={claimWorked.isPending}
-                    style={({ pressed }) => [styles.claim, pressed && styles.pressed]}
+                    style={({ pressed }) => [styles.claim, claimWorked.isPending && styles.busy, pressed && styles.pressed]}
                     accessibilityRole="button"
+                    accessibilityState={{ disabled: claimWorked.isPending, busy: claimWorked.isPending }}
                   >
                     <Ionicons name="briefcase-outline" size={13} color={colors.brand[700]} />
                     <Text style={styles.claimText}>{t('leave.claimCompOff')}</Text>
@@ -442,6 +444,8 @@ function makeStyles(colors: ColorScheme) {
     },
     applyBtnText: { color: colors.white, fontSize: 11.5, fontWeight: '800' },
     pressed: { opacity: 0.75 },
+    // A link that is waiting on its own request, greyed so it reads as not now.
+    busy: { opacity: 0.45 },
 
     content: { padding: 20, paddingTop: 12, gap: 12, paddingBottom: 28 },
 
