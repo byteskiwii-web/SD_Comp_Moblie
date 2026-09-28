@@ -18,13 +18,13 @@ import { useT } from '../i18n';
  *
  * The pages are served by the web console rather than duplicated here, so the
  * wording has exactly one source and cannot drift between platforms. The base
- * URL is configuration because the console will move to a real domain before
- * submission, and a hardcoded DuckDNS address in a store-listed binary would
- * be awkward to change afterwards.
+ * URL is configuration (EXPO_PUBLIC_WEB_URL, set on EAS) so the console can
+ * move again without a code change; the fallback is the production console,
+ * which has served from the root of its own domain since 27 Sep 2026.
  */
 const WEB_BASE =
   process.env.EXPO_PUBLIC_WEB_URL?.replace(/\/+$/, '') ||
-  'https://api-sd-hrms.duckdns.org/web';
+  'https://web.zobconnect.com';
 
 export const LEGAL_URLS = {
   privacy: `${WEB_BASE}/privacy`,
