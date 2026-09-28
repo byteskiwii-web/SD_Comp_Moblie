@@ -11,6 +11,9 @@ import { acknowledgePolicy, getOutstandingPolicies, type Policy } from '../../ap
 import { PolicyReaderSheet } from '../profile/PolicyReaderSheet';
 import { formatDate } from '../../utils/datetime';
 import { useT } from '../../i18n';
+import { useAuthStore } from '../../stores/authStore';
+import { LegalLinks } from '../../components/LegalLinks';
+import { DeleteAccountCard } from '../profile/DeleteAccountCard';
 
 /**
  * Acknowledge every outstanding policy before the app opens.
@@ -34,6 +37,7 @@ export function AcceptPoliciesScreen() {
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const queryClient = useQueryClient();
   const t = useT();
+  const signOut = useAuthStore((s) => s.signOut);
 
   const [reading, setReading] = useState<Policy | null>(null);
   /**
@@ -119,6 +123,13 @@ export function AcceptPoliciesScreen() {
         )}
 
         <Text style={styles.footnote}>{t('policyGate.footnote')}</Text>
+
+        {/* STORE-022: this screen had no way out at all -- no sign-out, no
+            privacy policy, no deletion. Somebody who will not sign a policy
+            must still be able to leave, and to ask for their data to go. */}
+        <Button title={t('common.signOut')} variant="outline" onPress={() => { void signOut(); }} />
+        <DeleteAccountCard />
+        <LegalLinks compact />
       </ScrollView>
 
       <PolicyReaderSheet policy={reading} onClose={() => setReading(null)} onFileOpened={markOpened} />

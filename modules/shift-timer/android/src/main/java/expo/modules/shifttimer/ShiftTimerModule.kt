@@ -24,6 +24,18 @@ class ShiftTimerModule : Module() {
       Unit
     }
 
+    // STORE-012: the persistent notification's words, in the employee's
+    // language. Separate from start() on purpose: an over-the-air update
+    // carrying JS that calls this can reach an older binary without it, and
+    // the JS side checks it exists before calling -- changing start()'s
+    // arguments instead would break every older binary's start().
+    Function("setNotificationText") { title: String, text: String, channelName: String ->
+      appContext.reactContext?.let { context ->
+        ShiftTimerService.persistNotificationText(context, title, text, channelName)
+      }
+      Unit
+    }
+
     Function("stop") {
       appContext.reactContext?.let { context ->
         context.stopService(Intent(context, ShiftTimerService::class.java))

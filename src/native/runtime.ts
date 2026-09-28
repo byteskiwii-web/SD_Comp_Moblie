@@ -58,4 +58,13 @@ export const runtimeLabel = isWeb ? 'web' : isExpoGo ? 'Expo Go' : 'development 
  * the background permission, but only the Android shift timer ever re-checks
  * presence during a shift, so an iOS receipt must not read as verified.
  */
-export const noMidShiftCheckLabel: string | null = hasShiftTimer ? null : isWeb || isExpoGo ? runtimeLabel : 'iOS';
+/*
+ * STORE-039: an installed iOS build returns null. It used to return 'iOS', so
+ * every successful iPhone punch came back amber, appended "No mid-shift
+ * location checks on iOS" -- the reviewer's first successful action read as
+ * a warning about the platform they were reviewing on. That iOS makes no
+ * mid-shift check is a product fact for the privacy policy and HR, not a
+ * caveat on each receipt. Expo Go and web keep their label: there it tells
+ * a tester that the build they are on is not the one employees use.
+ */
+export const noMidShiftCheckLabel: string | null = hasShiftTimer ? null : isWeb || isExpoGo ? runtimeLabel : null;

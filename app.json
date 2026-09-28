@@ -8,12 +8,12 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": false,
       "bundleIdentifier": "com.sdcomputronix.ziphrmsmobile",
       "buildNumber": "1",
       "infoPlist": {
-        "NSCameraUsageDescription": "Zob Connect uses your camera to take a live photo when you clock in or out, confirming it is you.",
-        "NSPhotoLibraryUsageDescription": "Zob Connect lets you choose an existing photo when you upload an identity document or set your profile picture.",
+        "NSCameraUsageDescription": "Zob Connect uses your camera to take a live photo when you clock in or out, to set up face verification, and to take your profile picture.",
+        "NSPhotoLibraryUsageDescription": "Zob Connect lets you choose an existing photo as your profile picture.",
         "ITSAppUsesNonExemptEncryption": false
       }
     },
@@ -38,8 +38,10 @@
       "blockedPermissions": [
         "android.permission.RECORD_AUDIO",
         "android.permission.WRITE_EXTERNAL_STORAGE",
-        "android.permission.SYSTEM_ALERT_WINDOW"
-      ]
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.READ_EXTERNAL_STORAGE"
+      ],
+      "allowBackup": false
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -68,15 +70,15 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Zob Connect lets you choose an existing photo when you upload an identity document or set your profile picture.",
-          "cameraPermission": "Zob Connect uses your camera to photograph your identity documents and to take a live photo when you clock in or out.",
+          "photosPermission": "Zob Connect lets you choose an existing photo as your profile picture.",
+          "cameraPermission": "Zob Connect uses your camera to take a live photo when you clock in or out, to set up face verification, and to take your profile picture.",
           "microphonePermission": false
         }
       ],
       [
         "expo-camera",
         {
-          "cameraPermission": "Zob Connect uses your camera to photograph your identity documents and to take a live photo when you clock in or out.",
+          "cameraPermission": "Zob Connect uses your camera to take a live photo when you clock in or out, to set up face verification, and to take your profile picture.",
           "microphonePermission": false,
           "recordAudioAndroid": false
         }
@@ -84,7 +86,8 @@
       [
         "expo-notifications",
         {
-          "color": "#1E40AF"
+          "color": "#1E40AF",
+          "icon": "./assets/notification-icon.png"
         }
       ],
       "expo-status-bar",

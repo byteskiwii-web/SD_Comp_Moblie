@@ -2,9 +2,13 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getHealthDeps, getKycStatus, KYC_STATUS_KEY, KycCheckStatus, kycStatusTone } from '../../api/verification.api';
 import { Card } from '../../components/ui';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { withdrawFaceConsent } from '../../api/face.api';
+import { onboardingGateQueryKey } from '../../hooks/useOnboardingGate';
+import { getApiErrorMessage } from '../../api/client';
 import { ColorScheme, radii } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
 import { useAuthStore } from '../../stores/authStore';
@@ -58,6 +62,33 @@ export function KycCard() {
     retry: false,
   });
   const verificationEnabled = health.data?.dependencies.verification === 'enabled';
+
+  /*
+   * WITHDRAWING FACE CONSENT, WHERE IT WAS GIVEN (STORE-013).
+   *
+   * The API existed and nothing called it, while the privacy policy promised
+   * withdrawal "at any time, as easily as you gave it". Withdrawal deletes the
+   * template on the server and sets face verification back to pending, which
+   * the onboarding gate then asks for again -- so the dialog says plainly that
+   * punching stops until the face is set up again.
+   */
+  const queryClient = useQueryClient();
+  const [withdrawOpen, setWithdrawOpen] = React.useState(false);
+  const [withdrawError, setWithdrawError] = React.useState('');
+  const withdraw = useMutation({
+    mutationFn: withdrawFaceConsent,
+    onSuccess: () => {
+      setWithdrawOpen(false);
+      setWithdrawError('');
+      void queryClient.invalidateQueries({ queryKey: ['profile-kyc-status', employee?.id] });
+      void queryClient.invalidateQueries({ queryKey: ['face-status', employee?.id] });
+      void queryClient.invalidateQueries({ queryKey: onboardingGateQueryKey(employee?.id) });
+    },
+    onError: (err) => {
+      setWithdrawOpen(false);
+      setWithdrawError(getApiErrorMessage(err));
+    },
+  });
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['profile-kyc-status', employee?.id],
@@ -156,6 +187,30 @@ export function KycCard() {
             status={kyc.face.status === 'registered' ? 'verified' : kyc.face.status}
             last
             onPress={kyc.face.status === 'registered' ? undefined : () => navigation.navigate('FaceRegister')}
+          />
+          {kyc.face.status === 'registered' ? (
+            <Pressable
+              onPress={() => setWithdrawOpen(true)}
+              disabled={withdraw.isPending}
+              hitSlop={8}
+              style={({ pressed }) => [styles.withdraw, (pressed || withdraw.isPending) && styles.withdrawDim]}
+              accessibilityRole="button"
+              accessibilityState={{ disabled: withdraw.isPending, busy: withdraw.isPending }}
+            >
+              <Ionicons name="remove-circle-outline" size={14} color={colors.dangerText} />
+              <Text style={styles.withdrawText}>{t('face.withdraw')}</Text>
+            </Pressable>
+          ) : null}
+          {withdrawError ? <Text style={styles.withdrawError}>{withdrawError}</Text> : null}
+          <ConfirmDialog
+            visible={withdrawOpen}
+            title={t('face.withdrawTitle')}
+            body={t('face.withdrawBody')}
+            confirmLabel={t('face.withdrawConfirm')}
+            tone="danger"
+            pending={withdraw.isPending}
+            onConfirm={() => withdraw.mutate()}
+            onCancel={() => setWithdrawOpen(false)}
           />
         </>
       ) : (
@@ -294,6 +349,13 @@ function makeStyles(colors: ColorScheme) {
     kycAction: { flexDirection: 'row', alignItems: 'center', gap: 1, marginLeft: 8 },
     kycActionText: { fontSize: 11, fontWeight: '800', color: colors.brand[700] },
     kycMuted: { fontSize: 11, color: colors.slate400, fontWeight: '600', paddingVertical: 8 },
+    withdraw: {
+      flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start',
+      paddingVertical: 8, marginTop: 2,
+    },
+    withdrawDim: { opacity: 0.5 },
+    withdrawText: { fontSize: 12, fontWeight: '700', color: colors.dangerText },
+    withdrawError: { fontSize: 11.5, fontWeight: '600', color: colors.dangerText, marginTop: 4 },
     kycDetail: { fontSize: 11, color: colors.slate400, fontWeight: '600', marginRight: 8 },
     kycChip: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: radii.pill },
     kycChipText: { fontSize: 11, fontWeight: '800' },

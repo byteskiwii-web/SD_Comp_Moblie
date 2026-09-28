@@ -26,6 +26,11 @@ import * as Location from 'expo-location';
 export type LocationStatus =
   /** Nothing known yet: the first read is in flight. */
   | 'checking'
+  /**
+   * Permission has never been asked on this install. Not a problem to show:
+   * the first Punch In tap asks, in context, where the reason is obvious.
+   */
+  | 'not-asked'
   /** Location on, permission granted, and a position in hand. */
   | 'ready'
   /** The phone's Location switch is off -- no app can get a fix. */
@@ -114,6 +119,7 @@ export function useLocationReadiness() {
         const perm = prompt
           ? await Location.requestForegroundPermissionsAsync()
           : await Location.getForegroundPermissionsAsync();
+        if (perm.status === 'undetermined') return set('not-asked');
         if (perm.status !== 'granted') {
           return set(perm.canAskAgain ? 'denied' : 'blocked');
         }
@@ -169,6 +175,7 @@ export function useLocationReadiness() {
         return set('services-off');
       }
       const perm = await Location.getForegroundPermissionsAsync();
+      if (perm.status === 'undetermined') return set('not-asked');
       if (perm.status !== 'granted') return set(perm.canAskAgain ? 'denied' : 'blocked');
       return fixedAt.current ? set('ready') : acquire(false);
     } catch {
@@ -190,6 +197,8 @@ export function useLocationReadiness() {
         return set('services-off');
       }
       const perm = await Location.getForegroundPermissionsAsync();
+      // Never asked is not a problem for a clock-out, which sends no position.
+      if (perm.status === 'undetermined') return 'ok';
       if (perm.status !== 'granted') return set(perm.canAskAgain ? 'denied' : 'blocked');
       return 'ok';
     } catch {
@@ -240,10 +249,16 @@ export function useLocationReadiness() {
     return acquire(true);
   }, [acquire, status]);
 
-  // First read: may prompt, since the panel exists to take a punch.
+  /*
+   * First read: SILENT (STORE-035). It used to prompt the moment Home
+   * rendered, before the person had tapped anything -- a system dialog out
+   * of nowhere, which is the one most likely to be denied, and denial here
+   * then costs the whole punch flow. The prompt now comes from the first
+   * Punch In tap (ensureFix) or the banner's Allow button.
+   */
   useEffect(() => {
     mounted.current = true;
-    void acquire(true);
+    void acquire(false);
     return () => {
       mounted.current = false;
     };

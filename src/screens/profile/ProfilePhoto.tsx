@@ -32,16 +32,23 @@ async function pickImage(from: 'camera' | 'library'): Promise<PickedFile | null>
   // Android before.
   const ImagePicker = require('expo-image-picker');
 
-  const perm =
-    from === 'camera'
-      ? await ImagePicker.requestCameraPermissionsAsync()
-      : await ImagePicker.requestMediaLibraryPermissionsAsync();
-  if (!perm.granted) {
-    Alert.alert(
-      tr(from === 'camera' ? 'file.cameraNeeded' : 'file.photosNeeded'),
-      tr(from === 'camera' ? 'file.cameraNeededBody' : 'file.photosNeededBody')
-    );
-    return null;
+  /*
+   * ONLY THE CAMERA ASKS (STORE-024 / STORE-031).
+   *
+   * The library used to ask for media-library permission first. The system
+   * pickers it opens need none -- the Android photo picker / GET_CONTENT and
+   * iOS PHPicker hand back only what the person chooses -- and on Android 12
+   * and below that request is for WRITE_EXTERNAL_STORAGE, which app.json
+   * deliberately blocks, so it was always refused: "Choose from library"
+   * could never work on those phones. On iOS it showed a Photos prompt for
+   * access the app never needed.
+   */
+  if (from === 'camera') {
+    const perm = await ImagePicker.requestCameraPermissionsAsync();
+    if (!perm.granted) {
+      Alert.alert(tr('file.cameraNeeded'), tr('file.cameraNeededBody'));
+      return null;
+    }
   }
 
   const opts = {

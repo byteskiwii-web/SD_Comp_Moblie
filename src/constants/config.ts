@@ -17,12 +17,6 @@ export const SHOW_FESTIVALS = false;
 // How often the shift-timer pings /attendance/location-check while clocked in.
 export const LOCATION_POLL_INTERVAL_MS = 12 * 60 * 1000; // 12 min (within the agreed 10-15 min window)
 
-// The old expo-location + TaskManager task name, kept only so
-// legacyTaskCleanup.ts can find and unregister it on devices upgrading from
-// the pre-shift-timer APK. Not used anywhere else -- remove alongside that
-// file after one release cycle.
-export const LEGACY_BACKGROUND_LOCATION_TASK = 'zip-hrms-location-check-task';
-
 // Fixed identifier for the local "still on shift?" reminder, so scheduling a
 // new one always replaces any prior one instead of stacking duplicates --
 // see src/utils/notifications.ts.

@@ -102,6 +102,9 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
   // is judged on, rather than whichever fix happens to be in state when the
   // selfie finishes uploading.
   const punchCoords = useRef<Coords | null>(null);
+  // Whether mid-shift checks will run for this clock-in -- asked before the
+  // camera opens (STORE-008), read after the punch lands to say so if not.
+  const bgGranted = useRef(true);
   // The banner's fix button, while it is working (Android's dialog, a fresh fix).
   const [fixing, setFixing] = useState(false);
   /*
@@ -310,9 +313,12 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
    * button that shows the system dialog in place; iOS keeps the path, because
    * iOS will not let an app switch Location on or link to that page.
    */
-  const locationProblem: Exclude<LocationStatus, 'ready' | 'checking'> | null =
-    location.status === 'ready' || location.status === 'checking' ? null : location.status;
-  const locationCopy = (st: Exclude<LocationStatus, 'ready' | 'checking'>) => {
+  type LocationProblem = Exclude<LocationStatus, 'ready' | 'checking' | 'not-asked'>;
+  const locationProblem: LocationProblem | null =
+    location.status === 'ready' || location.status === 'checking' || location.status === 'not-asked'
+      ? null
+      : location.status;
+  const locationCopy = (st: LocationProblem) => {
     switch (st) {
       case 'services-off':
         return {
@@ -528,11 +534,15 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
           const result = await location.ensureFix();
           if (result.status === 'ready' && result.coords) {
             punchCoords.current = result.coords;
+            // Asked here, before the camera, rather than after the selfie
+            // (STORE-008): whatever the answer, the clock-in goes ahead.
+            bgGranted.current = await askBackgroundLocation();
             setPendingAction('clock-in');
             return;
           }
-          const problem = result.status === 'checking' ? 'no-fix' : result.status;
-          if (problem === 'ready') return;
+          if (result.status === 'ready') return;
+          const problem: LocationProblem =
+            result.status === 'checking' || result.status === 'not-asked' ? 'no-fix' : result.status;
           const copy = locationCopy(problem);
           Alert.alert(
             t('clock.inNeedsLocationTitle'),
@@ -556,16 +566,20 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
         const access = await location.checkAccess();
         if (access === 'ok') {
           punchCoords.current = null;
+          bgGranted.current = true;
           setPendingAction('clock-out');
           return;
         }
-        const copy = locationCopy(access === 'ready' || access === 'checking' ? 'no-fix' : access);
+        const copy = locationCopy(
+          access === 'ready' || access === 'checking' || access === 'not-asked' ? 'no-fix' : access
+        );
         Alert.alert(t('clock.outLocationOffTitle'), t('clock.outLocationOffBody'), [
           { text: copy.action, onPress: () => void fixLocation() },
           {
             text: t('clock.punchOutAnyway'),
             onPress: () => {
               punchCoords.current = null;
+              bgGranted.current = true;
               setPendingAction('clock-out');
             },
           },
@@ -581,78 +595,63 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
 
   // "Allow all the time" location access powers the periodic mid-shift
   // geofence check (useLocationPollingEffect) once the employee is clocked in.
-  // Asked for here (after the selfie is already captured) rather than
-  // earlier, since Android only lets an app prompt for background access
-  // after foreground access is already granted.
+  // Android only lets an app prompt for background access once foreground
+  // access is granted, which is why this runs after ensureFix has succeeded.
   //
-  // ONLY WHERE THAT CHECK EXISTS. It runs on the Android shift timer and
-  // nowhere else, so on iOS, Expo Go and web there is nothing to disclose and
-  // nothing to ask for. Requesting "Always" on iOS for a background check the
-  // app never makes is App Review guideline 2.5.4, and app.json no longer
-  // declares iOS background location or the Always usage strings at all.
+  // Requesting "Always" on iOS for a background check the app never makes is
+  // App Review guideline 2.5.4, and app.json no longer declares iOS background
+  // location or the Always usage strings at all.
+  /**
+   * Background location, for a clock-in, BEFORE the camera (STORE-008).
+   *
+   * This used to run after the selfie, and "Not now" on the disclosure then
+   * cancelled the punch and threw the selfie away -- for a clock-out too.
+   * Google's reviewer checks exactly that decline, and a clock-out blocked by
+   * a permission it does not even use is worse still. Now:
+   *
+   *   - it is asked only when clocking IN, since the mid-shift check is the
+   *     only thing that uses it and a clock-out ends that check;
+   *   - it is asked before the camera, so nobody has done the liveness step
+   *     only to be stopped at a dialog;
+   *   - "Not now", or refusing the system prompt, still records the punch.
+   *     The mid-shift checks simply do not run, and the receipt says so.
+   *
+   * The disclosure still comes before the system prompt, as Play requires,
+   * and only where the check exists (the Android shift timer): iOS, Expo Go
+   * and web have nothing to disclose and nothing to ask for.
+   *
+   * Returns whether the checks will run.
+   */
+  const askBackgroundLocation = async (): Promise<boolean> => {
+    if (!hasShiftTimer) return true;
+    try {
+      const existing = await Location.getBackgroundPermissionsAsync();
+      if (existing.status === 'granted') return true;
+      const agreed = await askDisclosure();
+      if (!agreed) return false;
+      const bg = await Location.requestBackgroundPermissionsAsync();
+      return bg.status === 'granted';
+    } catch (err) {
+      // No background location in this runtime -- a denial, not a failure.
+      console.warn('[ClockPanel] background location is unavailable in this runtime', err);
+      return false;
+    }
+  };
+
   const handleCaptured = async (filePath: string) => {
     // First statement, before anything that can await: the frame is saved, so
     // the camera has no further job and must not block what comes next.
     setCaptured(true);
+    // The face-check overlay is a Modal too, and on iOS one presented while
+    // another is still animating out is dropped.
     await waitForCameraToClose();
-    // requestBackgroundPermissionsAsync does not resolve to 'denied' when the
-    // runtime has no background location at all -- it *throws*
-    // (ERR_LOCATION_INFO_PLIST in Expo Go, whose Info.plist carries no
-    // NSLocationAlwaysAndWhenInUseUsageDescription). Unhandled, that rejection
-    // skipped the mutation and left this modal open with no feedback at all.
-    // A runtime that cannot grant the permission has not granted it, so treat
-    // the throw as a denial and fall into the same gate.
-    let granted = false;
-    if (hasShiftTimer) {
-      try {
-        // Already granted? Then there is nothing to disclose and nothing to ask.
-        const existing = await Location.getBackgroundPermissionsAsync();
-        granted = existing.status === 'granted';
 
-        if (!granted) {
-          // THE DISCLOSURE COMES FIRST. Play's location policy requires an
-          // in-app screen naming the background collection before the system
-          // prompt appears — not an explanation afterwards, which is what this
-          // code used to do and is a rejection on its own.
-          const agreed = await askDisclosure();
-          if (!agreed) {
-            setPendingAction(null);
-            return;
-          }
-          const bg = await Location.requestBackgroundPermissionsAsync();
-          granted = bg.status === 'granted';
-        }
-      } catch (err) {
-        console.warn('[ClockPanel] background location is unavailable in this runtime', err);
-      }
-    }
-
-    /*
-     * THE MARK GOES IN EITHER WAY.
-     *
-     * This used to refuse the punch outright when background location was not
-     * granted, on a native build. On Android 11 and above that made attendance
-     * impossible for most people: requestBackgroundPermissionsAsync does not
-     * show a grant dialog there at all, it OPENS SYSTEM SETTINGS (Expo SDK 57
-     * docs) and returns denied -- so the employee was sent away mid-punch, the
-     * selfie they had just taken was thrown out, and coming back meant
-     * starting over. Anyone who had not already set "Allow all the time" by
-     * hand simply could not clock in or out.
-     *
-     * The two things were conflated. A punch needs a FOREGROUND fix, which is
-     * already in `coords` and is what the geofence check uses. Background
-     * location powers the periodic re-check DURING a shift, and
-     * useLocationPollingEffect reads that permission itself and quietly does
-     * nothing without it -- so refusing the mark protected nothing that the
-     * polling had not already handled.
-     *
-     * The disclosure and the request still happen, in that order, exactly as
-     * Play requires. What changed is that a refusal now costs the periodic
-     * checks, not the employee's attendance record.
-     */
+    const action = pendingAction;
     punchMutation.mutate(filePath);
 
-    if (!granted && hasShiftTimer) {
+    // Said now rather than discovered later: this shift will have no
+    // mid-shift presence checks. The punch itself has been sent regardless.
+    if (action === 'clock-in' && !bgGranted.current && hasShiftTimer) {
       Alert.alert(tr('clock.bgOffTitle'), tr('clock.bgOffBody'), [
         { text: tr('common.close'), style: 'cancel' },
         { text: tr('common.openSettings'), onPress: () => Linking.openSettings() },
@@ -660,9 +659,6 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
     }
   };
 
-  // Whichever path ended the punch -- success, failure or cancel -- clearing
-  // pendingAction is the one thing they all do, so the camera re-arms here
-  // rather than at each of the five places that clear it.
   useEffect(() => {
     if (!pendingAction) setCaptured(false);
   }, [pendingAction]);

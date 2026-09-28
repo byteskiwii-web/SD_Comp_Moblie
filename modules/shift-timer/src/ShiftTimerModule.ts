@@ -11,6 +11,10 @@ declare class ShiftTimerModule extends NativeModule<ShiftTimerModuleEvents> {
 
   // Stops the service and cancels the pending alarm. Idempotent.
   stop(): void;
+
+  // The persistent notification's title, text and channel name, in the
+  // employee's language. Call before start(); persisted for system restarts.
+  setNotificationText(title: string, text: string, channelName: string): void;
 }
 
 // This call loads the native module object from the JSI.

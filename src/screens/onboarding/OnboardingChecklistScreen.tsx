@@ -6,6 +6,8 @@ import { useNavigation } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
 import { Button, Card } from '../../components/ui';
 import { LanguageChips } from '../../components/LanguageChips';
+import { LegalLinks } from '../../components/LegalLinks';
+import { DeleteAccountCard } from '../profile/DeleteAccountCard';
 import { ColorScheme, radii } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
 import { useAuthStore } from '../../stores/authStore';
@@ -189,6 +191,13 @@ export function OnboardingChecklistScreen() {
         ) : null}
 
         <Button title={t('common.signOut')} variant="outline" onPress={() => signOut()} />
+
+        {/* STORE-022: a signed-in account must be able to reach the privacy
+            policy and ask for deletion from every screen it can land on --
+            and somebody who changes their mind halfway through onboarding is
+            exactly who is most likely to want to. */}
+        <DeleteAccountCard />
+        <LegalLinks compact />
       </ScrollView>
     </SafeAreaView>
   );

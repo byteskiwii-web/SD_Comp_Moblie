@@ -11,20 +11,23 @@
       "android": {},
       "env": {
         "EXPO_UPDATES_TARGET": "build"
-      }
+      },
+      "environment": "development"
     },
     "preview": {
       "distribution": "internal",
       "channel": "preview",
       "env": {
         "EXPO_UPDATES_TARGET": "build"
-      }
+      },
+      "environment": "preview"
     },
     "production": {
       "channel": "production",
       "env": {
         "EXPO_UPDATES_TARGET": "build"
-      }
+      },
+      "environment": "production"
     }
   },
   "submit": {
