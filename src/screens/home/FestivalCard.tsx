@@ -94,6 +94,11 @@ export function FestivalCard() {
             <View style={styles.text}>
               <Text style={styles.name} numberOfLines={2}>{h.name}</Text>
               <Text style={styles.when}>{isToday ? longDate(h.date) : friendly(h.date)}</Text>
+              {/* National holidays are the days that earn comp off -- said
+                  here, where people look to see what is coming. */}
+              {h.kind === 'public' ? (
+                <Text style={styles.earnPill}>{isToday ? t('compOff.earnToday') : t('compOff.earnPill')}</Text>
+              ) : null}
             </View>
           </View>
         );
@@ -179,6 +184,12 @@ const makeStyles = (colors: ColorScheme) =>
     text: { flex: 1 },
     name: { fontSize: 17, fontWeight: '800', color: colors.textLight, letterSpacing: -0.3 },
     when: { fontSize: 12, fontWeight: '600', color: colors.slate500, marginTop: 3 },
+    earnPill: {
+      alignSelf: 'flex-start', marginTop: 6, overflow: 'hidden',
+      fontSize: 10.5, fontWeight: '800', color: colors.successText,
+      backgroundColor: colors.successBg, borderRadius: radii.sm,
+      paddingHorizontal: 7, paddingVertical: 3,
+    },
 
     footer: {
       flexDirection: 'row',

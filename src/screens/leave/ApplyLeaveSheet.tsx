@@ -18,8 +18,9 @@ import { useThemeStore } from '../../stores/themeStore';
 import { Button } from '../../components/ui';
 import { DatePickerField } from '../../components/PickerField';
 import { getApiErrorMessage } from '../../api/client';
-import { toLocalDateKey } from '../../utils/datetime';
+import { formatDate, toLocalDateKey } from '../../utils/datetime';
 import { useT } from '../../i18n';
+import { nationalHolidaysIn, useNationalHolidays } from '../../hooks/useNationalHolidays';
 import {
   applyForLeave,
   LEAVE_TYPES,
@@ -67,13 +68,17 @@ export function ApplyLeaveSheet({
   onClose,
   onApplied,
   compOffAvailable = 0,
+  initialType = 'paid',
 }: {
   visible: boolean;
   onClose: () => void;
   onApplied: () => void;
   /** Comp off days left to take (LeaveSummary.compOffOutstanding). */
   compOffAvailable?: number;
+  /** The type the form opens on -- Comp off when opened from the comp-off card. */
+  initialType?: LeaveType;
 }) {
+  const { upcoming: nationalHolidays } = useNationalHolidays();
   const [leaveType, setLeaveType] = useState<LeaveType>('paid');
   const [startDate, setStartDate] = useState(toLocalDateKey());
   const [endDate, setEndDate] = useState(toLocalDateKey());
@@ -94,13 +99,13 @@ export function ApplyLeaveSheet({
   // reason still in the box is how a wrong request gets sent twice.
   useEffect(() => {
     if (!visible) return;
-    setLeaveType('paid');
+    setLeaveType(initialType);
     setStartDate(toLocalDateKey());
     setEndDate(toLocalDateKey());
     setHalfDay(false);
     setReason('');
     setError(null);
-  }, [visible]);
+  }, [visible, initialType]);
 
   // Keeping the end on or after the start, rather than letting somebody build
   // an invalid range and refusing it on submit. A week off is one date, so its
@@ -121,6 +126,15 @@ export function ApplyLeaveSheet({
     if (halfDay) return 0.5;
     return Math.round((Date.parse(endDate) - Date.parse(startDate)) / DAY_MS) + 1;
   }, [startDate, endDate, halfDay]);
+
+  /* National holidays inside the chosen dates. Nobody needs leave for one --
+     and working it is what earns a comp off -- so it is said on the form,
+     before somebody spends a paid day on a day they did not need to. */
+  const holidaysInRange = useMemo(
+    () => nationalHolidaysIn(nationalHolidays, startDate, isWeekOff ? startDate : endDate),
+    [nationalHolidays, startDate, endDate, isWeekOff]
+  );
+  const dayLabel = (date: string) => formatDate(`${String(date).slice(0, 10)}T00:00:00`);
 
   const submit = useMutation({
     mutationFn: () =>
@@ -201,6 +215,27 @@ export function ApplyLeaveSheet({
             </View>
             <Text style={styles.typeHint}>{t(LEAVE_TYPE_HINT_KEY[leaveType])}</Text>
 
+            {/* How to earn comp off, where the question comes up: choosing it.
+                Most useful when the balance is 0 -- the next national holiday
+                is the next chance to get one. */}
+            {isCompOff ? (
+              <View style={styles.earnBox}>
+                <Text style={styles.earnTitle}>{t('compOff.howTitle')}</Text>
+                <Text style={styles.earnLine}>• {t('compOff.howHoliday')}</Text>
+                <Text style={styles.earnLine}>• {t('compOff.howUnpaid')}</Text>
+                {nationalHolidays.length > 0 ? (
+                  <>
+                    <Text style={[styles.earnTitle, styles.earnTitleGap]}>{t('compOff.nextHolidays')}</Text>
+                    {nationalHolidays.slice(0, 3).map((h) => (
+                      <Text key={h.id} style={styles.earnLine}>
+                        <Text style={styles.earnDate}>{dayLabel(h.date)}</Text>  {h.name}
+                      </Text>
+                    ))}
+                  </>
+                ) : null}
+              </View>
+            ) : null}
+
             {isWeekOff ? (
               <DatePickerField label={t('apply.date')} value={startDate} onChange={setStartDate} />
             ) : (
@@ -234,6 +269,15 @@ export function ApplyLeaveSheet({
                 <Text style={styles.halfText}>{t('apply.halfDay')}</Text>
               </Pressable>
             )}
+
+            {holidaysInRange.map((h) => (
+              <View key={h.id} style={styles.holidayNote}>
+                <Ionicons name="flag" size={14} color={colors.brand[700]} style={styles.holidayNoteIcon} />
+                <Text style={styles.holidayNoteText}>
+                  {t('compOff.holidayInRange', { date: dayLabel(h.date), name: h.name })}
+                </Text>
+              </View>
+            ))}
 
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>{t('common.total')}</Text>
@@ -308,6 +352,17 @@ function makeStyles(colors: ColorScheme) {
     typeTextOn: { color: colors.brand[700] },
     typeTextEmpty: { color: colors.slate400 },
     typeHint: { fontSize: 11.5, lineHeight: 16, color: colors.slate500, fontWeight: '600' },
+    earnBox: { backgroundColor: colors.successBg, borderRadius: radii.md, paddingHorizontal: 12, paddingVertical: 10 },
+    earnTitle: { fontSize: 10.5, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.3, color: colors.successText, marginBottom: 4 },
+    earnTitleGap: { marginTop: 8 },
+    earnLine: { fontSize: 12, lineHeight: 18, color: colors.slate600 },
+    earnDate: { fontWeight: '800', color: colors.textLight },
+    holidayNote: {
+      flexDirection: 'row', gap: 8, alignItems: 'flex-start',
+      backgroundColor: colors.brand[50], borderRadius: radii.md, paddingHorizontal: 12, paddingVertical: 9,
+    },
+    holidayNoteIcon: { marginTop: 2 },
+    holidayNoteText: { flex: 1, fontSize: 12, lineHeight: 17, color: colors.slate600, fontWeight: '600' },
     pressed: { opacity: 0.75 },
 
     dates: { flexDirection: 'row', gap: 12, marginTop: 4 },

@@ -677,7 +677,7 @@ export const te: Catalogue = {
 
 
   'holidayKind.festival': 'పండుగ',
-  'holidayKind.public': 'ప్రభుత్వ సెలవు',
+  'holidayKind.public': 'జాతీయ సెలవు',
   'holidayKind.optional': 'ఐచ్ఛికం',
   'holidayKind.company': 'కంపెనీ',
   'festivals.dayCount_one': '{count} రోజు',
@@ -887,4 +887,17 @@ export const te: Catalogue = {
   'apply.compOffNone': 'ఇంకా వాడటానికి కాంప్ ఆఫ్ లేదు. జీతం లేని సెలవు రోజున లేదా జాతీయ సెలవున పని చేస్తే వస్తుంది.',
   'apply.compOffLeft': 'మీకు {count} కాంప్ ఆఫ్ మిగిలి ఉంది — అంత లేదా అంతకంటే తక్కువ అడగండి.',
   'apply.weekOffWeekday': 'వారపు సెలవు సోమవారం నుండి శుక్రవారం మాత్రమే — శని, ఆదివారాలు పని దినాలు.',
+  'compOff.title': 'కాంప్ ఆఫ్',
+  'compOff.use': 'వాడండి',
+  'compOff.leftLabel': 'రోజులు తీసుకోవడానికి మిగిలాయి',
+  'compOff.breakdown': 'సంపాదించినవి {earned} · వాడినవి {used} · వేచి ఉన్నవి {pending}',
+  'compOff.howTitle': 'కాంప్ ఆఫ్ ఎలా సంపాదించాలి',
+  'compOff.howHoliday': 'జాతీయ సెలవు రోజున పని చేయండి — ప్రతి దానికి 1 రోజు.',
+  'compOff.howUnpaid': 'ఆమోదించిన జీతం లేని సెలవులో ఒక రోజు పనికి వచ్చి, ఆ సెలవుపై దాన్ని నమోదు చేయండి — 1 రోజు (సగం రోజుకు ½).',
+  'compOff.nextHolidays': 'రాబోయే జాతీయ సెలవులు',
+  'compOff.noUpcoming': 'తర్వాతి 12 నెలల్లో జాతీయ సెలవులు లేవు.',
+  'compOff.holidayInRange': '{date} న {name}, జాతీయ సెలవు. దానికి సెలవు తీసుకోనవసరం లేదు — ఆ రోజు పని చేస్తే 1 కాంప్ ఆఫ్ వస్తుంది.',
+  'compOff.earnPill': 'జాతీయ సెలవు · పని చేస్తే 1 కాంప్ ఆఫ్',
+  'compOff.earnToday': 'జాతీయ సెలవు · ఈ రోజు పని చేస్తే 1 కాంప్ ఆఫ్',
+  'compOff.earnsShort': 'కాంప్ ఆఫ్ వస్తుంది',
 };

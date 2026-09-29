@@ -20,8 +20,10 @@ import {
   LEAVE_TYPES,
   type LeaveRequest,
   type LeaveStatus,
+  type LeaveType,
 } from '../../api/leave.api';
 import { ApplyLeaveSheet } from './ApplyLeaveSheet';
+import { CompOffCard } from './CompOffCard';
 import { GreetingHeader } from '../../components/GreetingHeader';
 import { t as tr, useT, type TKey } from '../../i18n';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
@@ -98,6 +100,9 @@ function shiftMonth(key: string, by: number) {
 export function LeaveScreen() {
   const queryClient = useQueryClient();
   const [applyOpen, setApplyOpen] = useState(false);
+  /* Which type the form opens on: Paid from the header button, Comp off from
+     the comp-off card's "Use" -- the person already said what they want. */
+  const [applyType, setApplyType] = useState<LeaveType>('paid');
   const [error, setError] = useState<string | null>(null);
   // Which request is having a worked day claimed against it.
   const [claiming, setClaiming] = useState<LeaveRequest | null>(null);
@@ -192,7 +197,7 @@ export function LeaveScreen() {
         <Text style={styles.headerTitle}>{t('leave.title')}</Text>
         <TourTarget id="leave-apply">
           <Pressable
-            onPress={() => setApplyOpen(true)}
+            onPress={() => { setApplyType('paid'); setApplyOpen(true); }}
             style={({ pressed }) => [styles.applyBtn, pressed && styles.pressed]}
             accessibilityRole="button"
           >
@@ -249,28 +254,9 @@ export function LeaveScreen() {
                     <Text style={styles.typeChipValue}>{summaryQuery.data?.taken[kind] ?? 0}</Text>
                   </View>
                 ))}
-                {/* Left to take, not used. Kept visually apart from the chips
-                    above for that reason -- it is the opposite direction of travel. */}
-                {(summaryQuery.data?.compOffOutstanding ?? 0) > 0 && (
-                  <View style={[styles.typeChip, styles.compChip]}>
-                    <Text style={[styles.typeChipLabel, styles.compChipLabel]}>{t('leave.compOff')}</Text>
-                    <Text style={[styles.typeChipValue, styles.compChipLabel]}>
-                      {summaryQuery.data?.compOffOutstanding}
-                    </Text>
-                  </View>
-                )}
               </View>
-              {/* Where holiday comp offs came from, so the number above can be
-                  checked against the person's own memory of the day. */}
-              {(summaryQuery.data?.compOffHolidays?.length ?? 0) > 0 && (
-                <Text style={styles.compHolidays}>
-                  {t('leave.compOffHolidays', {
-                    dates: summaryQuery.data!.compOffHolidays!
-                      .map((h) => `${h.name} (${shortDate(h.date)})`)
-                      .join(', '),
-                  })}
-                </Text>
-              )}
+              {/* Comp off left, and where it came from, now live in CompOffCard
+                  below -- one place for everything about comp off. */}
 
               {/* The twelve-month history, as a strip rather than a list: the
                   shape of a year of leave is the useful part, and any bar can
@@ -313,6 +299,11 @@ export function LeaveScreen() {
             </>
           )}
         </Card>
+
+        <CompOffCard
+          summary={summaryQuery.data}
+          onApply={() => { setApplyType('comp-off'); setApplyOpen(true); }}
+        />
 
         <TourTarget id="leave-list">
           <Text style={styles.sectionTitle}>{t('leave.myRequests')}</Text>
@@ -429,6 +420,7 @@ export function LeaveScreen() {
 
       <ApplyLeaveSheet
         visible={applyOpen}
+        initialType={applyType}
         // Not tied to the month on screen: comp off left is one running figure.
         compOffAvailable={summaryQuery.data?.compOffOutstanding ?? 0}
         onClose={() => setApplyOpen(false)}
@@ -492,9 +484,6 @@ function makeStyles(colors: ColorScheme) {
     },
     monthLabel: { fontSize: 13, fontWeight: '800', color: colors.textLight, letterSpacing: -0.2 },
 
-    compChip: { backgroundColor: colors.successBg },
-    compHolidays: { fontSize: 12, lineHeight: 17, color: colors.slate500, marginTop: 8 },
-    compChipLabel: { color: '#047857' },
 
     strip: {
       flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between',
