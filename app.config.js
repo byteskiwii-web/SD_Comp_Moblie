@@ -182,6 +182,22 @@ module.exports = ({ config }) => {
     ios: {
       ...config.ios,
       /**
+       * STORE-034 — NO PLAIN HTTP IN BUILDS THAT LEAVE THE TEAM.
+       *
+       * React Native's iOS template sets NSAllowsArbitraryLoads = true, so the
+       * shipped app would accept unencrypted connections to any host. Apple asks
+       * for a justification for that at review, and nothing here needs it: the
+       * API, the console and the map tiles are all https. Store and tester
+       * builds get the secure default; a development build keeps the template's
+       * setting so it can still reach a laptop's http://localhost.
+       */
+      infoPlist: {
+        ...config.ios?.infoPlist,
+        ...(buildProfile === 'production' || buildProfile === 'preview'
+          ? { NSAppTransportSecurity: { NSAllowsArbitraryLoads: false } }
+          : {}),
+      },
+      /**
        * F3 — PRIVACY MANIFEST FOR THE APP ITSELF.
        *
        * Apple requires a declared reason for each "required reason API" an

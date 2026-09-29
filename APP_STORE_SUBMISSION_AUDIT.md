@@ -198,7 +198,9 @@ Each item has a status block. Keep it current. The step-by-step fix for each ite
 
 | Platform | Category | Severity | Type | Status | Owner | Date identified | Date fixed | Verification |
 |---|---|---|---|---|---|---|---|---|
-| iOS | Policy / Distribution | 🔴 Critical | Potential (common rejection pattern) | ❌ Blocked — needs decision | Unassigned | 2026-09-28 | — | — |
+| iOS | Policy / Distribution | 🔴 Critical | Potential (common rejection pattern) | 🟡 In Progress | Unassigned | 2026-09-28 | — | — |
+
+> **Review, 29 Sep 2026 (evening).** Decided: **Unlisted App Distribution** on the App Store (it fits: an employee resource for one organisation). Still to do: submit the app for normal App Review, then file Apple's unlisted-distribution request for the approved app.
 
 **Current state.** The app is for one employer's staff. Accounts are created by HR, there is no sign-up, and the app, privacy policy and terms all say so ("The app is not open to the public and you cannot register yourself"). The config comments mention a possible later SaaS offering, but nothing in the product or on the website offers it to other employers today.
 
@@ -223,7 +225,9 @@ Each item has a status block. Keep it current. The step-by-step fix for each ite
 
 | Platform | Category | Severity | Type | Status | Owner | Date identified | Date fixed | Verification |
 |---|---|---|---|---|---|---|---|---|
-| Both | Reviewer Flow | 🔴 Critical | Confirmed gap | 🔴 Pending | Unassigned | 2026-09-28 | — | — |
+| Both | Reviewer Flow | 🔴 Critical | Confirmed gap | 🟡 In Progress | Unassigned | 2026-09-28 | — | — |
+
+> **Review, 29 Sep 2026 (evening).** Four review accounts exist on production and dev (`EMP-90001`, `EMP-90002`, `TL-90001`, `TL-90002`, password `Testing@1234`, created by `scripts/seed-review-accounts.js`): approved, profile complete, KYC and PAN–Aadhaar link marked verified, policies accepted, `geofence_exempt`. The script now puts them on **no shift**, because a shift gates clock-in to IST hours and reviewers test in their own daytime. Dev has that; **production still has MORNING until the script is re-run there.** Face stays a one-selfie in-app step (a template of a real face cannot be seeded); say so in the review notes.
 
 **Current state.** Everything past the login screen depends on server state a reviewer cannot create:
 1. **Onboarding gate:** profile, PAN/Aadhaar, bank, face and **HR approval** must all be complete before the tabs appear ([src/navigation/RootNavigator.tsx](src/navigation/RootNavigator.tsx) `GatedApp`). KYC calls hit paid third-party vendors.
@@ -844,6 +848,8 @@ The app no longer captures or uploads identity documents ([src/screens/profile/D
 |---|---|---|---|---|---|---|---|---|
 | Both | Build / Configuration | 🟡 Medium | Confirmed | 🟡 In Progress | Unassigned | 2026-09-28 | — | Environments done; versioning not |
 
+> **Review, 29 Sep 2026 (evening).** `eas.json`: `appVersionSource: remote` + `autoIncrement` on production, so versionCode/buildNumber no longer need hand edits (commit `c22403e`). Still to check: the first production build initialises the remote counter above 1.
+
 > **Review & fix, 28 Sep 2026.** Done: `environment` named on all three profiles, and production URLs in EAS (STORE-001). **Not done:** `appVersionSource: remote` + `autoIncrement`. It changes how every team build is numbered, so it needs the team's agreement first.
 
 **Current state.**
@@ -998,7 +1004,9 @@ The app no longer captures or uploads identity documents ([src/screens/profile/D
 
 | Platform | Category | Severity | Type | Status | Owner | Date identified | Date fixed | Verification |
 |---|---|---|---|---|---|---|---|---|
-| iOS | Security / Build | 🟢 Low | Needs Verification | ⚪ Needs Verification | Unassigned | 2026-09-28 | — | — |
+| iOS | Security / Build | 🟢 Low | Needs Verification | 🟢 Completed | Unassigned | 2026-09-28 | — | — |
+
+> **Review, 29 Sep 2026 (evening).** Introspecting a production config showed `NSAllowsArbitraryLoads: true` (the React Native template default). `app.config.js` now sets it to `false` for production and preview builds; development keeps it for localhost (commit `c22403e`). **Still to see:** the value in the first release IPA.
 
 **Current state.** Introspection showed `NSAllowsArbitraryLoads: true` + a `localhost` exception, but that came from `@expo/config-plugins`' **placeholder** Info.plist used during introspection, not the real prebuild template. All app traffic is https except the dev-only localhost fallback (STORE-001).
 
@@ -1131,7 +1139,9 @@ The app no longer captures or uploads identity documents ([src/screens/profile/D
 
 | Platform | Category | Severity | Type | Status | Owner | Date identified | Date fixed | Verification |
 |---|---|---|---|---|---|---|---|---|
-| Both (backend) | Privacy / Legal | 🟠 High | Confirmed | 🔴 Pending | Unassigned | 2026-09-28 | — | — |
+| Both (backend) | Privacy / Legal | 🟠 High | Confirmed | 🟢 Completed | Unassigned | 2026-09-28 | — | — |
+
+> **Review, 29 Sep 2026 (evening).** `withdrawConsent` now blanks the embedding on every template the employee has (the row stays as the audit record), and deletes each enrolment photo from Drive after the commit. A photo is unlinked only once Drive confirms, so a failed delete stays retryable. Tested in `tests/face.test.js` (commit `cc9f034`). Needs a deploy to reach production.
 
 **Current state.** `withdrawConsent()` in `SD_Computer/src/face/face.service.js` stamps the consent withdrawn, soft-deletes the template and resets `face_status`. It never deletes the enrolment photo that `enrol()` uploaded to Drive (`face-enrolment/<employeeId>`). The privacy policy says withdrawal removes it.
 
@@ -1147,7 +1157,9 @@ The app no longer captures or uploads identity documents ([src/screens/profile/D
 
 | Platform | Category | Severity | Type | Status | Owner | Date identified | Date fixed | Verification |
 |---|---|---|---|---|---|---|---|---|
-| Both (backend) | Authentication / Legal | 🟡 Medium | Confirmed | 🔴 Pending | Unassigned | 2026-09-28 | — | — |
+| Both (backend) | Authentication / Legal | 🟡 Medium | Confirmed | 🟢 Completed | Unassigned | 2026-09-28 | — | — |
+
+> **Review, 29 Sep 2026 (evening).** `/auth/me/deletion` (GET) and `/auth/me/deletion/confirm|request-code` (POST) are on the must-change-password allow-list. Deletion only removes access, so the allow-list grants nothing new (commit `cc9f034`, tested in `tests/auth.mustchange.test.js`). Needs a deploy.
 
 **Current state.** `SD_Computer/src/middleware/mustChangePassword.js` allows only `/auth/me/password`, `/auth/me`, `/auth/logout(-all)` and `/auth/refresh` for a session holding an admin-issued password. `/auth/me/deletion/*` is refused with `PASSWORD_CHANGE_REQUIRED`, so the app cannot offer deletion on the set-password screen (STORE-022).
 
