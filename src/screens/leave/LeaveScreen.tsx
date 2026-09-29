@@ -249,8 +249,8 @@ export function LeaveScreen() {
                     <Text style={styles.typeChipValue}>{summaryQuery.data?.taken[kind] ?? 0}</Text>
                   </View>
                 ))}
-                {/* Owed, not used. Kept visually apart from the two above for
-                    that reason -- it is the opposite direction of travel. */}
+                {/* Left to take, not used. Kept visually apart from the chips
+                    above for that reason -- it is the opposite direction of travel. */}
                 {(summaryQuery.data?.compOffOutstanding ?? 0) > 0 && (
                   <View style={[styles.typeChip, styles.compChip]}>
                     <Text style={[styles.typeChipLabel, styles.compChipLabel]}>{t('leave.compOff')}</Text>
@@ -429,6 +429,8 @@ export function LeaveScreen() {
 
       <ApplyLeaveSheet
         visible={applyOpen}
+        // Not tied to the month on screen: comp off left is one running figure.
+        compOffAvailable={summaryQuery.data?.compOffOutstanding ?? 0}
         onClose={() => setApplyOpen(false)}
         onApplied={() => {
           setApplyOpen(false);

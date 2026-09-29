@@ -4,11 +4,21 @@ import { apiClient } from './client';
 // server; the app presents it as its own tab.
 const BASE = '/leave';
 
-/** Paid or unpaid, and nothing else -- the only distinction payroll acts on. */
-export type LeaveType = 'paid' | 'unpaid';
+/**
+ * paid / unpaid -- ordinary leave, the distinction payroll acts on.
+ * comp-off      -- spends comp off already earned; the server refuses more
+ *                  than is left (COMP_OFF_INSUFFICIENT).
+ * week-off      -- the weekly off: one full weekday (Monday-Friday), one per
+ *                  week, decided by a manager like leave. Weekends are
+ *                  working days at the stores.
+ */
+export type LeaveType = 'paid' | 'unpaid' | 'comp-off' | 'week-off';
 export type LeaveStatus = 'pending' | 'approved' | 'rejected' | 'cancelled';
 
-export const LEAVE_TYPES: LeaveType[] = ['paid', 'unpaid'];
+export const LEAVE_TYPES: LeaveType[] = ['paid', 'unpaid', 'comp-off', 'week-off'];
+
+/** ISO weekdays a week off may fall on (1 = Monday). Mirrors LEAVE_WEEK_OFF_DAYS on the server. */
+export const WEEK_OFF_DAYS = [1, 2, 3, 4, 5];
 
 /**
  * Catalogue KEYS rather than English.
@@ -22,12 +32,16 @@ export const LEAVE_TYPES: LeaveType[] = ['paid', 'unpaid'];
 export const LEAVE_TYPE_LABEL_KEY = {
   paid: 'leaveType.paid',
   unpaid: 'leaveType.unpaid',
+  'comp-off': 'leaveType.compOff',
+  'week-off': 'leaveType.weekOff',
 } as const;
 
 /** What each one means for the day, said plainly on the form. */
 export const LEAVE_TYPE_HINT_KEY = {
   paid: 'leaveType.paidHint',
   unpaid: 'leaveType.unpaidHint',
+  'comp-off': 'leaveType.compOffHint',
+  'week-off': 'leaveType.weekOffHint',
 } as const;
 
 export type LeaveRequest = {
@@ -76,11 +90,18 @@ export type LeaveMonth = {
   pending: Record<LeaveType, number>;
   takenTotal: number;
   pendingTotal: number;
+  /** Approved week offs in the month -- not part of takenTotal. */
+  weekOffsTaken?: number;
 };
 
 export type LeaveSummary = LeaveMonth & {
   employeeId: string;
   compOffEarned: number;
+  /** Comp off already taken (approved comp-off leave). */
+  compOffUsed?: number;
+  /** Comp off reserved by requests still waiting for a decision. */
+  compOffPending?: number;
+  /** What a new comp-off request may take: earned, less used and pending. */
   compOffOutstanding: number;
   /**
    * National holidays (Republic Day, Independence Day, Gandhi Jayanti) the
