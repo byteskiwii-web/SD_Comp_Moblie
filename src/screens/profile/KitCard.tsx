@@ -105,10 +105,13 @@ export function KitCard() {
                   style={({ pressed }) => [
                     styles.size,
                     selected && styles.sizeOn,
+                    // Greyed while the choice is being saved, so a second tap
+                    // is not mistaken for a change of mind that went through.
+                    save.isPending && styles.sizeBusy,
                     pressed && styles.sizePressed,
                   ]}
                   accessibilityRole="button"
-                  accessibilityState={{ selected }}
+                  accessibilityState={{ selected, disabled: save.isPending, busy: save.isPending }}
                 >
                   <Text style={[styles.sizeText, selected && styles.sizeTextOn]}>{size}</Text>
                 </Pressable>
@@ -162,7 +165,8 @@ function makeStyles(colors: ColorScheme) {
     },
     sizeOn: { borderColor: colors.brand[700], backgroundColor: colors.brand[50] },
     sizePressed: { opacity: 0.75 },
-    sizeText: { fontSize: 11.5, fontWeight: '800', color: colors.slate600 },
+    sizeBusy: { opacity: 0.5 },
+    sizeText: { fontSize: 11.5, fontWeight: '800', color: colors.slate600, textAlign: 'center' },
     sizeTextOn: { color: colors.brand[700] },
     hint: { fontSize: 10.5, color: colors.slate400, marginTop: 8, fontWeight: '600' },
 

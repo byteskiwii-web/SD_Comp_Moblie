@@ -6,11 +6,8 @@ import { registerRootComponent } from 'expo';
 // so these run before App is imported below.
 import './src/utils/notificationSetup';
 import './src/tasks/registerShiftTimerTask';
-import { stopLegacyLocationTask } from './src/utils/legacyTaskCleanup';
 
 import App from './App';
-
-stopLegacyLocationTask();
 
 // registerRootComponent calls AppRegistry.registerComponent('main', () => App);
 // It also ensures that whether you load the app in Expo Go or in a native build,

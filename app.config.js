@@ -51,6 +51,33 @@ module.exports = ({ config }) => {
    *     it needs `appVersion`. eas.json sets EXPO_UPDATES_TARGET=build on
    *     every build profile, so a build can never inherit the Expo Go policy.
    */
+  /**
+   * STORE-001 — NO BUILD FOR PEOPLE WITHOUT A REAL SERVER.
+   *
+   * EXPO_PUBLIC_API_URL is inlined into the bundle at build time, and the app
+   * falls back to http://localhost:3000 without it -- which on a phone is the
+   * phone itself. A production build made while the EAS production
+   * environment was empty would have shipped exactly that: a login that can
+   * never succeed, in front of an App Store reviewer.
+   *
+   * So the two profiles that reach other people's phones refuse to build
+   * unless the URL is public https. Development builds are left alone: they
+   * point at a laptop on purpose.
+   */
+  const buildProfile = process.env.EAS_BUILD_PROFILE;
+  if (buildProfile === 'production' || buildProfile === 'preview') {
+    const apiUrl = process.env.EXPO_PUBLIC_API_URL || '';
+    const isPublicHttps =
+      /^https:\/\/[^/]+\.[^/]+/.test(apiUrl) &&
+      !/^https:\/\/(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(apiUrl);
+    if (!isPublicHttps) {
+      throw new Error(
+        `EXPO_PUBLIC_API_URL must be a public https URL for the "${buildProfile}" build, got "${apiUrl || '(unset)'}". ` +
+          `Set it in the EAS "${buildProfile}" environment (eas env:create).`
+      );
+    }
+  }
+
   const projectId = config.extra?.eas?.projectId;
   if (!projectId) {
     throw new Error('app.json is missing expo.extra.eas.projectId; cannot build the updates URL.');

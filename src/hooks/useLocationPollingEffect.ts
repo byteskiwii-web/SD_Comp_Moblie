@@ -3,6 +3,8 @@ import * as Location from 'expo-location';
 import { useShiftStore } from '../stores/shiftStore';
 import { hasShiftTimer } from '../native/runtime';
 import { LOCATION_POLL_INTERVAL_MS } from '../constants/config';
+import { t } from '../i18n';
+import { getNotifications } from '../native/notificationsModule';
 
 // Loaded through require(), never a static import. modules/shift-timer is
 // Android-only native code, so on iOS or in Expo Go the import itself throws
@@ -10,7 +12,12 @@ import { LOCATION_POLL_INTERVAL_MS } from '../constants/config';
 // the whole app down before the first render rather than merely disabling
 // the feature. A module factory only runs on first require, which on those
 // runtimes is never.
-type ShiftTimerModule = { start: (intervalMs: number) => void; stop: () => void };
+type ShiftTimerModule = {
+  start: (intervalMs: number) => void;
+  stop: () => void;
+  /** Absent on binaries built before it existed -- always check before calling. */
+  setNotificationText?: (title: string, text: string, channelName: string) => void;
+};
 let shiftTimer: ShiftTimerModule | null = null;
 function getShiftTimer(): ShiftTimerModule | null {
   if (!hasShiftTimer) return null;
@@ -86,7 +93,30 @@ export function useLocationPollingEffect() {
           if (cancelled || fg.status !== 'granted') return;
           const bg = await Location.getBackgroundPermissionsAsync();
           if (cancelled || bg.status !== 'granted') return;
-          getShiftTimer()?.start(LOCATION_POLL_INTERVAL_MS);
+          /*
+           * STORE-012: the tracking notification must be visible whenever the
+           * checks run. On Android 13+ notifications are off until allowed,
+           * and the app used to ask only later (from the push hook), so an
+           * employee who had not allowed them had checks running with nothing
+           * in the shade. Ask now -- right after clocking in, where the reason
+           * is obvious. A refusal does not stop the checks (the employee
+           * accepted them in the disclosure); it only hides the notice, which
+           * is the employee's choice to make in the system dialog.
+           */
+          try {
+            await getNotifications()?.requestPermissionsAsync();
+          } catch {
+            // No notifications in this runtime -- the service still starts.
+          }
+          if (cancelled) return;
+          const timer = getShiftTimer();
+          // In the employee's language, and naming location -- see
+          // ShiftTimerService.buildNotification. Guarded: a binary built before
+          // this function existed still runs this JS after an OTA update.
+          if (typeof timer?.setNotificationText === 'function') {
+            timer.setNotificationText(t('shiftNotif.title'), t('shiftNotif.text'), t('shiftNotif.channel'));
+          }
+          timer?.start(LOCATION_POLL_INTERVAL_MS);
         } else {
           getShiftTimer()?.stop();
         }

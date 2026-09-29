@@ -14,6 +14,17 @@ import { cancelClockOutReminder, scheduleClockOutReminder } from '../utils/notif
 // The query key is deliberately identical to ProfileScreen's meExtrasQuery
 // (['auth-me-extras', employee?.id]) so the two share one cache entry --
 // visiting Profile after clocking in costs no extra request, and vice versa.
+/*
+ * Schedule and cancel run one after another, never interleaved. Both are
+ * chains of awaits (permission read, list pending, cancel, schedule), and a
+ * cancel that overlapped a schedule could finish first and leave the
+ * reminder it was meant to remove filed behind it.
+ */
+let queue: Promise<void> = Promise.resolve();
+function enqueue(step: () => Promise<void>) {
+  queue = queue.then(step, step).catch((err) => console.warn('[useClockOutReminderEffect]', err));
+}
+
 export function useClockOutReminderEffect() {
   const employee = useAuthStore((s) => s.employee);
   const isClockedIn = useShiftStore((s) => s.isClockedIn);
@@ -32,11 +43,9 @@ export function useClockOutReminderEffect() {
       // The guard reads the store live rather than closing over `isClockedIn`:
       // the punch that ends the shift can land while this call is still
       // awaiting a permission answer.
-      scheduleClockOutReminder(shiftEnd, () => useShiftStore.getState().isClockedIn).catch((err) =>
-        console.warn('[useClockOutReminderEffect]', err)
-      );
+      enqueue(() => scheduleClockOutReminder(shiftEnd, () => useShiftStore.getState().isClockedIn));
     } else if (!isClockedIn) {
-      cancelClockOutReminder().catch(() => {});
+      enqueue(() => cancelClockOutReminder());
     }
   }, [isClockedIn, shiftEnd]);
 }

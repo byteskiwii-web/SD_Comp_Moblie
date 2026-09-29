@@ -239,15 +239,20 @@ export async function getDeletionStatus() {
   return res.data.data;
 }
 
-export async function requestDeletionCode() {
-  const res = await apiClient.post<{ success: true; data: { maskedEmail: string } }>(
-    '/auth/me/deletion/request-code',
-    {}
-  );
-  return res.data.data;
-}
+/**
+ * The word the employee types to confirm. The server compares it trimmed and
+ * case-insensitively, and it is the same Latin word in every language so the
+ * server has one thing to check.
+ */
+export const DELETION_CONFIRMATION_WORD = 'DELETE';
 
-export async function confirmDeletion(otp: string, reason?: string) {
+/**
+ * Files the deletion request. Confirmed by the typed word rather than an
+ * emailed code (29 Sep 2026): field staff often have no working mailbox, and
+ * the code blocked exactly the people the right exists for. The server still
+ * accepts `{ otp }` from builds already installed.
+ */
+export async function confirmDeletion(confirmation: string, reason?: string) {
   const res = await apiClient.post<{
     success: true;
     // requestId is a bigint id, so it arrives as a string (see AttendanceMark.id).
@@ -256,7 +261,7 @@ export async function confirmDeletion(otp: string, reason?: string) {
     data: { requestId?: string; sessionsRevoked?: number; alreadyRequested?: boolean };
   }>(
     '/auth/me/deletion/confirm',
-    reason ? { otp, reason } : { otp }
+    reason ? { confirmation, reason } : { confirmation }
   );
   return res.data.data;
 }

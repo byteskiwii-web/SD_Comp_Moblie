@@ -25,7 +25,6 @@
     "expo-secure-store": "~57.0.4",
     "expo-sharing": "~57.0.20",
     "expo-status-bar": "~57.0.1",
-    "expo-task-manager": "~57.0.17",
     "expo-updates": "~57.0.22",
     "jail-monkey": "^3.0.0",
     "react": "19.2.3",

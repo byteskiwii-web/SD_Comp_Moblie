@@ -46,12 +46,20 @@ export function BackgroundLocationDisclosure({
   // from Android 15 at targetSdk 36), so the buttons clear it themselves.
   const insets = useSafeAreaInsets();
 
+  /*
+   * STORE-006: every mid-shift check IS stored with its coordinates, so the
+   * old "we do not keep a trail of where you go" under "What we never do"
+   * understated what is collected -- on the very screen Play's reviewer is
+   * shown. It is gone, and what is kept is now said under "What we check".
+   * Nothing is promised here that the backend does not already do.
+   */
   const collected = [
     t('loc.discloseDoWhen'),
     t('loc.discloseDoStore'),
+    t('loc.discloseDoKept'),
     t('loc.discloseDoStop'),
   ];
-  const notCollected = [t('loc.discloseNotOff'), t('loc.discloseNotTrack')];
+  const notCollected = [t('loc.discloseNotOff')];
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onDecline}>

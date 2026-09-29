@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 import { getNotifications } from '../native/notificationsModule';
+import { useShiftStore } from '../stores/shiftStore';
 
 /**
  * Notification setup, run once at startup.
@@ -27,12 +28,22 @@ const Notifications = getNotifications();
 if (Notifications) {
   try {
     Notifications.setNotificationHandler({
-      handleNotification: async () => ({
-        shouldShowBanner: true,
-        shouldShowList: true,
-        shouldPlaySound: true,
-        shouldSetBadge: false,
-      }),
+      handleNotification: async (notification: any) => {
+        /* The last line of defence against "Don't forget to clock out" after
+           clocking out: a clock-out reminder arriving while the app is open
+           and the employee is NOT on shift is stale, so it is not shown.
+           (With the app closed the system shows it on its own -- the cancel
+           at clock-out is what prevents that one.) */
+        const stale =
+          notification?.request?.content?.data?.kind === 'clock-out-reminder' &&
+          !useShiftStore.getState().isClockedIn;
+        return {
+          shouldShowBanner: !stale,
+          shouldShowList: !stale,
+          shouldPlaySound: !stale,
+          shouldSetBadge: false,
+        };
+      },
     });
   } catch (err) {
     console.warn('[notificationSetup] handler unavailable in this runtime', err);

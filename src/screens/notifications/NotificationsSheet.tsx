@@ -275,8 +275,14 @@ export function NotificationsSheet({ visible, onClose }: { visible: boolean; onC
           <Text style={styles.title}>{t('notif.title')}</Text>
           <View style={styles.headerActions}>
             {unreadTotal > 0 && (
-              <Pressable onPress={() => readAll.mutate()} hitSlop={6} disabled={readAll.isPending}>
-                <Text style={styles.markAll}>{t('notif.markAllRead')}</Text>
+              <Pressable
+                onPress={() => readAll.mutate()}
+                hitSlop={6}
+                disabled={readAll.isPending}
+                accessibilityRole="button"
+                accessibilityState={{ disabled: readAll.isPending, busy: readAll.isPending }}
+              >
+                <Text style={[styles.markAll, readAll.isPending && styles.markAllBusy]}>{t('notif.markAllRead')}</Text>
               </Pressable>
             )}
             <Pressable onPress={onClose} hitSlop={10} accessibilityRole="button" accessibilityLabel={t('common.close')}>
@@ -466,8 +472,9 @@ function makeStyles(colors: ColorScheme) {
       fontSize: 11.5, fontWeight: '700', color: colors.brand[700],
       paddingHorizontal: 10, paddingVertical: 5,
       backgroundColor: colors.brand[50], borderRadius: radii.pill,
-      overflow: 'hidden',
+      overflow: 'hidden', textAlign: 'center',
     },
+    markAllBusy: { opacity: 0.5 },
 
     list: { paddingHorizontal: 12, paddingVertical: 8 },
     error: { color: colors.dangerText, fontSize: 11.5, fontWeight: '600', padding: 20, textAlign: 'center' },

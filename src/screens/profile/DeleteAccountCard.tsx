@@ -9,7 +9,7 @@ import { ColorScheme, radii } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
 import { useT } from '../../i18n';
 import { getApiErrorMessage } from '../../api/client';
-import { confirmDeletion, getDeletionStatus, requestDeletionCode } from '../../api/auth.api';
+import { confirmDeletion, DELETION_CONFIRMATION_WORD, getDeletionStatus } from '../../api/auth.api';
 import { useAuthStore } from '../../stores/authStore';
 
 /**
@@ -20,11 +20,13 @@ import { useAuthStore } from '../../stores/authStore';
  * the policy described a screen that did not exist, which is itself grounds
  * for rejection on both stores.
  *
- * TWO STEPS, EMAIL CODE IN BETWEEN. The realistic threat is not a stolen
- * password, it is an unlocked phone on a shop counter. A code sent to the
- * registered mailbox is the one factor somebody holding the handset does not
- * have. It is typed into the confirm box rather than pasted past a checkbox,
- * so the last action before an irreversible one is deliberate.
+ * CONFIRMED BY TYPING A WORD. It used to email a 6-digit code first, and
+ * field staff without a working mailbox could not get past that step -- the
+ * right was on the screen but out of reach. Now the employee types DELETE:
+ * still a deliberate act that no stray tap can complete, with no mailbox
+ * needed. The request cuts access and goes to HR, who review it before
+ * anything is removed, so a request somebody else made on an unlocked phone
+ * can still be caught and rejected.
  *
  * WHAT THE SCREEN PROMISES IS WHAT THE SERVER DOES. It does not say "your
  * account will be deleted": payroll and attendance carry statutory retention
@@ -42,21 +44,15 @@ export function DeleteAccountCard() {
   const insets = useSafeAreaInsets();
 
   const [open, setOpen] = useState(false);
-  const [code, setCode] = useState('');
+  const [typed, setTyped] = useState('');
   const [reason, setReason] = useState('');
-  const [sentTo, setSentTo] = useState<string | null>(null);
   const [error, setError] = useState('');
 
   const status = useQuery({ queryKey: ['deletion-status'], queryFn: getDeletionStatus });
-
-  const sendCode = useMutation({
-    mutationFn: requestDeletionCode,
-    onSuccess: (d) => { setSentTo(d.maskedEmail); setError(''); },
-    onError: (e) => setError(getApiErrorMessage(e)),
-  });
+  const confirmed = typed.trim().toUpperCase() === DELETION_CONFIRMATION_WORD;
 
   const submit = useMutation({
-    mutationFn: () => confirmDeletion(code.trim(), reason.trim() || undefined),
+    mutationFn: () => confirmDeletion(typed.trim(), reason.trim() || undefined),
     // Access is revoked server-side the moment this succeeds, so every token
     // this app holds is already dead. Signing out locally is not politeness,
     // it is the app agreeing with the server instead of showing a session
@@ -67,7 +63,7 @@ export function DeleteAccountCard() {
 
   const close = () => {
     if (submit.isPending) return;
-    setOpen(false); setCode(''); setReason(''); setSentTo(null); setError('');
+    setOpen(false); setTyped(''); setReason(''); setError('');
   };
 
   if (status.data?.pending) {
@@ -122,34 +118,31 @@ export function DeleteAccountCard() {
               ))}
               <Text style={styles.why}>{t('del.whyKept')}</Text>
 
-              {sentTo ? (
-                <>
-                  <Text style={styles.sentTo}>{t('del.codeSent', { email: sentTo })}</Text>
-                  <Text style={styles.spamHint}>{t('auth.checkSpam')}</Text>
-                  <TextInput
-                    value={code}
-                    onChangeText={setCode}
-                    keyboardType="number-pad"
-                    maxLength={6}
-                    editable={!submit.isPending}
-                    placeholder="000000"
-                    placeholderTextColor={colors.slate400}
-                    style={styles.codeInput}
-                    accessibilityLabel={t('del.codeLabel')}
-                  />
-                  <TextInput
-                    value={reason}
-                    onChangeText={setReason}
-                    multiline
-                    editable={!submit.isPending}
-                    placeholder={t('del.reasonPlaceholder')}
-                    placeholderTextColor={colors.slate400}
-                    style={styles.reasonInput}
-                    accessibilityLabel={t('del.reasonPlaceholder')}
-                  />
-                  <Text style={styles.optional}>{t('del.reasonOptional')}</Text>
-                </>
-              ) : null}
+              <Text style={styles.typePrompt}>{t('del.typePrompt', { word: DELETION_CONFIRMATION_WORD })}</Text>
+              <TextInput
+                value={typed}
+                onChangeText={(v) => { setTyped(v); if (error) setError(''); }}
+                autoCapitalize="characters"
+                autoCorrect={false}
+                autoComplete="off"
+                maxLength={20}
+                editable={!submit.isPending}
+                placeholder={DELETION_CONFIRMATION_WORD}
+                placeholderTextColor={colors.slate300}
+                style={[styles.wordInput, confirmed && styles.wordInputOk]}
+                accessibilityLabel={t('del.typeLabel')}
+              />
+              <TextInput
+                value={reason}
+                onChangeText={setReason}
+                multiline
+                editable={!submit.isPending}
+                placeholder={t('del.reasonPlaceholder')}
+                placeholderTextColor={colors.slate400}
+                style={styles.reasonInput}
+                accessibilityLabel={t('del.reasonPlaceholder')}
+              />
+              <Text style={styles.optional}>{t('del.reasonOptional')}</Text>
 
               {error ? <Text style={styles.error}>{error}</Text> : null}
             </ScrollView>
@@ -160,31 +153,21 @@ export function DeleteAccountCard() {
                 <Text style={styles.btnGhostText}>{t('common.cancel')}</Text>
               </Pressable>
 
-              {sentTo ? (
-                <Pressable
-                  onPress={() => submit.mutate()}
-                  disabled={code.trim().length !== 6 || submit.isPending}
-                  style={({ pressed }) => [
-                    styles.btn, styles.btnDanger,
-                    (code.trim().length !== 6 || submit.isPending) && styles.btnOff,
-                    pressed && styles.pressed,
-                  ]}
-                >
-                  {submit.isPending
-                    ? <ActivityIndicator size="small" color={colors.white} />
-                    : <Text style={styles.btnDangerText}>{t('del.confirm')}</Text>}
-                </Pressable>
-              ) : (
-                <Pressable
-                  onPress={() => sendCode.mutate()}
-                  disabled={sendCode.isPending}
-                  style={({ pressed }) => [styles.btn, styles.btnDanger, sendCode.isPending && styles.btnOff, pressed && styles.pressed]}
-                >
-                  {sendCode.isPending
-                    ? <ActivityIndicator size="small" color={colors.white} />
-                    : <Text style={styles.btnDangerText}>{t('del.sendCode')}</Text>}
-                </Pressable>
-              )}
+              <Pressable
+                onPress={() => submit.mutate()}
+                disabled={!confirmed || submit.isPending}
+                accessibilityRole="button"
+                accessibilityState={{ disabled: !confirmed || submit.isPending, busy: submit.isPending }}
+                style={({ pressed }) => [
+                  styles.btn, styles.btnDanger,
+                  (!confirmed || submit.isPending) && styles.btnOff,
+                  pressed && styles.pressed,
+                ]}
+              >
+                {submit.isPending
+                  ? <ActivityIndicator size="small" color={colors.white} />
+                  : <Text style={styles.btnDangerText}>{t('del.confirm')}</Text>}
+              </Pressable>
             </View>
           </View>
         </KeyboardAvoidingView>
@@ -223,13 +206,13 @@ const makeStyles = (colors: ColorScheme) =>
     bulletText: { flex: 1, fontSize: 14, lineHeight: 20, color: colors.textLight },
     why: { fontSize: 12.5, lineHeight: 18, color: colors.slate500, marginTop: 10, fontStyle: 'italic' },
 
-    sentTo: { fontSize: 13.5, color: colors.textLight, marginTop: 20, marginBottom: 4 },
-    spamHint: { fontSize: 11.5, color: colors.slate400, fontWeight: '600', marginBottom: 10 },
-    codeInput: {
+    typePrompt: { fontSize: 13.5, fontWeight: '700', color: colors.textLight, marginTop: 20, marginBottom: 8 },
+    wordInput: {
       borderWidth: 1, borderColor: colors.slate300, borderRadius: radii.md,
-      paddingHorizontal: 14, paddingVertical: 12, fontSize: 22, letterSpacing: 8,
+      paddingHorizontal: 14, paddingVertical: 12, fontSize: 20, fontWeight: '800', letterSpacing: 4,
       textAlign: 'center', color: colors.textLight, backgroundColor: colors.bgLight,
     },
+    wordInputOk: { borderColor: colors.danger, borderWidth: 2 },
     reasonInput: {
       borderWidth: 1, borderColor: colors.slate300, borderRadius: radii.md,
       paddingHorizontal: 12, paddingVertical: 10, marginTop: 12,

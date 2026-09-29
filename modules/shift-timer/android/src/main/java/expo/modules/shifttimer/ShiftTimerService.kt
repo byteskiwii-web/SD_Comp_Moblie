@@ -1,5 +1,6 @@
 package expo.modules.shifttimer
 
+import android.Manifest
 import android.app.AlarmManager
 import android.app.Notification
 import android.app.NotificationChannel
@@ -8,6 +9,7 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.IBinder
 import android.os.SystemClock
@@ -48,6 +50,16 @@ class ShiftTimerService : Service() {
     private const val PREF_INTERVAL_MS = "intervalMs"
     private const val PREF_LAST_TICK_ELAPSED = "lastTickElapsedMs"
     private const val DEFAULT_INTERVAL_MS = 12L * 60_000L
+
+    // The notification's words, set from JS in the employee's language
+    // (STORE-012). Persisted because the system can restart this service
+    // with no JS running to ask.
+    private const val PREF_NOTIF_TITLE = "notifTitle"
+    private const val PREF_NOTIF_TEXT = "notifText"
+    private const val PREF_CHANNEL_NAME = "channelName"
+    private const val DEFAULT_TITLE = "On shift · location checks on"
+    private const val DEFAULT_TEXT = "Zob Connect checks your location about every 12 minutes until you clock out."
+    private const val DEFAULT_CHANNEL_NAME = "Shift location checks"
 
     // Cross-checked against the SharedPreferences copy in fireTick so a
     // dedupe decision is correct even for the very first call in a fresh
@@ -90,6 +102,15 @@ class ShiftTimerService : Service() {
         context, ALARM_REQUEST_CODE, intent,
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
       )
+    }
+
+    /** Called from JS (ShiftTimerModule.setNotificationText) before start(). */
+    fun persistNotificationText(context: Context, title: String, text: String, channelName: String) {
+      context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
+        .putString(PREF_NOTIF_TITLE, title)
+        .putString(PREF_NOTIF_TEXT, text)
+        .putString(PREF_CHANNEL_NAME, channelName)
+        .apply()
     }
 
     fun persistInterval(context: Context, intervalMs: Long) {
@@ -165,7 +186,31 @@ class ShiftTimerService : Service() {
     persistInterval(this, intervalMs)
 
     Log.i(TAG, "ShiftTimerService onStartCommand intervalMs=$intervalMs")
-    startForegroundCompat()
+
+    /*
+     * STORE-025 -- STOP CLEANLY WHEN THIS CANNOT RUN AS A LOCATION SERVICE.
+     *
+     * Revoking location mid-shift kills the process, and START_REDELIVER_INTENT
+     * then restarts this service. On Android 14+ startForeground with type
+     * `location` throws SecurityException when no location permission is held,
+     * nothing caught it, so the process crashed and was restarted again -- a
+     * crash loop that shows up in Android vitals and pre-launch reports.
+     *
+     * Now: no permission, or a refused start (SecurityException, or
+     * ForegroundServiceStartNotAllowedException on 12+ -- caught as Exception
+     * so this compiles against every API level), and the alarm is cancelled,
+     * the service stops and is not restarted. The app shows why on next open.
+     */
+    if (!hasLocationPermission()) {
+      Log.w(TAG, "no location permission -- stopping instead of starting as a location service")
+      return stopWithoutRestart()
+    }
+    try {
+      startForegroundCompat()
+    } catch (e: Exception) {
+      Log.w(TAG, "startForeground refused -- stopping instead of crash-looping", e)
+      return stopWithoutRestart()
+    }
     scheduleNextAlarm(this, intervalMs)
 
     return START_REDELIVER_INTENT
@@ -210,6 +255,30 @@ class ShiftTimerService : Service() {
     }
   }
 
+  private fun hasLocationPermission(): Boolean =
+    checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+      checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+
+  private fun stopWithoutRestart(): Int {
+    cancelAlarm(this)
+    stopSelf()
+    return START_NOT_STICKY
+  }
+
+  /**
+   * The Zob Connect glyph for the status bar (STORE-012). expo-notifications
+   * generates `notification_icon` from app.json's `icon`; the full-colour
+   * launcher icon this used before renders as a featureless white blob, and
+   * Play's monitoring rules want an icon that clearly identifies the app.
+   * Falls back to the launcher icon if the drawable is missing.
+   */
+  private fun smallIconRes(): Int {
+    val id = resources.getIdentifier("notification_icon", "drawable", packageName)
+    return if (id != 0) id else applicationInfo.icon
+  }
+
+  private fun prefs() = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+
   private fun startForegroundCompat() {
     val notification = buildNotification()
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -237,10 +306,19 @@ class ShiftTimerService : Service() {
       Notification.Builder(this)
     }
 
+    /*
+     * Says what is happening, in the employee's language (STORE-012). It used
+     * to read "Clocked in / Checking your shift status periodically" in
+     * English only and never mentioned location -- the one thing Play's
+     * monitoring policy requires this notification to make clear.
+     */
+    val title = prefs().getString(PREF_NOTIF_TITLE, null) ?: DEFAULT_TITLE
+    val text = prefs().getString(PREF_NOTIF_TEXT, null) ?: DEFAULT_TEXT
     return builder
-      .setContentTitle("Clocked in")
-      .setContentText("Checking your shift status periodically")
-      .setSmallIcon(applicationInfo.icon)
+      .setContentTitle(title)
+      .setContentText(text)
+      .setStyle(Notification.BigTextStyle().bigText(text))
+      .setSmallIcon(smallIconRes())
       .setCategory(Notification.CATEGORY_SERVICE)
       .setOngoing(true)
       .also { contentIntent?.let(it::setContentIntent) }
@@ -250,13 +328,16 @@ class ShiftTimerService : Service() {
   private fun ensureChannel() {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
     val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-    if (manager.getNotificationChannel(CHANNEL_ID) != null) return
+    // Created every time rather than only once: re-creating an existing
+    // channel updates its name, which is how a language change reaches the
+    // system settings screen. Importance is kept -- Android ignores changes
+    // to it after creation anyway.
     val channel = NotificationChannel(
       CHANNEL_ID,
-      "Shift status",
+      prefs().getString(PREF_CHANNEL_NAME, null) ?: DEFAULT_CHANNEL_NAME,
       NotificationManager.IMPORTANCE_LOW
     ).apply {
-      description = "Ongoing notification shown while clocked in"
+      description = prefs().getString(PREF_NOTIF_TEXT, null) ?: DEFAULT_TEXT
     }
     manager.createNotificationChannel(channel)
   }

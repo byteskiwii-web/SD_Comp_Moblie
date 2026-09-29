@@ -9,7 +9,7 @@ const { withAndroidManifest } = require('expo/config-plugins');
  * knowledge — but claiming it is not automatic. The app has to say so in the
  * manifest:
  *
- *     android.content.isMonitoringTool = enterprise_management
+ *     isMonitoringTool = enterprise_management
  *
  * Without this flag, an app that samples location every 12 minutes and sends
  * it to an employer looks exactly like the thing the policy exists to stop,
@@ -34,7 +34,16 @@ const { withAndroidManifest } = require('expo/config-plugins');
  * The Play Console listing must ALSO carry a monitoring disclosure. That is a
  * console task, not a code one — it cannot be done from here.
  */
-const FLAG = 'android.content.isMonitoringTool';
+/*
+ * STORE-004: exactly the key Google's help page documents
+ * (Play Console Help, "Use of the isMonitoringTool flag", answer 12955211):
+ *   <meta-data android:name="isMonitoringTool" android:value="enterprise_management" />
+ * It used to write android.content.isMonitoringTool, which that page never
+ * mentions -- a key Play does not look for is the same as no flag at all.
+ */
+const FLAG = 'isMonitoringTool';
+// Removed if present, so a manifest can never carry both.
+const LEGACY_FLAG = 'android.content.isMonitoringTool';
 const VALUE = 'enterprise_management';
 
 module.exports = function withMonitoringTool(config) {
@@ -42,7 +51,8 @@ module.exports = function withMonitoringTool(config) {
     const app = cfg.modResults.manifest.application?.[0];
     if (!app) throw new Error('withMonitoringTool: no <application> in the manifest');
 
-    app['meta-data'] = app['meta-data'] || [];
+    // Drop the old, undocumented key if an earlier prebuild wrote it.
+    app['meta-data'] = (app['meta-data'] || []).filter((m) => m.$?.['android:name'] !== LEGACY_FLAG);
 
     // Idempotent: prebuild can run repeatedly against the same manifest, and a
     // duplicated meta-data name is a manifest merge failure, not a warning.

@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { saveAuth, loadAuth, clearAuth } from '../utils/secureStorage';
 import { getMe, type Me } from '../api/auth.api';
 import { stopShiftTimer } from '../hooks/useLocationPollingEffect';
+import { revokeServerSession, wipeUserData } from '../utils/signOutCleanup';
 
 export type Employee = {
   id: string;
@@ -223,12 +224,21 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
    * launch spend a request discovering that.
    */
   signOut: async (opts) => {
+    // Read before anything is cleared: revoking needs the token.
+    const token = get().token;
     // Nothing the shift timer does can reach the server without a session.
     stopShiftTimer();
+    // The server side of signing out (STORE-011). Not awaited -- signing out
+    // must never wait on the network. A forced sign-out's session is already
+    // dead, and the request just finds nothing to revoke.
+    if (token) revokeServerSession(token);
     await clearAuth();
     set({
       token: null, refreshToken: null, employee: null, store: null, profile: null,
       endedReason: opts?.reason ?? null,
     });
+    // And the person's data on the phone, after the state that renders it is
+    // gone -- so nothing re-fetches into the cache on the way out.
+    await wipeUserData();
   },
 }));

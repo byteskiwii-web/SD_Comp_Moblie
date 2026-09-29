@@ -2,23 +2,12 @@ import React, { useEffect } from 'react';
 import { AppState } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { QueryClient, QueryClientProvider, focusManager } from '@tanstack/react-query';
+import { QueryClientProvider, focusManager } from '@tanstack/react-query';
+import { queryClient } from './src/api/queryClient';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { useAuthStore } from './src/stores/authStore';
 import { useThemeStore } from './src/stores/themeStore';
 import { registerNotificationHistoryListener } from './src/utils/notifications';
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      // React Query's own focus tracking is built for the web's `window`
-      // focus event, which React Native does not have -- so without the
-      // AppState bridge below this setting does nothing at all, which is
-      // why several hooks here grew their own AppState listeners.
-      refetchOnWindowFocus: true,
-    },
-  },
-});
 
 /**
  * Tell React Query when the app is in the foreground.

@@ -94,6 +94,14 @@ export async function scheduleClockOutReminder(
     },
     trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: target },
   });
+  /*
+   * And once more AFTER filing it. The clock-out's cancel is asynchronous too:
+   * if it ran while this call was between the check above and the schedule
+   * (an app reopened on a stale "clocked in" that the server sync then
+   * corrects is exactly that), it cancelled nothing and this reminder would
+   * fire hours after the punch-out. Reported from the field.
+   */
+  if (isStillOnShift && !isStillOnShift()) await cancelClockOutReminder();
 }
 
 /**

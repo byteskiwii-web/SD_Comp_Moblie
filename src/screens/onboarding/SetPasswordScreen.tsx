@@ -11,6 +11,7 @@ import { getApiErrorMessage } from '../../api/client';
 import { useAuthStore } from '../../stores/authStore';
 import { useT } from '../../i18n';
 import { LanguageChips } from '../../components/LanguageChips';
+import { LegalLinks } from '../../components/LegalLinks';
 
 /**
  * Replace a password an administrator handed over.
@@ -123,6 +124,12 @@ export function SetPasswordScreen() {
             variant="outline"
             onPress={() => { void signOut(); }}
           />
+
+          {/* STORE-022: the privacy policy and terms from here too. Deletion
+              is not offered on this screen: the server refuses every route
+              but a password change for a session still holding an issued
+              password, so the request would only fail. */}
+          <LegalLinks compact />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

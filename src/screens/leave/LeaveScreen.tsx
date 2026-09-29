@@ -260,6 +260,17 @@ export function LeaveScreen() {
                   </View>
                 )}
               </View>
+              {/* Where holiday comp offs came from, so the number above can be
+                  checked against the person's own memory of the day. */}
+              {(summaryQuery.data?.compOffHolidays?.length ?? 0) > 0 && (
+                <Text style={styles.compHolidays}>
+                  {t('leave.compOffHolidays', {
+                    dates: summaryQuery.data!.compOffHolidays!
+                      .map((h) => `${h.name} (${shortDate(h.date)})`)
+                      .join(', '),
+                  })}
+                </Text>
+              )}
 
               {/* The twelve-month history, as a strip rather than a list: the
                   shape of a year of leave is the useful part, and any bar can
@@ -344,8 +355,9 @@ export function LeaveScreen() {
                   <Pressable
                     onPress={() => setWithdrawId(r.id)}
                     disabled={withdraw.isPending}
-                    style={({ pressed }) => [styles.withdraw, pressed && styles.pressed]}
+                    style={({ pressed }) => [styles.withdraw, withdraw.isPending && styles.busy, pressed && styles.pressed]}
                     accessibilityRole="button"
+                    accessibilityState={{ disabled: withdraw.isPending, busy: withdraw.isPending }}
                   >
                     <Ionicons name="arrow-undo-outline" size={13} color={colors.dangerText} />
                     <Text style={styles.withdrawText}>{t('leave.withdraw')}</Text>
@@ -367,8 +379,9 @@ export function LeaveScreen() {
                   <Pressable
                     onPress={() => setClaiming(r)}
                     disabled={claimWorked.isPending}
-                    style={({ pressed }) => [styles.claim, pressed && styles.pressed]}
+                    style={({ pressed }) => [styles.claim, claimWorked.isPending && styles.busy, pressed && styles.pressed]}
                     accessibilityRole="button"
+                    accessibilityState={{ disabled: claimWorked.isPending, busy: claimWorked.isPending }}
                   >
                     <Ionicons name="briefcase-outline" size={13} color={colors.brand[700]} />
                     <Text style={styles.claimText}>{t('leave.claimCompOff')}</Text>
@@ -442,6 +455,8 @@ function makeStyles(colors: ColorScheme) {
     },
     applyBtnText: { color: colors.white, fontSize: 11.5, fontWeight: '800' },
     pressed: { opacity: 0.75 },
+    // A link that is waiting on its own request, greyed so it reads as not now.
+    busy: { opacity: 0.45 },
 
     content: { padding: 20, paddingTop: 12, gap: 12, paddingBottom: 28 },
 
@@ -476,6 +491,7 @@ function makeStyles(colors: ColorScheme) {
     monthLabel: { fontSize: 13, fontWeight: '800', color: colors.textLight, letterSpacing: -0.2 },
 
     compChip: { backgroundColor: colors.successBg },
+    compHolidays: { fontSize: 12, lineHeight: 17, color: colors.slate500, marginTop: 8 },
     compChipLabel: { color: '#047857' },
 
     strip: {
