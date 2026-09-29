@@ -38,6 +38,9 @@ export type RegisterRow = {
 export type LivePerson = {
   employeeId: string;
   name: string;
+  /** The store of the latest punch -- where they clocked in (or out). */
+  storeCode: string | null;
+  storeName: string | null;
   onShift: boolean;
   lastMarkType: 'clock-in' | 'clock-out' | null;
   lastMarkAt: string | null;

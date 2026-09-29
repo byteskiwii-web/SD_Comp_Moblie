@@ -15,6 +15,7 @@ import { getTeamLeave, LEAVE_TYPE_LABEL_KEY, type LeaveRequest } from '../../api
 import { useAuthStore } from '../../stores/authStore';
 import { formatTime, newestFirst, toLocalDateKey } from '../../utils/datetime';
 import { formatDuration } from '../../utils/attendanceDay';
+import { storeLabel } from '../../utils/store';
 import { t as tr, useT, type TKey } from '../../i18n';
 import {
   getTeamLive,
@@ -177,6 +178,16 @@ function OnShift() {
                       })
                     : t('team.noPunchToday')}
                 </Text>
+                {/* Where the punch was made, so a lead covering several stores
+                    can see who is at which one without opening each day. */}
+                {p.lastMarkAt && (p.storeName || p.storeCode) ? (
+                  <View style={styles.rowStore}>
+                    <Ionicons name="storefront-outline" size={11} color={colors.slate400} />
+                    <Text style={styles.rowStoreText} numberOfLines={1}>
+                      {storeLabel({ name: p.storeName, store_code: p.storeCode })}
+                    </Text>
+                  </View>
+                ) : null}
               </View>
               <Text style={[styles.rowState, p.onShift && styles.rowStateOn]}>
                 {p.onShift ? 'IN' : '—'}
@@ -504,6 +515,8 @@ function makeStyles(colors: ColorScheme) {
     rowText: { flex: 1 },
     rowName: { fontSize: 12.5, fontWeight: '700', color: colors.textLight },
     rowMeta: { fontSize: 10.5, color: colors.slate400, marginTop: 2, fontWeight: '600' },
+    rowStore: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
+    rowStoreText: { flexShrink: 1, fontSize: 10.5, color: colors.slate500, fontWeight: '600' },
     rowState: { fontSize: 10.5, fontWeight: '800', color: colors.slate300 },
     rowStateOn: { color: colors.successText },
 

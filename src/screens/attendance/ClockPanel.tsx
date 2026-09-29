@@ -11,6 +11,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { clockInWindow, formatDuration, isWithinShiftWindow, summariseDay } from '../../utils/attendanceDay';
 import { Skeleton } from '../../components/Skeleton';
 import { useShiftStore } from '../../stores/shiftStore';
+import { cancelBreakReminder, cancelClockOutReminder } from '../../utils/notifications';
 import { haversineDistance } from '../../utils/haversine';
 import { clockIn, clockOut, endBreak, getAttendanceHistory, startBreak } from '../../api/attendance.api';
 import { CameraCaptureScreen } from './CameraCaptureScreen';
@@ -348,10 +349,19 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
       ? haversineDistance(coords.latitude, coords.longitude, parseFloat(store.lat), parseFloat(store.lng))
       : null;
   const insideFence = distanceMetres != null && store ? distanceMetres <= store.geofence_radius_m : null;
+  /*
+   * TEAM LEADS ARE GEO-TAGGED ONLY. Their punches are approved wherever they
+   * are (the server's fence-exempt roles) and being away from the store is
+   * not an alert for them -- they move between stores. So the panel records
+   * where they are without the in/out verdict, and never says "needs HR
+   * approval" about a punch that will not need it.
+   */
+  const geoTagOnly = employee?.role === 'team-lead';
   // The drawing needs a definite inside/outside. Before a fix arrives there
   // is no answer, and `false` would draw the dot as OUT of the fence -- an
-  // amber ring and a warning tint for a state that is merely unknown.
-  const insideForMap = insideFence === true;
+  // amber ring and a warning tint for a state that is merely unknown. For a
+  // geo-tagged-only lead, anywhere is fine, so the dot is never drawn amber.
+  const insideForMap = insideFence === true || (geoTagOnly && distanceMetres != null);
 
   // A deep link that already knows the direction: open the camera the moment
   // it is safe to, rather than landing here and asking for a decision the
@@ -410,6 +420,10 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
         setClockedIn(result.attendance.store_code, result.attendance.timestamp);
       } else {
         setClockedOut();
+        // Directly, as well as through useClockOutReminderEffect: a reminder
+        // for a shift that has just ended must not depend on a re-render.
+        void cancelClockOutReminder().catch(() => {});
+        void cancelBreakReminder().catch(() => {});
       }
       const isPending = result.attendance.approval_status === 'pending-approval';
       // No mid-shift geofence polling in this runtime (Expo Go, web, and iOS,
@@ -784,27 +798,31 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
         ) : !fenceMatters ? null : (
           <>
             <StatusBanner
-              tone={distanceMetres == null ? 'muted' : insideFence ? 'ok' : 'warn'}
+              tone={distanceMetres == null ? 'muted' : insideFence || geoTagOnly ? 'ok' : 'warn'}
               icon={
                 distanceMetres == null
                   ? 'ellipsis-horizontal-circle-outline'
-                  : insideFence
-                    ? 'checkmark-circle'
-                    : 'location-outline'
+                  : geoTagOnly
+                    ? 'location'
+                    : insideFence
+                      ? 'checkmark-circle'
+                      : 'location-outline'
               }
               title={
                 distanceMetres == null
                   ? t('map.locating')
-                  : insideFence
-                    ? t('clock.insideFence')
-                    : t('clock.outsideFence')
+                  : geoTagOnly
+                    ? t('clock.geoTagged')
+                    : insideFence
+                      ? t('clock.insideFence')
+                      : t('clock.outsideFence')
               }
               // Formatted, because "438636m from" is a number nobody can read
               // at a glance and the distance is the whole point of the line.
               detail={
                 distanceMetres == null
                   ? null
-                  : t(insideFence ? 'clock.insideDetail' : 'clock.outsideDetail', {
+                  : t(geoTagOnly ? 'clock.geoTaggedDetail' : insideFence ? 'clock.insideDetail' : 'clock.outsideDetail', {
                       distance: formatDistance(distanceMetres),
                       site: store?.name ?? t('clock.yourSite'),
                     })

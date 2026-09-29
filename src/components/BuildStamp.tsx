@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
-import { Platform, Pressable, StyleSheet, Text } from 'react-native';
+import React from 'react';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 import Constants from 'expo-constants';
 import { useThemeStore } from '../stores/themeStore';
-import { useT } from '../i18n';
 import { formatDate, formatTime } from '../utils/datetime';
 import type { ColorScheme } from '../theme/tokens';
 
@@ -21,11 +20,12 @@ import type { ColorScheme } from '../theme/tokens';
  * into the APK). The commit is stamped into the app config at build, publish
  * or serve time -- see buildCommit in app.config.js.
  *
- * On an installed app, tapping it checks for an update and applies it at
- * once. An update normally lands on the NEXT launch after it downloads, so
- * "close it and open it twice" was the only instruction there was; this
- * replaces it with one tap. Expo Go loads from the dev server and has nothing
- * to apply, so there it is just a label.
+ * It is only a label. It used to be a "tap to check for updates" button, and
+ * that was removed (29 Sep 2026): installed APKs are never sent over-the-air
+ * updates on their runtime (a new APK is how changes reach them), so the
+ * check could only ever answer "up to date" -- a button that does nothing
+ * reads as broken. expo-updates still checks by itself at launch, which
+ * covers any update that does exist.
  *
  * Deliberately not translated: a commit hash and a runtime name are the same
  * in every language, and the people reading them are the ones fixing it.
@@ -46,9 +46,6 @@ function loadUpdates(): UpdatesModule | null {
 export function BuildStamp() {
   const colors = useThemeStore((s) => s.colors);
   const styles = React.useMemo(() => makeStyles(colors), [colors]);
-  const t = useT();
-  const [status, setStatus] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
 
   const inExpoGo = Constants.executionEnvironment === 'storeClient';
   const extra = Constants.expoConfig?.extra as { buildCommit?: string | null } | undefined;
@@ -66,51 +63,20 @@ export function BuildStamp() {
     source = 'built-in bundle';
   }
 
-  const canUpdate = !inExpoGo && Boolean(Updates?.isEnabled);
-
-  const check = async () => {
-    if (!Updates || busy) return;
-    setBusy(true);
-    setStatus(t('build.checking'));
-    try {
-      const found = await Updates.checkForUpdateAsync();
-      if (!found.isAvailable) {
-        setStatus(t('build.upToDate'));
-        return;
-      }
-      await Updates.fetchUpdateAsync();
-      setStatus(t('build.applying'));
-      await Updates.reloadAsync();
-    } catch (err) {
-      console.warn('[build] update check failed', err);
-      setStatus(t('build.checkFailed'));
-    } finally {
-      setBusy(false);
-    }
-  };
-
   const line = [`Build ${commit}`, runtime, source].filter(Boolean).join(' · ');
 
   return (
-    <Pressable
-      onPress={canUpdate ? check : undefined}
-      disabled={!canUpdate || busy}
-      style={({ pressed }) => [styles.wrap, pressed && canUpdate && styles.pressed]}
-      accessibilityRole={canUpdate ? 'button' : 'text'}
-      accessibilityLabel={line}
-    >
+    <View style={styles.wrap} accessibilityRole="text" accessibilityLabel={line}>
       <Text style={styles.line} selectable>
         {line}
       </Text>
-      {canUpdate ? <Text style={styles.action}>{status ?? t('build.tapToUpdate')}</Text> : null}
-    </Pressable>
+    </View>
   );
 }
 
 const makeStyles = (colors: ColorScheme) =>
   StyleSheet.create({
-    wrap: { alignItems: 'center', paddingTop: 18, paddingBottom: 8, gap: 3 },
-    pressed: { opacity: 0.6 },
+    wrap: { alignItems: 'center', paddingTop: 18, paddingBottom: 8 },
     line: {
       fontSize: 10.5,
       fontWeight: '600',
@@ -118,5 +84,4 @@ const makeStyles = (colors: ColorScheme) =>
       textAlign: 'center',
       fontVariant: ['tabular-nums'],
     },
-    action: { fontSize: 11, fontWeight: '700', color: colors.brand[700] },
   });

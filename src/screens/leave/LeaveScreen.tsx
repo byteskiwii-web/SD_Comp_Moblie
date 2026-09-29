@@ -260,6 +260,17 @@ export function LeaveScreen() {
                   </View>
                 )}
               </View>
+              {/* Where holiday comp offs came from, so the number above can be
+                  checked against the person's own memory of the day. */}
+              {(summaryQuery.data?.compOffHolidays?.length ?? 0) > 0 && (
+                <Text style={styles.compHolidays}>
+                  {t('leave.compOffHolidays', {
+                    dates: summaryQuery.data!.compOffHolidays!
+                      .map((h) => `${h.name} (${shortDate(h.date)})`)
+                      .join(', '),
+                  })}
+                </Text>
+              )}
 
               {/* The twelve-month history, as a strip rather than a list: the
                   shape of a year of leave is the useful part, and any bar can
@@ -480,6 +491,7 @@ function makeStyles(colors: ColorScheme) {
     monthLabel: { fontSize: 13, fontWeight: '800', color: colors.textLight, letterSpacing: -0.2 },
 
     compChip: { backgroundColor: colors.successBg },
+    compHolidays: { fontSize: 12, lineHeight: 17, color: colors.slate500, marginTop: 8 },
     compChipLabel: { color: '#047857' },
 
     strip: {

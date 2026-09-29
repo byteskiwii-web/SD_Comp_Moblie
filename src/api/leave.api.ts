@@ -82,6 +82,12 @@ export type LeaveSummary = LeaveMonth & {
   employeeId: string;
   compOffEarned: number;
   compOffOutstanding: number;
+  /**
+   * National holidays (Republic Day, Independence Day, Gandhi Jayanti) the
+   * employee clocked in on -- each earns one comp off, already included in
+   * the two totals above. Newest first. Absent from servers before 29 Sep 2026.
+   */
+  compOffHolidays?: { date: string; name: string }[];
   byMonth: LeaveMonth[];
 };
 
