@@ -23,7 +23,9 @@ import { useT } from '../../i18n';
 import {
   applyForLeave,
   LEAVE_TYPES,
+  LEAVE_TYPE_HINT_KEY,
   LEAVE_TYPE_LABEL_KEY,
+  WEEK_OFF_DAYS,
   type LeaveType,
 } from '../../api/leave.api';
 
@@ -37,20 +39,40 @@ import {
  * "half of which day?" has no answer over a range and the server refuses it.
  * Hiding an option that cannot apply beats showing one that produces an error
  * after the fact.
+ *
+ * Two types carry their own rules, stated on the form rather than learned
+ * from a refusal:
+ *
+ *   Comp off   spends what has been earned. The chip shows how much is left
+ *              and is off when there is none; asking for more is caught here.
+ *   Week off   one full weekday. Saturday and Sunday are working days at the
+ *              stores, so a weekend is flagged before sending. One date, no
+ *              half day, and no reason needed -- it is the weekly off, not an
+ *              absence to explain. The one-per-week rule is the server's.
  */
 
+/** Mirrors LEAVE_MAX_SPAN_DAYS. */
 const MAX_SPAN_DAYS = 30;
-const MIN_REASON = 10;
+/** Mirrors LEAVE_REASON_MIN_LENGTH: the team asked for no practical minimum. */
+const MIN_REASON = 1;
 const DAY_MS = 864e5;
+
+const isoWeekday = (dateKey: string) => {
+  const d = new Date(`${dateKey}T00:00:00`).getDay();
+  return d === 0 ? 7 : d;
+};
 
 export function ApplyLeaveSheet({
   visible,
   onClose,
   onApplied,
+  compOffAvailable = 0,
 }: {
   visible: boolean;
   onClose: () => void;
   onApplied: () => void;
+  /** Comp off days left to take (LeaveSummary.compOffOutstanding). */
+  compOffAvailable?: number;
 }) {
   const [leaveType, setLeaveType] = useState<LeaveType>('paid');
   const [startDate, setStartDate] = useState(toLocalDateKey());
@@ -65,6 +87,9 @@ export function ApplyLeaveSheet({
   // navigation bar edge-to-edge -- the body's end has to clear it.
   const insets = useSafeAreaInsets();
 
+  const isWeekOff = leaveType === 'week-off';
+  const isCompOff = leaveType === 'comp-off';
+
   // A fresh sheet every time. Reopening it with somebody's last rejected
   // reason still in the box is how a wrong request gets sent twice.
   useEffect(() => {
@@ -78,15 +103,19 @@ export function ApplyLeaveSheet({
   }, [visible]);
 
   // Keeping the end on or after the start, rather than letting somebody build
-  // an invalid range and refusing it on submit.
+  // an invalid range and refusing it on submit. A week off is one date, so its
+  // end simply follows the start.
   useEffect(() => {
-    if (endDate < startDate) setEndDate(startDate);
-  }, [startDate, endDate]);
+    if (isWeekOff ? endDate !== startDate : endDate < startDate) setEndDate(startDate);
+  }, [startDate, endDate, isWeekOff]);
 
   const singleDay = startDate === endDate;
   useEffect(() => {
-    if (!singleDay && halfDay) setHalfDay(false);
-  }, [singleDay, halfDay]);
+    if ((!singleDay || isWeekOff) && halfDay) setHalfDay(false);
+  }, [singleDay, halfDay, isWeekOff]);
+
+  // A stale server message about the previous type is not about this one.
+  useEffect(() => setError(null), [leaveType]);
 
   const days = useMemo(() => {
     if (halfDay) return 0.5;
@@ -98,8 +127,8 @@ export function ApplyLeaveSheet({
       applyForLeave({
         leave_type: leaveType,
         start_date: startDate,
-        end_date: endDate,
-        half_day: halfDay,
+        end_date: isWeekOff ? startDate : endDate,
+        half_day: isWeekOff ? false : halfDay,
         reason: reason.trim(),
       }),
     onSuccess: () => {
@@ -111,12 +140,19 @@ export function ApplyLeaveSheet({
 
   // Checked here as well as on the server so the button can say why it is off,
   // instead of the form bouncing back with a message after a round trip.
-  const problem =
-    reason.trim().length < MIN_REASON
-      ? `Add a reason (at least ${MIN_REASON} characters).`
-      : days > MAX_SPAN_DAYS
-        ? `That is ${days} days — apply for up to ${MAX_SPAN_DAYS} at a time.`
-        : null;
+  const problem = isWeekOff
+    ? !WEEK_OFF_DAYS.includes(isoWeekday(startDate))
+      ? t('apply.weekOffWeekday')
+      : null
+    : isCompOff && compOffAvailable <= 0
+      ? t('apply.compOffNone')
+      : isCompOff && days > compOffAvailable
+        ? t('apply.compOffLeft', { count: compOffAvailable })
+        : reason.trim().length < MIN_REASON
+          ? t('apply.reasonNeeded')
+          : days > MAX_SPAN_DAYS
+            ? t('apply.tooLong', { days, max: MAX_SPAN_DAYS })
+            : null;
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -142,35 +178,48 @@ export function ApplyLeaveSheet({
             <View style={styles.types}>
               {LEAVE_TYPES.map((kind) => {
                 const on = leaveType === kind;
+                // Comp off with nothing earned is shown, not hidden: the empty
+                // chip is how somebody learns the option exists and why it is off.
+                const empty = kind === 'comp-off' && compOffAvailable <= 0;
                 return (
                   <Pressable
                     key={kind}
                     onPress={() => setLeaveType(kind)}
-                    style={({ pressed }) => [styles.type, on && styles.typeOn, pressed && styles.pressed]}
+                    style={({ pressed }) => [
+                      styles.type, on && styles.typeOn, empty && !on && styles.typeEmpty, pressed && styles.pressed,
+                    ]}
                     accessibilityRole="button"
                     accessibilityState={{ selected: on }}
                   >
-                    <Text style={[styles.typeText, on && styles.typeTextOn]}>{t(LEAVE_TYPE_LABEL_KEY[kind])}</Text>
+                    <Text style={[styles.typeText, on && styles.typeTextOn, empty && !on && styles.typeTextEmpty]}>
+                      {t(LEAVE_TYPE_LABEL_KEY[kind])}
+                      {kind === 'comp-off' ? ` · ${compOffAvailable}` : ''}
+                    </Text>
                   </Pressable>
                 );
               })}
             </View>
+            <Text style={styles.typeHint}>{t(LEAVE_TYPE_HINT_KEY[leaveType])}</Text>
 
-            <View style={styles.dates}>
-              <View style={styles.dateCol}>
-                <DatePickerField label={t('apply.from')} value={startDate} onChange={setStartDate} />
+            {isWeekOff ? (
+              <DatePickerField label={t('apply.date')} value={startDate} onChange={setStartDate} />
+            ) : (
+              <View style={styles.dates}>
+                <View style={styles.dateCol}>
+                  <DatePickerField label={t('apply.from')} value={startDate} onChange={setStartDate} />
+                </View>
+                <View style={styles.dateCol}>
+                  <DatePickerField
+                    label={t('apply.to')}
+                    value={endDate}
+                    onChange={setEndDate}
+                    minimumDate={new Date(`${startDate}T00:00:00`)}
+                  />
+                </View>
               </View>
-              <View style={styles.dateCol}>
-                <DatePickerField
-                  label={t('apply.to')}
-                  value={endDate}
-                  onChange={setEndDate}
-                  minimumDate={new Date(`${startDate}T00:00:00`)}
-                />
-              </View>
-            </View>
+            )}
 
-            {singleDay && (
+            {singleDay && !isWeekOff && (
               <Pressable
                 onPress={() => setHalfDay((v) => !v)}
                 style={styles.halfRow}
@@ -189,11 +238,11 @@ export function ApplyLeaveSheet({
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>{t('common.total')}</Text>
               <Text style={styles.totalValue}>
-                {t('apply.days', { count: days })}
+                {t('apply.days', { count: isWeekOff ? 1 : days })}
               </Text>
             </View>
 
-            <Text style={styles.label}>{t('apply.reason')}</Text>
+            <Text style={styles.label}>{isWeekOff ? t('apply.reasonOptional') : t('apply.reason')}</Text>
             <TextInput
               style={styles.input}
               value={reason}
@@ -254,8 +303,11 @@ function makeStyles(colors: ColorScheme) {
       borderWidth: 1.5, borderColor: colors.slate200, backgroundColor: colors.surface,
     },
     typeOn: { borderColor: colors.brand[700], backgroundColor: colors.brand[50] },
+    typeEmpty: { borderStyle: 'dashed' },
     typeText: { fontSize: 11.5, fontWeight: '800', color: colors.slate600 },
     typeTextOn: { color: colors.brand[700] },
+    typeTextEmpty: { color: colors.slate400 },
+    typeHint: { fontSize: 11.5, lineHeight: 16, color: colors.slate500, fontWeight: '600' },
     pressed: { opacity: 0.75 },
 
     dates: { flexDirection: 'row', gap: 12, marginTop: 4 },
