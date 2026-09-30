@@ -698,7 +698,7 @@ export const hi: Catalogue = {
 
 
   'holidayKind.festival': 'त्योहार',
-  'holidayKind.public': 'सार्वजनिक अवकाश',
+  'holidayKind.public': 'राष्ट्रीय अवकाश',
   'holidayKind.optional': 'वैकल्पिक',
   'holidayKind.company': 'कंपनी',
   'festivals.dayCount_one': '{count} दिन',
@@ -908,4 +908,17 @@ export const hi: Catalogue = {
   'apply.compOffNone': 'अभी इस्तेमाल करने को कोई कॉम्प ऑफ़ नहीं है। यह बिना वेतन छुट्टी के दिन या राष्ट्रीय अवकाश पर काम करने से मिलता है।',
   'apply.compOffLeft': 'आपके पास {count} कॉम्प ऑफ़ बचा है — उतना या उससे कम माँगें।',
   'apply.weekOffWeekday': 'साप्ताहिक छुट्टी केवल सोमवार से शुक्रवार हो सकती है — शनिवार और रविवार कार्यदिवस हैं।',
+  'compOff.title': 'कॉम्प ऑफ़',
+  'compOff.use': 'इस्तेमाल करें',
+  'compOff.leftLabel': 'दिन लेने को बचे हैं',
+  'compOff.breakdown': 'कमाए {earned} · इस्तेमाल {used} · प्रतीक्षा में {pending}',
+  'compOff.howTitle': 'कॉम्प ऑफ़ कैसे कमाएँ',
+  'compOff.howHoliday': 'राष्ट्रीय अवकाश पर काम करें — हर एक से 1 दिन मिलता है।',
+  'compOff.howUnpaid': 'स्वीकृत बिना वेतन छुट्टी के किसी दिन काम पर आएँ, फिर उस छुट्टी पर उसे दर्ज करें — 1 दिन मिलता है (आधे दिन पर ½)।',
+  'compOff.nextHolidays': 'आने वाले राष्ट्रीय अवकाश',
+  'compOff.noUpcoming': 'अगले 12 महीनों में कोई राष्ट्रीय अवकाश नहीं है।',
+  'compOff.holidayInRange': '{date} को {name} है, एक राष्ट्रीय अवकाश। इसके लिए छुट्टी लेने की ज़रूरत नहीं — और उस दिन काम करने पर 1 कॉम्प ऑफ़ मिलता है।',
+  'compOff.earnPill': 'राष्ट्रीय अवकाश · काम करने पर 1 कॉम्प ऑफ़',
+  'compOff.earnToday': 'राष्ट्रीय अवकाश · आज काम करने पर 1 कॉम्प ऑफ़',
+  'compOff.earnsShort': 'कॉम्प ऑफ़ मिलता है',
 };

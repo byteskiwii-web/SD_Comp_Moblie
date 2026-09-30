@@ -710,7 +710,7 @@ export const en = {
 
 
   'holidayKind.festival': 'Festival',
-  'holidayKind.public': 'Public holiday',
+  'holidayKind.public': 'National holiday',
   'holidayKind.optional': 'Optional',
   'holidayKind.company': 'Company',
   'festivals.dayCount_one': '{count} day',
@@ -920,4 +920,17 @@ export const en = {
   'apply.compOffNone': 'No comp off to use yet. You earn it by working an unpaid-leave day or a national holiday.',
   'apply.compOffLeft': 'You have {count} comp off left — ask for that much or less.',
   'apply.weekOffWeekday': 'Week offs can only be Monday to Friday — Saturday and Sunday are working days.',
+  'compOff.title': 'Comp off',
+  'compOff.use': 'Use',
+  'compOff.leftLabel': 'days left to take',
+  'compOff.breakdown': 'Earned {earned} · Used {used} · Waiting {pending}',
+  'compOff.howTitle': 'How to earn comp off',
+  'compOff.howHoliday': 'Work on a national holiday — each one earns 1 day.',
+  'compOff.howUnpaid': 'Come in on a day of your approved unpaid leave, then mark it on that leave — earns 1 day (½ for half a day).',
+  'compOff.nextHolidays': 'Next national holidays',
+  'compOff.noUpcoming': 'No national holidays in the next 12 months.',
+  'compOff.holidayInRange': '{date} is {name}, a national holiday. You don\'t need leave for it — and if you work that day, you earn 1 comp off.',
+  'compOff.earnPill': 'National holiday · working earns 1 comp off',
+  'compOff.earnToday': 'National holiday · working today earns 1 comp off',
+  'compOff.earnsShort': 'Earns comp off',
 } as const;

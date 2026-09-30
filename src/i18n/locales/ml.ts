@@ -691,7 +691,7 @@ export const ml: Catalogue = {
 
 
   'holidayKind.festival': 'ഉത്സവം',
-  'holidayKind.public': 'പൊതു അവധി',
+  'holidayKind.public': 'ദേശീയ അവധി',
   'holidayKind.optional': 'ഐച്ഛികം',
   'holidayKind.company': 'കമ്പനി',
   'festivals.dayCount_one': '{count} ദിവസം',
@@ -901,4 +901,17 @@ export const ml: Catalogue = {
   'apply.compOffNone': 'ഉപയോഗിക്കാൻ ഇതുവരെ കോംപ് ഓഫ് ഇല്ല. ശമ്പളമില്ലാത്ത അവധി ദിവസമോ ദേശീയ അവധിയിലോ ജോലി ചെയ്താൽ ലഭിക്കും.',
   'apply.compOffLeft': 'നിങ്ങൾക്ക് {count} കോംപ് ഓഫ് ബാക്കിയുണ്ട് — അത്രയോ അതിൽ കുറവോ ചോദിക്കുക.',
   'apply.weekOffWeekday': 'പ്രതിവാര അവധി തിങ്കൾ മുതൽ വെള്ളി വരെ മാത്രം — ശനിയും ഞായറും പ്രവൃത്തി ദിവസങ്ങളാണ്.',
+  'compOff.title': 'കോംപ് ഓഫ്',
+  'compOff.use': 'ഉപയോഗിക്കുക',
+  'compOff.leftLabel': 'ദിവസം എടുക്കാൻ ബാക്കി',
+  'compOff.breakdown': 'നേടിയത് {earned} · ഉപയോഗിച്ചത് {used} · കാത്തിരിക്കുന്നത് {pending}',
+  'compOff.howTitle': 'കോംപ് ഓഫ് എങ്ങനെ നേടാം',
+  'compOff.howHoliday': 'ദേശീയ അവധി ദിവസം ജോലി ചെയ്യുക — ഓരോന്നിനും 1 ദിവസം.',
+  'compOff.howUnpaid': 'അംഗീകരിച്ച ശമ്പളമില്ലാത്ത അവധിയിലെ ഒരു ദിവസം ജോലിക്ക് വന്ന്, ആ അവധിയിൽ അത് രേഖപ്പെടുത്തുക — 1 ദിവസം (പകുതി ദിവസത്തിന് ½).',
+  'compOff.nextHolidays': 'വരാനിരിക്കുന്ന ദേശീയ അവധികൾ',
+  'compOff.noUpcoming': 'അടുത്ത 12 മാസത്തിൽ ദേശീയ അവധികളില്ല.',
+  'compOff.holidayInRange': '{date}-ന് {name}, ഒരു ദേശീയ അവധി. അതിന് അവധി എടുക്കേണ്ടതില്ല — ആ ദിവസം ജോലി ചെയ്താൽ 1 കോംപ് ഓഫ് ലഭിക്കും.',
+  'compOff.earnPill': 'ദേശീയ അവധി · ജോലി ചെയ്താൽ 1 കോംപ് ഓഫ്',
+  'compOff.earnToday': 'ദേശീയ അവധി · ഇന്ന് ജോലി ചെയ്താൽ 1 കോംപ് ഓഫ്',
+  'compOff.earnsShort': 'കോംപ് ഓഫ് ലഭിക്കും',
 };

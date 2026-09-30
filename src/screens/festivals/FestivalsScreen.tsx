@@ -163,8 +163,14 @@ function Row({
         <View style={styles.meta}>
           {/* Only worth saying when it is not the ordinary case. */}
           {holiday.kind !== 'festival' && (
-            <Text style={styles.kind}>{tr(HOLIDAY_KIND_KEY[holiday.kind])}</Text>
+            <Text style={[styles.kind, holiday.kind === 'public' && styles.kindNational]}>
+              {tr(HOLIDAY_KIND_KEY[holiday.kind])}
+            </Text>
           )}
+          {/* The days that earn comp off, said where the calendar is read. */}
+          {holiday.kind === 'public' && !isPast ? (
+            <Text style={[styles.kind, styles.kindNational]}>{tr('compOff.earnsShort')}</Text>
+          ) : null}
           {holiday.region ? <Text style={styles.kind}>{holiday.region}</Text> : null}
         </View>
       </View>
@@ -221,4 +227,5 @@ const makeStyles = (colors: ColorScheme) =>
       paddingHorizontal: 6, paddingVertical: 2,
       overflow: 'hidden',
     },
+    kindNational: { color: colors.successText, backgroundColor: colors.successBg },
   });

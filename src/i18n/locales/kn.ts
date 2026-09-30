@@ -691,7 +691,7 @@ export const kn: Catalogue = {
 
 
   'holidayKind.festival': 'ಹಬ್ಬ',
-  'holidayKind.public': 'ಸಾರ್ವಜನಿಕ ರಜೆ',
+  'holidayKind.public': 'ರಾಷ್ಟ್ರೀಯ ರಜೆ',
   'holidayKind.optional': 'ಐಚ್ಛಿಕ',
   'holidayKind.company': 'ಕಂಪನಿ',
   'festivals.dayCount_one': '{count} ದಿನ',
@@ -901,4 +901,17 @@ export const kn: Catalogue = {
   'apply.compOffNone': 'ಬಳಸಲು ಇನ್ನೂ ಕಾಂಪ್ ಆಫ್ ಇಲ್ಲ. ಸಂಬಳರಹಿತ ರಜೆಯ ದಿನ ಅಥವಾ ರಾಷ್ಟ್ರೀಯ ರಜೆಯಂದು ಕೆಲಸ ಮಾಡಿದರೆ ಸಿಗುತ್ತದೆ.',
   'apply.compOffLeft': 'ನಿಮ್ಮ ಬಳಿ {count} ಕಾಂಪ್ ಆಫ್ ಉಳಿದಿದೆ — ಅಷ್ಟು ಅಥವಾ ಕಡಿಮೆ ಕೇಳಿ.',
   'apply.weekOffWeekday': 'ವಾರದ ರಜೆ ಸೋಮವಾರದಿಂದ ಶುಕ್ರವಾರ ಮಾತ್ರ — ಶನಿವಾರ ಮತ್ತು ಭಾನುವಾರ ಕೆಲಸದ ದಿನಗಳು.',
+  'compOff.title': 'ಕಾಂಪ್ ಆಫ್',
+  'compOff.use': 'ಬಳಸಿ',
+  'compOff.leftLabel': 'ದಿನಗಳು ತೆಗೆದುಕೊಳ್ಳಲು ಉಳಿದಿವೆ',
+  'compOff.breakdown': 'ಗಳಿಸಿದ್ದು {earned} · ಬಳಸಿದ್ದು {used} · ಕಾಯುತ್ತಿರುವುದು {pending}',
+  'compOff.howTitle': 'ಕಾಂಪ್ ಆಫ್ ಹೇಗೆ ಗಳಿಸುವುದು',
+  'compOff.howHoliday': 'ರಾಷ್ಟ್ರೀಯ ರಜೆಯಂದು ಕೆಲಸ ಮಾಡಿ — ಪ್ರತಿಯೊಂದಕ್ಕೂ 1 ದಿನ.',
+  'compOff.howUnpaid': 'ಅನುಮೋದಿತ ಸಂಬಳರಹಿತ ರಜೆಯ ಒಂದು ದಿನ ಕೆಲಸಕ್ಕೆ ಬಂದು, ಆ ರಜೆಯಲ್ಲಿ ಅದನ್ನು ಗುರುತಿಸಿ — 1 ದಿನ (ಅರ್ಧ ದಿನಕ್ಕೆ ½).',
+  'compOff.nextHolidays': 'ಮುಂದಿನ ರಾಷ್ಟ್ರೀಯ ರಜೆಗಳು',
+  'compOff.noUpcoming': 'ಮುಂದಿನ 12 ತಿಂಗಳಲ್ಲಿ ರಾಷ್ಟ್ರೀಯ ರಜೆ ಇಲ್ಲ.',
+  'compOff.holidayInRange': '{date} ರಂದು {name}, ರಾಷ್ಟ್ರೀಯ ರಜೆ. ಅದಕ್ಕೆ ರಜೆ ತೆಗೆದುಕೊಳ್ಳಬೇಕಿಲ್ಲ — ಆ ದಿನ ಕೆಲಸ ಮಾಡಿದರೆ 1 ಕಾಂಪ್ ಆಫ್ ಸಿಗುತ್ತದೆ.',
+  'compOff.earnPill': 'ರಾಷ್ಟ್ರೀಯ ರಜೆ · ಕೆಲಸ ಮಾಡಿದರೆ 1 ಕಾಂಪ್ ಆಫ್',
+  'compOff.earnToday': 'ರಾಷ್ಟ್ರೀಯ ರಜೆ · ಇಂದು ಕೆಲಸ ಮಾಡಿದರೆ 1 ಕಾಂಪ್ ಆಫ್',
+  'compOff.earnsShort': 'ಕಾಂಪ್ ಆಫ್ ಸಿಗುತ್ತದೆ',
 };
