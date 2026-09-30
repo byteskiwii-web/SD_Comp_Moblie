@@ -549,6 +549,7 @@ export const bn: Catalogue = {
   'live.turnLeft': 'আপনার মাথা বামদিকে ঘোরান',
   'live.turnRight': 'আপনার মাথা ডানদিকে ঘোরান',
   'live.faceForward': 'আবার সামনের দিকে তাকান',
+  'live.lookStraight': 'সোজা ক্যামেরার দিকে তাকান',
   'live.verified': 'লাইভনেস যাচাই করা হয়েছে',
   'live.step': '{count}-এর মধ্যে {done}',
 

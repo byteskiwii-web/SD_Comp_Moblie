@@ -542,6 +542,7 @@ export const ml: Catalogue = {
   'live.turnLeft': 'തല ഇടത്തേക്ക് തിരിക്കുക',
   'live.turnRight': 'തല വലത്തേക്ക് തിരിക്കുക',
   'live.faceForward': 'വീണ്ടും നേരെ നോക്കുക',
+  'live.lookStraight': 'നേരെ ക്യാമറയിലേക്ക് നോക്കുക',
   'live.verified': 'ലൈവ്നെസ് സ്ഥിരീകരിച്ചു',
   'live.step': '{count}-ൽ {done}',
 

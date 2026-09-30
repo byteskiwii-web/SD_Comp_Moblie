@@ -549,6 +549,7 @@ export const gu: Catalogue = {
   'live.turnLeft': 'તમારું માથું ડાબી બાજુ ફેરવો',
   'live.turnRight': 'તમારું માથું જમણી બાજુ ફેરવો',
   'live.faceForward': 'ફરીથી સામે જુઓ',
+  'live.lookStraight': 'સીધા કેમેરા તરફ જુઓ',
   'live.verified': 'લાઇવનેસ ચકાસાયું',
   'live.step': '{count} માંથી {done}',
 

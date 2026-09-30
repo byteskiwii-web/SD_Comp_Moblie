@@ -18,7 +18,17 @@ import type { Face } from 'react-native-vision-camera-face-detector';
 // Found on a real device: face checks were failing not on identity, but
 // because the previous turn-last order captured every clock-in selfie
 // side-on (see livenessPage.ts's identical fix for the full story).
-export type LivenessState = 'looking-for-face' | 'challenge-blink' | 'challenge-turn' | 'timeout';
+//
+// FACE FORWARD BETWEEN THE LAST TURN AND THE BLINKS, AND DURING THEM (30 Sep
+// 2026). Ending on blinks was not enough on its own: the blink step started
+// on the frame the second turn peaked, with the head still turned, and a
+// turned-away eye reads as closed -- so blinks were counted almost at once
+// and the photo was taken side-on. At enrolment that side-on photo became the
+// face on file, and every forward-facing clock-in then failed to match it.
+// Now: 'face-forward' waits for the head to come back after the last turn,
+// and a blink is only counted while the head is facing forward.
+export type LivenessState =
+  | 'looking-for-face' | 'challenge-turn' | 'face-forward' | 'challenge-blink' | 'timeout';
 
 const CHALLENGE_TIMEOUT_MS = 10000;
 const EYES_CLOSED_THRESHOLD = 0.3;
@@ -111,24 +121,41 @@ export function useLiveness(onPassed: () => void) {
           if (turned > YAW_TURN_THRESHOLD_DEG) {
             recentred.current = false;
             turnsDone.current += 1;
+            // Both turns done: wait for the head to come back to centre
+            // before blinking starts -- see the header.
             if (turnsDone.current >= TURNS_NEEDED) {
-              eyesShut.current = false;
-              blinksDone.current = 0;
-              setState('challenge-blink');
+              setState('face-forward');
               armTimeout();
             }
           }
         } else if (turned < RECENTRE_DEG) {
           // Between the two turns the head must come back through the middle.
           // Without this, a single sweep from far left to far right satisfies
-          // both directions on the way past. Also what makes sure blinking
-          // (next) always starts from a face that has already recentred.
+          // both directions on the way past.
           recentred.current = true;
         }
         return;
       }
 
+      const facingForward = Math.abs(face.yawAngle - (baselineYaw.current ?? face.yawAngle)) < RECENTRE_DEG;
+
+      if (state === 'face-forward') {
+        if (facingForward) {
+          eyesShut.current = false;
+          blinksDone.current = 0;
+          setState('challenge-blink');
+          armTimeout();
+        }
+        return;
+      }
+
       if (state === 'challenge-blink') {
+        // Only while facing forward: a turned-away eye reads as closed, which
+        // is how false blinks used to be counted in an instant.
+        if (!facingForward) {
+          eyesShut.current = false;
+          return;
+        }
         const leftClosed = (face.leftEyeOpenProbability ?? 1) < EYES_CLOSED_THRESHOLD;
         const rightClosed = (face.rightEyeOpenProbability ?? 1) < EYES_CLOSED_THRESHOLD;
         if (leftClosed && rightClosed) eyesShut.current = true;

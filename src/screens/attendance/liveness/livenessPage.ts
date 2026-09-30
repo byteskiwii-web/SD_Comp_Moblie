@@ -309,6 +309,9 @@ var landmarker = null, stream = null, lastRes = null;
 var baseYaw = null, basePitch = null;
 var phase = "boot", finished = false, startedAt = 0, alignedAt = 0;
 var lastVideoTime = -1, blinkShut = false, blinks = 0;
+// When the last blink was counted; the photo is taken a moment later, from a
+// frame that is facing forward with both eyes open (phase "settle").
+var settleFrom = 0;
 // Which way to turn, and in which order. Randomised per attempt: a replayed
 // video of somebody turning left then right passes a fixed order every time.
 var turnOrder = [], turnIndex = 0, recentred = true;
@@ -470,6 +473,27 @@ function drawBrackets(colour) {
   ctx.restore();
 }
 
+/**
+ * Is the head facing the camera right now? Same two signals the turn step
+ * uses -- rotation from this person's own resting baseline, corroborated by
+ * how far the nose sits off the face's centre line.
+ *
+ * Asked before a blink is counted and before the photo is taken. Without it
+ * (found on a real device, 30 Sep 2026), the blink step began while the head
+ * was still turned from the last turn; a turned-away eye reads as "closed" to
+ * the model, so three "blinks" were counted in a fraction of a second, the
+ * blink prompt barely showed, and the saved selfie -- the ENROLMENT photo --
+ * was side-on. Every later clock-in, taken facing forward, then failed to
+ * match it.
+ */
+function facingForward(res) {
+  var m = res && res.facialTransformationMatrixes && res.facialTransformationMatrixes[0];
+  if (!m || baseYaw === null) return false;
+  var p = yawPitchDeg(m.data);
+  var r = noseRatio(res.faceLandmarks[0]);
+  return Math.abs(p.yaw - baseYaw) < RECENTRE_DEG && Math.abs(r) < TURN_RATIO;
+}
+
 function capture() {
   // CAP THE LONG EDGE. The camera is asked for 960x540 but a constraint is a
   // hint, and a phone is free to hand back 1080p -- which is roughly four
@@ -491,11 +515,15 @@ function capture() {
   // 0.72 rather than 0.8: at this size the difference is invisible on a face
   // and worth about a fifth of the payload.
   var url = c.toDataURL("image/jpeg", 0.72);
-  send({ type: "captured", base64: url.slice(url.indexOf(",") + 1),
-         width: w, height: h });
+  return { type: "captured", base64: url.slice(url.indexOf(",") + 1), width: w, height: h };
 }
 
 function pass() {
+  // The frame is taken NOW -- the caller only calls pass() on a frame that is
+  // facing forward with eyes open -- and handed over after the badge lands.
+  // It used to be grabbed 550 ms later, by which time the head could be
+  // anywhere.
+  var frame = capture();
   phase = "verified"; finished = true;
   showArrow(null);
   setStep(3);
@@ -509,7 +537,7 @@ function pass() {
   blinksEl.classList.add("hide");
   badge.classList.add("show");
   send({ type: "status", phase: "verified" });
-  setTimeout(capture, 550);   // let the badge land before the screen tears down
+  setTimeout(function () { send(frame); }, 550);   // let the badge land before the screen tears down
 }
 
 function loop() {
@@ -599,10 +627,15 @@ function loop() {
 
     } else if (phase === "turn") {
       var want = turnOrder[turnIndex];
-      showArrow(want);
-      promptEl.textContent = want === "left"
-        ? S("live.turnLeft", "Turn your head to the left")
-        : S("live.turnRight", "Turn your head to the right");
+      // Both turns done: the step stays here until the head is back to
+      // facing forward -- only then does blinking start (see below).
+      var turnsDone = turnIndex >= turnOrder.length;
+      showArrow(turnsDone ? null : want);
+      promptEl.textContent = turnsDone
+        ? S("live.faceForward", "Face forward again")
+        : want === "left"
+          ? S("live.turnLeft", "Turn your head to the left")
+          : S("live.turnRight", "Turn your head to the right");
 
       var m2 = lastRes.facialTransformationMatrixes && lastRes.facialTransformationMatrixes[0];
       if (m2) {
@@ -618,18 +651,23 @@ function loop() {
           // both directions on the way past. Also the last thing checked
           // before the turn phase hands off to blink, so blinking always
           // starts from a face that has already come back to centre.
-          subEl.textContent = S("live.faceForward", "Face forward again");
-          if (turned < RECENTRE_DEG && !side) recentred = true;
+          subEl.textContent = turnsDone ? "" : S("live.faceForward", "Face forward again");
+          if (turned < RECENTRE_DEG && !side) {
+            recentred = true;
+            // The hand-off to blinking happens HERE, on the frame the head is
+            // back at centre -- not on the frame the last turn peaked, which
+            // is what used to start the blink step side-on.
+            if (turnsDone) {
+              phase = "blink";
+              setStep(2);
+              blinksEl.classList.remove("hide");
+              send({ type: "status", phase: "blink" });
+            }
+          }
         } else if (turned > TURN_DEG && side === want) {
           turnIndex++;
           recentred = false;
           subEl.textContent = "";
-          if (turnIndex >= turnOrder.length) {
-            phase = "blink";
-            setStep(2);
-            blinksEl.classList.remove("hide");
-            send({ type: "status", phase: "blink" });
-          }
         } else {
           subEl.textContent = S("live.step", "{done} of {count}", { done: turnIndex + 1, count: 2 });
         }
@@ -639,17 +677,41 @@ function loop() {
       // Counted on the OPENING edge, not on the closing one: a shut eye is a
       // state that persists for many frames, and counting frames would let
       // somebody pass by closing their eyes once and waiting.
+      //
+      // And only while facing forward: a turned-away eye reads as "closed",
+      // which is how three false blinks used to be counted in an instant.
       var lb = blendshape(lastRes, "eyeBlinkLeft"), rb = blendshape(lastRes, "eyeBlinkRight");
-      if (lb > BLINK_SHUT && rb > BLINK_SHUT) {
-        blinkShut = true;
-      } else if (blinkShut && lb < BLINK_OPEN && rb < BLINK_OPEN) {
+      if (!facingForward(lastRes)) {
         blinkShut = false;
-        blinks++;
-        paintBlinks();
-        if (blinks >= BLINKS_NEEDED) { pass(); return; }
+        promptEl.textContent = S("live.lookStraight", "Look straight at the camera");
+        subEl.textContent = S("live.blinkProgress", "{done} of {count}", { done: blinks, count: BLINKS_NEEDED });
+      } else {
+        if (lb > BLINK_SHUT && rb > BLINK_SHUT) {
+          blinkShut = true;
+        } else if (blinkShut && lb < BLINK_OPEN && rb < BLINK_OPEN) {
+          blinkShut = false;
+          blinks++;
+          paintBlinks();
+          if (blinks >= BLINKS_NEEDED) {
+            phase = "settle";
+            settleFrom = performance.now();
+          }
+        }
+        promptEl.textContent = S("live.blink", "Blink {count} times", { count: BLINKS_NEEDED });
+        subEl.textContent = S("live.blinkProgress", "{done} of {count}", { done: blinks, count: BLINKS_NEEDED });
       }
-      promptEl.textContent = S("live.blink", "Blink {count} times", { count: BLINKS_NEEDED });
-      subEl.textContent = S("live.blinkProgress", "{done} of {count}", { done: blinks, count: BLINKS_NEEDED });
+
+    } else if (phase === "settle") {
+      // The photo that becomes the face on file (at enrolment) or is matched
+      // against it (at clock-in): taken from a frame facing forward with both
+      // eyes open, a beat after the last blink so the lids are fully up.
+      var lo = blendshape(lastRes, "eyeBlinkLeft"), ro = blendshape(lastRes, "eyeBlinkRight");
+      var ready = facingForward(lastRes) && lo < BLINK_OPEN && ro < BLINK_OPEN;
+      if (ready && performance.now() - settleFrom > 250) { pass(); return; }
+      promptEl.textContent = ready
+        ? S("live.holdStill", "Hold still")
+        : S("live.lookStraight", "Look straight at the camera");
+      subEl.textContent = "";
     }
   }
 
@@ -745,7 +807,7 @@ export function livenessStringsScript(): string {
     'live.position', 'live.lookingBack', 'live.lookingLight', 'live.lookingSlow',
     'live.moveCloser', 'live.moveBack', 'live.centre', 'live.holdStill',
     'live.blink', 'live.blinkProgress', 'live.turnLeft', 'live.turnRight',
-    'live.faceForward', 'live.verified', 'live.step',
+    'live.faceForward', 'live.lookStraight', 'live.verified', 'live.step',
     'live.noModelTitle', 'live.noModelBody',
     'live.cameraBlockedTitle', 'live.cameraBlockedBody',
     'live.modelFailTitle', 'live.modelFailBody',

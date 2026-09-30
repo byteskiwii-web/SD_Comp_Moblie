@@ -542,6 +542,7 @@ export const kn: Catalogue = {
   'live.turnLeft': 'ತಲೆಯನ್ನು ಎಡಕ್ಕೆ ತಿರುಗಿಸಿ',
   'live.turnRight': 'ತಲೆಯನ್ನು ಬಲಕ್ಕೆ ತಿರುಗಿಸಿ',
   'live.faceForward': 'ಮತ್ತೆ ಮುಂದೆ ನೋಡಿ',
+  'live.lookStraight': 'ನೇರವಾಗಿ ಕ್ಯಾಮೆರಾದತ್ತ ನೋಡಿ',
   'live.verified': 'ಲೈವ್‌ನೆಸ್ ಪರಿಶೀಲಿಸಲಾಗಿದೆ',
   'live.step': '{count} ರಲ್ಲಿ {done}',
 

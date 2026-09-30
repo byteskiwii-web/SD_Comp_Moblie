@@ -542,6 +542,7 @@ export const ta: Catalogue = {
   'live.turnLeft': 'தலையை இடதுபுறம் திருப்புங்கள்',
   'live.turnRight': 'தலையை வலதுபுறம் திருப்புங்கள்',
   'live.faceForward': 'மீண்டும் நேராகப் பாருங்கள்',
+  'live.lookStraight': 'கேமராவை நேராகப் பாருங்கள்',
   'live.verified': 'உயிர்ப்புச் சரிபார்ப்பு முடிந்தது',
   'live.step': '{count}-இல் {done}',
 

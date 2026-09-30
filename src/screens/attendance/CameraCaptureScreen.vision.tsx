@@ -15,6 +15,7 @@ const CHALLENGE_KEY: Record<string, TKey> = {
   'looking-for-face': 'camera.centreFace',
   'challenge-blink': 'camera.blinkToContinue',
   'challenge-turn': 'camera.turnHead',
+  'face-forward': 'live.faceForward',
   timeout: 'camera.timedOut',
 };
 

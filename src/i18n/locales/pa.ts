@@ -549,6 +549,7 @@ export const pa: Catalogue = {
   'live.turnLeft': 'ਆਪਣਾ ਸਿਰ ਖੱਬੇ ਪਾਸੇ ਮੋੜੋ',
   'live.turnRight': 'ਆਪਣਾ ਸਿਰ ਸੱਜੇ ਪਾਸੇ ਮੋੜੋ',
   'live.faceForward': 'ਦੁਬਾਰਾ ਸਿੱਧਾ ਵੇਖੋ',
+  'live.lookStraight': 'ਸਿੱਧਾ ਕੈਮਰੇ ਵੱਲ ਦੇਖੋ',
   'live.verified': 'ਲਾਈਵਨੈੱਸ ਤਸਦੀਕ ਹੋਈ',
   'live.step': '{count} ਵਿੱਚੋਂ {done}',
 

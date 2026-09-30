@@ -549,6 +549,7 @@ export const mr: Catalogue = {
   'live.turnLeft': 'तुमचे डोके डावीकडे वळवा',
   'live.turnRight': 'तुमचे डोके उजवीकडे वळवा',
   'live.faceForward': 'पुन्हा समोर पहा',
+  'live.lookStraight': 'थेट कॅमेऱ्याकडे पाहा',
   'live.verified': 'लाइव्हनेस पडताळले',
   'live.step': '{count} पैकी {done}',
 
