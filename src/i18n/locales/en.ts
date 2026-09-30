@@ -560,6 +560,7 @@ export const en = {
   'live.turnLeft': 'Turn your head to the left',
   'live.turnRight': 'Turn your head to the right',
   'live.faceForward': 'Face forward again',
+  'live.lookStraight': 'Look straight at the camera',
   'live.verified': 'Liveness verified',
   'live.step': '{done} of {count}',
 

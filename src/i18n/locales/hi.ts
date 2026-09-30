@@ -549,6 +549,7 @@ export const hi: Catalogue = {
   'live.turnLeft': 'सिर बाईं ओर घुमाएँ',
   'live.turnRight': 'सिर दाईं ओर घुमाएँ',
   'live.faceForward': 'फिर से सामने देखें',
+  'live.lookStraight': 'सीधे कैमरे की ओर देखें',
   'live.verified': 'लाइवनेस सत्यापित',
   'live.step': '{count} में से {done}',
 

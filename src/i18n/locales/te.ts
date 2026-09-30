@@ -542,6 +542,7 @@ export const te: Catalogue = {
   'live.turnLeft': 'తలను ఎడమవైపు తిప్పండి',
   'live.turnRight': 'తలను కుడివైపు తిప్పండి',
   'live.faceForward': 'మళ్లీ ముందుకు చూడండి',
+  'live.lookStraight': 'నేరుగా కెమెరా వైపు చూడండి',
   'live.verified': 'లైవ్‌నెస్ ధృవీకరించబడింది',
   'live.step': '{count}లో {done}',
 
