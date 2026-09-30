@@ -4,12 +4,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '../../components/ui';
 import { ColorScheme } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
 import { useAuthStore } from '../../stores/authStore';
-import { enrolFace, getFaceStatus } from '../../api/face.api';
+import { enrolFace } from '../../api/face.api';
 import { getApiErrorMessage } from '../../api/client';
 import { onboardingGateQueryKey } from '../../hooks/useOnboardingGate';
 import { CameraCaptureScreen } from '../attendance/CameraCaptureScreen';
@@ -31,12 +31,13 @@ type Nav = NativeStackNavigationProp<OnboardingStackParamList, 'FaceRegister'>;
  * this screen opens, including a later re-enrolment: a re-taken photo is a
  * new consent event, not a continuation of the first one.
  *
- * RE-ENROLMENT IS THE SAME FLOW. Reached again from Profile (see KycCard.tsx)
- * after HR resets a template, or simply because the employee's appearance has
- * changed -- capturing a new photo supersedes the old template
- * (face.service.js's enrol() soft-deletes the previous row inside the same
- * transaction), so there is nothing here that branches on "first time" vs
- * "again" beyond the status banner below.
+ * REACHED ONLY WHILE NOT YET REGISTERED. Re-enrolling an already-registered
+ * face now goes through FaceChangeRequestScreen instead: face.service.js's
+ * enrol() refuses with FACE_ALREADY_REGISTERED once a face is on file (it
+ * used to silently replace it, which is exactly the hole that screen closes).
+ * This screen is still reached, unchanged, for first-time onboarding and for
+ * re-enrolling after HR's own resetForReenrolment drops face_status back to
+ * 'pending' -- both leave the server genuinely expecting a plain enrol().
  */
 export function FaceRegisterScreen() {
   const navigation = useNavigation<Nav>();
@@ -45,9 +46,6 @@ export function FaceRegisterScreen() {
   const colors = useThemeStore((s) => s.colors);
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const t = useT();
-
-  const statusQuery = useQuery({ queryKey: ['face-status', employee?.id], queryFn: getFaceStatus, enabled: !!employee });
-  const alreadyRegistered = statusQuery.data?.status === 'registered';
 
   const [consentAccepted, setConsentAccepted] = useState(false);
   const [cameraOpen, setCameraOpen] = useState(false);
@@ -90,12 +88,6 @@ export function FaceRegisterScreen() {
       <ScreenHeader title={t('face.title')} />
       <ScrollView contentContainerStyle={styles.scroll}>
         <Text style={styles.subtitle}>{t('face.intro')}</Text>
-
-        {alreadyRegistered ? (
-          <View style={styles.infoCard}>
-            <Text style={styles.infoText}>{t('face.alreadyRegistered')}</Text>
-          </View>
-        ) : null}
 
         <Pressable style={styles.consentRow} onPress={() => setConsentAccepted((v) => !v)}>
           <View style={[styles.checkbox, consentAccepted && styles.checkboxChecked]}>

@@ -454,7 +454,15 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
     onError: (err) => {
       // The one that was invisible. A punch that did not land is the single
       // most important thing this screen ever has to say.
-      const text = getApiErrorMessage(err);
+      const code = getApiErrorCode(err);
+      // A genuine appearance change reads exactly like these two codes on
+      // the phone -- a mismatch, or the lockout a run of them trips -- and
+      // "try again" is not the fix for either. Point at the one self-service
+      // door left now that enrolFace() refuses to silently replace a
+      // registered face (see KycCard.tsx / FaceChangeRequestScreen.tsx).
+      const faceChangeHint =
+        code === 'FACE_NOT_RECOGNISED' || code === 'FACE_LOCKED_OUT' ? ' ' + tr('clock.faceChangeHint') : '';
+      const text = getApiErrorMessage(err) + faceChangeHint;
       setBanner({ tone: 'warning', text });
       setToast({ tone: 'warning', text });
 
@@ -480,7 +488,7 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
       // Onboarding regressed since the tabs opened (HR un-approved the
       // record, a check was reset). Re-asking the gate swaps the tabs for
       // the checklist, which is the screen that says what to do about it.
-      if (getApiErrorCode(err) === 'ONBOARDING_INCOMPLETE') {
+      if (code === 'ONBOARDING_INCOMPLETE') {
         queryClient.invalidateQueries({ queryKey: onboardingGateQueryKey(employee?.id) });
       }
     },

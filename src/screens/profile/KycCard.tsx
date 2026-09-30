@@ -1,18 +1,19 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getHealthDeps, getKycStatus, KYC_STATUS_KEY, KycCheckStatus, kycStatusTone } from '../../api/verification.api';
 import { Card } from '../../components/ui';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
-import { withdrawFaceConsent } from '../../api/face.api';
+import { getMyFaceChange, withdrawFaceConsent } from '../../api/face.api';
 import { onboardingGateQueryKey } from '../../hooks/useOnboardingGate';
 import { getApiErrorMessage } from '../../api/client';
 import { ColorScheme, radii } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
 import { useAuthStore } from '../../stores/authStore';
 import { useT } from '../../i18n';
+import { formatDate } from '../../utils/datetime';
 
 /**
  * Identity-verification status: PAN, Aadhaar, bank.
@@ -97,6 +98,22 @@ export function KycCard() {
     retry: false,
   });
 
+  /**
+   * The employee's own latest face change request (src/face/faceChange.service.js)
+   * -- a genuine appearance change on an ALREADY-registered face, decided by
+   * HR against the currently stored photo. Fetched only once a face is
+   * actually registered: a face still pending first enrolment has nothing to
+   * "change" yet, and FaceRegisterScreen (not this) is where that happens.
+   */
+  const faceChange = useQuery({
+    queryKey: ['face-change-mine', employee?.id],
+    queryFn: getMyFaceChange,
+    enabled: worksAtSite && data?.kyc?.face.status === 'registered',
+    retry: false,
+  });
+  const pendingFaceChange = faceChange.data?.status === 'pending' ? faceChange.data : null;
+  const rejectedFaceChange = faceChange.data?.status === 'rejected' ? faceChange.data : null;
+
   // Bottom-tab screens stay mounted, so without this the card would only ever
   // reflect what it saw once per app session. Refetch whenever Profile regains
   // focus, to catch KYC finished via the gate flow (or by HR) while this sat
@@ -106,13 +123,28 @@ export function KycCard() {
       if (worksAtSite) {
         refetch();
         health.refetch();
+        faceChange.refetch();
       }
-      // health.refetch is stable across renders (react-query), and including
-      // it would refire this effect every time `health` itself is a new
-      // object -- the same reason `refetch` alone is listed below, not `data`.
+      // health.refetch / faceChange.refetch are stable across renders
+      // (react-query), and including them would refire this effect every
+      // time either is a new object -- the same reason `refetch` alone is
+      // listed below, not `data`.
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [worksAtSite, refetch])
   );
+
+  /** Tapping the face row once it is registered -- see the row's own comment. */
+  const onFaceRowPress = () => {
+    if (pendingFaceChange) {
+      Alert.alert(
+        t('face.changePendingTitle'),
+        t('face.changePendingBody', { date: formatDate(pendingFaceChange.requestedAt) }),
+        [{ text: t('common.close'), style: 'cancel' }]
+      );
+      return;
+    }
+    navigation.navigate('FaceChangeRequest');
+  };
 
   if (!worksAtSite) return null;
 
@@ -180,13 +212,26 @@ export function KycCard() {
           ) : null}
 
           {/* Self-hosted, so not gated on verificationEnabled -- there is no
-              vendor toggle to disable, unlike the three rows above it. */}
+              vendor toggle to disable, unlike the three rows above it.
+
+              ONCE REGISTERED, THE ROW STAYS TAPPABLE -- unlike PAN/Aadhaar/
+              bank, which go inert the moment they are verified. A face can
+              change (a shave, an eye surgery) in a way a PAN number cannot,
+              and enrolFace() itself now refuses to silently replace an
+              already-registered one -- this is the only door left, via
+              onFaceRowPress: raise a change request, or explain a pending one. */}
           <KycRow
             icon="scan-outline"
             label={t('kyc.faceShort')}
             status={kyc.face.status === 'registered' ? 'verified' : kyc.face.status}
+            detail={
+              pendingFaceChange ? t('face.changeRowPending')
+              : rejectedFaceChange ? t('face.changeRowRejected', { note: rejectedFaceChange.decisionNote ?? '' })
+              : null
+            }
+            actionLabel={kyc.face.status === 'registered' ? t('face.changeAction') : undefined}
             last
-            onPress={kyc.face.status === 'registered' ? undefined : () => navigation.navigate('FaceRegister')}
+            onPress={kyc.face.status === 'registered' ? onFaceRowPress : () => navigation.navigate('FaceRegister')}
           />
           {kyc.face.status === 'registered' ? (
             <Pressable
@@ -225,6 +270,7 @@ function KycRow({
   label,
   status,
   detail,
+  actionLabel,
   last,
   noDivider,
   onPress,
@@ -233,6 +279,8 @@ function KycRow({
   label: string;
   status: KycCheckStatus;
   detail?: string | null;
+  /** Overrides the default "Verify now" -- the face row says "Update" instead, since it is verified already. */
+  actionLabel?: string;
   last?: boolean;
   /** Suppress the rule when the row below is a continuation of this one. */
   noDivider?: boolean;
@@ -256,7 +304,7 @@ function KycRow({
           people tap a Pending badge hoping something happens. */}
       {onPress ? (
         <View style={styles.kycAction}>
-          <Text style={styles.kycActionText}>{t('kyc.verifyNow')}</Text>
+          <Text style={styles.kycActionText}>{actionLabel ?? t('kyc.verifyNow')}</Text>
           <Ionicons name="chevron-forward" size={13} color={colors.brand[700]} />
         </View>
       ) : null}
