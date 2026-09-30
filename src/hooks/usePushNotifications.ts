@@ -31,6 +31,11 @@ const STALE_BY_TYPE: Record<string, string[][]> = {
   policy: [['policies-outstanding'], ['policies-library']],
   onboarding: [['my-documents'], ['auth-me-extras']],
   kudos: [['kudos']],
+  // A face change request's decision (src/face/faceChange.service.js#decide)
+  // -- approved or rejected -- so KycCard's row and the onboarding gate (an
+  // approval also touches face_registered_at) pick it up without waiting for
+  // the next foreground.
+  face: [['face-change-mine'], ['profile-kyc-status'], ['kyc-gate']],
 };
 
 /**

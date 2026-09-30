@@ -234,3 +234,18 @@ export function getApiErrorCode(err: unknown): string | undefined {
   }
   return undefined;
 }
+
+/**
+ * The raw `details` object for a non-VALIDATION_FAILED error code -- see the
+ * comment above on `details`'s shape not being one fixed thing. Typed `T` by
+ * the caller, who already knows which code they checked for and what that
+ * code's own AppError call site put there (e.g. FACE_CHANGE_PENDING's
+ * `{ requestedAt }`). Never assume this exists without checking the code first.
+ */
+export function getApiErrorDetails<T = unknown>(err: unknown): T | undefined {
+  if (axios.isAxiosError(err)) {
+    const body = err.response?.data as ApiErrorBody | undefined;
+    return body?.error?.details as unknown as T | undefined;
+  }
+  return undefined;
+}

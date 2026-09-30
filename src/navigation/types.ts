@@ -81,4 +81,8 @@ export type ProfileStackParamList = {
   AadhaarOtpRequest: undefined;
   AadhaarOtpVerify: { referenceId: string };
   FaceRegister: undefined;
+  // Profile only -- raised against an ALREADY-registered face, unlike
+  // FaceRegister above (first enrolment / HR-reset re-enrolment). See
+  // KycCard.tsx and FaceChangeRequestScreen.tsx.
+  FaceChangeRequest: undefined;
 };
