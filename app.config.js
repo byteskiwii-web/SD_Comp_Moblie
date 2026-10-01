@@ -60,12 +60,12 @@ module.exports = ({ config }) => {
    * environment was empty would have shipped exactly that: a login that can
    * never succeed, in front of an App Store reviewer.
    *
-   * So the two profiles that reach other people's phones refuse to build
-   * unless the URL is public https. Development builds are left alone: they
-   * point at a laptop on purpose.
+   * So the profiles that reach other people's phones refuse to build unless
+   * the URL is public https. Development builds are left alone: they point at
+   * a laptop on purpose.
    */
   const buildProfile = process.env.EAS_BUILD_PROFILE;
-  if (buildProfile === 'production' || buildProfile === 'preview') {
+  if (buildProfile === 'production' || buildProfile === 'production-apk' || buildProfile === 'preview') {
     const apiUrl = process.env.EXPO_PUBLIC_API_URL || '';
     const isPublicHttps =
       /^https:\/\/[^/]+\.[^/]+/.test(apiUrl) &&
