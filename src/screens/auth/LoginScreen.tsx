@@ -77,7 +77,7 @@ export function LoginScreen({ navigation }: Props) {
     <SafeAreaView style={styles.flex}>
       <KeyboardAvoidingView
         style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         {/* First thing on the first screen: the language. Everything below it
@@ -166,7 +166,7 @@ export function LoginScreen({ navigation }: Props) {
 function makeStyles(colors: ColorScheme) {
   return StyleSheet.create({
     flex: { flex: 1, backgroundColor: colors.bgLight },
-    scroll: { flexGrow: 1, justifyContent: 'center', padding: 24 },
+    scroll: { flexGrow: 1, justifyContent: 'center', padding: 24, paddingBottom: 280 },
     languageRow: { marginBottom: 20 },
     header: { alignItems: 'center', marginBottom: 32 },
     logoDot: {

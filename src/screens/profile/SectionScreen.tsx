@@ -63,7 +63,7 @@ export function SectionScreen({
   return (
     <SafeAreaView style={styles.flex} edges={['top']}>
       <ScreenHeader title={title} subtitle={subtitle} />
-      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
@@ -81,6 +81,10 @@ export function SectionScreen({
 function makeStyles(colors: ColorScheme) {
   return StyleSheet.create({
     flex: { flex: 1, backgroundColor: colors.bgLight },
-    content: { padding: 20, paddingTop: 8, gap: 16, paddingBottom: 32 },
+    // Generous on purpose: DeptManagerCard's fields can end up as the last
+    // content on this screen, and a focused field can only scroll as far
+    // above the keyboard as there is scrollable room below it -- 32px left
+    // none at all.
+    content: { padding: 20, paddingTop: 8, gap: 16, paddingBottom: 280 },
   });
 }

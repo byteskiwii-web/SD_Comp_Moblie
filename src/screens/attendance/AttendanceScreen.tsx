@@ -97,7 +97,7 @@ export function AttendanceScreen() {
   return (
     <SafeAreaView style={styles.flex} edges={['top']}>
       <GreetingHeader />
-      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <TourScrollView
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
@@ -134,7 +134,13 @@ export function AttendanceScreen() {
 function makeStyles(colors: ColorScheme) {
   return StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.bgLight },
-  content: { padding: 20, paddingTop: 12, gap: 14 },
+  // paddingBottom generous on purpose: RegularisePanel's note field (and the
+  // Submit/Cancel buttons after it) can end up as the last thing in this
+  // shared ScrollView, and a focused field can only ever be scrolled as far
+  // above the keyboard as there is scrollable content below it. 20px left no
+  // room at all -- the field sat behind the keyboard until scrolled to by
+  // hand, on every platform, regardless of KeyboardAvoidingView's behavior.
+  content: { padding: 20, paddingTop: 12, paddingBottom: 280, gap: 14 },
   segment: {
     flexDirection: 'row', backgroundColor: colors.slate100, borderRadius: radii.md, padding: 4,
   },

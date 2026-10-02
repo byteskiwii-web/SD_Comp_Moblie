@@ -121,7 +121,7 @@ export function PanVerifyScreen() {
   return (
     <SafeAreaView style={styles.flex}>
       <ScreenHeader title={t('kyc.panShort')} />
-      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <Text style={styles.subtitle}>{combinedPanAadhaar ? t('pan.introCombined') : t('pan.intro')}</Text>
 
@@ -204,7 +204,7 @@ export function PanVerifyScreen() {
 function makeStyles(colors: ColorScheme) {
   return StyleSheet.create({
     flex: { flex: 1, backgroundColor: colors.bgLight },
-    scroll: { flexGrow: 1, justifyContent: 'center', padding: 24 },
+    scroll: { flexGrow: 1, justifyContent: 'center', padding: 24, paddingBottom: 280 },
     title: { fontSize: 17.5, fontWeight: '800', color: colors.textLight, textAlign: 'center' },
     subtitle: {
       fontSize: 11,

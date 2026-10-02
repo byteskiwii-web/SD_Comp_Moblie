@@ -70,7 +70,7 @@ export function SetPasswordScreen() {
 
   return (
     <SafeAreaView style={styles.flex}>
-      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           {/* The first screen after a first sign-in, so the language is
               offered here too -- before the password, the profile, KYC and
@@ -139,7 +139,7 @@ export function SetPasswordScreen() {
 function makeStyles(colors: ColorScheme) {
   return StyleSheet.create({
     flex: { flex: 1, backgroundColor: colors.bgLight },
-    scroll: { flexGrow: 1, justifyContent: 'center', padding: 24 },
+    scroll: { flexGrow: 1, justifyContent: 'center', padding: 24, paddingBottom: 280 },
     languageRow: { marginBottom: 20 },
     badge: {
       alignSelf: 'center', width: 46, height: 46, borderRadius: radii.pill,

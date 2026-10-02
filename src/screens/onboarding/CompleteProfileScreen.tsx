@@ -81,7 +81,7 @@ export function CompleteProfileScreen() {
         shows the control when navigation.canGoBack() is actually true.
       */}
       <ScreenHeader title={t('onboard.title')} />
-      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <Text style={styles.subtitle}>
             {t('onboard.subtitle', { name: employee?.first_name ?? '' })}
@@ -145,7 +145,7 @@ export function CompleteProfileScreen() {
 function makeStyles(colors: ColorScheme) {
   return StyleSheet.create({
     flex: { flex: 1, backgroundColor: colors.bgLight },
-    scroll: { flexGrow: 1, padding: 24, paddingBottom: 40 },
+    scroll: { flexGrow: 1, padding: 24, paddingBottom: 280 },
     subtitle: {
       fontSize: 11.5, color: colors.slate500, textAlign: 'center',
       marginTop: 8, marginBottom: 20, lineHeight: 18,

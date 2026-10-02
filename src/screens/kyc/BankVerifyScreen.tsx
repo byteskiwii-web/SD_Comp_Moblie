@@ -151,7 +151,7 @@ export function BankVerifyScreen() {
     // nothing -- the native view only insets what it actually overlaps.
     <SafeAreaView style={styles.flex} edges={['top', 'bottom']}>
       <ScreenHeader title={t('bank.title')} />
-      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <Text style={styles.subtitle}>
             {t('bank.intro')}
@@ -313,7 +313,7 @@ function ModeOption({
 function makeStyles(colors: ColorScheme) {
   return StyleSheet.create({
     flex: { flex: 1, backgroundColor: colors.bgLight },
-    scroll: { flexGrow: 1, padding: 24, paddingBottom: 40 },
+    scroll: { flexGrow: 1, padding: 24, paddingBottom: 280 },
     title: { fontSize: 17.5, fontWeight: '800', color: colors.textLight, textAlign: 'center' },
     subtitle: {
       fontSize: 11, color: colors.slate500, textAlign: 'center',

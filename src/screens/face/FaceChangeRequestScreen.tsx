@@ -119,7 +119,7 @@ export function FaceChangeRequestScreen() {
   return (
     <SafeAreaView style={styles.flex}>
       <ScreenHeader title={t('face.changeTitle')} />
-      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <Text style={styles.subtitle}>{t('face.changeIntro')}</Text>
 
@@ -170,7 +170,10 @@ export function FaceChangeRequestScreen() {
 function makeStyles(colors: ColorScheme) {
   return StyleSheet.create({
     flex: { flex: 1, backgroundColor: colors.bgLight },
-    scroll: { flexGrow: 1, justifyContent: 'center', padding: 24 },
+    // paddingBottom generous on purpose, same reasoning as every other screen
+    // touched for this: a focused field can only scroll as far above the
+    // keyboard as there is scrollable content below it.
+    scroll: { flexGrow: 1, justifyContent: 'center', padding: 24, paddingBottom: 280 },
     subtitle: { fontSize: 12.5, color: colors.slate600, textAlign: 'center', marginBottom: 20, lineHeight: 19 },
     label: { fontSize: 12, fontWeight: '700', color: colors.slate600, marginBottom: 8 },
     reasonInput: {

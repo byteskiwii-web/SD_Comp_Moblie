@@ -45,7 +45,7 @@ export function ForgotPasswordRequestScreen({ navigation, route }: Props) {
 
   return (
     <SafeAreaView style={styles.flex}>
-    <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <Text style={styles.title}>
           {fromFirstLogin ? t('auth.setPasswordTitle') : t('auth.forgotTitle')}
@@ -82,7 +82,7 @@ export function ForgotPasswordRequestScreen({ navigation, route }: Props) {
 function makeStyles(colors: ColorScheme) {
   return StyleSheet.create({
     flex: { flex: 1, backgroundColor: colors.bgLight },
-    scroll: { flexGrow: 1, justifyContent: 'center', padding: 24 },
+    scroll: { flexGrow: 1, justifyContent: 'center', padding: 24, paddingBottom: 280 },
     title: { fontSize: 17.5, fontWeight: '800', color: colors.textLight, textAlign: 'center' },
     subtitle: { fontSize: 11, color: colors.slate500, textAlign: 'center', marginTop: 8, marginBottom: 24, lineHeight: 18 },
     errorText: { color: colors.dangerText, fontSize: 11, fontWeight: '600', marginBottom: 12, textAlign: 'center' },
