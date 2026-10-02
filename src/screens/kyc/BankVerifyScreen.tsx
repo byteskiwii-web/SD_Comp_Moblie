@@ -151,7 +151,7 @@ export function BankVerifyScreen() {
     // nothing -- the native view only insets what it actually overlaps.
     <SafeAreaView style={styles.flex} edges={['top', 'bottom']}>
       <ScreenHeader title={t('bank.title')} />
-      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <Text style={styles.subtitle}>
             {t('bank.intro')}

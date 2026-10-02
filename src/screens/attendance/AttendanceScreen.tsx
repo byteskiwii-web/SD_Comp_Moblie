@@ -97,7 +97,7 @@ export function AttendanceScreen() {
   return (
     <SafeAreaView style={styles.flex} edges={['top']}>
       <GreetingHeader />
-      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <TourScrollView
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}

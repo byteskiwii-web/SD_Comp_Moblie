@@ -70,7 +70,7 @@ export function SetPasswordScreen() {
 
   return (
     <SafeAreaView style={styles.flex}>
-      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           {/* The first screen after a first sign-in, so the language is
               offered here too -- before the password, the profile, KYC and

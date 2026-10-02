@@ -121,7 +121,7 @@ export function PanVerifyScreen() {
   return (
     <SafeAreaView style={styles.flex}>
       <ScreenHeader title={t('kyc.panShort')} />
-      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <Text style={styles.subtitle}>{combinedPanAadhaar ? t('pan.introCombined') : t('pan.intro')}</Text>
 

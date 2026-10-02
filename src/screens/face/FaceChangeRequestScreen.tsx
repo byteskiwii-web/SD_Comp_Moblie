@@ -119,7 +119,7 @@ export function FaceChangeRequestScreen() {
   return (
     <SafeAreaView style={styles.flex}>
       <ScreenHeader title={t('face.changeTitle')} />
-      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <Text style={styles.subtitle}>{t('face.changeIntro')}</Text>
 

@@ -192,6 +192,7 @@ export const hi: Catalogue = {
   'reg.sent': 'अनुरोध भेजा गया',
   'reg.submitted': 'सुधार का अनुरोध भेज दिया गया।',
   'reg.needNote': 'कृपया टिप्पणी जोड़ें',
+  'reg.noteTooShort': 'कृपया अधिक विस्तृत कारण लिखें (कम से कम {min} अक्षर)',
   'reg.needTime': 'कम से कम एक समय भरें',
   'reg.outBeforeIn': 'क्लॉक आउट, क्लॉक इन के बाद होना चाहिए',
   'reg.dayApproved': "उस दिन का सुधार पहले ही मंज़ूर हो चुका है।",

@@ -1,8 +1,9 @@
-import React, { useMemo } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useCallback, useMemo, useState } from 'react';
+import { Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card } from '../../components/ui';
 import { ColorScheme, radii } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
@@ -42,6 +43,49 @@ export function HomeScreen() {
     queryFn: () => getAttendanceHistory(employee!.id, today(), today()),
     enabled: !!employee,
   });
+
+  const queryClient = useQueryClient();
+
+  /**
+   * Every card on this screen reads its own query -- the hero/timeline above,
+   * then ClockPanel, TeamLeaveCard, FestivalCard, SalesTargetCard,
+   * MonthlyStatsCard, PoliciesCard and AppreciationCard below. None of them
+   * had a way to be told "something changed, go look again" beyond their own
+   * poll interval (if any) or the app coming back to the foreground, so this
+   * is the one place that can refresh the whole page at once.
+   */
+  const refreshHomeQueries = useCallback(
+    () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['attendance-today'] }),
+        queryClient.invalidateQueries({ queryKey: ['home-team-leave'] }),
+        queryClient.invalidateQueries({ queryKey: ['holidays-today'] }),
+        queryClient.invalidateQueries({ queryKey: ['sales-target'] }),
+        queryClient.invalidateQueries({ queryKey: ['attendance-month'] }),
+        queryClient.invalidateQueries({ queryKey: ['leave-summary'] }),
+        queryClient.invalidateQueries({ queryKey: ['policies-outstanding'] }),
+        queryClient.invalidateQueries({ queryKey: ['kudos-mine'] }),
+      ]),
+    [queryClient]
+  );
+
+  // Home is the first tab and the one most likely to be left open in the
+  // background for a while -- without this, a punch recorded from a push's
+  // deep link, a new policy, or a kudos awarded elsewhere would only appear
+  // after a cold start.
+  useFocusEffect(
+    useCallback(() => {
+      void refreshHomeQueries();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+  );
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refreshHomeQueries();
+    setRefreshing(false);
+  }, [refreshHomeQueries]);
 
   // Marks come back most-recent-first. Employees can clock in/out multiple
   // times per day (e.g. lunch breaks), so only the LATEST mark determines
@@ -97,7 +141,11 @@ export function HomeScreen() {
     <SafeAreaView style={styles.flex} edges={['top']}>
       {/* The shared bar -- outside the scroll, same as every other tab. */}
       <GreetingHeader />
-      <TourScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <TourScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.brand[700]} />}
+      >
         <TourTarget
           id="home-hero"
           style={[

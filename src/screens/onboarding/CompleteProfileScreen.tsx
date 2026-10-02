@@ -81,7 +81,7 @@ export function CompleteProfileScreen() {
         shows the control when navigation.canGoBack() is actually true.
       */}
       <ScreenHeader title={t('onboard.title')} />
-      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <Text style={styles.subtitle}>
             {t('onboard.subtitle', { name: employee?.first_name ?? '' })}

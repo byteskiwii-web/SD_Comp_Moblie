@@ -205,6 +205,7 @@ export const en = {
   'reg.sent': 'Request sent',
   'reg.submitted': 'Regularisation request submitted successfully.',
   'reg.needNote': 'Please add a note',
+  'reg.noteTooShort': 'Please add a fuller reason (at least {min} characters)',
   'reg.needTime': 'Set at least one time',
   'reg.outBeforeIn': 'Clock-out must be after clock-in',
   'reg.dayApproved': "That day has already been corrected and approved.",

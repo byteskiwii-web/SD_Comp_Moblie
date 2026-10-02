@@ -220,9 +220,17 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
     ]);
   }
 
+  // Mirrors the server's own REGULARISATION_REASON_MIN_LENGTH (5) -- without
+  // this, a reason short enough to clear the "not empty" check below still
+  // bounced back from the server with no warning until submit.
+  const MIN_REASON_LENGTH = 5;
+
   function validate(): boolean {
     const next: typeof errors = {};
     if (!reason.trim()) next.reason = tr('reg.needNote');
+    else if (reason.trim().length < MIN_REASON_LENGTH) {
+      next.reason = tr('reg.noteTooShort', { min: MIN_REASON_LENGTH });
+    }
     if (requestType === 'adjust') {
       if (!submitted.inTime && !submitted.outTime) next.time = tr('reg.needTime');
       else if (submitted.inTime && submitted.outTime && submitted.outTime <= submitted.inTime) {

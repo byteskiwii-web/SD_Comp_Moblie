@@ -63,7 +63,7 @@ export function SectionScreen({
   return (
     <SafeAreaView style={styles.flex} edges={['top']}>
       <ScreenHeader title={title} subtitle={subtitle} />
-      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
