@@ -334,7 +334,7 @@ export const en = {
   'deptMgr.namePlaceholder': 'Their full name',
   'deptMgr.empty': "Nobody recorded yet. Add your manager's details so they are to hand when you need them.",
   'deptMgr.hint': 'Managers change from time to time — keep this current so the right person is reachable.',
-  'deptMgr.badPhone': 'Phone must be a 10-digit Indian mobile number.',
+  'deptMgr.badPhone': 'Invalid mobile number',
   'deptMgr.badEmail': 'That email address does not look right.',
   'deptMgr.unnamed': 'Not named',
 

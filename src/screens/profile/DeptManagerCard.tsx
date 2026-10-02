@@ -69,8 +69,13 @@ export function DeptManagerCard() {
 
   // Checked here so the button can say why, rather than the form bouncing back
   // after a round trip. Both patterns match the server's exactly.
+  //
+  // The phone check only fires once all 10 digits are in (the field's own
+  // maxLength), not on every keystroke -- it used to flag "9" as invalid the
+  // instant it was typed, which read as the field being permanently wrong
+  // until the very last digit landed.
   const problem =
-    phone.trim() && !/^[6-9][0-9]{9}$/.test(phone.trim())
+    phone.trim().length === 10 && !/^[6-9][0-9]{9}$/.test(phone.trim())
       ? t('deptMgr.badPhone')
       : email.trim() && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim())
         ? t('deptMgr.badEmail')
