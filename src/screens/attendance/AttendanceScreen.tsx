@@ -1,7 +1,8 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { KeyboardAvoidingView, Platform, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRoute, type RouteProp } from '@react-navigation/native';
+import { useFocusEffect, useRoute, type RouteProp } from '@react-navigation/native';
+import { useQueryClient } from '@tanstack/react-query';
 import type { AttendanceStackParamList } from '../../navigation/types';
 import { ColorScheme, radii } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
@@ -33,6 +34,47 @@ export function AttendanceScreen() {
   const t = useT();
   const params = useRoute<RouteProp<AttendanceStackParamList, 'AttendanceHome'>>().params;
   const [tab, setTab] = useState<Tab>(params?.tab ?? 'clock');
+  const queryClient = useQueryClient();
+  const [refreshing, setRefreshing] = useState(false);
+
+  /**
+   * Every attendance-shaped query this screen's three tabs read between them,
+   * invalidated together rather than per-tab: cheap (a handful of
+   * already-cached GETs), and it means switching tabs after a pull doesn't
+   * need its own separate refresh logic. Keyed without the employee id --
+   * React Query matches by prefix, so this reaches every per-employee variant
+   * without this screen needing to read the id itself.
+   */
+  const refreshAttendanceQueries = useCallback(
+    () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['attendance-today'] }),
+        queryClient.invalidateQueries({ queryKey: ['attendance-day'] }),
+        queryClient.invalidateQueries({ queryKey: ['attendance-history'] }),
+        queryClient.invalidateQueries({ queryKey: ['attendance-month'] }),
+        // RegularisePanel's own request list/allowance -- a decision on one of
+        // these arrives as a push (see usePushNotifications.ts), but someone
+        // simply returning to this tab after a few days away should not have
+        // to wait for that to have landed.
+        queryClient.invalidateQueries({ queryKey: ['regularisation-mine'] }),
+      ]),
+    [queryClient]
+  );
+
+  // Bottom-tab screens stay mounted, so without this a request approved or a
+  // punch recorded elsewhere would only show up here after a cold start.
+  useFocusEffect(
+    useCallback(() => {
+      void refreshAttendanceQueries();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+  );
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refreshAttendanceQueries();
+    setRefreshing(false);
+  }, [refreshAttendanceQueries]);
 
   // Held here, not read straight off params, on purpose. ClockPanel remounts
   // every time the segmented control leaves 'clock' and comes back (this
@@ -55,29 +97,36 @@ export function AttendanceScreen() {
   return (
     <SafeAreaView style={styles.flex} edges={['top']}>
       <GreetingHeader />
-      <TourScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.segment}>
-          {(['clock', 'history', 'regularise'] as Tab[]).map((id) => (
-            <Pressable
-              key={id}
-              onPress={() => setTab(id)}
-              style={[styles.segmentItem, tab === id && styles.segmentItemActive]}
-            >
-              <Text style={[styles.segmentText, tab === id && styles.segmentTextActive]}>
-                {t(TAB_KEY[id])}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <TourScrollView
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.brand[700]} />}
+        >
+          <View style={styles.segment}>
+            {(['clock', 'history', 'regularise'] as Tab[]).map((id) => (
+              <Pressable
+                key={id}
+                onPress={() => setTab(id)}
+                style={[styles.segmentItem, tab === id && styles.segmentItemActive]}
+              >
+                <Text style={[styles.segmentText, tab === id && styles.segmentTextActive]}>
+                  {t(TAB_KEY[id])}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
 
-        {tab === 'clock' ? (
-          <ClockPanel autoPunch={autoPunch} onAutoPunchStarted={() => setAutoPunch(undefined)} />
-        ) : tab === 'history' ? (
-          <HistoryPanel />
-        ) : (
-          <RegularisePanel initialDate={params?.date} />
-        )}
-      </TourScrollView>
+          {tab === 'clock' ? (
+            <ClockPanel autoPunch={autoPunch} onAutoPunchStarted={() => setAutoPunch(undefined)} />
+          ) : tab === 'history' ? (
+            <HistoryPanel />
+          ) : (
+            <RegularisePanel initialDate={params?.date} />
+          )}
+        </TourScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

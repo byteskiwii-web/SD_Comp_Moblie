@@ -27,10 +27,21 @@ let openedLaunchId: string | null = null;
 /** Every query a server notification can make stale, by its type. */
 const STALE_BY_TYPE: Record<string, string[][]> = {
   leave: [['leave'], ['leave-summary'], ['team-leave'], ['home-team-leave']],
-  regularisation: [['attendance-today'], ['attendance-day'], ['attendance-month'], ['attendance-history']],
+  // 'regularisation-mine' was missing here: the four attendance-* keys cover
+  // the register an approved 'adjust' writes to, but not RegularisePanel's
+  // OWN list/allowance query -- so an HR decision updated the register live
+  // while the employee's own correction-request status sat stale until the
+  // screen was reopened.
+  regularisation: [
+    ['attendance-today'], ['attendance-day'], ['attendance-month'], ['attendance-history'],
+    ['regularisation-mine'],
+  ],
   policy: [['policies-outstanding'], ['policies-library']],
   onboarding: [['my-documents'], ['auth-me-extras']],
-  kudos: [['kudos']],
+  // Was ['kudos'] -- AppreciationCard.tsx actually queries ['kudos-mine'], a
+  // distinct top-level key, so invalidating ['kudos'] matched nothing and a
+  // live kudos push never refreshed the Home card.
+  kudos: [['kudos-mine']],
   // A face change request's decision (src/face/faceChange.service.js#decide)
   // -- approved or rejected -- so KycCard's row and the onboarding gate (an
   // approval also touches face_registered_at) pick it up without waiting for

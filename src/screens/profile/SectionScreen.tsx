@@ -1,6 +1,7 @@
 import React from 'react';
-import { RefreshControl, ScrollView, StyleSheet } from 'react-native';
+import { KeyboardAvoidingView, Platform, RefreshControl, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useQueryClient } from '@tanstack/react-query';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { ColorScheme } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
@@ -33,25 +34,45 @@ export function SectionScreen({
   const colors = useThemeStore((s) => s.colors);
   const styles = React.useMemo(() => makeStyles(colors), [colors]);
   const refreshProfile = useAuthStore((s) => s.refreshProfile);
+  const queryClient = useQueryClient();
   const [refreshing, setRefreshing] = React.useState(false);
 
+  /**
+   * Pulling down here used to only call refreshProfile() -- which re-reads
+   * the employee record itself, but not any of the section-specific queries
+   * that live on top of it. The Identity section's KycCard (profile-kyc-status,
+   * kyc-health, face-change-mine, face-status) is the clearest case: pulling
+   * down on Profile looked like it refreshed everything, but the KYC card
+   * underneath kept showing whatever it last fetched. Invalidated without the
+   * employee id suffix -- React Query matches by prefix, so this still reaches
+   * every per-employee variant of each key without this generic wrapper
+   * needing to know the signed-in employee's id itself.
+   */
   const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
     await refreshProfile();
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['profile-kyc-status'] }),
+      queryClient.invalidateQueries({ queryKey: ['kyc-health'] }),
+      queryClient.invalidateQueries({ queryKey: ['face-change-mine'] }),
+      queryClient.invalidateQueries({ queryKey: ['face-status'] }),
+    ]);
     setRefreshing(false);
-  }, [refreshProfile]);
+  }, [refreshProfile, queryClient]);
 
   return (
     <SafeAreaView style={styles.flex} edges={['top']}>
       <ScreenHeader title={title} subtitle={subtitle} />
-      <ScrollView
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.brand[700]} />}
-      >
-        {children}
-      </ScrollView>
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <ScrollView
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.brand[700]} />}
+        >
+          {children}
+        </ScrollView>
+      </KeyboardAvoidingView>
       {overlay}
     </SafeAreaView>
   );

@@ -4,42 +4,35 @@ import type { Face } from 'react-native-vision-camera-face-detector';
 // Anti-spoof-photo gating (deters holding up a printed/static photo), NOT
 // biometric identity verification against a stored reference photo.
 //
-// Sequential, not a coin flip: every attempt runs BOTH phases -- two distinct
-// head turns, then three distinct blinks -- matching the rigor of the
-// WebView/Expo Go liveness check (CameraCaptureScreen.webview -> livenessPage.ts,
-// two turns / BLINKS_NEEDED=3). The two implementations must not diverge in
-// how hard they are to spoof just because one runs on-device and the other
-// in a WASM WebView.
+// TWO BLINKS, NO HEAD TURN. This used to also require two head turns before
+// the blinks, matching the WebView/Expo Go liveness check
+// (CameraCaptureScreen.webview -> livenessPage.ts). Both were simplified to
+// blink-only at the same time and must not diverge -- same two-blink rule,
+// same passive forward-facing gate, in both places.
 //
-// TURN BEFORE BLINK, NOT AFTER. The captured photo is taken the moment the
-// last challenge completes, and blinking doesn't move the head while a turn
-// does -- so ending on blinks means the capture is never taken mid-turn,
-// without needing an extra "face forward and wait" pause tacked onto the end.
-// Found on a real device: face checks were failing not on identity, but
-// because the previous turn-last order captured every clock-in selfie
-// side-on (see livenessPage.ts's identical fix for the full story).
-//
-// FACE FORWARD BETWEEN THE LAST TURN AND THE BLINKS, AND DURING THEM (30 Sep
-// 2026). Ending on blinks was not enough on its own: the blink step started
-// on the frame the second turn peaked, with the head still turned, and a
-// turned-away eye reads as closed -- so blinks were counted almost at once
-// and the photo was taken side-on. At enrolment that side-on photo became the
-// face on file, and every forward-facing clock-in then failed to match it.
-// Now: 'face-forward' waits for the head to come back after the last turn,
-// and a blink is only counted while the head is facing forward.
-export type LivenessState =
-  | 'looking-for-face' | 'challenge-turn' | 'face-forward' | 'challenge-blink' | 'timeout';
+// THE FORWARD-FACING GATE STAYS, BUT IT IS NO LONGER A STEP. Found on a real
+// device (Sep 2026): a blink counted the instant it happened regardless of
+// head angle, and a selfie captured mid-turn became the face on file, which
+// every later forward-facing clock-in then failed to match. The fix then was
+// a turn-then-recentre challenge before blinking; the turn is gone now, but
+// the underlying lesson -- a blink while turned away is not evidence of
+// anything, because a turned-away eye reads as "closed" too -- still holds.
+// So a blink only ever counts while the face is within FORWARD_TOLERANCE_DEG
+// of where it was first detected. This is reactive, not a challenge: nothing
+// is asked of the user beyond looking at the camera and blinking twice; the
+// 'not-forward' state only ever appears if they happen to glance away
+// mid-blink, and clears itself the instant they look back.
+export type LivenessState = 'looking-for-face' | 'not-forward' | 'challenge-blink' | 'timeout';
 
 const CHALLENGE_TIMEOUT_MS = 10000;
 const EYES_CLOSED_THRESHOLD = 0.3;
 const EYES_OPEN_THRESHOLD = 0.6;
-const YAW_TURN_THRESHOLD_DEG = 15;
-// Must swing back within this of baseline between the two turns, or a single
-// continuous turn-and-hold could be read as two -- see livenessPage.ts's own
-// RECENTRE_DEG for the same reasoning.
-const RECENTRE_DEG = 8;
-const BLINKS_NEEDED = 3;
-const TURNS_NEEDED = 2;
+// How far off the angle the face was first detected at still counts as
+// "forward" -- generous enough for natural head wobble, tight enough that a
+// genuine turn-away does not count a blink. Same tolerance the old
+// turn-challenge used between its two turns.
+const FORWARD_TOLERANCE_DEG = 8;
+const BLINKS_NEEDED = 2;
 
 export function useLiveness(onPassed: () => void) {
   const [state, setState] = useState<LivenessState>('looking-for-face');
@@ -49,13 +42,6 @@ export function useLiveness(onPassed: () => void) {
   // hook used to have) only ever detects one blink total.
   const eyesShut = useRef(false);
   const blinksDone = useRef(0);
-  // Direction-agnostic on purpose: a turn is "did the head swing past the
-  // threshold and back", not "did it go left then right". Asserting a
-  // specific left/right order would require trusting the face detector's yaw
-  // sign convention under front-camera mirroring, which nothing here has
-  // verified on a real device.
-  const turnsDone = useRef(0);
-  const recentred = useRef(true);
   // Deliberately NOT reflected via useState -- setting state here would
   // re-render this screen in the same tick as capturePhotoToFile() starts,
   // which recreates the face-detector's CameraOutput (its own memoization
@@ -79,8 +65,6 @@ export function useLiveness(onPassed: () => void) {
     baselineYaw.current = null;
     eyesShut.current = false;
     blinksDone.current = 0;
-    turnsDone.current = 0;
-    recentred.current = true;
     hasPassed.current = false;
     setState('looking-for-face');
   }, [clearTimer]);
@@ -106,72 +90,40 @@ export function useLiveness(onPassed: () => void) {
         baselineYaw.current = face.yawAngle;
         eyesShut.current = false;
         blinksDone.current = 0;
-        turnsDone.current = 0;
-        recentred.current = true;
-        setState('challenge-turn');
+        setState('challenge-blink');
         armTimeout();
         return;
       }
 
-      if (state === 'challenge-turn') {
-        const base = baselineYaw.current ?? face.yawAngle;
-        const turned = Math.abs(face.yawAngle - base);
+      const facingForward = Math.abs(face.yawAngle - (baselineYaw.current ?? face.yawAngle)) < FORWARD_TOLERANCE_DEG;
 
-        if (recentred.current) {
-          if (turned > YAW_TURN_THRESHOLD_DEG) {
-            recentred.current = false;
-            turnsDone.current += 1;
-            // Both turns done: wait for the head to come back to centre
-            // before blinking starts -- see the header.
-            if (turnsDone.current >= TURNS_NEEDED) {
-              setState('face-forward');
-              armTimeout();
-            }
-          }
-        } else if (turned < RECENTRE_DEG) {
-          // Between the two turns the head must come back through the middle.
-          // Without this, a single sweep from far left to far right satisfies
-          // both directions on the way past.
-          recentred.current = true;
-        }
+      if (!facingForward) {
+        // A turned-away eye reads as closed, which is how false blinks used
+        // to be counted in an instant -- so a glance away resets the
+        // in-progress blink rather than letting it count, and the state
+        // reflects it so the screen can say "face forward" without this ever
+        // having been a step the user had to deliberately complete.
+        eyesShut.current = false;
+        if (state !== 'not-forward') setState('not-forward');
         return;
       }
+      if (state === 'not-forward') setState('challenge-blink');
 
-      const facingForward = Math.abs(face.yawAngle - (baselineYaw.current ?? face.yawAngle)) < RECENTRE_DEG;
+      const leftClosed = (face.leftEyeOpenProbability ?? 1) < EYES_CLOSED_THRESHOLD;
+      const rightClosed = (face.rightEyeOpenProbability ?? 1) < EYES_CLOSED_THRESHOLD;
+      if (leftClosed && rightClosed) eyesShut.current = true;
 
-      if (state === 'face-forward') {
-        if (facingForward) {
-          eyesShut.current = false;
-          blinksDone.current = 0;
-          setState('challenge-blink');
-          armTimeout();
-        }
-        return;
-      }
+      const eyesOpenAgain =
+        (face.leftEyeOpenProbability ?? 0) > EYES_OPEN_THRESHOLD &&
+        (face.rightEyeOpenProbability ?? 0) > EYES_OPEN_THRESHOLD;
 
-      if (state === 'challenge-blink') {
-        // Only while facing forward: a turned-away eye reads as closed, which
-        // is how false blinks used to be counted in an instant.
-        if (!facingForward) {
-          eyesShut.current = false;
-          return;
-        }
-        const leftClosed = (face.leftEyeOpenProbability ?? 1) < EYES_CLOSED_THRESHOLD;
-        const rightClosed = (face.rightEyeOpenProbability ?? 1) < EYES_CLOSED_THRESHOLD;
-        if (leftClosed && rightClosed) eyesShut.current = true;
-
-        const eyesOpenAgain =
-          (face.leftEyeOpenProbability ?? 0) > EYES_OPEN_THRESHOLD &&
-          (face.rightEyeOpenProbability ?? 0) > EYES_OPEN_THRESHOLD;
-
-        if (eyesShut.current && eyesOpenAgain) {
-          eyesShut.current = false;
-          blinksDone.current += 1;
-          if (blinksDone.current >= BLINKS_NEEDED) {
-            clearTimer();
-            hasPassed.current = true;
-            onPassed();
-          }
+      if (eyesShut.current && eyesOpenAgain) {
+        eyesShut.current = false;
+        blinksDone.current += 1;
+        if (blinksDone.current >= BLINKS_NEEDED) {
+          clearTimer();
+          hasPassed.current = true;
+          onPassed();
         }
       }
     },

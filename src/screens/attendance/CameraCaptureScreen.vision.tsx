@@ -14,8 +14,9 @@ type Props = CameraCaptureProps;
 const CHALLENGE_KEY: Record<string, TKey> = {
   'looking-for-face': 'camera.centreFace',
   'challenge-blink': 'camera.blinkToContinue',
-  'challenge-turn': 'camera.turnHead',
-  'face-forward': 'live.faceForward',
+  // Reactive, not a step: shown only for as long as a glance away from the
+  // camera would stop a blink from counting -- see useLiveness.ts's header.
+  'not-forward': 'live.faceForward',
   timeout: 'camera.timedOut',
 };
 

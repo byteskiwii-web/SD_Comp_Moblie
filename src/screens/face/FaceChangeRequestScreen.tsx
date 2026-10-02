@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useState } from 'react';
-import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useNavigation } from '@react-navigation/native';
@@ -119,8 +119,9 @@ export function FaceChangeRequestScreen() {
   return (
     <SafeAreaView style={styles.flex}>
       <ScreenHeader title={t('face.changeTitle')} />
-      <ScrollView contentContainerStyle={styles.scroll}>
-        <Text style={styles.subtitle}>{t('face.changeIntro')}</Text>
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+          <Text style={styles.subtitle}>{t('face.changeIntro')}</Text>
 
         <Text style={styles.label}>{t('face.changeReasonLabel')}</Text>
         <TextInput
@@ -144,20 +145,20 @@ export function FaceChangeRequestScreen() {
         {success ? <Text style={styles.successText}>{success}</Text> : null}
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-        <View style={styles.buttonGap}>
-          <Button
-            title={t('face.openCamera')}
-            onPress={() => {
-              submittedRef.current = false;
-              setError('');
-              setCameraOpen(true);
-            }}
-            loading={mutation.isPending}
-            disabled={!consentAccepted || !reasonOk || mutation.isPending}
-          />
-        </View>
-        <Button title={t('common.back')} variant="outline" onPress={() => navigation.goBack()} />
-      </ScrollView>
+          <View style={styles.buttonGap}>
+            <Button
+              title={t('face.openCamera')}
+              onPress={() => {
+                submittedRef.current = false;
+                setError('');
+                setCameraOpen(true);
+              }}
+              loading={mutation.isPending}
+              disabled={!consentAccepted || !reasonOk || mutation.isPending}
+            />
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       <Modal visible={cameraOpen} animationType="slide" onRequestClose={() => setCameraOpen(false)}>
         <CameraCaptureScreen onCancel={() => setCameraOpen(false)} onCaptured={handleCaptured} />

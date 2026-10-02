@@ -1,6 +1,7 @@
-import React, { useMemo, useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useCallback, useMemo, useState } from 'react';
+import { Modal, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ColorScheme, radii } from '../../theme/tokens';
@@ -171,6 +172,35 @@ export function LeaveScreen() {
     [listQuery.data]
   );
 
+  const refreshLeaveQueries = useCallback(
+    () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['leave'] }),
+        queryClient.invalidateQueries({ queryKey: ['leave-summary'] }),
+      ]),
+    [queryClient]
+  );
+
+  // A decision (approve/reject/withdraw-elsewhere) already arrives as a push
+  // and refreshes this live while the app is foregrounded -- see
+  // usePushNotifications.ts. This is the other half: the tab stays mounted,
+  // so simply returning to it after it was backgrounded for a while (the push
+  // having been missed, or the app having been closed) must still show what
+  // changed, not whatever this screen last fetched.
+  useFocusEffect(
+    useCallback(() => {
+      void refreshLeaveQueries();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+  );
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refreshLeaveQueries();
+    setRefreshing(false);
+  }, [refreshLeaveQueries]);
+
   return (
     <SafeAreaView style={styles.flex} edges={['top']}>
       {/* Withdrawing was a single tap on an irreversible action, with the
@@ -207,7 +237,11 @@ export function LeaveScreen() {
         </TourTarget>
       </View>
 
-      <TourScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <TourScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.brand[700]} />}
+      >
         <Card>
           {/* The month leads, and can be stepped through. A bare figure with no
               month attached is the thing people misread. */}
@@ -257,40 +291,6 @@ export function LeaveScreen() {
               </View>
               {/* Comp off left, and where it came from, now live in CompOffCard
                   below -- one place for everything about comp off. */}
-
-              {/* The twelve-month history, as a strip rather than a list: the
-                  shape of a year of leave is the useful part, and any bar can
-                  be tapped for its own figures. */}
-              {(summaryQuery.data?.byMonth?.length ?? 0) > 0 && (
-                <View style={styles.strip}>
-                  {summaryQuery.data!.byMonth.map((m) => {
-                    const peak = Math.max(1, ...summaryQuery.data!.byMonth.map((x) => x.takenTotal));
-                    const on = m.month === month;
-                    return (
-                      <Pressable
-                        key={m.month}
-                        style={styles.stripCol}
-                        onPress={() => setMonth(m.month)}
-                        accessibilityLabel={t('leave.monthTaken', {
-                          month: monthLabel(m.month),
-                          count: m.takenTotal,
-                        })}
-                      >
-                        <View
-                          style={[
-                            styles.stripBar,
-                            { height: 4 + Math.round((m.takenTotal / peak) * 26) },
-                            on && styles.stripBarOn,
-                          ]}
-                        />
-                        <Text style={[styles.stripLabel, on && styles.stripLabelOn]}>
-                          {m.month.slice(5)}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-              )}
 
               {/* Said plainly rather than implied by the absence of a balance. */}
               <Text style={styles.footnote}>
@@ -483,18 +483,6 @@ function makeStyles(colors: ColorScheme) {
       marginBottom: 12,
     },
     monthLabel: { fontSize: 13, fontWeight: '800', color: colors.textLight, letterSpacing: -0.2 },
-
-
-    strip: {
-      flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between',
-      gap: 3, marginTop: 14, paddingTop: 10,
-      borderTopWidth: 1, borderTopColor: colors.slate100,
-    },
-    stripCol: { flex: 1, alignItems: 'center', gap: 3 },
-    stripBar: { width: '100%', borderRadius: 2, backgroundColor: colors.slate200, minHeight: 4 },
-    stripBarOn: { backgroundColor: colors.brand[700] },
-    stripLabel: { fontSize: 8.5, color: colors.slate400, fontWeight: '700' },
-    stripLabelOn: { color: colors.brand[700] },
 
     sectionTitle: {
       fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4,

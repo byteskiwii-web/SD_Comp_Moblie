@@ -17,6 +17,7 @@ import { GreetingHeader } from '../../components/GreetingHeader';
 import { BuildStamp } from '../../components/BuildStamp';
 import { useProfileSummary, type SetupTask, type Summary } from './useProfileSummary';
 import type { ProfileStackParamList } from '../../navigation/types';
+import { useQueryClient } from '@tanstack/react-query';
 
 const ROLE_LABEL: Record<string, string> = {
   'field-employee': 'role.field-employee',
@@ -61,6 +62,7 @@ export function ProfileScreen() {
   const styles = React.useMemo(() => makeStyles(colors), [colors]);
   const t = useT();
   const summary = useProfileSummary();
+  const queryClient = useQueryClient();
   const [refreshing, setRefreshing] = React.useState(false);
 
   /**
@@ -75,11 +77,25 @@ export function ProfileScreen() {
    */
   const [signOutOpen, setSignOutOpen] = React.useState(false);
 
+  /**
+   * Pulling down here used to only re-read the employee record
+   * (refreshProfile()) -- not any of the four queries useProfileSummary
+   * itself reads to build the "Pending" / "2 to upload" strip, so the one
+   * thing this pull is actually for (this hub's own summary counts) did not
+   * move. Invalidated without the employee id suffix on the one key that
+   * carries it -- React Query matches by prefix.
+   */
   const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
     await refreshProfile();
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['profile-kyc-status'] }),
+      queryClient.invalidateQueries({ queryKey: ['health-deps'] }),
+      queryClient.invalidateQueries({ queryKey: ['my-documents'] }),
+      queryClient.invalidateQueries({ queryKey: ['policies-library'] }),
+    ]);
     setRefreshing(false);
-  }, [refreshProfile]);
+  }, [refreshProfile, queryClient]);
 
   const go = (route: Route) => navigation.navigate(route);
 

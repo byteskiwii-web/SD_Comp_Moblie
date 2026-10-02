@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View, Alert } from 'react-native';
+import { Modal, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -163,6 +163,18 @@ export function NotificationsSheet({ visible, onClose }: { visible: boolean; onC
     queryClient.invalidateQueries({ queryKey: ['notifications-unread'] });
   };
 
+  // A manual pull on top of the count-driven poll above -- for the one moment
+  // that matters most, right after opening the sheet because a push just
+  // arrived, waiting out the backstop interval is the wrong amount of patience
+  // to ask for.
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = async () => {
+    setRefreshing(true);
+    invalidate();
+    await queryClient.refetchQueries({ queryKey: ['notifications'] });
+    setRefreshing(false);
+  };
+
   const readOne = useMutation({ mutationFn: markNotificationRead, onSuccess: invalidate });
   const unreadOne = useMutation({ mutationFn: markNotificationUnread, onSuccess: invalidate });
   const readAll = useMutation({
@@ -324,7 +336,11 @@ export function NotificationsSheet({ visible, onClose }: { visible: boolean; onC
           </View>
         )}
 
-        <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          contentContainerStyle={styles.list}
+          showsVerticalScrollIndicator={false}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.brand[700]} />}
+        >
           {isLoading ? (
             <SkeletonRows count={4} />
           ) : error ? (

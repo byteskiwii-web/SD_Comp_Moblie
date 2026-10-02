@@ -5,6 +5,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigation } from '@react-navigation/native';
 import { Button, TextField, Card } from '../../components/ui';
 import { DatePickerField } from '../../components/PickerField';
+import { ScreenHeader } from '../../components/ScreenHeader';
 import { ColorScheme } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
 import { useAuthStore } from '../../stores/authStore';
@@ -71,12 +72,17 @@ export function CompleteProfileScreen() {
 
   return (
     <SafeAreaView style={styles.flex}>
+      {/*
+        This screen used to draw its own back control -- a plain outline
+        Button embedded in the scroll content, scrolling out of view, and
+        calling navigation.goBack() unconditionally even when there was
+        nothing to go back to. Every other screen in the app uses the shared
+        ScreenHeader instead, which stays pinned above the content and only
+        shows the control when navigation.canGoBack() is actually true.
+      */}
+      <ScreenHeader title={t('onboard.title')} />
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-          <View style={styles.backRow}>
-            <Button title={t('common.back')} variant="outline" onPress={() => navigation.goBack()} />
-          </View>
-          <Text style={styles.title}>{t('onboard.title')}</Text>
           <Text style={styles.subtitle}>
             {t('onboard.subtitle', { name: employee?.first_name ?? '' })}
           </Text>
@@ -140,12 +146,10 @@ function makeStyles(colors: ColorScheme) {
   return StyleSheet.create({
     flex: { flex: 1, backgroundColor: colors.bgLight },
     scroll: { flexGrow: 1, padding: 24, paddingBottom: 40 },
-    title: { fontSize: 19, fontWeight: '800', color: colors.textLight, textAlign: 'center' },
     subtitle: {
       fontSize: 11.5, color: colors.slate500, textAlign: 'center',
       marginTop: 8, marginBottom: 20, lineHeight: 18,
     },
-    backRow: { alignSelf: 'flex-start', marginBottom: 10 },
     card: { marginBottom: 14, gap: 2 },
     row: { flexDirection: 'row', gap: 12 },
     rowItem: { flex: 1 },

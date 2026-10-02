@@ -111,7 +111,6 @@ export function FaceRegisterScreen() {
             disabled={!consentAccepted || mutation.isPending}
           />
         </View>
-        <Button title={t('common.back')} variant="outline" onPress={() => navigation.goBack()} />
       </ScrollView>
 
       <Modal visible={cameraOpen} animationType="slide" onRequestClose={() => setCameraOpen(false)}>

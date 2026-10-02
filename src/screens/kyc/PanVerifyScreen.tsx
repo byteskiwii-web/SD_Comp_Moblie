@@ -55,12 +55,22 @@ export function PanVerifyScreen() {
         ...(combinedPanAadhaar ? { aadhaar_number: aadhaarNumber } : {}),
       }),
     onSuccess: (result) => {
-      // Cleared regardless of outcome: the raw number has done its one job
-      // and this screen never holds onto it longer than the request needs.
-      setAadhaarNumber('');
       queryClient.invalidateQueries({ queryKey: kycGateQueryKey(employee?.id) });
       queryClient.invalidateQueries({ queryKey: ['profile-kyc-status', employee?.id] });
       if (result.verified && (!result.aadhaar || result.aadhaar.verified)) {
+        // Cleared only here, on genuine success: the raw number has done its
+        // one job and this screen never holds onto it longer than that.
+        //
+        // It used to be cleared unconditionally at the top of onSuccess --
+        // which this branch is not the only way to reach. A combined
+        // submission that comes back reporting PAN ITSELF failed is still an
+        // HTTP success (a failed business outcome, handled in the `else`
+        // below), and Aadhaar is never even checked when PAN fails first --
+        // so the typed Aadhaar number was being wiped on every PAN retry,
+        // forcing a re-type of all 12 digits for a field that was never the
+        // problem. Confirmed as the exact bug reported: "Aadhaar details
+        // disappeared when PAN verification failed."
+        setAadhaarNumber('');
         setSuccess(
           result.aadhaar ? t('pan.combinedVerified') : t('pan.verifiedWith', { masked: result.pan.masked })
         );
@@ -68,8 +78,11 @@ export function PanVerifyScreen() {
       } else if (result.aadhaar && !result.aadhaar.verified) {
         // PAN itself may still be verified here -- the message is about
         // Aadhaar specifically, which is what stopped this from completing.
+        // The typed Aadhaar number survives so the user can fix it and retry.
         setError(result.aadhaar.message);
       } else {
+        // PAN failed; Aadhaar (if combined) was never reached. Both typed
+        // fields survive for the retry.
         setError(result.message);
       }
     },

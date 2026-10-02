@@ -1,9 +1,9 @@
-import React, { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useCallback, useMemo, useState } from 'react';
+import { Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useQuery } from '@tanstack/react-query';
-import { useNavigation } from '@react-navigation/native';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Card } from '../../components/ui';
 import { SkeletonList, SkeletonRows } from '../../components/Skeleton';
 import { TourScrollView, TourTarget } from '../../components/tour/TourTarget';
@@ -63,6 +63,40 @@ export function TeamScreen() {
   const colors = useThemeStore((s) => s.colors);
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const t = useT();
+  const queryClient = useQueryClient();
+
+  /**
+   * All four tabs' queries, invalidated together regardless of which is
+   * showing -- cheap (each is a single scoped GET), and it means a lead
+   * flipping between tabs after a refresh never finds an unrefreshed one.
+   */
+  const refreshTeamQueries = useCallback(
+    () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['team-live'] }),
+        queryClient.invalidateQueries({ queryKey: ['team-register'] }),
+        queryClient.invalidateQueries({ queryKey: ['team-regularisations'] }),
+        queryClient.invalidateQueries({ queryKey: ['team-leave'] }),
+      ]),
+    [queryClient]
+  );
+
+  // This tab stays mounted while a lead is elsewhere in the app -- without
+  // this, someone clocking in, a new request landing, or a decision being
+  // made would only show up here after a cold start.
+  useFocusEffect(
+    useCallback(() => {
+      void refreshTeamQueries();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+  );
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refreshTeamQueries();
+    setRefreshing(false);
+  }, [refreshTeamQueries]);
 
   return (
     <SafeAreaView style={styles.flex} edges={['top']}>
@@ -79,7 +113,11 @@ export function TeamScreen() {
         </View>
       </View>
 
-      <TourScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <TourScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.brand[700]} />}
+      >
         <TourTarget id="team-tabs">
         <View style={styles.segment}>
           {(['today', 'register', 'requests', 'leave'] as Tab[]).map((id) => (
