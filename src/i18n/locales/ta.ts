@@ -853,6 +853,8 @@ export const ta: Catalogue = {
   'punch.out': 'பஞ்ச் அவுட்',
   'personal.dob': 'பிறந்த தேதி',
   'personal.dobNote': 'இது HR-இடம் உள்ளது. திருத்தம் தேவைப்பட்டால் அவர்களிடம் கேளுங்கள்.',
+  'personal.address': 'முகவரி',
+  'personal.addressNote': 'இது HR-இடம் உள்ளது. திருத்தம் தேவைப்பட்டால் அவர்களிடம் கேளுங்கள்.',
   'target.title': 'விற்பனை இலக்கு',
   'target.of': '{target}இல்',
   'target.asOf': '{date} வரை',
