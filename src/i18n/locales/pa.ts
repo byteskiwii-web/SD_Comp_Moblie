@@ -843,6 +843,8 @@ export const pa: Catalogue = {
   'punch.out': 'ਪੰਚ ਆਊਟ',
   'personal.dob': 'ਜਨਮ ਤਾਰੀਖ',
   'personal.dobNote': 'ਇਹ HR ਕੋਲ ਹੈ। ਸੁਧਾਰ ਚਾਹੀਦਾ ਹੋਵੇ ਤਾਂ ਉਨ੍ਹਾਂ ਨੂੰ ਕਹੋ।',
+  'personal.address': 'ਪਤਾ',
+  'personal.addressNote': 'ਇਹ HR ਕੋਲ ਹੈ। ਸੁਧਾਰ ਚਾਹੀਦਾ ਹੋਵੇ ਤਾਂ ਉਨ੍ਹਾਂ ਨੂੰ ਕਹੋ।',
   'target.title': 'ਵਿਕਰੀ ਟੀਚਾ',
   'target.of': '{target} ਵਿੱਚੋਂ',
   'target.asOf': '{date} ਤੱਕ',

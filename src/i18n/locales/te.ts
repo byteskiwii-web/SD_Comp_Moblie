@@ -853,6 +853,8 @@ export const te: Catalogue = {
   'punch.out': 'పంచ్ అవుట్',
   'personal.dob': 'పుట్టిన తేదీ',
   'personal.dobNote': 'ఇది HR వద్ద ఉంది. సవరణ కావాలంటే వారిని అడగండి.',
+  'personal.address': 'చిరునామా',
+  'personal.addressNote': 'ఇది HR వద్ద ఉంది. సవరణ కావాలంటే వారిని అడగండి.',
   'target.title': 'అమ్మకాల లక్ష్యం',
   'target.of': '{target}లో',
   'target.asOf': '{date} వరకు',

@@ -843,6 +843,8 @@ export const gu: Catalogue = {
   'punch.out': 'પંચ આઉટ',
   'personal.dob': 'જન્મ તારીખ',
   'personal.dobNote': 'આ HR પાસે છે. સુધારો જોઈએ તો તેમને કહો.',
+  'personal.address': 'સરનામું',
+  'personal.addressNote': 'આ HR પાસે છે. સુધારો જોઈએ તો તેમને કહો.',
   'target.title': 'વેચાણ લક્ષ્ય',
   'target.of': '{target}માંથી',
   'target.asOf': '{date} સુધી',

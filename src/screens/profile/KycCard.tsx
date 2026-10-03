@@ -182,6 +182,7 @@ export function KycCard() {
             icon="finger-print-outline"
             label={t('kyc.aadhaarShort')}
             status={kyc.aadhaar.status}
+            detail={kyc.aadhaar.masked}
             // Under the combined provider there is no separate Aadhaar screen
             // to route to -- PanVerify verifies both from one submission.
             onPress={kyc.aadhaar.status === 'verified' ? undefined : action(combinedPanAadhaar ? 'PanVerify' : 'AadhaarOtpRequest')}

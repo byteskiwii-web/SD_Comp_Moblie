@@ -52,6 +52,18 @@ export function PersonalCard() {
   const current = profile?.gender ?? null;
   const locked = current !== null;
 
+  /**
+   * Two lines, not five rows: a postal address reads as one fact, not five
+   * separate ones. Line 1 is the street (both address lines, comma-joined,
+   * either of which may be absent), line 2 is city/state/pin -- whichever of
+   * those three are actually on file, so a partial record (e.g. no pincode
+   * yet) still reads cleanly instead of showing a trailing comma or a blank.
+   */
+  const addressLines = [
+    [profile?.addressLine1, profile?.addressLine2].filter(Boolean).join(', '),
+    [[profile?.city, profile?.state].filter(Boolean).join(', '), profile?.zipcode].filter(Boolean).join(' '),
+  ].filter(Boolean);
+
   return (
     <Card>
       <Text style={styles.cardTitle}>{t('personal.title')}</Text>
@@ -63,6 +75,22 @@ export function PersonalCard() {
       <Text style={styles.label}>{t('personal.dob')}</Text>
       <Text style={styles.readOnly}>{formatDate(profile?.dateOfBirth ?? '')}</Text>
       <Text style={styles.hint}>{t('personal.dobNote')}</Text>
+
+      {/* Same story as DOB, same fix: collected once at onboarding
+          (CompleteProfileScreen), read-only here for the same reason gender
+          and DOB are -- an address HR corrects, not the phone -- and shown
+          here for the first time because it was on file and displayed
+          nowhere. Two lines rather than five separate rows: a postal address
+          is read as one thing, not five facts. */}
+      <Text style={[styles.label, styles.labelSpaced]}>{t('personal.address')}</Text>
+      {addressLines.length > 0 ? (
+        addressLines.map((line, i) => (
+          <Text key={i} style={styles.readOnly}>{line}</Text>
+        ))
+      ) : (
+        <Text style={styles.readOnly}>—</Text>
+      )}
+      <Text style={styles.hint}>{t('personal.addressNote')}</Text>
 
       <Text style={[styles.label, styles.labelSpaced]}>{t('personal.gender')}</Text>
       <View style={styles.options}>

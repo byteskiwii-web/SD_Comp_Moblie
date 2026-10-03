@@ -843,6 +843,8 @@ export const bn: Catalogue = {
   'punch.out': 'পাঞ্চ আউট',
   'personal.dob': 'জন্মতারিখ',
   'personal.dobNote': 'এটি HR-এর কাছে আছে। সংশোধন দরকার হলে তাদের বলুন।',
+  'personal.address': 'ঠিকানা',
+  'personal.addressNote': 'এটি HR-এর কাছে আছে। সংশোধন দরকার হলে তাদের বলুন।',
   'target.title': 'বিক্রয় লক্ষ্য',
   'target.of': '{target}-এর মধ্যে',
   'target.asOf': '{date} পর্যন্ত',

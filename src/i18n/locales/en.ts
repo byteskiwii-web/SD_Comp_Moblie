@@ -872,6 +872,8 @@ export const en = {
   'punch.out': 'Punch Out',
   'personal.dob': 'Date of birth',
   'personal.dobNote': 'HR holds this. Ask them if it needs correcting.',
+  'personal.address': 'Address',
+  'personal.addressNote': 'HR holds this. Ask them if it needs correcting.',
   'target.title': 'Sales target',
   'target.of': 'of {target}',
   'target.asOf': 'as of {date}',
