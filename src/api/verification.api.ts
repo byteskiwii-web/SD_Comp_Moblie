@@ -20,7 +20,14 @@ export type KycStatus = {
     aadhaarLinked?: boolean | null;
     aadhaarLinkCheckedAt?: string | null;
   };
-  aadhaar: { status: KycCheckStatus; verifiedAt: string | null };
+  /**
+   * `masked` is maskAadhaar() applied to what the EMPLOYEE submitted, written
+   * only once a combined PAN+Aadhaar check confirms it -- never the
+   * provider's own masked response (see migration 066's header on the
+   * backend for why that distinction matters). Null until verified, or for
+   * anyone verified before this field existed.
+   */
+  aadhaar: { status: KycCheckStatus; verifiedAt: string | null; masked: string | null };
   bank: { status: KycCheckStatus; verifiedAt: string | null; masked: string | null; ifsc: string | null };
   /**
    * Self-hosted, not a vendor check (src/face/) -- a different status
