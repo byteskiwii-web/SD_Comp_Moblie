@@ -66,12 +66,11 @@ export async function runShiftTimerTick(): Promise<void> {
       }
     }
 
-    // 'disabled' is direct evidence -- report it now instead of waiting on
-    // the server's gap inference. 'timeout' is NOT evidence of anything (bad
-    // signal, not off); leave knownLocationOff undefined so the server falls
-    // back to its own inference for a persistently bad signal instead of
-    // this tick punishing one slow fix.
-    await checkShiftIntegrity(probe.status === 'disabled' ? true : undefined);
+    // 'disabled' means the switch is off: report it now. 'ok' and 'timeout'
+    // both mean the switch is on -- a slow fix indoors is a bad signal, not
+    // location off -- so they report "on", and the server does not read the
+    // ping this tick could not send as an outage.
+    await checkShiftIntegrity(probe.status === 'disabled');
   } catch (err) {
     console.warn('[shiftTimer] tick failed', err);
   }

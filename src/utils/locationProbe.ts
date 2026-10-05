@@ -22,6 +22,21 @@ const CACHED_FIX_MAX_AGE_MS = 5 * 60 * 1000;
  * ever skip a live GPS fix, never mask an off state, because that state was
  * already ruled out above.
  */
+/**
+ * Whether the phone's location services switch is OFF -- the switch only,
+ * never a position, so it needs no permission and never prompts (on every iOS
+ * and Android version expo-location supports). `undefined` when it cannot be
+ * read: the server then falls back to its own gap inference rather than this
+ * device guessing either way.
+ */
+export async function isLocationServicesOff(): Promise<boolean | undefined> {
+  try {
+    return !(await Location.hasServicesEnabledAsync());
+  } catch {
+    return undefined;
+  }
+}
+
 export async function probeLocation(): Promise<LocationProbeResult> {
   let servicesEnabled: boolean;
   try {

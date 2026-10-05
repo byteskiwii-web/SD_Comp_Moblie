@@ -3,6 +3,7 @@ import { toLocalDateKey } from './datetime';
 import { useShiftStore } from '../stores/shiftStore';
 import { reportIntegrityState, AttendanceAlertConditions, AttendanceAlertType } from '../api/attendanceAlerts.api';
 import { fireIntegrityAlertNotification } from './notifications';
+import { isLocationServicesOff } from './locationProbe';
 
 const today = () => toLocalDateKey();
 
@@ -16,17 +17,20 @@ const WARNING_ACTION: Record<AttendanceAlertType, string> = {
 };
 
 /**
- * Checks Developer Mode and reports it, optionally alongside a DIRECTLY
- * known location-off state.
+ * Checks Developer Mode and reports it together with whether location is off.
  *
  * Called from two places on different cadences -- the foreground hook
- * (useShiftIntegrityWatcher, ~60s while the app is open, which never knows
- * its own location state reliably and so omits knownLocationOff -- the
- * server's gap inference is the fallback for that caller) and the native
+ * (useShiftIntegrityWatcher, ~60s while the app is open) and the native
  * shift-timer's tick (shiftTimerTask.ts, roughly every 12 min including
- * while the app is closed), which DOES attempt a location fix on every wake
- * and so can pass a direct answer for instant detection instead of waiting
- * on the server's gap threshold.
+ * while the app is closed, Android only), which passes what its own probe
+ * found. Without a caller's answer this reads the location services switch
+ * itself, so EVERY report says "on" or "off".
+ *
+ * The device's answer wins on the server over its ping-gap inference: a gap
+ * also follows a slow GPS fix indoors, a delayed timer or a failed request,
+ * none of which is location being off, and was warning employees whose
+ * location was on. Only when the switch cannot be read is location_off left
+ * out, for the server to infer.
  *
  * Holds NO state about what it has already reported. It sends the current
  * state every time, and the server decides whether that is a new detection
@@ -42,6 +46,8 @@ export async function checkShiftIntegrity(knownLocationOff?: boolean): Promise<v
   const shift = useShiftStore.getState();
   if (!shift.isClockedIn || shift.isOnBreak || !shift.storeCode) return;
 
+  const locationOff = typeof knownLocationOff === 'boolean' ? knownLocationOff : await isLocationServicesOff();
+
   let developerMode = false;
   try {
     developerMode = await JailMonkey.isDevelopmentSettingsMode();
@@ -52,7 +58,7 @@ export async function checkShiftIntegrity(knownLocationOff?: boolean): Promise<v
 
   try {
     const conditions: AttendanceAlertConditions = { developer_mode: developerMode };
-    if (typeof knownLocationOff === 'boolean') conditions.location_off = knownLocationOff;
+    if (typeof locationOff === 'boolean') conditions.location_off = locationOff;
 
     const result = await reportIntegrityState({
       store_code: shift.storeCode,
