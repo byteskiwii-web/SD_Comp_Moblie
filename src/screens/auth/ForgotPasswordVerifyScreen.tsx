@@ -67,7 +67,7 @@ export function ForgotPasswordVerifyScreen({ navigation, route }: Props) {
           <Button title={t('auth.verify')} onPress={submit} loading={mutation.isPending} />
         </View>
         <Button
-          title={t('auth.changeEmployeeId')}
+          title={t('auth.changeLoginId')}
           variant="outline"
           onPress={() => navigation.goBack()}
         />
