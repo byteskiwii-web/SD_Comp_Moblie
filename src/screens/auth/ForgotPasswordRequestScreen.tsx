@@ -37,7 +37,7 @@ export function ForgotPasswordRequestScreen({ navigation, route }: Props) {
     setError('');
     const parsed = forgotPasswordRequestSchema.safeParse({ employee_id: employeeId });
     if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? t('auth.needEmployeeId'));
+      setError(parsed.error.issues[0]?.message ?? t('auth.needLoginId'));
       return;
     }
     mutation.mutate();
@@ -54,11 +54,15 @@ export function ForgotPasswordRequestScreen({ navigation, route }: Props) {
           {fromFirstLogin ? t('auth.firstLoginBody') : t('auth.forgotBody')}
         </Text>
 
+        {/* Employee id, email or mobile, the same three the sign-in box takes;
+            the server resolves an email or mobile to the account and emails
+            the code to the address on file. */}
         <TextField
-          label={t('auth.employeeId')}
-          placeholder="EMP-00001"
-          autoCapitalize="characters"
+          label={t('auth.loginId')}
+          placeholder={t('auth.loginIdPlaceholder')}
+          autoCapitalize="none"
           autoCorrect={false}
+          keyboardType="email-address"
           value={employeeId}
           onChangeText={(t) => { setEmployeeId(t); setError(''); }}
         />

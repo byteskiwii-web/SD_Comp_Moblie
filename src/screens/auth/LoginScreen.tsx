@@ -94,21 +94,20 @@ export function LoginScreen({ navigation }: Props) {
           <Text style={styles.subtitle}>{t('auth.intro')}</Text>
         </View>
 
-        {/* Accepts an employee id or the email address on the record. The
-            server matches both exactly; autoCapitalize is off because an
-            address typed in capitals is the commonest way to fail a login that
-            should have worked, and the server lower-cases it anyway.
-
-            Its own label, not the shared auth.employeeId: Forgot password
-            posts to an endpoint that still validates the employee ID pattern
-            alone, so the two screens genuinely accept different things. */}
+        {/* Accepts an employee id, the email address or the mobile number on
+            the record. The server normalises and matches all three exactly
+            (SD_Computer loginIdentifier.js), so a mobile may be typed with or
+            without +91 and spaces; autoCapitalize is off because an address
+            typed in capitals is the commonest way to fail a login that should
+            have worked, and the server lower-cases it anyway. Forgot password
+            takes the same three and shares this label. */}
         {/* testIDs, not the placeholder, are what automation locates these by:
             the placeholder and the label are translated, so a locator on
             either matches only while the app is in English. */}
         <TextField
           testID="login-employee-id"
-          label={t('auth.idOrEmail')}
-          placeholder={t('auth.idOrEmailPlaceholder')}
+          label={t('auth.loginId')}
+          placeholder={t('auth.loginIdPlaceholder')}
           autoCapitalize="none"
           autoCorrect={false}
           keyboardType="email-address"
