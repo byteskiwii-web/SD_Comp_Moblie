@@ -7,13 +7,12 @@ import { INTEGRITY_FOREGROUND_CHECK_INTERVAL_MS } from '../constants/config';
 /**
  * Detects Developer Mode while the app is open, roughly every 60s
  * (AppState "active" transition + interval, same pattern as
- * useShiftSync.ts / useKycGate.ts). Calls checkShiftIntegrity() with no
- * known location state -- this watcher can't tell whether location is off
- * any more reliably than the old design could, so it leaves that to the
- * server's gap inference. The native shift-timer (src/tasks/shiftTimerTask.ts)
- * covers the same Developer Mode check independently, roughly every 12 min
- * including while this app is closed, and DOES know its location state
- * directly on each tick.
+ * useShiftSync.ts / useKycGate.ts). checkShiftIntegrity() reads the location
+ * services switch itself, so each report also says whether location is on --
+ * which is what keeps an open app, on iOS and Android alike, from being
+ * flagged "location off" just because a background ping was missed. The
+ * native shift-timer (src/tasks/shiftTimerTask.ts) covers the same checks
+ * roughly every 12 min while this app is closed (Android).
  */
 export function useShiftIntegrityWatcher() {
   const isClockedIn = useShiftStore((s) => s.isClockedIn);

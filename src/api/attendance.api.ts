@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 import { apiClient } from './client';
+import { isLocationServicesOff } from '../utils/locationProbe';
 import type {
   AttendanceMark,
   LocationCheckResult,
@@ -142,9 +143,17 @@ export async function clockIn(input: PunchInput) {
 }
 
 export async function clockOut(input: PunchInput) {
+  const form = await buildPunchFormData(input);
+  // An iPhone never pings in the background, so a shift spent with the app
+  // closed would otherwise be inferred as "location off" at clock-out. The
+  // switch alone is sent -- a clock-out still reads no position. Android keeps
+  // the server's inference: its pings run in the background.
+  if (Platform.OS === 'ios' && (await isLocationServicesOff()) === false) {
+    form.append('location_services_on', 'true');
+  }
   const res = await apiClient.post<{ success: true; message: string; data: PunchResult }>(
     '/attendance/clock-out',
-    await buildPunchFormData(input),
+    form,
     { headers: { 'Content-Type': 'multipart/form-data' }, timeout: PUNCH_TIMEOUT_MS }
   );
   return res.data.data;
