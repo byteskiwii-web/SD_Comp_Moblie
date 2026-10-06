@@ -58,7 +58,7 @@ export async function runShiftTimerTick(): Promise<void> {
           // reject the task -- a rejected headless task never calls
           // notifyTaskFinished, so the wakelock is held indefinitely.
           await getNotifications()?.scheduleNotificationAsync({
-            content: { title: 'Outside your store', body: result.alert, data: { kind: 'geofence-alert' } },
+            content: { title: result.alertTitle ?? 'Outside your store', body: result.alert, data: { kind: 'geofence-alert' } },
             trigger: null,
           });
         }

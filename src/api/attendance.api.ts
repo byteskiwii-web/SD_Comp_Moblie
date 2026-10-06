@@ -203,7 +203,7 @@ export async function locationCheck(input: {
   /** The fix's accuracy in metres; the server allows for it at the fence. */
   accuracy_m?: number | null;
 }) {
-  const res = await apiClient.post<{ success: true; data: LocationCheckResult; alert: string | null }>(
+  const res = await apiClient.post<{ success: true; data: LocationCheckResult; alert: string | null; alertTitle?: string | null }>(
     '/attendance/location-check',
     {
       ...input,
