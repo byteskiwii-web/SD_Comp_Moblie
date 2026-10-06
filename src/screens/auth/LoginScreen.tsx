@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useMutation } from '@tanstack/react-query';
@@ -86,9 +86,12 @@ export function LoginScreen({ navigation }: Props) {
           <LanguageChips />
         </View>
         <View style={styles.header}>
-          <View style={styles.logoDot}>
-            <Text style={styles.logoDotText}>Z</Text>
-          </View>
+          <Image
+            source={require('../../../assets/logo.png')}
+            style={styles.logo}
+            resizeMode="contain"
+            accessibilityIgnoresInvertColors
+          />
           <Text style={styles.brandLabel}>{t('auth.brand')}</Text>
           <Text style={styles.title}>{t('auth.signIn')}</Text>
           <Text style={styles.subtitle}>{t('auth.intro')}</Text>
@@ -168,12 +171,7 @@ function makeStyles(colors: ColorScheme) {
     scroll: { flexGrow: 1, justifyContent: 'center', padding: 24, paddingBottom: 280 },
     languageRow: { marginBottom: 20 },
     header: { alignItems: 'center', marginBottom: 32 },
-    logoDot: {
-      width: 52, height: 52, borderRadius: 16, backgroundColor: colors.brand[700], marginBottom: 14,
-      alignItems: 'center', justifyContent: 'center',
-      shadowColor: colors.brand[900], shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.25, shadowRadius: 8, elevation: 4,
-    },
-    logoDotText: { color: colors.white, fontSize: 19, fontWeight: '800' },
+    logo: { width: 56, height: 56, marginBottom: 14 },
     brandLabel: {
       fontSize: 11, fontWeight: '800', letterSpacing: 1.5, color: colors.brand[700], marginBottom: 16,
     },
