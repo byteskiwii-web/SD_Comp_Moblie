@@ -49,6 +49,9 @@ export type LocationCheckResult = {
   radiusMetres: number;
   storeName: string;
   checkedAt: string;
+  /** The day's shared integrity-alert count/status after this ping; null if that check itself failed server-side. */
+  alertCount?: number | null;
+  alertStatus?: 'tracking' | 'pending' | null;
 };
 
 export type MonthlySummary = {
