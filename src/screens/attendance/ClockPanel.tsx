@@ -12,7 +12,7 @@ import { clockInWindow, formatDuration, isWithinShiftWindow, summariseDay } from
 import { Skeleton } from '../../components/Skeleton';
 import { useShiftStore } from '../../stores/shiftStore';
 import { cancelBreakReminder, cancelClockOutReminder } from '../../utils/notifications';
-import { haversineDistance } from '../../utils/haversine';
+import { haversineDistance, isWithinFence } from '../../utils/haversine';
 import { clockIn, clockOut, endBreak, getAttendanceHistory, startBreak } from '../../api/attendance.api';
 import { CameraCaptureScreen } from './CameraCaptureScreen';
 import { hasShiftTimer, noMidShiftCheckLabel } from '../../native/runtime';
@@ -358,7 +358,10 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
     coords && store?.lat && store?.lng
       ? haversineDistance(coords.latitude, coords.longitude, parseFloat(store.lat), parseFloat(store.lng))
       : null;
-  const insideFence = distanceMetres != null && store ? distanceMetres <= store.geofence_radius_m : null;
+  // Same accuracy-aware rule as the server, so a rough indoor fix does not
+  // show "outside" for a punch the server will accept.
+  const insideFence =
+    distanceMetres != null && store ? isWithinFence(distanceMetres, store.geofence_radius_m, coords?.accuracy) : null;
   /*
    * TEAM LEADS ARE GEO-TAGGED ONLY. Their punches are approved wherever they
    * are (the server's fence-exempt roles) and being away from the store is
@@ -417,7 +420,7 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
         employee_id: employee.id,
         store_code: store.store_code,
         ...(pendingAction === 'clock-in' && at
-          ? { latitude: at.latitude, longitude: at.longitude }
+          ? { latitude: at.latitude, longitude: at.longitude, accuracy_m: at.accuracy ?? null }
           : {}),
         device_id: 'mobile-app',
         selfieFilePath: filePath,
