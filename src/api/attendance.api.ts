@@ -21,6 +21,8 @@ type PunchInput = {
    */
   latitude?: number;
   longitude?: number;
+  /** The fix's accuracy in metres; the server allows for it at the fence. */
+  accuracy_m?: number | null;
   device_id?: string;
   selfieFilePath: string; // filesystem path from VisionCamera's capturePhotoToFile
 };
@@ -100,6 +102,7 @@ async function buildPunchFormData(input: PunchInput): Promise<FormData> {
   if (input.latitude != null && input.longitude != null) {
     form.append('latitude', String(input.latitude));
     form.append('longitude', String(input.longitude));
+    if (input.accuracy_m != null) form.append('accuracy_m', String(Math.round(input.accuracy_m)));
   }
   form.append('client_timestamp', new Date().toISOString());
   if (input.device_id) form.append('device_id', input.device_id);
@@ -197,6 +200,8 @@ export async function locationCheck(input: {
   store_code: string;
   latitude: number;
   longitude: number;
+  /** The fix's accuracy in metres; the server allows for it at the fence. */
+  accuracy_m?: number | null;
 }) {
   const res = await apiClient.post<{ success: true; data: LocationCheckResult; alert: string | null }>(
     '/attendance/location-check',

@@ -42,7 +42,8 @@ export type LocationStatus =
   /** Everything is allowed, but no position could be obtained (indoors, no signal). */
   | 'no-fix';
 
-export type Coords = { latitude: number; longitude: number };
+/** `accuracy`: the fix's radius of uncertainty in metres, when the OS gives one. */
+export type Coords = { latitude: number; longitude: number; accuracy?: number | null };
 
 /** Re-read interval for the passive check. Two cheap calls, no prompt, no GPS. */
 const POLL_MS = 15_000;
@@ -131,7 +132,7 @@ export function useLocationReadiness() {
         try {
           const cached = await Location.getLastKnownPositionAsync({ maxAge: CACHED_FIX_MAX_AGE_MS });
           if (cached) {
-            keep({ latitude: cached.coords.latitude, longitude: cached.coords.longitude });
+            keep({ latitude: cached.coords.latitude, longitude: cached.coords.longitude, accuracy: cached.coords.accuracy ?? null });
             hasFix = true;
             set('ready');
           }
@@ -146,7 +147,7 @@ export function useLocationReadiness() {
               setTimeout(() => reject(new Error('timeout')), FRESH_FIX_TIMEOUT_MS)
             ),
           ]);
-          keep({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
+          keep({ latitude: pos.coords.latitude, longitude: pos.coords.longitude, accuracy: pos.coords.accuracy ?? null });
           return set('ready');
         } catch {
           // A screen already unblocked by the cached fix is not knocked back
