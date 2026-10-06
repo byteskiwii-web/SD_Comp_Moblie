@@ -176,6 +176,11 @@ export function DayDetailScreen() {
                 <Text style={styles.hoursLabel}>{t('day.effectiveHours')}</Text>
                 <Text style={styles.hoursValue}>{formatDuration(day.effectiveMinutes)}</Text>
               </View>
+              {/* Effective + break = gross, read left to right. */}
+              <View style={styles.hoursMid}>
+                <Text style={styles.hoursLabel}>{t('day.totalBreak')}</Text>
+                <Text style={styles.hoursValue}>{formatDuration(day.breakMinutes)}</Text>
+              </View>
               <View style={styles.hoursRight}>
                 <Text style={styles.hoursLabel}>{t('day.grossHours')}</Text>
                 <Text style={styles.hoursValue}>{formatDuration(day.grossMinutes)}</Text>
@@ -325,6 +330,7 @@ function makeStyles(colors: ColorScheme) {
   issueTitle: { fontSize: 12.5, fontWeight: '800', color: colors.warningText },
   issueLine: { fontSize: 12, color: colors.slate700, lineHeight: 17 },
   issueHint: { fontSize: 11, color: colors.slate500, fontWeight: '600', marginTop: 4 },
+  hoursMid: { alignItems: 'center' },
   hoursRight: { alignItems: 'flex-end' },
   hoursLabel: { fontSize: 10.5, color: colors.slate400, fontWeight: '700' },
   hoursValue: { fontSize: 13, fontWeight: '800', color: colors.textLight, marginTop: 2 },

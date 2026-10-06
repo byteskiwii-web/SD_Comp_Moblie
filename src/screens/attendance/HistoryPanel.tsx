@@ -275,7 +275,12 @@ function DayRow({
       </View>
 
       <View style={styles.right}>
-        <Text style={styles.hours}>{formatDuration(day.effectiveMinutes)}</Text>
+        <View style={styles.totals}>
+          <Text style={styles.hours}>{formatDuration(day.effectiveMinutes)}</Text>
+          {day.firstIn && (
+            <Text style={styles.breakTaken}>{tr('history.breakTaken', { duration: formatDuration(day.breakMinutes) })}</Text>
+          )}
+        </View>
         <Ionicons name="chevron-forward" size={16} color={colors.slate300} />
       </View>
     </Pressable>
@@ -330,6 +335,8 @@ function makeStyles(colors: ColorScheme) {
 
   right: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   hours: { fontSize: 11.5, fontWeight: '800', color: colors.slate600 },
+  totals: { alignItems: 'flex-end', gap: 1 },
+  breakTaken: { fontSize: 10, fontWeight: '600', color: colors.slate400 },
 
   backdrop: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
