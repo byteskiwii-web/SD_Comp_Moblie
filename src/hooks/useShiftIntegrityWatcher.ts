@@ -24,7 +24,13 @@ export function useShiftIntegrityWatcher() {
 
     checkShiftIntegrity();
 
-    const interval = setInterval(checkShiftIntegrity, INTEGRITY_FOREGROUND_CHECK_INTERVAL_MS);
+    // Foreground only: on Android this timer can keep firing with the app in
+    // the background and the screen locked, when a battery saver may have
+    // switched location off for the locked phone -- read as "location off"
+    // although the user has it on. The background tick covers that time.
+    const interval = setInterval(() => {
+      if (AppState.currentState === 'active') checkShiftIntegrity();
+    }, INTEGRITY_FOREGROUND_CHECK_INTERVAL_MS);
     const subscription = AppState.addEventListener('change', (state) => {
       if (state === 'active') checkShiftIntegrity();
     });

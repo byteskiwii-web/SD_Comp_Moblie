@@ -42,11 +42,21 @@ const WARNING_ACTION: Record<AttendanceAlertType, string> = {
  * No-ops entirely when not on shift -- the same isClockedIn && !isOnBreak
  * gate useLocationPollingEffect uses for the geofence poll.
  */
-export async function checkShiftIntegrity(knownLocationOff?: boolean): Promise<void> {
+/**
+ * `knownLocationOff`: true/false is the caller's answer; `null` means the
+ * caller knows it cannot tell (location_off is left out for the server to
+ * infer); `undefined` means read the switch here.
+ */
+export async function checkShiftIntegrity(knownLocationOff?: boolean | null): Promise<void> {
   const shift = useShiftStore.getState();
   if (!shift.isClockedIn || shift.isOnBreak || !shift.storeCode) return;
 
-  const locationOff = typeof knownLocationOff === 'boolean' ? knownLocationOff : await isLocationServicesOff();
+  const locationOff =
+    knownLocationOff === null
+      ? undefined
+      : typeof knownLocationOff === 'boolean'
+        ? knownLocationOff
+        : await isLocationServicesOff();
 
   let developerMode = false;
   try {

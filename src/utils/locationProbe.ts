@@ -1,12 +1,17 @@
 import * as Location from 'expo-location';
 
 export type LocationProbeResult =
-  | { status: 'ok'; coords: { latitude: number; longitude: number } }
+  | { status: 'ok'; coords: { latitude: number; longitude: number; accuracy: number | null } }
   | { status: 'disabled' } // Location services are off -- known directly, not inferred.
   | { status: 'timeout' }; // Services are on but no fix arrived in time -- a bad signal, not evidence of anything.
 
 const FIX_TIMEOUT_MS = 20000;
-const CACHED_FIX_MAX_AGE_MS = 5 * 60 * 1000;
+/*
+ * Only a recent cached fix may stand in when no live fix arrives. At 5 minutes
+ * a fix from before the employee reached the store could be judged against
+ * the fence and read "outside" while they stood inside it.
+ */
+const CACHED_FIX_MAX_AGE_MS = 2 * 60 * 1000;
 
 /**
  * Distinguishes "location is off" from "location is on but the fix is slow
@@ -17,10 +22,13 @@ const CACHED_FIX_MAX_AGE_MS = 5 * 60 * 1000;
  *
  * hasServicesEnabledAsync() is checked fresh every call (cheap, no radio
  * involved) rather than cached, since detecting the OFF state precisely is
- * the entire point. Once confirmed on, getLastKnownPositionAsync's maxAge
- * short-circuit is safe to use for the actual coordinates -- it can only
- * ever skip a live GPS fix, never mask an off state, because that state was
- * already ruled out above.
+ * the entire point.
+ *
+ * The position is a LIVE high-accuracy fix first: this decides inside/outside
+ * the fence, and a cached or Wi-Fi/cell fix is often 100+ m off or minutes
+ * old. Only if no live fix arrives within FIX_TIMEOUT_MS does a cached fix of
+ * at most CACHED_FIX_MAX_AGE_MS stand in. Either way its accuracy goes with it,
+ * so the server can allow for a rough reading (isWithinFence).
  */
 /**
  * Whether the phone's location services switch is OFF -- the switch only,
@@ -47,21 +55,24 @@ export async function probeLocation(): Promise<LocationProbeResult> {
   if (!servicesEnabled) return { status: 'disabled' };
 
   try {
-    const cached = await Location.getLastKnownPositionAsync({ maxAge: CACHED_FIX_MAX_AGE_MS });
-    if (cached) {
-      return { status: 'ok', coords: { latitude: cached.coords.latitude, longitude: cached.coords.longitude } };
-    }
+    const position = await Promise.race([
+      Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High }),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('probe timeout')), FIX_TIMEOUT_MS)),
+    ]);
+    return { status: 'ok', coords: toCoords(position.coords) };
   } catch {
-    // Fall through to a live fix.
+    // No live fix in time -- a recent cached one may stand in.
   }
 
   try {
-    const position = await Promise.race([
-      Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }),
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('probe timeout')), FIX_TIMEOUT_MS)),
-    ]);
-    return { status: 'ok', coords: { latitude: position.coords.latitude, longitude: position.coords.longitude } };
+    const cached = await Location.getLastKnownPositionAsync({ maxAge: CACHED_FIX_MAX_AGE_MS });
+    if (cached) return { status: 'ok', coords: toCoords(cached.coords) };
   } catch {
-    return { status: 'timeout' };
+    // Nothing usable either way.
   }
+  return { status: 'timeout' };
+}
+
+function toCoords(c: { latitude: number; longitude: number; accuracy?: number | null }) {
+  return { latitude: c.latitude, longitude: c.longitude, accuracy: c.accuracy ?? null };
 }
