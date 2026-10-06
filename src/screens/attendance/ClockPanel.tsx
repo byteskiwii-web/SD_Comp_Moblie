@@ -287,6 +287,16 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
    * store says clocked in and off break.
    */
   const now = useTicker();
+  /*
+   * Effective hours and total break so far today, for everyone -- not only
+   * shifts with a break allowance. From today's marks already loaded above,
+   * re-read on the same ticker, so a running shift or break keeps counting:
+   * no extra request, no extra timer.
+   */
+  const todayTotals = useMemo(() => {
+    const day = summariseDay(toLocalDateKey(now), marks, now);
+    return day.firstIn ? { effective: day.effectiveMinutes, breakTaken: day.breakMinutes } : null;
+  }, [marks, now]);
   const dayFinishedToday = !isCurrentlyClockedIn && !!lastClockOut;
   const shiftWindowOpen = isWithinShiftWindow(profile?.shiftStart, profile?.shiftEnd, now);
   /* The Clock In button follows the shift: closed before the window opens
@@ -865,28 +875,45 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
           attendance fact, read where a break is actually taken, not a
           three-part breakdown (lunch/tea/tea) that reads as furniture on a
           profile page nobody opens mid-shift. */}
-      {breakUsage && !compact && (
-        <View style={[styles.breakCard, breakUsage.overrun > 0 && styles.breakCardOver]}>
-          <View style={styles.breakCardRow}>
-            <Text style={styles.breakCardLabel}>
-              {breakUsage.used > 0 ? t('clock.breakUsed') : t('clock.breakMax')}
-            </Text>
-            <Text style={styles.breakCardValue}>
-              {breakUsage.used > 0
-                ? t('clock.breakUsedOf', { used: breakUsage.used, allowance: breakUsage.allowance })
-                : t('clock.breakMaxMinutes', { allowance: breakUsage.allowance })}
-            </Text>
-          </View>
-          {breakUsage.used > 0 &&
-            (breakUsage.overrun > 0 ? (
-              <Text style={styles.breakCardOverText}>
-                {t('clock.breakOver', { overrun: breakUsage.overrun, endsAt: formatClockTime(breakUsage.endsAt) })}
-              </Text>
-            ) : (
-              <Text style={styles.breakCardLeft}>
-                {t('clock.breakLeft', { remaining: breakUsage.remaining })}
-              </Text>
-            ))}
+      {(breakUsage || todayTotals) && !compact && (
+        <View style={[styles.breakCard, breakUsage && breakUsage.overrun > 0 && styles.breakCardOver]}>
+          {todayTotals && (
+            <View style={styles.breakCardRow}>
+              <Text style={styles.breakCardLabel}>{t('day.effectiveHours')}</Text>
+              <Text style={styles.breakCardValue}>{formatDuration(todayTotals.effective)}</Text>
+            </View>
+          )}
+          {/* With an allowance, "Break used X of Y" below already says it. */}
+          {todayTotals && !breakUsage && (
+            <View style={styles.breakCardRow}>
+              <Text style={styles.breakCardLabel}>{t('day.totalBreak')}</Text>
+              <Text style={styles.breakCardValue}>{formatDuration(todayTotals.breakTaken)}</Text>
+            </View>
+          )}
+          {breakUsage && (
+            <>
+              <View style={styles.breakCardRow}>
+                <Text style={styles.breakCardLabel}>
+                  {breakUsage.used > 0 ? t('clock.breakUsed') : t('clock.breakMax')}
+                </Text>
+                <Text style={styles.breakCardValue}>
+                  {breakUsage.used > 0
+                    ? t('clock.breakUsedOf', { used: breakUsage.used, allowance: breakUsage.allowance })
+                    : t('clock.breakMaxMinutes', { allowance: breakUsage.allowance })}
+                </Text>
+              </View>
+              {breakUsage.used > 0 &&
+                (breakUsage.overrun > 0 ? (
+                  <Text style={styles.breakCardOverText}>
+                    {t('clock.breakOver', { overrun: breakUsage.overrun, endsAt: formatClockTime(breakUsage.endsAt) })}
+                  </Text>
+                ) : (
+                  <Text style={styles.breakCardLeft}>
+                    {t('clock.breakLeft', { remaining: breakUsage.remaining })}
+                  </Text>
+                ))}
+            </>
+          )}
         </View>
       )}
 
