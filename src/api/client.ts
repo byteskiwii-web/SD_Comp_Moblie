@@ -227,6 +227,22 @@ export function getApiErrorMessage(err: unknown, fallback = 'Something went wron
   return fallback;
 }
 
+/**
+ * The verification provider's own words for a failure ("Beneficiary bank
+ * offline", "Invalid PAN"), when the server passed them on in
+ * `details.providerMessage`. Shown NEXT TO getApiErrorMessage's line, never
+ * instead of it. Undefined for anything else -- and never trusts `details`'
+ * shape, for the reason given on ApiErrorBody above.
+ */
+export function getProviderMessage(err: unknown): string | undefined {
+  const details = getApiErrorDetails<unknown>(err);
+  if (details && typeof details === 'object' && !Array.isArray(details)) {
+    const said = (details as { providerMessage?: unknown }).providerMessage;
+    if (typeof said === 'string' && said.trim()) return said.trim();
+  }
+  return undefined;
+}
+
 export function getApiErrorCode(err: unknown): string | undefined {
   if (axios.isAxiosError(err)) {
     const body = err.response?.data as ApiErrorBody | undefined;

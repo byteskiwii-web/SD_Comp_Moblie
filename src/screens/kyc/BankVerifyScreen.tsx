@@ -24,7 +24,7 @@ import {
   type BankVerifyMode,
   type BankVerifyResult,
 } from '../../api/verification.api';
-import { getApiErrorMessage } from '../../api/client';
+import { getApiErrorMessage, getProviderMessage } from '../../api/client';
 import { onboardingGateQueryKey as kycGateQueryKey } from '../../hooks/useOnboardingGate';
 import { bankVerifySchema } from '../../schemas/kyc.schema';
 import { useT } from '../../i18n';
@@ -100,7 +100,8 @@ export function BankVerifyScreen() {
     },
     onError: (err) => {
       setResult(null);
-      setError(getApiErrorMessage(err));
+      const reason = getProviderMessage(err);
+      setError(reason ? `${getApiErrorMessage(err)}\n${t('kyc.reason', { reason })}` : getApiErrorMessage(err));
     },
   });
 
@@ -222,9 +223,15 @@ export function BankVerifyScreen() {
           {result && (
             <View style={[styles.result, result.verified ? styles.resultOk : styles.resultBad]}>
               <Text style={[styles.resultTitle, result.verified ? styles.resultTitleOk : styles.resultTitleBad]}>
-                {result.verified ? t('bank.verified') : t('bank.unusable')}
+                {/* "Not usable for salary" only when the account is known to
+                    exist; a check that could not confirm the account (wrong
+                    details, bank offline) says so instead. */}
+                {result.verified ? t('bank.verified') : result.accountExists ? t('bank.unusable') : t('bank.notVerified')}
               </Text>
               <Text style={styles.resultLine}>{result.message}</Text>
+              {result.providerMessage ? (
+                <Text style={styles.resultLine}>{t('kyc.reason', { reason: result.providerMessage })}</Text>
+              ) : null}
               {result.account.nameAtBank ? (
                 <Text style={styles.resultLine}>
                   {t('bank.nameAtBank', { name: result.account.nameAtBank })}
