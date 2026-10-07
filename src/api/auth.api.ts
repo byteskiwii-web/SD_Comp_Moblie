@@ -135,7 +135,8 @@ export type Me = {
    * every existing row). The onboarding checklist
    * (useOnboardingGate.ts) shows it as the last step.
    */
-  approvalStatus: 'pending-approval' | 'approved' | 'rejected' | null;
+  /** 'on-hold': waiting on HR's decision after a check that needs a human (e.g. PAN not linked to Aadhaar). */
+  approvalStatus: 'pending-approval' | 'on-hold' | 'approved' | 'rejected' | null;
   approvalRejectionReason: string | null;
 };
 

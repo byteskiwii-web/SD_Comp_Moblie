@@ -10,7 +10,7 @@ import { ColorScheme } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
 import { useAuthStore } from '../../stores/authStore';
 import { getKycStatus, verifyPan } from '../../api/verification.api';
-import { getApiErrorMessage } from '../../api/client';
+import { getApiErrorMessage, getProviderMessage } from '../../api/client';
 import { onboardingGateQueryKey as kycGateQueryKey } from '../../hooks/useOnboardingGate';
 import { panVerifySchema } from '../../schemas/kyc.schema';
 import { KycStackParamList } from '../../navigation/types';
@@ -82,11 +82,15 @@ export function PanVerifyScreen() {
         setError(result.aadhaar.message);
       } else {
         // PAN failed; Aadhaar (if combined) was never reached. Both typed
-        // fields survive for the retry.
-        setError(result.message);
+        // fields survive for the retry. The provider's own reason, when it
+        // gave one, goes under ours.
+        setError(result.providerMessage ? `${result.message}\n${t('kyc.reason', { reason: result.providerMessage })}` : result.message);
       }
     },
-    onError: (err) => setError(getApiErrorMessage(err)),
+    onError: (err) => {
+      const reason = getProviderMessage(err);
+      setError(reason ? `${getApiErrorMessage(err)}\n${t('kyc.reason', { reason })}` : getApiErrorMessage(err));
+    },
   });
 
   const formatDob = (raw: string) => {

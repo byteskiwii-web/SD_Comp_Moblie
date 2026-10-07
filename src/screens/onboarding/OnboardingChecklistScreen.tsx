@@ -106,6 +106,10 @@ export function OnboardingChecklistScreen() {
   const displayRoute = (step: DisplayStep): string | undefined => (step === 'panAadhaar' ? ROUTE.pan : ROUTE[step]);
   const done = displayRows.filter((s) => isDisplayDone(s)).length;
   const rejected = status?.approvalStatus === 'rejected';
+  /* Held for HR -- today, when the PAN turned out not to be linked to an
+     Aadhaar. Not a rejection: the account stays, HR has been told, and the
+     person can still fix the cause and re-run the check. */
+  const held = status?.approvalStatus === 'on-hold';
   /* The next thing to do, so the big button at the bottom always goes somewhere. */
   const next = displayRows.find((s) => !isDisplayDone(s) && displayRoute(s));
 
@@ -121,6 +125,18 @@ export function OnboardingChecklistScreen() {
         <Text style={styles.hello}>{t('checklist.hello', { name: employee?.first_name ?? '' })}</Text>
         <Text style={styles.title}>{t('checklist.title')}</Text>
         <Text style={styles.body}>{t('checklist.body')}</Text>
+
+        {held ? (
+          <View style={styles.holdCard} accessibilityRole="alert">
+            <Ionicons name="pause-circle" size={22} color={colors.warningText} />
+            <View style={styles.holdBody}>
+              <Text style={styles.holdTitle}>{t('checklist.onHoldTitle')}</Text>
+              <Text style={styles.holdText}>
+                {t('checklist.onHoldBody', { reason: status?.approvalRejectionReason || t('checklist.onHoldNoReason') })}
+              </Text>
+            </View>
+          </View>
+        ) : null}
 
         {isError ? (
           <Card style={styles.errorCard}>
@@ -156,7 +172,9 @@ export function OnboardingChecklistScreen() {
                         : waiting
                           ? rejected
                             ? t('checklist.rejected', { reason: status?.approvalRejectionReason ?? '' })
-                            : status?.selfComplete ? t('checklist.waitingHr') : t('checklist.afterSteps')
+                            : held
+                              ? t('checklist.onHold')
+                              : status?.selfComplete ? t('checklist.waitingHr') : t('checklist.afterSteps')
                           : t(`checklist.hint.${step}` as TKey)}
                     </Text>
                   </View>
@@ -183,7 +201,7 @@ export function OnboardingChecklistScreen() {
           <View style={styles.cta}>
             <Button title={t('checklist.continue')} onPress={() => navigation.navigate(displayRoute(next)!)} />
           </View>
-        ) : status?.selfComplete && !status.complete ? (
+        ) : status?.selfComplete && !status.complete && !held ? (
           <View style={styles.waitCard}>
             <Ionicons name="checkmark-circle" size={20} color={colors.successText} />
             <Text style={styles.waitText}>{t('checklist.allSent')}</Text>
@@ -230,6 +248,10 @@ function makeStyles(colors: ColorScheme) {
     waitCard: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: colors.successBg, borderRadius: radii.md, padding: 14 },
     waitText: { flex: 1, fontSize: 12.5, fontWeight: '600', color: colors.slate700, lineHeight: 18 },
     errorCard: { gap: 12 },
+    holdCard: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, backgroundColor: colors.warningBg, borderRadius: radii.md, padding: 14, marginBottom: 14 },
+    holdBody: { flex: 1 },
+    holdTitle: { fontSize: 13.5, fontWeight: '800', color: colors.warningText, marginBottom: 3 },
+    holdText: { fontSize: 12.5, color: colors.slate700, lineHeight: 18 },
     errorText: { fontSize: 12.5, color: colors.dangerText, fontWeight: '600' },
   });
 }

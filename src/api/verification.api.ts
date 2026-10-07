@@ -119,6 +119,8 @@ export type PanVerifyResult = {
   verified: boolean;
   outcome: string;
   message: string;
+  /** The provider's own words when PAN Verify itself said no; null otherwise. */
+  providerMessage?: string | null;
   pan: {
     masked: string;
     status?: string;
@@ -211,6 +213,8 @@ export type BankVerifyResult = {
   accountExists: boolean;
   outcome: string;
   message: string;
+  /** The provider's own words for the outcome ("Account is blocked"); null on a plain success. */
+  providerMessage?: string | null;
   account: { masked: string; ifsc: string; nameAtBank: string | null };
   mode: BankVerifyMode;
   /** Penny-drop only: proof the rupee actually landed. */
