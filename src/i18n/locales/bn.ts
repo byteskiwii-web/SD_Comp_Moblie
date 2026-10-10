@@ -884,7 +884,7 @@ export const bn: Catalogue = {
   'face.withdrawBody': 'আপনার মুখের গাণিতিক সারাংশ মুছে ফেলা হবে। মুখ যাচাই আবার সেট না করা পর্যন্ত আপনি পাঞ্চ ইন বা পাঞ্চ আউট করতে পারবেন না।',
   'face.withdrawConfirm': 'প্রত্যাহার করুন',
   'shiftNotif.title': 'শিফটে আছেন · লোকেশন যাচাই চালু',
-  'shiftNotif.text': 'পাঞ্চ আউট না করা পর্যন্ত Zob Connect প্রায় প্রতি 12 মিনিটে আপনার লোকেশন যাচাই করে।',
+  'shiftNotif.text': 'পাঞ্চ আউট না করা পর্যন্ত Zob Connect আপনার লোকেশন যাচাই করে।',
   'shiftNotif.channel': 'শিফটের লোকেশন যাচাই',
   'clock.geoTagged': 'লোকেশন রেকর্ড হয়েছে',
   'clock.geoTaggedDetail': '{site} থেকে {distance} · টিম লিডের লোকেশন শুধু রেকর্ড হয়, জিওফেন্স যাচাই হয় না',

@@ -884,7 +884,7 @@ export const gu: Catalogue = {
   'face.withdrawBody': 'તમારા ચહેરાનો ગાણિતિક સાર કાઢી નાખવામાં આવશે. ચહેરા ચકાસણી ફરી સેટ ન કરો ત્યાં સુધી તમે પંચ ઇન કે પંચ આઉટ કરી શકશો નહીં.',
   'face.withdrawConfirm': 'પાછી ખેંચો',
   'shiftNotif.title': 'શિફ્ટ પર · લોકેશન ચકાસણી ચાલુ',
-  'shiftNotif.text': 'પંચ આઉટ કરો ત્યાં સુધી Zob Connect લગભગ દર 12 મિનિટે તમારું લોકેશન ચકાસે છે.',
+  'shiftNotif.text': 'પંચ આઉટ કરો ત્યાં સુધી Zob Connect તમારું લોકેશન ચકાસે છે.',
   'shiftNotif.channel': 'શિફ્ટની લોકેશન ચકાસણી',
   'clock.geoTagged': 'લોકેશન નોંધાયું',
   'clock.geoTaggedDetail': '{site} થી {distance} · ટીમ લીડનું લોકેશન ફક્ત નોંધાય છે, જીઓફેન્સ તપાસ થતી નથી',

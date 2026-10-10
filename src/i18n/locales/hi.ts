@@ -901,7 +901,7 @@ export const hi: Catalogue = {
   'face.withdrawBody': 'आपके चेहरे का गणितीय सार हटा दिया जाएगा। जब तक आप चेहरा सत्यापन फिर से सेट नहीं करते, आप पंच इन या पंच आउट नहीं कर पाएँगे।',
   'face.withdrawConfirm': 'वापस लें',
   'shiftNotif.title': 'शिफ़्ट पर · लोकेशन जाँच चालू',
-  'shiftNotif.text': 'पंच आउट करने तक Zob Connect लगभग हर 12 मिनट में आपकी लोकेशन जाँचता है।',
+  'shiftNotif.text': 'पंच आउट करने तक Zob Connect आपकी लोकेशन जाँचता है।',
   'shiftNotif.channel': 'शिफ़्ट की लोकेशन जाँच',
   'clock.geoTagged': 'लोकेशन दर्ज हुई',
   'clock.geoTaggedDetail': '{site} से {distance} · टीम लीड की लोकेशन केवल दर्ज होती है, जियोफ़ेंस जाँच नहीं होती',

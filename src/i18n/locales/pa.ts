@@ -884,7 +884,7 @@ export const pa: Catalogue = {
   'face.withdrawBody': 'ਤੁਹਾਡੇ ਚਿਹਰੇ ਦਾ ਗਣਿਤਕ ਸਾਰ ਮਿਟਾ ਦਿੱਤਾ ਜਾਵੇਗਾ। ਚਿਹਰਾ ਪੁਸ਼ਟੀ ਦੁਬਾਰਾ ਸੈੱਟ ਕਰਨ ਤੱਕ ਤੁਸੀਂ ਪੰਚ ਇਨ ਜਾਂ ਪੰਚ ਆਊਟ ਨਹੀਂ ਕਰ ਸਕੋਗੇ।',
   'face.withdrawConfirm': 'ਵਾਪਸ ਲਓ',
   'shiftNotif.title': 'ਸ਼ਿਫਟ ਤੇ · ਲੋਕੇਸ਼ਨ ਜਾਂਚ ਚਾਲੂ',
-  'shiftNotif.text': 'ਪੰਚ ਆਊਟ ਕਰਨ ਤੱਕ Zob Connect ਲਗਭਗ ਹਰ 12 ਮਿੰਟ ਵਿੱਚ ਤੁਹਾਡੀ ਲੋਕੇਸ਼ਨ ਜਾਂਚਦਾ ਹੈ।',
+  'shiftNotif.text': 'ਪੰਚ ਆਊਟ ਕਰਨ ਤੱਕ Zob Connect ਤੁਹਾਡੀ ਲੋਕੇਸ਼ਨ ਜਾਂਚਦਾ ਹੈ।',
   'shiftNotif.channel': 'ਸ਼ਿਫਟ ਦੀ ਲੋਕੇਸ਼ਨ ਜਾਂਚ',
   'clock.geoTagged': 'ਲੋਕੇਸ਼ਨ ਦਰਜ ਹੋਈ',
   'clock.geoTaggedDetail': '{site} ਤੋਂ {distance} · ਟੀਮ ਲੀਡ ਦੀ ਲੋਕੇਸ਼ਨ ਸਿਰਫ਼ ਦਰਜ ਹੁੰਦੀ ਹੈ, ਜੀਓਫੈਂਸ ਜਾਂਚ ਨਹੀਂ ਹੁੰਦੀ',

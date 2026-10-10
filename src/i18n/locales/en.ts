@@ -913,7 +913,7 @@ export const en = {
   'face.withdrawBody': 'The mathematical summary of your face will be deleted. You won\'t be able to punch in or out until you set up face verification again.',
   'face.withdrawConfirm': 'Withdraw',
   'shiftNotif.title': 'On shift · location checks on',
-  'shiftNotif.text': 'Zob Connect checks your location about every 12 minutes until you clock out.',
+  'shiftNotif.text': "Zob Connect checks your location while you're on shift, until you clock out.",
   'shiftNotif.channel': 'Shift location checks',
   'clock.geoTagged': 'Location recorded',
   'clock.geoTaggedDetail': '{distance} from {site} · team leads are geo-tagged, not fence-checked',

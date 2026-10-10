@@ -58,7 +58,7 @@ class ShiftTimerService : Service() {
     private const val PREF_NOTIF_TEXT = "notifText"
     private const val PREF_CHANNEL_NAME = "channelName"
     private const val DEFAULT_TITLE = "On shift · location checks on"
-    private const val DEFAULT_TEXT = "Zob Connect checks your location about every 12 minutes until you clock out."
+    private const val DEFAULT_TEXT = "Zob Connect checks your location while you're on shift, until you clock out."
     private const val DEFAULT_CHANNEL_NAME = "Shift location checks"
 
     // Cross-checked against the SharedPreferences copy in fireTick so a

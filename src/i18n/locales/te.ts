@@ -894,7 +894,7 @@ export const te: Catalogue = {
   'face.withdrawBody': 'మీ ముఖం యొక్క గణిత సారాంశం తొలగించబడుతుంది. ముఖ ధృవీకరణను మళ్లీ సెటప్ చేసే వరకు మీరు పంచ్ ఇన్ లేదా పంచ్ అవుట్ చేయలేరు.',
   'face.withdrawConfirm': 'ఉపసంహరించు',
   'shiftNotif.title': 'షిఫ్ట్‌లో · లొకేషన్ తనిఖీ ఆన్',
-  'shiftNotif.text': 'మీరు పంచ్ అవుట్ చేసే వరకు Zob Connect దాదాపు ప్రతి 12 నిమిషాలకు మీ లొకేషన్ తనిఖీ చేస్తుంది.',
+  'shiftNotif.text': 'మీరు పంచ్ అవుట్ చేసే వరకు Zob Connect మీ లొకేషన్ తనిఖీ చేస్తుంది.',
   'shiftNotif.channel': 'షిఫ్ట్ లొకేషన్ తనిఖీలు',
   'clock.geoTagged': 'లొకేషన్ నమోదైంది',
   'clock.geoTaggedDetail': '{site} నుండి {distance} · టీమ్ లీడ్ లొకేషన్ నమోదు మాత్రమే, జియోఫెన్స్ తనిఖీ ఉండదు',
