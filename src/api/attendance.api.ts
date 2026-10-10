@@ -9,6 +9,7 @@ import type {
   Regularisation,
   RegularisationRequestType,
 } from '../types/attendance';
+import type { PickedFile } from './documents.api';
 
 type PunchInput = {
   employee_id: string;
@@ -231,14 +232,47 @@ type RegularisationInput = {
   requested_clock_in?: string; // ISO datetime -- only meaningful for 'adjust'
   requested_clock_out?: string;
   reason: string;
+  // Required for a self-submission (the server enforces this); there is no
+  // console/on-behalf path from this app, so it is always sent here.
+  photo: PickedFile;
 };
+
+async function buildRegularisationFormData(input: RegularisationInput): Promise<FormData> {
+  const form = new FormData();
+  form.append('store_code', input.store_code);
+  form.append('mark_date', input.mark_date);
+  form.append('request_type', input.request_type);
+  if (input.requested_clock_in) form.append('requested_clock_in', input.requested_clock_in);
+  if (input.requested_clock_out) form.append('requested_clock_out', input.requested_clock_out);
+  form.append('reason', input.reason);
+
+  if (Platform.OS === 'web') {
+    // See buildPunchFormData above -- the browser's real FormData stringifies
+    // RN's {uri,name,type} shape instead of sending bytes, so it has to go
+    // through fetch().blob() here too.
+    const blob = await (await fetch(input.photo.uri)).blob();
+    form.append('photo', blob, input.photo.name);
+    return form;
+  }
+
+  form.append('photo', {
+    uri: input.photo.uri,
+    name: input.photo.name,
+    type: input.photo.mimeType,
+  } as unknown as Blob);
+
+  return form;
+}
 
 // employee_id is NOT sent -- omitting it raises the request under the
 // caller's own id. Sending someone else's id here would need reviewer
 // authority the mobile app's own employee session never has, so there is
 // nothing this app could gain by sending one.
 export async function submitRegularisation(input: RegularisationInput) {
-  const res = await apiClient.post<{ success: true; data: Regularisation }>('/regularisation', input);
+  const form = await buildRegularisationFormData(input);
+  const res = await apiClient.post<{ success: true; data: Regularisation }>('/regularisation', form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
   return res.data.data;
 }
 

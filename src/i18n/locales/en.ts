@@ -221,6 +221,13 @@ export const en = {
   'reg.yourRequests': 'Your requests',
   'reg.none': 'No corrections raised yet.',
   'reg.sameDay': 'A correction can only be raised for a day that has finished.',
+  'reg.photo.label': 'Supporting photo',
+  'reg.photo.hint': 'Attach a photo as evidence — a slip, a screenshot, anything that supports this request.',
+  'reg.photo.required': 'Please attach a photo',
+  'reg.photo.take': 'Take photo',
+  'reg.photo.choose': 'Choose from gallery',
+  'reg.photo.replace': 'Replace',
+  'reg.photo.remove': 'Remove',
 
   /* ----------------------------------------------------------------- leave */
   'leave.title': 'Leave',

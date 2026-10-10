@@ -208,6 +208,13 @@ export const mr: Catalogue = {
   'reg.yourRequests': 'तुमच्या विनंत्या',
   'reg.none': 'अजून कोणतीही दुरुस्ती केलेली नाही.',
   'reg.sameDay': 'फक्त पूर्ण झालेल्या दिवसासाठीच दुरुस्ती करता येते.',
+  'reg.photo.label': 'सहाय्यक फोटो',
+  'reg.photo.hint': 'पुरावा म्हणून एक फोटो जोडा — एक चिठ्ठी, स्क्रीनशॉट किंवा या विनंतीला समर्थन देणारे काहीही.',
+  'reg.photo.required': 'कृपया एक फोटो जोडा',
+  'reg.photo.take': 'फोटो घ्या',
+  'reg.photo.choose': 'गॅलरीमधून निवडा',
+  'reg.photo.replace': 'बदला',
+  'reg.photo.remove': 'काढा',
 
   'leave.title': 'रजा',
   'leave.apply': 'अर्ज करा',

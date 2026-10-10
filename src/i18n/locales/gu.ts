@@ -208,6 +208,13 @@ export const gu: Catalogue = {
   'reg.yourRequests': 'તમારી વિનંતીઓ',
   'reg.none': 'હજુ સુધી કોઈ સુધારો કરવામાં આવ્યો નથી.',
   'reg.sameDay': 'સુધારો ફક્ત પૂરા થયેલા દિવસ માટે જ કરી શકાય.',
+  'reg.photo.label': 'સહાયક ફોટો',
+  'reg.photo.hint': 'પુરાવા તરીકે એક ફોટો જોડો — એક સ્લિપ, સ્ક્રીનશોટ અથવા આ વિનંતીને સમર્થન આપતું કંઈપણ.',
+  'reg.photo.required': 'કૃપા કરી એક ફોટો જોડો',
+  'reg.photo.take': 'ફોટો લો',
+  'reg.photo.choose': 'ગેલેરીમાંથી પસંદ કરો',
+  'reg.photo.replace': 'બદલો',
+  'reg.photo.remove': 'દૂર કરો',
 
   'leave.title': 'રજા',
   'leave.apply': 'અરજી કરો',

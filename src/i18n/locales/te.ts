@@ -201,6 +201,13 @@ export const te: Catalogue = {
   'reg.yourRequests': 'మీ అభ్యర్థనలు',
   'reg.none': 'ఇంకా ఏ సవరణా కోరలేదు.',
   'reg.sameDay': 'పూర్తయిన రోజుకు మాత్రమే సవరణ కోరవచ్చు.',
+  'reg.photo.label': 'సహాయక ఫోటో',
+  'reg.photo.hint': 'సాక్ష్యంగా ఒక ఫోటోను జత చేయండి — స్లిప్, స్క్రీన్‌షాట్ లేదా ఈ రిక్వెస్ట్‌కు మద్దతు ఇచ్చే ఏదైనా.',
+  'reg.photo.required': 'దయచేసి ఒక ఫోటోను జత చేయండి',
+  'reg.photo.take': 'ఫోటో తీయండి',
+  'reg.photo.choose': 'గ్యాలరీ నుండి ఎంచుకోండి',
+  'reg.photo.replace': 'మార్చండి',
+  'reg.photo.remove': 'తీసివేయండి',
 
   'leave.title': 'సెలవు',
   'leave.apply': 'దరఖాస్తు',

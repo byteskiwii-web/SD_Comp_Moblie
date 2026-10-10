@@ -208,6 +208,13 @@ export const bn: Catalogue = {
   'reg.yourRequests': 'আপনার অনুরোধসমূহ',
   'reg.none': 'এখনও কোনো সংশোধন জানানো হয়নি।',
   'reg.sameDay': 'শুধুমাত্র শেষ হওয়া দিনের জন্য সংশোধন জানানো যায়।',
+  'reg.photo.label': 'সহায়ক ছবি',
+  'reg.photo.hint': 'প্রমাণ হিসেবে একটি ছবি যুক্ত করুন — একটি স্লিপ, স্ক্রিনশট, বা এই অনুরোধকে সমর্থন করে এমন কিছু।',
+  'reg.photo.required': 'অনুগ্রহ করে একটি ছবি যুক্ত করুন',
+  'reg.photo.take': 'ছবি তুলুন',
+  'reg.photo.choose': 'গ্যালারি থেকে বেছে নিন',
+  'reg.photo.replace': 'পরিবর্তন করুন',
+  'reg.photo.remove': 'মুছুন',
 
   'leave.title': 'ছুটি',
   'leave.apply': 'আবেদন করুন',

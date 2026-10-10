@@ -201,6 +201,13 @@ export const kn: Catalogue = {
   'reg.yourRequests': 'ನಿಮ್ಮ ವಿನಂತಿಗಳು',
   'reg.none': 'ಇನ್ನೂ ಯಾವುದೇ ತಿದ್ದುಪಡಿ ಕೇಳಿಲ್ಲ.',
   'reg.sameDay': 'ಮುಗಿದ ದಿನಕ್ಕೆ ಮಾತ್ರ ತಿದ್ದುಪಡಿ ಕೇಳಬಹುದು.',
+  'reg.photo.label': 'ಪೋಷಕ ಫೋಟೋ',
+  'reg.photo.hint': 'ಪುರಾವೆಯಾಗಿ ಒಂದು ಫೋಟೋವನ್ನು ಲಗತ್ತಿಸಿ — ಒಂದು ಸ್ಲಿಪ್, ಸ್ಕ್ರೀನ್‌ಶಾಟ್ ಅಥವಾ ಈ ವಿನಂತಿಗೆ ಬೆಂಬಲಿಸುವ ಯಾವುದೇ.',
+  'reg.photo.required': 'ದಯವಿಟ್ಟು ಒಂದು ಫೋಟೋವನ್ನು ಲಗತ್ತಿಸಿ',
+  'reg.photo.take': 'ಫೋಟೋ ತೆಗೆಯಿರಿ',
+  'reg.photo.choose': 'ಗ್ಯಾಲರಿಯಿಂದ ಆಯ್ಕೆಮಾಡಿ',
+  'reg.photo.replace': 'ಬದಲಾಯಿಸಿ',
+  'reg.photo.remove': 'ತೆಗೆದುಹಾಕಿ',
 
   'leave.title': 'ರಜೆ',
   'leave.apply': 'ಅರ್ಜಿ',

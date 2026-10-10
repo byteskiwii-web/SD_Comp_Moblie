@@ -208,6 +208,13 @@ export const hi: Catalogue = {
   'reg.yourRequests': 'आपके अनुरोध',
   'reg.none': 'अभी कोई सुधार नहीं भेजा गया।',
   'reg.sameDay': 'सुधार केवल उस दिन के लिए भेजा जा सकता है जो पूरा हो चुका हो।',
+  'reg.photo.label': 'सहायक फोटो',
+  'reg.photo.hint': 'सबूत के तौर पर एक फोटो लगाएं — कोई पर्ची, स्क्रीनशॉट, या कुछ भी जो इस रिक्वेस्ट का समर्थन करे।',
+  'reg.photo.required': 'कृपया एक फोटो लगाएं',
+  'reg.photo.take': 'फोटो लें',
+  'reg.photo.choose': 'गैलरी से चुनें',
+  'reg.photo.replace': 'बदलें',
+  'reg.photo.remove': 'हटाएं',
 
   'leave.title': 'छुट्टी',
   'leave.apply': 'आवेदन',

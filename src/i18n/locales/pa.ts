@@ -208,6 +208,13 @@ export const pa: Catalogue = {
   'reg.yourRequests': 'ਤੁਹਾਡੀਆਂ ਬੇਨਤੀਆਂ',
   'reg.none': 'ਹਾਲੇ ਤੱਕ ਕੋਈ ਸੁਧਾਰ ਨਹੀਂ ਕੀਤਾ ਗਿਆ।',
   'reg.sameDay': 'ਸੁਧਾਰ ਸਿਰਫ਼ ਪੂਰੇ ਹੋ ਚੁੱਕੇ ਦਿਨ ਲਈ ਹੀ ਕੀਤਾ ਜਾ ਸਕਦਾ ਹੈ।',
+  'reg.photo.label': 'ਸਹਾਇਕ ਫੋਟੋ',
+  'reg.photo.hint': 'ਸਬੂਤ ਵਜੋਂ ਇੱਕ ਫੋਟੋ ਜੋੜੋ — ਇੱਕ ਸਲਿੱਪ, ਸਕ੍ਰੀਨਸ਼ਾਟ ਜਾਂ ਇਸ ਬੇਨਤੀ ਦਾ ਸਮਰਥਨ ਕਰਨ ਵਾਲੀ ਕੋਈ ਵੀ ਚੀਜ਼।',
+  'reg.photo.required': 'ਕਿਰਪਾ ਕਰਕੇ ਇੱਕ ਫੋਟੋ ਜੋੜੋ',
+  'reg.photo.take': 'ਫੋਟੋ ਲਓ',
+  'reg.photo.choose': 'ਗੈਲਰੀ ਤੋਂ ਚੁਣੋ',
+  'reg.photo.replace': 'ਬਦਲੋ',
+  'reg.photo.remove': 'ਹਟਾਓ',
 
   'leave.title': 'ਛੁੱਟੀ',
   'leave.apply': 'ਅਰਜ਼ੀ ਦਿਓ',
