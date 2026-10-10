@@ -213,6 +213,19 @@ export function dayDiscrepancies(
 }
 
 /**
+ * When clock-in opens, minutes past midnight. A day shift opens at 10:00 --
+ * or its lead-in, if earlier -- and a shift crossing midnight at its lead-in.
+ * Mirrors the server (attendance.window.js, ATTENDANCE_CLOCK_IN_OPENS_AT),
+ * which is the rule that actually refuses.
+ */
+const CLOCK_IN_OPENS_AT_MIN = 10 * 60;
+function clockInOpensMinute(start: number, end: number, leadInMinutes: number): number {
+  const leadInOpen = start - leadInMinutes;
+  const open = start < end ? Math.min(CLOCK_IN_OPENS_AT_MIN, leadInOpen) : leadInOpen;
+  return (open + 1440) % 1440;
+}
+
+/**
  * Where "now" sits against the shift, for the Clock In button: open, not yet
  * (with when it opens), or over. Mirrors the server's rule; the server is
  * still the one that refuses. null when there is no shift -- never gated.
@@ -226,7 +239,7 @@ export function clockInWindow(
   const start = minutesOfDay(shiftStart);
   const end = minutesOfDay(shiftEnd);
   if (start === null || end === null) return null;
-  const openMin = (start - leadInMinutes + 1440) % 1440;
+  const openMin = clockInOpensMinute(start, end, leadInMinutes);
   const span = (end - openMin + 1440) % 1440;
   const nowMin = now.getHours() * 60 + now.getMinutes();
   const elapsed = (nowMin - openMin + 1440) % 1440;
@@ -266,7 +279,8 @@ export function clockInWindow(
  * the first would hide the fence permanently from everyone unrostered, who
  * are exactly the people whose punches get judged on location alone.
  *
- * LEAD-IN, because arriving early is normal. Somebody standing outside the
+ * From when clock-in opens (10:00 for a day shift; see clockInOpensMinute),
+ * because arriving early is normal. Somebody standing outside the
  * gate at five to ten is deciding where to be when the shift starts, and the
  * fence line is the answer to that. Ending exactly on the rostered end is
  * fine by contrast: an employee still clocked in past it is on shift by the
@@ -289,8 +303,9 @@ export function isWithinShiftWindow(
   if (start === null || end === null) return null;
 
   const overnight = end <= start;
-  const spanMinutes = (overnight ? end + 1440 - start : end - start) + leadInMinutes;
-  const opensAt = (start - leadInMinutes + 1440) % 1440;
+  // Opens when clock-in does, so the fence line and the button agree.
+  const opensAt = clockInOpensMinute(start, end, leadInMinutes);
+  const spanMinutes = (overnight ? end + 1440 - start : end - start) + ((start - opensAt + 1440) % 1440);
   const sinceOpen = (now.getHours() * 60 + now.getMinutes() - opensAt + 1440) % 1440;
   return sinceOpen <= spanMinutes;
 }
