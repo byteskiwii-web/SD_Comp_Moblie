@@ -3,6 +3,7 @@ import { API_V1 } from '../constants/config';
 import { useAuthStore } from '../stores/authStore';
 import { currentLanguage } from '../stores/preferencesStore';
 import { useConnectivityStore } from '../stores/connectivityStore';
+import { t, hasTranslation } from '../i18n';
 
 export const apiClient = axios.create({
   baseURL: API_V1,
@@ -184,7 +185,45 @@ export type ApiErrorBody = {
   };
 };
 
-export function getApiErrorMessage(err: unknown, fallback = 'Something went wrong. Please try again.'): string {
+/** Codes that mean the same thing to the employee share one string. */
+const ERROR_ALIASES: Record<string, string> = {
+  UNAUTHENTICATED: 'INVALID_REFRESH_TOKEN',
+  FACE_PHOTO_STORE_FAILED: 'FACE_PHOTO_NOT_SAVED',
+  EMAIL_SEND_FAILED: 'EMAIL_NOT_CONFIGURED',
+  BANK_SOURCE_DECLINED: 'BANK_UNAVAILABLE',
+  BANK_BENEFICIARY_OFFLINE: 'BANK_UNAVAILABLE',
+  BANK_NETWORK_UNAVAILABLE: 'BANK_UNAVAILABLE',
+  BANK_IMPS_FAILED: 'BANK_UNAVAILABLE',
+  BANK_UPSTREAM_FAILED: 'BANK_UNAVAILABLE',
+  BANK_TRANSACTION_FAILED: 'BANK_UNAVAILABLE',
+  UPSTREAM_AUTH_FAILED: 'UPSTREAM_UNAVAILABLE',
+  UPSTREAM_UNRECOGNISED_RESPONSE: 'UPSTREAM_UNAVAILABLE',
+  UPSTREAM_QUOTA_OR_WALLET_EXHAUSTED: 'QUOTA_EXHAUSTED',
+  PENNY_DROP_NOT_ENABLED: 'PROVIDER_UNSUPPORTED_OPERATION',
+};
+
+/**
+ * The server's words are English only, so a known code is shown from the
+ * phone's own catalogue, in the language the employee picked. Undefined for an
+ * unknown code (the server's text is used, as before) or when a placeholder
+ * could not be filled -- half a sentence is worse than the English one.
+ */
+function translatedError(code: string | undefined, details: unknown): string | undefined {
+  if (!code) return undefined;
+  const plain = details && typeof details === 'object' && !Array.isArray(details) ? (details as Record<string, unknown>) : {};
+  const missing = plain.missing;
+  const onlyApproval = Array.isArray(missing) && missing.length === 1 && missing[0] === 'approval';
+  const key = 'err.' + (code === 'ONBOARDING_INCOMPLETE' && onlyApproval ? 'ONBOARDING_WAITING_HR' : ERROR_ALIASES[code] ?? code);
+  if (!hasTranslation(key)) return undefined;
+  const vars: Record<string, string | number> = {};
+  for (const [k, v] of Object.entries(plain)) {
+    if (typeof v === 'string' || typeof v === 'number') vars[k] = v;
+  }
+  const text = t(key, vars);
+  return /\{\w+\}/.test(text) ? undefined : text;
+}
+
+export function getApiErrorMessage(err: unknown, fallback = t('err.generic')): string {
   if (axios.isAxiosError(err)) {
     const body = err.response?.data as ApiErrorBody | undefined;
     /*
@@ -213,16 +252,14 @@ export function getApiErrorMessage(err: unknown, fallback = 'Something went wron
       ? body.error.details.find((d) => d?.message)?.message
       : undefined;
     if (detail) return detail;
+    const translated = translatedError(body?.error?.code, body?.error?.details);
+    if (translated) return translated;
     if (body?.error?.message) return body.error.message;
-    if (err.message === 'Network Error') {
-      return 'Could not reach the server. Check your Wi-Fi connection and try again.';
-    }
+    if (err.message === 'Network Error') return t('err.network');
     // A timeout is not "something went wrong", which is what this used to fall
     // through to. It is a specific thing with a specific remedy, and on this
     // app it almost always means a punch photo going up a weak uplink.
-    if (err.code === 'ECONNABORTED' || /timeout/i.test(err.message)) {
-      return 'The connection is too slow to finish that right now. Move somewhere with better signal and try again.';
-    }
+    if (err.code === 'ECONNABORTED' || /timeout/i.test(err.message)) return t('err.timeout');
   }
   return fallback;
 }

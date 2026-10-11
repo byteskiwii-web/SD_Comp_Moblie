@@ -65,6 +65,11 @@ export function translate(key: TKey, vars?: Vars, lang?: LanguageCode): string {
   return vars ? interpolate(raw, vars) : raw;
 }
 
+/** For keys built at runtime (a server error code): is there a string for it? */
+export function hasTranslation(key: string): key is TKey {
+  return key in en;
+}
+
 /** `{name}` only. A catalogue is data; nothing in it is evaluated. */
 function interpolate(text: string, vars: Vars): string {
   return text.replace(/\{(\w+)\}/g, (whole, name) =>
