@@ -4,16 +4,13 @@ import { useShiftStore } from '../stores/shiftStore';
 import { reportIntegrityState, AttendanceAlertConditions, AttendanceAlertType } from '../api/attendanceAlerts.api';
 import { fireIntegrityAlertNotification } from './notifications';
 import { isLocationServicesOff } from './locationProbe';
+import { t, type TKey } from '../i18n';
 
 const today = () => toLocalDateKey();
 
-const WARNING_TITLE: Record<AttendanceAlertType, string> = {
-  location_off: 'Location is off',
-  developer_mode: 'Developer Mode is on',
-};
-const WARNING_ACTION: Record<AttendanceAlertType, string> = {
-  location_off: 'turn location back on',
-  developer_mode: 'disable Developer Mode',
+const WARNING_KEYS: Record<AttendanceAlertType, { title: TKey; body: TKey }> = {
+  location_off: { title: 'alert.locationOffTitle', body: 'alert.locationOffBody' },
+  developer_mode: { title: 'alert.devModeTitle', body: 'alert.devModeBody' },
 };
 
 /**
@@ -76,13 +73,13 @@ export async function checkShiftIntegrity(knownLocationOff?: boolean | null): Pr
       conditions,
     });
 
-    const newlyCounted = (Object.keys(result.counted) as AttendanceAlertType[]).filter((t) => result.counted[t]);
+    const newlyCounted = (Object.keys(result.counted) as AttendanceAlertType[]).filter((type) => result.counted[type]);
     if (newlyCounted.length === 0) return;
 
     if (result.status === 'pending') {
       await fireIntegrityAlertNotification({
-        title: 'Attendance sent for review',
-        body: "An integrity issue was detected 4 times today. Today's attendance has been sent to your manager and HR for review.",
+        title: t('alert.reviewTitle'),
+        body: t('alert.reviewBody'),
         escalated: true,
       });
       return;
@@ -92,8 +89,8 @@ export async function checkShiftIntegrity(knownLocationOff?: boolean | null): Pr
     // are separate things for the employee to fix.
     for (const type of newlyCounted) {
       await fireIntegrityAlertNotification({
-        title: WARNING_TITLE[type],
-        body: `Warning ${result.alertCount} of 3 — ${WARNING_ACTION[type]} to keep today's attendance valid.`,
+        title: t(WARNING_KEYS[type].title),
+        body: t(WARNING_KEYS[type].body, { count: result.alertCount }),
         escalated: false,
       });
     }

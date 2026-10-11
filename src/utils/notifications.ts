@@ -1,6 +1,7 @@
 import { getNotifications } from '../native/notificationsModule';
 import { BREAK_REMINDER_ID, CLOCK_OUT_REMINDER_ID } from '../constants/config';
 import { useNotificationsStore } from '../stores/notificationsStore';
+import { t } from '../i18n';
 
 // The notification handler and Android channel are already registered at
 // module scope in notificationSetup.ts (imported once, unconditionally, from
@@ -88,8 +89,8 @@ export async function scheduleClockOutReminder(
   await Notifications.scheduleNotificationAsync({
     identifier: CLOCK_OUT_REMINDER_ID,
     content: {
-      title: 'Still on shift?',
-      body: "It's past your shift end time. Don't forget to clock out.",
+      title: t('remind.clockOutTitle'),
+      body: t('remind.clockOutBody'),
       data: { kind: 'clock-out-reminder' },
     },
     trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: target },
@@ -135,8 +136,8 @@ export async function scheduleBreakReminder(dueAt: Date): Promise<void> {
   await Notifications.scheduleNotificationAsync({
     identifier: BREAK_REMINDER_ID,
     content: {
-      title: 'Break is over',
-      body: 'Time to come back to your shift. Going over extends your shift by the same amount.',
+      title: t('remind.breakTitle'),
+      body: t('remind.breakBody'),
       data: { kind: 'break-reminder' },
     },
     trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: dueAt },

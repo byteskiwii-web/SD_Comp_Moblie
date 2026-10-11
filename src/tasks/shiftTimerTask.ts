@@ -1,6 +1,8 @@
 import { getNotifications } from '../native/notificationsModule';
 import { useAuthStore } from '../stores/authStore';
 import { useShiftStore } from '../stores/shiftStore';
+import { usePreferencesStore } from '../stores/preferencesStore';
+import { t } from '../i18n';
 import { locationCheck } from '../api/attendance.api';
 import { checkShiftIntegrity } from '../utils/shiftIntegrityCheck';
 import { probeLocation } from '../utils/locationProbe';
@@ -26,8 +28,13 @@ export async function runShiftTimerTick(): Promise<void> {
     // unread in SecureStore (every API call would 401) and the persisted
     // shift store still holds its defaults (isClockedIn: false), since
     // zustand's persist middleware hydrates asynchronously. Same fix as the
-    // old backgroundLocationTask.ts used.
-    await Promise.all([useAuthStore.getState().hydrate(), useShiftStore.persist.rehydrate()]);
+    // old backgroundLocationTask.ts used. Preferences too, so alerts come
+    // out in the employee's language rather than the store's default.
+    await Promise.all([
+      useAuthStore.getState().hydrate(),
+      useShiftStore.persist.rehydrate(),
+      usePreferencesStore.persist.rehydrate(),
+    ]);
 
     const shift = useShiftStore.getState();
     if (!shift.isClockedIn || !shift.storeCode || shift.isOnBreak) {
@@ -53,12 +60,22 @@ export async function runShiftTimerTick(): Promise<void> {
           accuracy_m: probe.coords.accuracy,
         });
         if (result.alert) {
+          // The server decides WHETHER to alert; the words are built here
+          // from its numbers so they come out in the employee's language.
+          const d = result.data;
+          const vars = { distance: d.distanceMetres, store: d.storeName, count: d.alertCount ?? '' };
+          const pending = d.alertStatus === 'pending';
+          const body = pending
+            ? t('alert.outsideReviewBody', vars)
+            : typeof d.alertCount === 'number'
+              ? t('alert.outsideBody', vars)
+              : t('alert.outsideNoCountBody', vars);
           // Resolved per use: this runs in a headless context where the
           // module may be unavailable, and a missing alert must not
           // reject the task -- a rejected headless task never calls
           // notifyTaskFinished, so the wakelock is held indefinitely.
           await getNotifications()?.scheduleNotificationAsync({
-            content: { title: result.alertTitle ?? 'Outside your store', body: result.alert, data: { kind: 'geofence-alert' } },
+            content: { title: t(pending ? 'alert.reviewTitle' : 'alert.outsideTitle'), body, data: { kind: 'geofence-alert' } },
             trigger: null,
           });
         }
