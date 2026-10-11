@@ -221,6 +221,13 @@ export const en = {
   'reg.yourRequests': 'Your requests',
   'reg.none': 'No corrections raised yet.',
   'reg.sameDay': 'A correction can only be raised for a day that has finished.',
+  'reg.photo.label': 'Supporting photo',
+  'reg.photo.hint': 'Attach a photo as evidence — a slip, a screenshot, anything that supports this request.',
+  'reg.photo.required': 'Please attach a photo',
+  'reg.photo.take': 'Take photo',
+  'reg.photo.choose': 'Choose from gallery',
+  'reg.photo.replace': 'Replace',
+  'reg.photo.remove': 'Remove',
 
   /* ----------------------------------------------------------------- leave */
   'leave.title': 'Leave',
@@ -913,7 +920,7 @@ export const en = {
   'face.withdrawBody': 'The mathematical summary of your face will be deleted. You won\'t be able to punch in or out until you set up face verification again.',
   'face.withdrawConfirm': 'Withdraw',
   'shiftNotif.title': 'On shift · location checks on',
-  'shiftNotif.text': 'Zob Connect checks your location about every 12 minutes until you clock out.',
+  'shiftNotif.text': "Zob Connect checks your location while you're on shift, until you clock out.",
   'shiftNotif.channel': 'Shift location checks',
   'clock.geoTagged': 'Location recorded',
   'clock.geoTaggedDetail': '{distance} from {site} · team leads are geo-tagged, not fence-checked',

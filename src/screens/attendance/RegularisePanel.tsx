@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { storeLabel } from '../../utils/store';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -23,6 +23,8 @@ import type { Regularisation, RegularisationRequestType, RegularisationStatus } 
 import { SkeletonRows } from '../../components/Skeleton';
 import { t as tr, useT, type TKey } from '../../i18n';
 import { RadioRow } from '../../components/RadioRow';
+import { pickImage, chooseImageSource } from '../../utils/pickImage';
+import type { PickedFile } from '../../api/documents.api';
 
 /**
  * The latest day a correction may target: yesterday, locally.
@@ -100,7 +102,8 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
   const [requestType, setRequestType] = useState<RegularisationRequestType>('adjust');
   const [rows, setRows] = useState<StampRow[]>([]);
   const [reason, setReason] = useState('');
-  const [errors, setErrors] = useState<{ time?: string; reason?: string }>({});
+  const [photo, setPhoto] = useState<PickedFile | null>(null);
+  const [errors, setErrors] = useState<{ time?: string; reason?: string; photo?: string }>({});
   // Replaces the old top-of-card banner, which sat above whatever the person
   // had scrolled down the form to reach in order to press Request in the
   // first place -- see components/Toast.tsx. justSubmitted is the button's
@@ -180,6 +183,7 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
             ? combineDateTime(markDate, submitted.outTime) ?? undefined
             : undefined,
         reason: reason.trim(),
+        photo: photo!,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['regularisation-mine', employee?.id] });
@@ -187,6 +191,7 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
       setToast({ tone: 'success', text: tr('reg.submitted') });
       setJustSubmitted(true);
       setReason('');
+      setPhoto(null);
     },
     onError: (err) => setToast({ tone: 'warning', text: getApiErrorMessage(err) }),
   });
@@ -231,6 +236,7 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
     else if (reason.trim().length < MIN_REASON_LENGTH) {
       next.reason = tr('reg.noteTooShort', { min: MIN_REASON_LENGTH });
     }
+    if (!photo) next.photo = tr('reg.photo.required');
     if (requestType === 'adjust') {
       if (!submitted.inTime && !submitted.outTime) next.time = tr('reg.needTime');
       else if (submitted.inTime && submitted.outTime && submitted.outTime <= submitted.inTime) {
@@ -240,6 +246,25 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
     setErrors(next);
     return Object.keys(next).length === 0;
   }
+
+  const pickPhoto = async (from: 'camera' | 'library') => {
+    // quality/maxEdgePx match the existing selfie-shrink numbers used for
+    // punch photos; allowsEditing stays off -- this is often a screenshot or
+    // a slip, and forcing a square crop would cut real evidence off it.
+    const file = await pickImage(from, { quality: 0.7, maxEdgePx: 1600 });
+    if (file) {
+      setPhoto(file);
+      setErrors((e) => (e.photo ? { ...e, photo: undefined } : e));
+    }
+  };
+  const choosePhotoSource = () =>
+    chooseImageSource(
+      t('reg.photo.label'),
+      t('reg.photo.take'),
+      t('reg.photo.choose'),
+      t('common.cancel'),
+      pickPhoto
+    );
 
   const updateRow = (key: string, patch: Partial<StampRow>) =>
     setRows((rs) => rs.map((r) => (r.key === key ? { ...r, ...patch } : r)));
@@ -502,6 +527,39 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
             error={errors.reason}
           />
 
+          <View style={styles.photoSection}>
+            <Text style={styles.fieldLabel}>{t('reg.photo.label')}</Text>
+            <Text style={styles.help}>{t('reg.photo.hint')}</Text>
+            {photo ? (
+              <View style={styles.photoPreviewRow}>
+                <Image source={{ uri: photo.uri }} style={styles.photoThumb} />
+                <View style={styles.photoPreviewActions}>
+                  <Pressable onPress={choosePhotoSource} style={styles.photoActionBtn}>
+                    <Ionicons name="camera-outline" size={16} color={colors.brand[600]} />
+                    <Text style={styles.photoActionText}>{t('reg.photo.replace')}</Text>
+                  </Pressable>
+                  <Pressable onPress={() => setPhoto(null)} style={styles.photoActionBtn}>
+                    <Ionicons name="trash-outline" size={16} color={colors.dangerText} />
+                    <Text style={[styles.photoActionText, styles.photoActionDanger]}>
+                      {t('reg.photo.remove')}
+                    </Text>
+                  </Pressable>
+                </View>
+              </View>
+            ) : (
+              <Pressable
+                style={[styles.photoTile, errors.photo && styles.photoTileError]}
+                onPress={choosePhotoSource}
+              >
+                <Ionicons name="camera-outline" size={22} color={colors.slate500} />
+                <Text style={styles.photoTileText}>
+                  {t('reg.photo.take')} / {t('reg.photo.choose')}
+                </Text>
+              </Pressable>
+            )}
+            {errors.photo ? <Text style={styles.errorText}>{errors.photo}</Text> : null}
+          </View>
+
           <View style={styles.actions}>
             <View style={styles.actionHalf}>
               <Button
@@ -512,6 +570,7 @@ export function RegularisePanel({ initialDate }: { initialDate?: string } = {}) 
                   setJustSubmitted(false);
                   setErrors({});
                   setReason('');
+                  setPhoto(null);
                   setMarkDate(latestCorrectableDay());
                 }}
               />
@@ -647,6 +706,23 @@ function makeStyles(colors: ColorScheme) {
     color: colors.slate500, marginBottom: 6,
   },
   help: { fontSize: 11, color: colors.slate500, marginBottom: 10, lineHeight: 17 },
+
+  photoSection: { marginBottom: 14 },
+  // Dashed = not attached yet, same convention PunchTiles uses for "not
+  // available right now" -- reads as "tap to add" rather than a filled button.
+  photoTile: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    paddingVertical: 16, borderRadius: radii.md, borderWidth: 1.5,
+    borderStyle: 'dashed', borderColor: colors.slate300, backgroundColor: colors.slate50,
+  },
+  photoTileError: { borderColor: colors.danger },
+  photoTileText: { fontSize: 12.5, fontWeight: '700', color: colors.slate500 },
+  photoPreviewRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  photoThumb: { width: 64, height: 64, borderRadius: radii.md, backgroundColor: colors.slate100 },
+  photoPreviewActions: { flex: 1, gap: 8 },
+  photoActionBtn: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  photoActionText: { fontSize: 12.5, fontWeight: '700', color: colors.brand[600] },
+  photoActionDanger: { color: colors.dangerText },
 
   segment: { flexDirection: 'row', backgroundColor: colors.slate100, borderRadius: radii.md, padding: 4, marginBottom: 14 },
   segmentItem: { flex: 1, alignItems: 'center', paddingVertical: 9, borderRadius: radii.sm },

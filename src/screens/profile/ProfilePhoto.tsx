@@ -11,6 +11,7 @@ import type { PickedFile } from '../../api/documents.api';
 import { t as tr, useT } from '../../i18n';
 import { directLoadMayHelp, forgetProfilePhoto, serverRefused, useProfilePhotoFile } from '../../components/profilePhotoFile';
 import { File } from 'expo-file-system';
+import { pickImage as pickImageShared } from '../../utils/pickImage';
 
 /**
  * The avatar, and the way to change it.
@@ -26,90 +27,16 @@ import { File } from 'expo-file-system';
  * the axios client's interceptors.
  */
 
-async function pickImage(from: 'camera' | 'library'): Promise<PickedFile | null> {
-  // Required lazily, matching FilePickerSheet: expo-image-picker registers
-  // native handlers at module scope and a static import has broken startup on
-  // Android before.
-  const ImagePicker = require('expo-image-picker');
-
-  /*
-   * ONLY THE CAMERA ASKS (STORE-024 / STORE-031).
-   *
-   * The library used to ask for media-library permission first. The system
-   * pickers it opens need none -- the Android photo picker / GET_CONTENT and
-   * iOS PHPicker hand back only what the person chooses -- and on Android 12
-   * and below that request is for WRITE_EXTERNAL_STORAGE, which app.json
-   * deliberately blocks, so it was always refused: "Choose from library"
-   * could never work on those phones. On iOS it showed a Photos prompt for
-   * access the app never needed.
-   */
-  if (from === 'camera') {
-    const perm = await ImagePicker.requestCameraPermissionsAsync();
-    if (!perm.granted) {
-      Alert.alert(tr('file.cameraNeeded'), tr('file.cameraNeededBody'));
-      return null;
-    }
-  }
-
-  const opts = {
-    quality: 0.6,
-    allowsEditing: true,
-    // Square, because every place this is shown is a circle. Cropping here
-    // beats cropping in CSS, which would silently discard the sides of a
-    // portrait photo without the employee ever seeing what was cut.
-    aspect: [1, 1] as [number, number],
-  };
-  const res =
-    from === 'camera'
-      ? await ImagePicker.launchCameraAsync(opts)
-      : await ImagePicker.launchImageLibraryAsync(opts);
-
-  if (res.canceled || !res.assets?.length) return null;
-  const a = res.assets[0];
-  const shrunk = await shrinkForAvatar(a.uri, a.width, a.height);
-  if (shrunk) {
-    return { uri: shrunk, name: `profile-${Date.now()}.jpg`, mimeType: 'image/jpeg' };
-  }
-  return {
-    uri: a.uri,
-    name: a.fileName ?? `profile-${Date.now()}.jpg`,
-    mimeType: a.mimeType ?? 'image/jpeg',
-  };
-}
-
 /**
- * THE LARGEST PICTURE ANY SCREEN NEEDS.
- *
- * The picker hands back the camera's full resolution, and a square crop from
- * a 50 MP Android camera is roughly 6000 x 6000. Android would not draw that
- * at all -- "Saved, but it could not be displayed" -- and every team list
- * that shows the face downloaded all of it to paint a 34 px circle.
- *
- * 1024 px is several times the largest avatar on the densest screen.
- *
- * Loaded lazily and allowed to fail: expo-image-manipulator is in Expo Go,
- * but an APK built before it was added does not have the native half, and
- * requiring it there throws. Such a build uploads the original, as before;
- * the display side copes with that on its own (resizeMethod on the Image).
+ * 1024 px: several times the largest avatar on the densest screen, and well
+ * under what Android will refuse to draw from a 50 MP camera's full-res
+ * square crop ("Saved, but it could not be displayed"). Square, because
+ * every place this is shown is a circle — cropping here beats cropping in
+ * CSS, which would silently discard the sides of a portrait photo without
+ * the employee ever seeing what was cut.
  */
-const AVATAR_MAX_PX = 1024;
-
-async function shrinkForAvatar(uri: string, width?: number, height?: number): Promise<string | null> {
-  // The picker reports 0 when the system did not say; only skip when it did.
-  if (width && height && Math.max(width, height) <= AVATAR_MAX_PX) return null;
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { ImageManipulator, SaveFormat } = require('expo-image-manipulator') as typeof import('expo-image-manipulator');
-    const context = ImageManipulator.manipulate(uri);
-    context.resize((width ?? 0) >= (height ?? 0) ? { width: AVATAR_MAX_PX } : { height: AVATAR_MAX_PX });
-    const image = await context.renderAsync();
-    const saved = await image.saveAsync({ format: SaveFormat.JPEG, compress: 0.82 });
-    return saved.uri;
-  } catch (err) {
-    console.warn('[profile photo] could not shrink the picture; uploading the original', err);
-    return null;
-  }
-}
+const pickImage = (from: 'camera' | 'library') =>
+  pickImageShared(from, { quality: 0.6, allowsEditing: true, aspect: [1, 1], maxEdgePx: 1024 });
 
 export function ProfilePhoto() {
   const employee = useAuthStore((s) => s.employee);
