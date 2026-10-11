@@ -92,4 +92,5 @@ export type Regularisation = {
   decidedAt: string | null;
   decidedBy: string | null;
   decisionNote: string | null;
+  hasPhoto: boolean;
 };
