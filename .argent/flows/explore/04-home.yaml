@@ -1,0 +1,6 @@
+steps:
+  - when: { visible: { text: Allow } }
+    steps:
+      - tap: { text: Allow }
+  - wait: 1500
+  - run: _skip-tour

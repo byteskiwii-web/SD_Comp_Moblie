@@ -1,0 +1,7 @@
+steps:
+  - run: _home
+  - tap: { text: Profile }
+  - run: _skip-tour
+  - scroll-to: { target: { text: Company policies } }
+  - tap: { text: Company policies }
+  - run: _skip-tour

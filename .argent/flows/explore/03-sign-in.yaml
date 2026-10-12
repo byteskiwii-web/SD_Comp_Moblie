@@ -1,8 +1,9 @@
-executionPrerequisite: App on the login screen.
 steps:
+  - launch: com.sdcomputronix.ziphrmsmobile
+  - await: { visible: { id: login-employee-id }, timeout: 30000 }
   - type: { into: { id: login-employee-id }, text: EMP-90002, submit: false }
   - echo: Return on the password field dismisses the keyboard so the button is reachable
   - type: { into: { id: login-password }, text: "{{secret:REVIEW_PASSWORD}}", submit: true }
-  - echo: The button comes after the password field; the screen title has the same words
+  - echo: The button follows the password field; the screen title has the same words
   - tap: { text: Sign in, after: { id: login-password } }
   - wait: 8000

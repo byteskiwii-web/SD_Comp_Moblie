@@ -1,0 +1,4 @@
+steps:
+  - run: _home
+  - tap: { text: Team }
+  - run: _skip-tour

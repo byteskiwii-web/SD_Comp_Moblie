@@ -1,0 +1,4 @@
+steps:
+  - run: _home
+  - tap: { text: Leave }
+  - run: _skip-tour

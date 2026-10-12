@@ -1,0 +1,7 @@
+steps:
+  - run: _home
+  - tap: { text: Leave }
+  - run: _skip-tour
+  - tap: { text: Apply }
+  - wait: 1500
+  - await: { idle: true }

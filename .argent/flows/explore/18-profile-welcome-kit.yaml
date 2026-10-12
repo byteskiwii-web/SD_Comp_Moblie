@@ -1,0 +1,7 @@
+steps:
+  - run: _home
+  - tap: { text: Profile }
+  - run: _skip-tour
+  - scroll-to: { target: { text: Welcome kit } }
+  - tap: { text: Welcome kit }
+  - run: _skip-tour

@@ -1,0 +1,11 @@
+steps:
+  - run: _home
+  - tap: { text: Profile }
+  - run: _skip-tour
+  - scroll-to: { target: { text: Privacy & account } }
+  - tap: { text: Privacy & account }
+  - wait: 1500
+  - scroll-to: { target: { text: Request deletion of my data } }
+  - tap: { text: Request deletion of my data }
+  - wait: 1500
+  - await: { idle: true }

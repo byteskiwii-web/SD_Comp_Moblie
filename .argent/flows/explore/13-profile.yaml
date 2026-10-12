@@ -1,0 +1,4 @@
+steps:
+  - run: _home
+  - tap: { text: Profile }
+  - run: _skip-tour

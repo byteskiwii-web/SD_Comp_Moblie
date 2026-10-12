@@ -1,0 +1,5 @@
+steps:
+  - run: _home
+  - scroll-to: { target: { text: View all festivals } }
+  - tap: { text: View all festivals }
+  - run: _skip-tour

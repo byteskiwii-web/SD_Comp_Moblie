@@ -1,8 +1,7 @@
-executionPrerequisite: Signed in, on the tabs.
 steps:
-  - tap: { text: Profile }
   - wait: 2500
   - when: { visible: { text: Skip } }
     steps:
       - tap: { text: Skip }
+  - wait: 800
   - await: { idle: true }

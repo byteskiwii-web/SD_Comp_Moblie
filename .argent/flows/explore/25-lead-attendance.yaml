@@ -1,0 +1,4 @@
+steps:
+  - run: _home
+  - tap: { text: Attendance }
+  - run: _skip-tour

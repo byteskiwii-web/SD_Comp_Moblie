@@ -1,5 +1,0 @@
-executionPrerequisite: On the Attendance tab.
-steps:
-  - swipe: { direction: up, duration: 600 }
-  - wait: 1500
-  - await: { idle: true }

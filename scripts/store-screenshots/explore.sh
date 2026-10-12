@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Walks the main screens once, as the review account, and saves for each a
+# Walks every screen once, as the review account, and saves for each a
 # screenshot and argent's accessibility tree. The output is what the goldie
 # flows in .argent/flows are written from. Keeps going past a failed step, so
 # one run shows as much of the app as it can reach.
@@ -19,17 +19,17 @@ flow() {
 }
 
 # Location and photos are granted up front, as a person would on first use;
-# the notification prompt cannot be pre-granted on iOS and is seen in 02/03.
+# the notification prompt cannot be pre-granted on iOS and is answered by 04-home.
 for p in location photos camera; do
   argent run settings-permissions --udid "$UDID" --action grant --permission "$p" \
     --bundleId "$BUNDLE_ID" >> "$OUT/permissions.txt" 2>&1
 done
 
-flow 01-launch;          snap 01-login
-flow 02-sign-in;         snap 02-after-sign-in
-flow 03-dismiss;         snap 03-home
-flow 04-attendance;      snap 04-attendance
-flow 05-history-day;     snap 05-history-day
-flow 06-leave;           snap 06-leave
-flow 07-profile;         snap 07-profile
-flow 08-profile-account; snap 08-privacy-account
+# Every screen, in order. Each flow relaunches into the signed-in app
+# (_home.yaml) or continues from the previous one; a failure only costs that
+# screen, and its screenshot shows where it stopped.
+for f in .argent/flows/explore/[0-9]*.yaml; do
+  name=$(basename "$f" .yaml)
+  flow "$name"
+  snap "$name"
+done

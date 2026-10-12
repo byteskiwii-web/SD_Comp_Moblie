@@ -1,0 +1,8 @@
+steps:
+  - launch: com.sdcomputronix.ziphrmsmobile
+  - await: { visible: { text: Home }, timeout: 30000 }
+  - wait: 2500
+  - when: { visible: { text: Skip } }
+    steps:
+      - tap: { text: Skip }
+  - wait: 800

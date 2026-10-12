@@ -1,6 +1,7 @@
-executionPrerequisite: On the Profile tab.
 steps:
+  - run: _home
+  - tap: { text: Profile }
+  - run: _skip-tour
   - scroll-to: { target: { text: Privacy & account } }
   - tap: { text: Privacy & account }
-  - wait: 2000
-  - await: { idle: true }
+  - run: _skip-tour
