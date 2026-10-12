@@ -80,11 +80,15 @@ jobs:
           CI=1 npx expo prebuild --platform ios --clean
           WS=$(ls -d ios/*.xcworkspace | head -1)
           SCHEME=$(basename "$WS" .xcworkspace)
-          set -o pipefail
-          xcodebuild -workspace "$WS" -scheme "$SCHEME" -configuration Release \
+          mkdir -p out
+          if ! xcodebuild -workspace "$WS" -scheme "$SCHEME" -configuration Release \
             -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
             -derivedDataPath build CODE_SIGNING_ALLOWED=NO COMPILER_INDEX_STORE_ENABLE=NO \
-            build | tail -n 200
+            build > out/xcodebuild.log 2>&1; then
+            grep -n -E "error:|The following build commands failed" -A4 out/xcodebuild.log | head -150
+            tail -n 40 out/xcodebuild.log
+            exit 1
+          fi
           mkdir -p build-sim
           cp -R build/Build/Products/Release-iphonesimulator/*.app build-sim/
           ls build-sim
@@ -134,6 +138,7 @@ jobs:
           name: store-screenshots-${{ env.MODE }}
           path: |
             out/explore
+            out/xcodebuild.log
             goldie/out/screenshots
             goldie/out/raw
           if-no-files-found: ignore
