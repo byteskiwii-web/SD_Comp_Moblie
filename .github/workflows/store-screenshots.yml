@@ -27,6 +27,9 @@ on:
         type: choice
         options: [explore, capture]
         default: capture
+      only:
+        description: "explore: run only the flows whose names start with this glob, e.g. 0[1348]"
+        default: ""
 
 concurrency:
   group: store-screenshots
@@ -121,7 +124,7 @@ jobs:
         if: env.MODE == 'explore'
         run: |
           APP=$(ls -d "$PWD"/build-sim/*.app | head -1)
-          bash scripts/store-screenshots/explore.sh "${{ steps.sim.outputs.udid }}" out/explore "$APP"
+          ONLY="${{ inputs.only }}" bash scripts/store-screenshots/explore.sh "${{ steps.sim.outputs.udid }}" out/explore "$APP"
 
       - name: Capture with goldie
         if: env.MODE == 'capture'

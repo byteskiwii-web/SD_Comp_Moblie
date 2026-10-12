@@ -66,8 +66,17 @@ snap 00-first-launch
 # Every screen, in order. Each flow relaunches into the signed-in app
 # (_home.yaml) or continues from the previous one; a failure only costs that
 # screen, and its screenshot shows where it stopped.
-for f in .argent/flows/explore/[0-9]*.yaml; do
+# ONLY narrows the run to some flows (a glob on the name, e.g. "0[1348]").
+for f in .argent/flows/explore/${ONLY:-[0-9]}*.yaml; do
   name=$(basename "$f" .yaml)
   flow "$name"
   snap "$name"
 done
+
+# Anything that killed the app: its crash reports (the simulator writes them
+# to the host's DiagnosticReports) and the app's own log lines.
+EXE=$(/usr/libexec/PlistBuddy -c "Print CFBundleExecutable" "$APP/Info.plist")
+mkdir -p "$OUT/crashes"
+grep -l "$BUNDLE_ID" ~/Library/Logs/DiagnosticReports/*.ips 2>/dev/null | while read -r f; do cp "$f" "$OUT/crashes/"; done
+xcrun simctl spawn "$UDID" log show --last 60m --style compact \
+  --predicate "process == \"$EXE\"" > "$OUT/app.log" 2>&1 || true
