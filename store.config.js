@@ -55,6 +55,8 @@ const screenshots = fs.existsSync(shotsDir)
 module.exports = {
   configVersion: 0,
   apple: {
+    // Must equal the build's version (app.json "version") to attach the build.
+    version: require('./app.json').expo.version,
     copyright: '2026 S.D. Computronix',
     categories: ['BUSINESS', 'PRODUCTIVITY'],
     // Released by hand once Apple has approved both the app and the Unlisted
