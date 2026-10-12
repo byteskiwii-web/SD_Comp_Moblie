@@ -1,0 +1,10 @@
+# Its own flow, starting from a relaunch, so explore.sh's one re-run starts
+# from an empty form: typing has dropped a character ("TL90001") before.
+steps:
+  - launch: com.sdcomputronix.ziphrmsmobile
+  - await: { visible: { id: login-employee-id }, timeout: 30000 }
+  - type: { into: { id: login-employee-id }, text: TL-90001, submit: false }
+  - type: { into: { id: login-password }, text: "{{secret:REVIEW_PASSWORD}}", submit: true }
+  - tap: { text: Sign in, after: { id: login-password } }
+  - await: { visible: { text: Home }, timeout: 30000 }
+  - run: _skip-tour

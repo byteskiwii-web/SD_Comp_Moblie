@@ -6,4 +6,5 @@ steps:
   - type: { into: { id: login-password }, text: "{{secret:REVIEW_PASSWORD}}", submit: true }
   - echo: The button follows the password field; the screen title has the same words
   - tap: { text: Sign in, after: { id: login-password } }
-  - wait: 8000
+  - echo: Fails here, not in the next flow, when the sign-in did not take
+  - await: { visible: { text: Home }, timeout: 30000 }

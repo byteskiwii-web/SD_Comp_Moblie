@@ -8,8 +8,3 @@ steps:
   - echo: Confirm in the alert; the alert's button is the last Sign out on screen
   - tap: { text: Sign out, after: { text: Sign out? } }
   - await: { visible: { id: login-employee-id }, timeout: 20000 }
-  - type: { into: { id: login-employee-id }, text: TL-90001, submit: false }
-  - type: { into: { id: login-password }, text: "{{secret:REVIEW_PASSWORD}}", submit: true }
-  - tap: { text: Sign in, after: { id: login-password } }
-  - wait: 8000
-  - run: _skip-tour
