@@ -42,3 +42,7 @@ yarn-error.*
 /ios
 /android
 google-services.json
+
+# goldie / store-screenshot output
+/goldie/out/
+/out/
