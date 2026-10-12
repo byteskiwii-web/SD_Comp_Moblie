@@ -13,15 +13,30 @@ snap() {
   xcrun simctl io "$UDID" screenshot "$OUT/$1.png" >/dev/null 2>&1
   argent run describe --udid "$UDID" > "$OUT/$1.describe.txt" 2>&1
 }
+# iOS asks for notifications once, after sign-in. While that alert is up argent
+# cannot read the app at all (its RPCs time out) and every screenshot has the
+# alert over it, so it is answered from outside the flows, by position: the
+# accessibility service still sees the alert, it is just not tappable by text.
+allow_alert() {
+  if argent run describe --udid "$UDID" 2>/dev/null | grep -q "Would Like to Send You Notifications"; then
+    # "Allow" button centre on the 6.9" simulator: (0.509 + 0.318/2, 0.560 + 0.050/2)
+    argent run gesture-tap --udid "$UDID" --x 0.668 --y 0.585 >> "$OUT/setup.txt" 2>&1
+    sleep 2
+    echo "answered the notification prompt" >> "$OUT/setup.txt"
+  fi
+}
 flow() {
+  allow_alert
   argent flow run ".argent/flows/explore/$1.yaml" --device "$UDID" > "$OUT/$1.flow.txt" 2>&1
   local rc=$?
-  # A cold start can outrun argent's devtools handshake on the launch step;
-  # argent's own message says a re-run is the fix (goldie retries the same way).
-  if [ $rc -ne 0 ] && grep -q "could not connect to native devtools" "$OUT/$1.flow.txt"; then
+  # One re-run for anything transient: a cold start racing argent's devtools
+  # handshake, an RPC timeout, the prompt appearing mid-flow.
+  if [ $rc -ne 0 ]; then
+    allow_alert
     argent flow run ".argent/flows/explore/$1.yaml" --device "$UDID" > "$OUT/$1.flow.txt" 2>&1
     rc=$?
   fi
+  allow_alert
   echo "$1: exit $rc" | tee -a "$OUT/summary.txt"
 }
 

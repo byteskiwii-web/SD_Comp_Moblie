@@ -1,6 +1,6 @@
+# The notification prompt is answered by explore.sh before this runs: while an
+# iOS alert is up, argent cannot read the app's tree, so a `when` guard on it
+# errors instead of evaluating.
 steps:
-  - when: { visible: { text: Allow } }
-    steps:
-      - tap: { text: Allow }
   - wait: 1500
   - run: _skip-tour
