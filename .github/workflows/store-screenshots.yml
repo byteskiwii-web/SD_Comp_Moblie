@@ -1,0 +1,140 @@
+# App Store screenshots on a GitHub-hosted Mac.
+#
+# Builds a Release simulator app (prebuild + xcodebuild, no signing, no EAS),
+# boots an iPhone 17 Pro Max simulator and either:
+#   explore  - signs in as the review account and saves a screenshot and the
+#              accessibility tree of each main screen, for writing the flows;
+#   capture  - runs goldie (goldie/goldie.config.ts) to produce the framed
+#              1320x2868 App Store screenshots.
+# Results are uploaded as the run's artifact.
+#
+# Needs the repository secret REVIEW_PASSWORD (the review accounts' password).
+# argent reads it as ARGENT_SECRET_REVIEW_PASSWORD for {{secret:REVIEW_PASSWORD}}
+# and redacts it from its reports.
+name: Store screenshots (iOS)
+
+on:
+  push:
+    branches: [chore/store-screenshots]
+    paths:
+      - .github/workflows/store-screenshots.yml
+      - .argent/**
+      - goldie/**
+      - scripts/store-screenshots/**
+  workflow_dispatch:
+    inputs:
+      mode:
+        type: choice
+        options: [explore, capture]
+        default: capture
+
+concurrency:
+  group: store-screenshots
+  cancel-in-progress: true
+
+env:
+  BUNDLE_ID: com.sdcomputronix.ziphrmsmobile
+  # Same values as the EAS production environment, so the build talks to the
+  # production API the review accounts live on.
+  EAS_BUILD_PROFILE: production
+  EXPO_UPDATES_TARGET: build
+  EXPO_PUBLIC_API_URL: https://api.zobconnect.com
+  EXPO_PUBLIC_WEB_URL: https://web.zobconnect.com
+  ARGENT_SECRET_REVIEW_PASSWORD: ${{ secrets.REVIEW_PASSWORD }}
+  MODE: ${{ inputs.mode || 'explore' }}
+
+jobs:
+  screenshots:
+    runs-on: macos-15
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select the newest Xcode
+        run: |
+          ls -d /Applications/Xcode*.app
+          X=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
+          [ -n "$X" ] || X=$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)
+          sudo xcode-select -s "$X"
+          xcodebuild -version
+          xcrun simctl list runtimes
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # The .app depends only on the JS, assets and native config; flows and
+      # goldie settings do not touch it, so iterating on them reuses the build.
+      - name: Restore the simulator build
+        id: app-cache
+        uses: actions/cache@v4
+        with:
+          path: build-sim
+          key: sim-app-${{ hashFiles('package-lock.json', 'app.json', 'app.config.js', 'eas.json', 'plugins/**', 'modules/**', 'assets/**', 'src/**', 'index.ts', 'App.tsx') }}
+
+      - name: Build the Release simulator app
+        if: steps.app-cache.outputs.cache-hit != 'true'
+        run: |
+          npm ci
+          CI=1 npx expo prebuild --platform ios --clean
+          WS=$(ls -d ios/*.xcworkspace | head -1)
+          SCHEME=$(basename "$WS" .xcworkspace)
+          set -o pipefail
+          xcodebuild -workspace "$WS" -scheme "$SCHEME" -configuration Release \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build CODE_SIGNING_ALLOWED=NO COMPILER_INDEX_STORE_ENABLE=NO \
+            build | tail -n 200
+          mkdir -p build-sim
+          cp -R build/Build/Products/Release-iphonesimulator/*.app build-sim/
+          ls build-sim
+
+      - name: Boot an iPhone 17 Pro Max simulator
+        id: sim
+        run: |
+          NAME="iPhone 17 Pro Max"
+          UDID=$(xcrun simctl list devices available -j | python3 -c "import json,sys; d=json.load(sys.stdin)['devices']; print(next((x['udid'] for r in sorted(d, reverse=True) for x in d[r] if x['name']=='$NAME'), ''))")
+          if [ -z "$UDID" ]; then
+            RT=$(xcrun simctl list runtimes -j | python3 -c "import json,sys; r=[x for x in json.load(sys.stdin)['runtimes'] if x['platform']=='iOS' and x['isAvailable']]; print(r[-1]['identifier'])")
+            UDID=$(xcrun simctl create "$NAME" "com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max" "$RT")
+          fi
+          xcrun simctl boot "$UDID" || true
+          xcrun simctl bootstatus "$UDID" -b
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+
+      - name: Install tools
+        run: |
+          npm i -g @swmansion/argent@latest
+          argent telemetry disable || true
+          if [ "$MODE" = capture ]; then brew list ffmpeg >/dev/null 2>&1 || brew install ffmpeg; fi
+
+      - name: Explore the app
+        if: env.MODE == 'explore'
+        run: |
+          APP=$(ls -d build-sim/*.app | head -1)
+          xcrun simctl install "${{ steps.sim.outputs.udid }}" "$APP"
+          bash scripts/store-screenshots/explore.sh "${{ steps.sim.outputs.udid }}" out/explore
+
+      - name: Capture with goldie
+        if: env.MODE == 'capture'
+        env:
+          GOLDIE_CONFIG: ${{ github.workspace }}/goldie/goldie.config.ts
+          APP_PATH: ${{ github.workspace }}/build-sim
+        run: |
+          npx -y goldie@0 doctor || true
+          npx -y goldie@0 capture
+          npx -y goldie@0 frame
+          npx -y goldie@0 manifest
+          npx -y goldie@0 verify
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: store-screenshots-${{ env.MODE }}
+          path: |
+            out/explore
+            goldie/out/screenshots
+            goldie/out/raw
+          if-no-files-found: ignore
+          retention-days: 14

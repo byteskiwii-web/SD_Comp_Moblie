@@ -1,0 +1,6 @@
+executionPrerequisite: On the Profile tab.
+steps:
+  - scroll-to: { target: { text: Privacy & account } }
+  - tap: { text: Privacy & account }
+  - wait: 2000
+  - await: { idle: true }
