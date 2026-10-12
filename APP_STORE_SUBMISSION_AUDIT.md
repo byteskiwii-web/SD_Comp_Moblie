@@ -35,6 +35,7 @@ Severity: 🔴 Critical · 🟠 High · 🟡 Medium · 🟢 Low. "Critical" mean
 
 ## Contents
 
+- [iOS submission status (13 Oct 2026)](#ios-submission-status-13-oct-2026)
 - [A. Executive summary](#a-executive-summary)
 - [B. Scope, method and limits](#b-scope-method-and-limits)
 - [C. What the app does (reviewer's view)](#c-what-the-app-does-reviewers-view)
@@ -48,6 +49,115 @@ Severity: 🔴 Critical · 🟠 High · 🟡 Medium · 🟢 Low. "Critical" mean
 - [K. Draft store declarations](#k-draft-store-declarations)
 - [L. Sources](#l-sources)
 - [M. Change log](#m-change-log)
+
+---
+
+## iOS submission status (13 Oct 2026)
+
+> Working state of the **App Store** submission. Section-D items below carry the detail; this section is the order of work and what is left. Android/Play items are not covered here.
+
+### Done and verified
+
+| What | Where | Evidence |
+|---|---|---|
+| App Store Connect app record created (Zob Connect, App ID `6819753428`, bundle `com.sdcomputronix.ziphrmsmobile`) | ASC | Record exists; `eas.json` submit profile carries `ascAppId` (`6d96a38`) so `eas submit` runs non-interactively |
+| Build **1.0.0 (2)** uploaded to TestFlight | EAS build `9e8b8a05…`, submission `dff2be32…` | Build 1 was rejected by Apple's automated check **ITMS-90683** (missing `NSMotionUsageDescription`: `expo-location` links Core Motion). Fixed by setting `motionUsagePermission` (`11d9646`); introspected Info.plist shows the key |
+| Release Info.plist: camera, photo-library, when-in-use location and motion strings; `NSAllowsArbitraryLoads: false`; `ITSAppUsesNonExemptEncryption: false`; iPhone only | `app.json`, `app.config.js` | `expo config --type introspect` with `EAS_BUILD_PROFILE=production`, 7 Oct |
+| Latest JS on the `production` and `preview` update channels | EAS Update | `eas update:list`, 13 Oct |
+| Review accounts usable from anywhere, any time | Backend | `EMP-90001/90002`, `TL-90001/90002`: no shift (the 10:00 clock-in rule does not apply), `geofence_exempt`, `is_test_account` (no face match, fixed OTP `TEST_ACCOUNT_OTP`) |
+| Test accounts may be signed in on several devices at once — a tester can no longer sign the reviewer out | Backend `1949424` | `tests/auth.login.test.js` 50/50; deployed 12 Oct |
+| Re-running the seed closes open deletion requests on review accounts | Backend `177e83b` | Deployed 13 Oct |
+| Deletion message states a timeframe: "HR will complete your request within 30 days" (10 locales); privacy policy and support page say the same | Mobile `0b66fd0`, web `5895a6b` | Live on `web.zobconnect.com` and both update channels, 13 Oct |
+| Public pages | Web | `/privacy`, `/support`, `/terms` and `api.zobconnect.com/health` return 200 |
+| TestFlight **Test Information** filled (contact, sign-in, review notes) | ASC | Saved by the account holder, 7 Oct |
+
+### Left to do — owner: account holder
+
+| # | Task | Values |
+|---|---|---|
+| 1 | Test build 2 on a real iPhone via TestFlight with `EMP-90002` (keep `EMP-90001` for Apple): sign-in, clock in/out, break, history, leave, regularisation photo (camera + gallery), privacy link, location **Don't Allow**, airplane mode, `TL-90001` team view; iPad in iPhone mode if available | — |
+| 2 | Screenshots, iPhone 6.9" (1320×2868), from the review account; attendance screen first, login last | 5–6 screens |
+| 3 | App Information | Subtitle `Attendance & leave for staff`; category Business; Content Rights: no third-party content |
+| 4 | Age rating | All content questions None; no web access, UGC, messaging, ads or social features → **4+** (kudos are received from managers only) |
+| 5 | Pricing and Availability | Free; **India only** (also removes the EU trader-status requirement) |
+| 6 | App Privacy | See [K2](#k2-app-store-connect-app-privacy) |
+| 7 | Version 1.0 | Description/keywords below; support URL `https://web.zobconnect.com/support`; copyright `2026 S.D. Computronix`; build 1.0.0 (2); **Manually release this version** |
+| 8 | App Review Information | Sign-in `EMP-90001`; notes below; contact with `+91` phone |
+| 9 | Server, on submit day | `TEST_ACCOUNT_OTP` set in `/opt/apps/backend/.env` and `pm2 reload sd-backend --update-env`; `node scripts/seed-review-accounts.js` re-run (current policies signed, lockouts and deletion requests cleared) |
+| 10 | Submit, then file the **Unlisted App Distribution** request (STORE-002; see Distribution below) | App ID `6819753428`; reason: internal app for one company's employees |
+| 11 | After approval of both | Release manually; share the direct link with employees |
+
+**Description**
+
+```
+Zob Connect is the workplace app for S.D. Computronix field and store staff. Sign in with the employee account issued by your employer — there is no public sign-up.
+
+• Clock in and out with a live selfie and your location
+• Breaks, daily and monthly hours, and full attendance history
+• Leave and attendance-correction requests with a supporting photo
+• Shift reminders and alerts from your team
+• Team view for team leads
+• Company policies, your profile and documents in one place
+• Available in English, Hindi, Bengali, Gujarati, Kannada, Malayalam, Marathi, Punjabi, Tamil and Telugu
+
+Your data: see the Privacy Policy. You can request deletion of your account and data at any time from Profile → Privacy & account.
+```
+
+Keywords: `attendance,clock in,shift,leave,employee,staff,timesheet,workforce,HR,store`
+
+**App Review notes** (the one-time code is the server's `TEST_ACCOUNT_OTP`; the review password is in STORE-003)
+
+```
+Zob Connect is an internal app for employees of S.D. Computronix. Accounts are issued by HR; there is no public sign-up. We intend to request Unlisted App Distribution for this app.
+
+Sign-in: EMP-90001 / <review password>
+If a one-time code is requested, use: <TEST_ACCOUNT_OTP>
+
+This review account is fully set up and works from any location, at any time:
+- Attendance tab → Clock In (takes a selfie; location is recorded) → Break → Clock Out
+- History, leave and regularisation requests
+- Profile → Privacy & account → Request deletion of my data (it sends a request to HR and signs you out; you can sign in again)
+
+Identity documents (PAN, Aadhaar, bank) are collected only during employee onboarding for payroll and are already completed for this account.
+
+Team-lead view: TL-90001 / <review password>
+```
+
+### Distribution: Unlisted first, Custom App as fallback
+
+| | Unlisted App Distribution | Custom App (Apple Business Manager) |
+|---|---|---|
+| Approval odds | High — Apple lists "employee resources" as an Unlisted use case | Highest — Guideline 3.2 allows apps for one business |
+| Client needs | Nothing | An Apple Business Manager account for S.D. Computronix (D-U-N-S, verification; allow 1–3 weeks) |
+| Employees install | From a direct App Store link, with their own Apple ID | Without MDM: one redemption code per install, issued by HR. With MDM: pushed to managed devices |
+| Reversible | Yes | **No** — an app set to Custom can never be listed on the App Store |
+| Personal phones | Fits | Poor fit (codes for every joiner) |
+
+**Decision (13 Oct 2026): Unlisted.** Same app record, same review; it keeps the Custom route open, whereas choosing Custom first closes the other one for good.
+
+**Unlisted path**
+1. Submit version 1.0 for review with **Manually release this version** and availability **India only**.
+2. File the request: developer.apple.com → Contact → *Unlisted App Distribution* (App Apple ID `6819753428`; audience: employees of S.D. Computronix; how they get the link: HR sends it at onboarding).
+3. When the app and the request are both approved, release. The App Store link works for anyone who has it, and the app does not appear in search, charts or categories.
+
+**Fallback: Custom App path** (only if Apple refuses Unlisted, or the client wants device-managed distribution)
+1. Client: enrol S.D. Computronix in Apple Business Manager (business.apple.com) using its D-U-N-S number; note the **Organization ID** (ABM → Preferences → Enrollment Information).
+2. ASC → Pricing and Availability → App Distribution Methods → **Private** (Custom App) → add that Organization ID. Irreversible.
+3. Submit for review as usual; the same notes and review account apply.
+4. Client: ABM → Apps and Books → Custom Apps → acquire Zob Connect → distribute through MDM, or buy redemption codes and hand one to each employee.
+
+### Risks and their answers
+
+| Risk | Answer |
+|---|---|
+| Reviewer cannot sign in | Multi-device for test accounts; reseed before submit; lockout (5 wrong passwords) clears itself after 15 min |
+| Policy screen in front of the app | Reseed signs every published policy; publish no policies during review |
+| Reviewer confirms deletion | Only signs them out; reseed closes the request; HR ignores requests from review accounts |
+| Guideline 3.2 / 4.2 (single-company app) | Notes say so; Unlisted request; fallback Custom App via Apple Business Manager |
+| Guideline 5.1.1 (Aadhaar, PAN, bank, face) | Notes explain onboarding purpose; App Privacy matches K2; policy lists every type |
+| Crash or broken flow on the reviewer's device | Item 1 above, before submitting |
+| Changes mid-review | No `production` EAS update, no non-urgent backend/web deploy, no policy publication while "Waiting for Review"/"In Review" |
+| Seller shown as "Subir Deepak Bhagvati" (individual account), not S.D. Computronix | Not a blocker; changing it needs an Organization account (D-U-N-S) — STORE-019 |
 
 ---
 
@@ -200,6 +310,8 @@ Each item has a status block. Keep it current. The step-by-step fix for each ite
 |---|---|---|---|---|---|---|---|---|
 | iOS | Policy / Distribution | 🔴 Critical | Potential (common rejection pattern) | 🟡 In Progress | Unassigned | 2026-09-28 | — | — |
 
+> **Review, 13 Oct 2026.** Process settled: review notes state it is an internal app and that Unlisted distribution will be requested; Version Release set to manual; the Unlisted request is filed right after submitting; release only after both are approved.
+
 > **Review, 29 Sep 2026 (evening).** Decided: **Unlisted App Distribution** on the App Store (it fits: an employee resource for one organisation). Still to do: submit the app for normal App Review, then file Apple's unlisted-distribution request for the approved app.
 
 **Current state.** The app is for one employer's staff. Accounts are created by HR, there is no sign-up, and the app, privacy policy and terms all say so ("The app is not open to the public and you cannot register yourself"). The config comments mention a possible later SaaS offering, but nothing in the product or on the website offers it to other employers today.
@@ -225,7 +337,9 @@ Each item has a status block. Keep it current. The step-by-step fix for each ite
 
 | Platform | Category | Severity | Type | Status | Owner | Date identified | Date fixed | Verification |
 |---|---|---|---|---|---|---|---|---|
-| Both | Reviewer Flow | 🔴 Critical | Confirmed gap | 🟡 In Progress | Unassigned | 2026-09-28 | — | — |
+| Both | Reviewer Flow | 🔴 Critical | Confirmed gap | 🟢 Completed (iOS) | Unassigned | 2026-09-28 | 2026-10-12 | Seeded accounts; multi-device test 50/50; Play "App access" still to file |
+
+> **Review, 13 Oct 2026.** Every gate is now cleared for the review accounts: no shift (so the 10:00 clock-in rule of `88a4233` does not apply), `geofence_exempt`, and `is_test_account` (migration 069: no face match, fixed one-time code `TEST_ACCOUNT_OTP`). The one-device rule no longer applies to test accounts (backend `1949424`), so testers and reviewers cannot sign each other out. A confirmed deletion only revokes sessions and opens a request; re-running the seed closes it (`177e83b`). Review notes are written (see the iOS submission status section). Still to do on submit day: re-run the seed on production.
 
 > **Review, 29 Sep 2026 (evening).** Four review accounts exist on production and dev (`EMP-90001`, `EMP-90002`, `TL-90001`, `TL-90002`, password `Testing@1234`, created by `scripts/seed-review-accounts.js`): approved, profile complete, KYC and PAN–Aadhaar link marked verified, policies accepted, `geofence_exempt`. The script now puts them on **no shift**, because a shift gates clock-in to IST hours and reviewers test in their own daytime. Dev has that; **production still has MORNING until the script is re-run there.** Face stays a one-selfie in-app step (a template of a real face cannot be seeded); say so in the review notes.
 
@@ -579,7 +693,9 @@ The app no longer captures or uploads identity documents ([src/screens/profile/D
 
 | Platform | Category | Severity | Type | Status | Owner | Date identified | Date fixed | Verification |
 |---|---|---|---|---|---|---|---|---|
-| iOS | Metadata / Privacy | 🟠 High | Confirmed gap | 🔴 Pending | Unassigned | 2026-09-28 | — | — |
+| iOS | Metadata / Privacy | 🟠 High | Confirmed gap | 🟡 In Progress | Unassigned | 2026-09-28 | — | Answers final in K2; to enter in ASC |
+
+> **Review, 13 Oct 2026.** K2 is final: the push token is declared as Device ID, and Google ML Kit's usage/performance metrics as Diagnostics (Analytics, not linked). Status stays In Progress until the answers are entered in App Store Connect.
 
 **Current state.** No App Privacy answers exist. `NSPrivacyCollectedDataTypes` is deliberately omitted from the app's privacy manifest ([app.config.js](app.config.js) F3 comment), so App Store Connect is the only place collection is declared.
 
@@ -632,6 +748,8 @@ The app no longer captures or uploads identity documents ([src/screens/profile/D
 | Platform | Category | Severity | Type | Status | Owner | Date identified | Date fixed | Verification |
 |---|---|---|---|---|---|---|---|---|
 | iOS | Metadata | 🟠 High | Confirmed gap | 🔴 Pending | Unassigned | 2026-09-28 | — | — |
+
+> **Review, 13 Oct 2026.** App record created (App ID `6819753428`); `ascAppId` in `eas.json`; export compliance answered by `ITSAppUsesNonExemptEncryption: false`; TestFlight Test Information saved. Listing, review information, availability (India only), age rating and pricing values are in the iOS submission status section.
 
 **Current state.** No ASC configuration recorded; `eas.json` `submit.production` is empty.
 
@@ -727,6 +845,8 @@ The app no longer captures or uploads identity documents ([src/screens/profile/D
 | Platform | Category | Severity | Type | Status | Owner | Date identified | Date fixed | Verification |
 |---|---|---|---|---|---|---|---|---|
 | Both | Authentication / Legal | 🟡 Medium | Confirmed | 🟡 In Progress | Unassigned | 2026-09-28 | — | Partly done; rest needs backend + a decision |
+
+> **Review, 13 Oct 2026.** Timeframe added: the deletion-requested message says HR completes the request within 30 days (10 locales, `0b66fd0`), and the privacy policy and support page say the same (web `5895a6b`, live).
 
 > **Review & fix, 28 Sep 2026.** The onboarding checklist and the mandatory-policy screen now show the deletion card and the privacy/terms links. The policy screen also gained the sign-out it never had. The set-password screen gets privacy/terms only: the backend's `mustChangePassword` allow-list refuses `/auth/me/deletion/*`, so deletion there needs a backend change (STORE-042). **Still open:** a route for employees with no email, and the stated timeframe (HR decision).
 
@@ -1176,7 +1296,7 @@ Tick an item only when its section-D status block says 🟢 Completed with verif
 
 - [x] STORE-001 — Set production API/web URLs in EAS `production` env; make builds fail without a public https API URL
 - [ ] STORE-002 — Decide iOS distribution (Unlisted / Custom App / public SaaS) before creating the ASC listing
-- [ ] STORE-003 — Create two fully onboarded review accounts on production and write review notes
+- [x] STORE-003 — Create two fully onboarded review accounts on production and write review notes
 - [x] STORE-004 — Change monitoring flag key to `isMonitoringTool`
 - [ ] STORE-005 — Decide and implement background-location approach (drop it, or file declaration + video)
 - [ ] STORE-006 — Correct the "no trail" claim in the location disclosure (10 locales)
@@ -1222,7 +1342,7 @@ Tick an item only when its section-D status block says 🟢 Completed with verif
 - [ ] STORE-021 — Counsel sign-off (DPDP, Aadhaar, biometrics, retention, data location)
 - [ ] STORE-028 — Production push credentials (google-services.json, FCM V1, APNs) verified end-to-end
 - [ ] STORE-033 — After first TestFlight upload: check privacy-manifest notices, reconcile privacy report
-- [ ] STORE-034 — Confirm ATS in the real release Info.plist
+- [x] STORE-034 — Confirm ATS in the real release Info.plist
 
 ### 🟢 Verified / no action required
 
@@ -1763,22 +1883,26 @@ Ordered for the fewest rework loops. Items in the same step can run in parallel.
 
 Security practices: **data encrypted in transit — Yes**. **Users can request deletion — Yes** (in-app + URL from STORE-010). Independent security review — No (unless done).
 
-### K2. App Store Connect App Privacy (draft)
+### K2. App Store Connect App Privacy
 
-All types: **Linked to the user's identity: Yes. Used for tracking: No.**
+Final, 13 Oct 2026. "Do you or your third-party partners collect data?" **Yes.** Privacy policy URL `https://web.zobconnect.com/privacy`.
 
-| Apple category → type | Purposes |
+Unless stated: **Purpose: App Functionality. Linked to the user's identity: Yes. Used for tracking: No.**
+
+| Apple category → type | What it is |
 |---|---|
-| Contact Info → Name, Email Address, Phone Number, Physical Address | App Functionality |
-| Location → Precise Location | App Functionality (iOS: at clock-in only) |
-| Sensitive Info (biometric data — face template) | App Functionality |
-| Financial Info → Other Financial Info (bank account) | App Functionality |
-| User Content → Photos or Videos (selfies, enrolment and profile photos) | App Functionality |
-| User Content → Other User Content (leave/regularisation reasons) | App Functionality |
-| Identifiers → User ID | App Functionality |
-| Identifiers → Device ID (push token — ⚪ confirm classification) | App Functionality |
-| Diagnostics → Performance Data / Other Diagnostic Data (ML Kit) | Analytics (by SDK) — ⚪ reconcile with ML Kit's privacy manifest |
-| Other Data → Other Data Types (PAN, Aadhaar number, DOB, gender) | App Functionality |
+| Contact Info → Name, Email Address, Phone Number, Physical Address | Employee profile |
+| Location → Precise Location | Checked at clock-in and clock-out (iOS asks only "While Using") |
+| Sensitive Info → Sensitive Info | Face verification summary (biometric) |
+| Financial Info → Other Financial Info | Bank account for payroll |
+| User Content → Photos or Videos | Punch selfies, face set-up, profile and regularisation photos |
+| User Content → Other User Content | Leave and regularisation reasons |
+| Identifiers → User ID | Employee ID |
+| Identifiers → Device ID | Push notification token (declared to be safe) |
+| Other Data → Other Data Types | PAN, Aadhaar number, date of birth, gender |
+| Diagnostics → Performance Data, Other Diagnostic Data | Google ML Kit usage/performance metrics. **Purpose: Analytics. Linked: No.** Tracking: No |
+
+Not collected: Health & Fitness, Contacts, Browsing/Search History, Purchases, Usage Data, Audio, advertising data.
 
 ---
 
@@ -1806,3 +1930,4 @@ Stated from general knowledge and **not re-verified today** (marked ⚪ where us
 |---|---|---|
 | 2026-09-28 | Initial audit: 39 findings (7 Critical, 14 High, 9 Medium, 9 Low) | Claude (audit) |
 | 2026-09-28 | Review: claims verified. Added STORE-040/041/042. Code fixes applied to 21 items (8 completed, 13 in progress). See "Review of this audit" in section A | Claude (review) |
+| 2026-10-13 | iOS submission status section added. ITMS-90683 fixed (build 2). STORE-003 completed for iOS (multi-device test accounts, seed closes deletion requests). STORE-022 timeframe added. K2 finalised. STORE-034 ticked | Claude |
