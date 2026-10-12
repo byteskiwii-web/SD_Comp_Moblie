@@ -71,7 +71,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: build-sim
-          key: sim-app-${{ hashFiles('package-lock.json', 'app.json', 'app.config.js', 'eas.json', 'plugins/**', 'modules/**', 'assets/**', 'src/**', 'index.ts', 'App.tsx') }}
+          key: sim-app-adhoc-${{ hashFiles('package-lock.json', 'app.json', 'app.config.js', 'eas.json', 'plugins/**', 'modules/**', 'assets/**', 'src/**', 'index.ts', 'App.tsx') }}
 
       - name: Build the Release simulator app
         if: steps.app-cache.outputs.cache-hit != 'true'
@@ -83,7 +83,8 @@ jobs:
           mkdir -p out
           if ! xcodebuild -workspace "$WS" -scheme "$SCHEME" -configuration Release \
             -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
-            -derivedDataPath build CODE_SIGNING_ALLOWED=NO COMPILER_INDEX_STORE_ENABLE=NO \
+            -derivedDataPath build COMPILER_INDEX_STORE_ENABLE=NO \
+            CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM= PROVISIONING_PROFILE_SPECIFIER= \
             build > out/xcodebuild.log 2>&1; then
             grep -n -E "error:|The following build commands failed" -A4 out/xcodebuild.log | head -150
             tail -n 40 out/xcodebuild.log
@@ -92,6 +93,10 @@ jobs:
           mkdir -p build-sim
           cp -R build/Build/Products/Release-iphonesimulator/*.app build-sim/
           ls build-sim
+          # Ad-hoc signed, not unsigned: without the application-identifier
+          # entitlement the simulator's keychain refuses expo-secure-store, the
+          # saved-login read never returns and the app sits on its spinner.
+          codesign -d --entitlements - build-sim/*.app
 
       - name: Boot an iPhone 17 Pro Max simulator
         id: sim
@@ -115,9 +120,8 @@ jobs:
       - name: Explore the app
         if: env.MODE == 'explore'
         run: |
-          APP=$(ls -d build-sim/*.app | head -1)
-          xcrun simctl install "${{ steps.sim.outputs.udid }}" "$APP"
-          bash scripts/store-screenshots/explore.sh "${{ steps.sim.outputs.udid }}" out/explore
+          APP=$(ls -d "$PWD"/build-sim/*.app | head -1)
+          bash scripts/store-screenshots/explore.sh "${{ steps.sim.outputs.udid }}" out/explore "$APP"
 
       - name: Capture with goldie
         if: env.MODE == 'capture'
