@@ -499,7 +499,7 @@ export const en = {
   'del.reasonOptional': 'You do not have to give a reason.',
   'del.confirm': 'Confirm deletion',
   'del.pendingTitle': 'Deletion requested',
-  'del.pendingBody': 'HR has been notified and is reviewing your request. You will be contacted at your registered email.',
+  'del.pendingBody': 'HR has been notified and will complete your request within 30 days. You will be contacted at your registered email.',
   'loc.discloseTitle': 'Location while you are on shift',
   'loc.discloseRule': 'Zob Connect collects location data to confirm you are at your assigned store, even when the app is closed or not in use.',
   'loc.discloseDoLabel': 'What we check',
