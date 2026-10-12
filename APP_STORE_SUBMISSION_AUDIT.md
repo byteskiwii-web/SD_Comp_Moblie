@@ -105,7 +105,7 @@ Your data: see the Privacy Policy. You can request deletion of your account and 
 
 Keywords: `attendance,clock in,shift,leave,employee,staff,timesheet,workforce,HR,store`
 
-**App Review notes** (the one-time code is the server's `TEST_ACCOUNT_OTP`; the review password is in STORE-003)
+**App Review notes** (the one-time code is the server's `TEST_ACCOUNT_OTP`; the review password is in the backend seed script)
 
 ```
 Zob Connect is an internal app for employees of S.D. Computronix. Accounts are issued by HR; there is no public sign-up. We intend to request Unlisted App Distribution for this app.
@@ -341,7 +341,7 @@ Each item has a status block. Keep it current. The step-by-step fix for each ite
 
 > **Review, 13 Oct 2026.** Every gate is now cleared for the review accounts: no shift (so the 10:00 clock-in rule of `88a4233` does not apply), `geofence_exempt`, and `is_test_account` (migration 069: no face match, fixed one-time code `TEST_ACCOUNT_OTP`). The one-device rule no longer applies to test accounts (backend `1949424`), so testers and reviewers cannot sign each other out. A confirmed deletion only revokes sessions and opens a request; re-running the seed closes it (`177e83b`). Review notes are written (see the iOS submission status section). Still to do on submit day: re-run the seed on production.
 
-> **Review, 29 Sep 2026 (evening).** Four review accounts exist on production and dev (`EMP-90001`, `EMP-90002`, `TL-90001`, `TL-90002`, password `Testing@1234`, created by `scripts/seed-review-accounts.js`): approved, profile complete, KYC and PAN–Aadhaar link marked verified, policies accepted, `geofence_exempt`. The script now puts them on **no shift**, because a shift gates clock-in to IST hours and reviewers test in their own daytime. Dev has that; **production still has MORNING until the script is re-run there.** Face stays a one-selfie in-app step (a template of a real face cannot be seeded); say so in the review notes.
+> **Review, 29 Sep 2026 (evening).** Four review accounts exist on production and dev (`EMP-90001`, `EMP-90002`, `TL-90001`, `TL-90002`, password set in `scripts/seed-review-accounts.js` (private backend repo; never put it in this public repo), created by `scripts/seed-review-accounts.js`): approved, profile complete, KYC and PAN–Aadhaar link marked verified, policies accepted, `geofence_exempt`. The script now puts them on **no shift**, because a shift gates clock-in to IST hours and reviewers test in their own daytime. Dev has that; **production still has MORNING until the script is re-run there.** Face stays a one-selfie in-app step (a template of a real face cannot be seeded); say so in the review notes.
 
 **Current state.** Everything past the login screen depends on server state a reviewer cannot create:
 1. **Onboarding gate:** profile, PAN/Aadhaar, bank, face and **HR approval** must all be complete before the tabs appear ([src/navigation/RootNavigator.tsx](src/navigation/RootNavigator.tsx) `GatedApp`). KYC calls hit paid third-party vendors.
