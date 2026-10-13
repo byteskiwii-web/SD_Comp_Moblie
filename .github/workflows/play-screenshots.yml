@@ -112,12 +112,15 @@ jobs:
       - name: Create a Pixel 9 Pro-sized AVD
         run: |
           SDKM="$ANDROID_HOME/cmdline-tools/latest/bin"
+          # This avdmanager writes to ~/.config/.android/avd, where the newer
+          # emulator does not look; pin one folder for both, for every step.
+          export ANDROID_AVD_HOME="$HOME/.android/avd"
+          mkdir -p "$ANDROID_AVD_HOME"
+          echo "ANDROID_AVD_HOME=$ANDROID_AVD_HOME" >> "$GITHUB_ENV"
           yes | "$SDKM/sdkmanager" --licenses > /dev/null || true
           "$SDKM/sdkmanager" --install emulator platform-tools "system-images;android-35;google_apis;x86_64" > /dev/null
           echo no | "$SDKM/avdmanager" create avd --force -n test --package "system-images;android-35;google_apis;x86_64" --device pixel_6
-          # Wherever this runner keeps AVDs (ANDROID_AVD_HOME, ANDROID_USER_HOME...).
-          CFG="$("$SDKM/avdmanager" list avd 2>/dev/null | awk '/Path:/ && /test\.avd/ {print $2; exit}')/config.ini"
-          echo "AVD config: $CFG"; env | grep -E '^ANDROID_(AVD|USER|SDK|EMULATOR)_HOME' || true
+          CFG="$ANDROID_AVD_HOME/test.avd/config.ini"
           sed -i -E '/^(hw\.lcd\.(width|height|density)|skin\.(name|path)|hw\.ramSize|disk\.dataPartition\.size|hw\.keyboard)=/d' "$CFG"
           printf 'hw.lcd.width=1280\nhw.lcd.height=2856\nhw.lcd.density=480\nskin.name=1280x2856\nskin.path=_no_skin\nhw.ramSize=4096\ndisk.dataPartition.size=6G\nhw.keyboard=no\n' >> "$CFG"
           grep -E '^(hw\.lcd|skin|hw\.ramSize|disk)' "$CFG"
@@ -130,7 +133,8 @@ jobs:
         run: |
           mkdir -p out/android
           argent server start --detach >> out/android/setup.txt 2>&1 || true
-          argent run boot-device --avdName test --bootTimeoutMs 600000 >> out/android/setup.txt 2>&1
+          emulator -list-avds | tee -a out/android/setup.txt
+          argent run boot-device --avdName test --bootTimeoutMs 600000 >> out/android/setup.txt 2>&1 || { tail -40 out/android/setup.txt; exit 1; }
           SERIAL=$(adb devices | awk '/^emulator-/{print $1; exit}')
           echo "serial: $SERIAL" | tee -a out/android/setup.txt
           [ -n "$SERIAL" ] || { tail -40 out/android/setup.txt; exit 1; }
