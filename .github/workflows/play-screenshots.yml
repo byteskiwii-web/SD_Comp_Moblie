@@ -115,7 +115,9 @@ jobs:
           yes | "$SDKM/sdkmanager" --licenses > /dev/null || true
           "$SDKM/sdkmanager" --install emulator platform-tools "system-images;android-35;google_apis;x86_64" > /dev/null
           echo no | "$SDKM/avdmanager" create avd --force -n test --package "system-images;android-35;google_apis;x86_64" --device pixel_6
-          CFG="${ANDROID_AVD_HOME:-$HOME/.android/avd}/test.avd/config.ini"
+          # Wherever this runner keeps AVDs (ANDROID_AVD_HOME, ANDROID_USER_HOME...).
+          CFG="$("$SDKM/avdmanager" list avd 2>/dev/null | awk '/Path:/ && /test\.avd/ {print $2; exit}')/config.ini"
+          echo "AVD config: $CFG"; env | grep -E '^ANDROID_(AVD|USER|SDK|EMULATOR)_HOME' || true
           sed -i -E '/^(hw\.lcd\.(width|height|density)|skin\.(name|path)|hw\.ramSize|disk\.dataPartition\.size|hw\.keyboard)=/d' "$CFG"
           printf 'hw.lcd.width=1280\nhw.lcd.height=2856\nhw.lcd.density=480\nskin.name=1280x2856\nskin.path=_no_skin\nhw.ramSize=4096\ndisk.dataPartition.size=6G\nhw.keyboard=no\n' >> "$CFG"
           grep -E '^(hw\.lcd|skin|hw\.ramSize|disk)' "$CFG"
