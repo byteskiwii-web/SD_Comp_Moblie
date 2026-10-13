@@ -17,6 +17,15 @@
  * 111,320 m is one degree of latitude. Longitude shrinks by cos(latitude),
  * which at Ahmedabad is about 0.93 -- ignoring it would squash the fence into
  * an oval on exactly the east-west offsets a high street produces.
+ *
+ * THE SPAN IS CAPPED (MAX_SPAN_METRES). Following the dot works for someone a
+ * street or a suburb away; for someone in another city or country it asked for
+ * a span of tens or hundreds of degrees, and MKMapView throws on a region past
+ * 180 degrees -- an uncaught native exception, so the app quit as the
+ * Attendance tab opened. App Review is the case that found it: a geofence-
+ * exempt review account on a Mumbai store, opened in California. Past the cap
+ * the dot is simply off the card; the distance printed above it still says
+ * how far away they are, which is the only thing a map that wide could add.
  */
 export type FenceFrame = {
   latitude: number;
@@ -26,6 +35,9 @@ export type FenceFrame = {
 };
 
 export const METRES_PER_DEG_LAT = 111_320;
+
+/** 20 km: a whole city around the site, and a fraction of a degree. */
+export const MAX_SPAN_METRES = 20_000;
 
 export function frameFence(
   siteLat: number,
@@ -44,8 +56,12 @@ export function frameFence(
     const dLat = Math.abs(userLat - siteLat) * METRES_PER_DEG_LAT;
     const dLng = Math.abs(userLng - siteLng) * METRES_PER_DEG_LAT * cosLat;
     // 2.4x the offset, so the dot lands inside the card rather than on its edge.
-    spanMetres = Math.max(spanMetres, Math.max(dLat, dLng) * 2.4);
+    const followDot = Math.max(dLat, dLng) * 2.4;
+    // Non-finite only from a malformed fix; the fence frame is the safe answer.
+    if (Number.isFinite(followDot)) spanMetres = Math.max(spanMetres, followDot);
   }
+  // Never wider than a city, whatever the fence or the fix: see the header.
+  spanMetres = Math.min(spanMetres, Math.max(MAX_SPAN_METRES, Math.max(radiusMetres, 50) * 2.6));
 
   const latitudeDelta = spanMetres / METRES_PER_DEG_LAT;
   return {
