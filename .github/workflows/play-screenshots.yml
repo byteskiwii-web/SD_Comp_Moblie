@@ -1,0 +1,110 @@
+# Google Play screenshots on a GitHub-hosted Linux runner.
+#
+# Builds a release APK (prebuild + Gradle, x86_64 only, no EAS), boots a
+# Pixel 9 Pro emulator (the 1280x2856 screen goldie's pixel-10-pro frame
+# expects) and plays the explore flows behind the goldie scenes. The raw
+# captures are the run's artifact; they are framed with `goldie frame` like
+# the iOS ones.
+#
+# Its own workflow and concurrency group, so it never cancels an iOS run.
+name: Store screenshots (Android)
+
+on:
+  # A workflow that is not on the default branch yet can only start on push.
+  push:
+    branches: [chore/play-screenshots]
+  workflow_dispatch:
+    inputs:
+      flows:
+        description: "Space-separated explore flows to play (blank: the goldie scenes)"
+        default: ""
+
+concurrency:
+  group: play-screenshots
+  cancel-in-progress: true
+
+env:
+  BUNDLE_ID: com.sdcomputronix.ziphrmsmobile
+  EAS_BUILD_PROFILE: production
+  EXPO_UPDATES_TARGET: build
+  EXPO_PUBLIC_API_URL: https://api.zobconnect.com
+  EXPO_PUBLIC_WEB_URL: https://web.zobconnect.com
+  ARGENT_SECRET_REVIEW_PASSWORD: ${{ secrets.REVIEW_PASSWORD }}
+  ARGENT_EMULATOR_NO_WINDOW: "1"
+
+jobs:
+  screenshots:
+    # 24.04 for glibc 2.39, which argent's gesture and screenshot tools need.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: 17
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Restore the APK
+        id: apk-cache
+        uses: actions/cache@v4
+        with:
+          path: build-apk
+          key: apk-x86_64-${{ hashFiles('package-lock.json', 'app.json', 'app.config.js', 'eas.json', 'plugins/**', 'modules/**', 'assets/**', 'src/**', 'index.ts', 'App.tsx') }}
+
+      - name: Build the release APK
+        if: steps.apk-cache.outputs.cache-hit != 'true'
+        run: |
+          npm ci
+          CI=1 npx expo prebuild --platform android --clean
+          mkdir -p out
+          cd android
+          if ! ./gradlew assembleRelease -PreactNativeArchitectures=x86_64 --no-daemon > ../out/gradle.log 2>&1; then
+            grep -n -E "error:|FAILURE|What went wrong" -A6 ../out/gradle.log | head -150
+            tail -n 40 ../out/gradle.log
+            exit 1
+          fi
+          cd ..
+          mkdir -p build-apk
+          cp android/app/build/outputs/apk/release/app-release.apk build-apk/
+          ls -l build-apk
+
+      - name: Install tools
+        run: |
+          npm i -g @swmansion/argent@latest
+          argent telemetry disable || true
+
+      - name: Capture on a Pixel 9 Pro emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_9_pro
+          ram-size: 4096M
+          disk-size: 6G
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
+          disable-animations: true
+          script: FLOWS="${{ inputs.flows }}" bash scripts/store-screenshots/android-explore.sh emulator-5554 out/android "$PWD/build-apk/app-release.apk"
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: play-screenshots
+          path: |
+            out/android
+            out/gradle.log
+          if-no-files-found: ignore
+          retention-days: 14
