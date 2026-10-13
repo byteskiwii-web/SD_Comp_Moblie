@@ -13,10 +13,42 @@ snap() {
   adb -s "$SERIAL" exec-out screencap -p > "$OUT/$1.png" 2>/dev/null
   argent run describe --udid "$SERIAL" > "$OUT/$1.describe.txt" 2>&1
 }
+# The first-run tour. On Android it is a modal, and while it is up argent's
+# tree holds only the modal -- "Home" and the tabs are not in it -- so a
+# flow's await for them times out. Answered here, by the frame describe
+# reports, before every flow and before a retry.
+skip_tour() {
+  local n=0 hit x y
+  while [ $n -lt 3 ]; do
+    hit=$(argent run describe --udid "$SERIAL" 2>/dev/null | python3 -c '
+import json, re, sys
+raw = sys.stdin.read()
+try:
+    text = json.loads(raw)["description"]
+except Exception:
+    text = raw
+if "STEP " not in text:
+    sys.exit()
+m = re.search(r"Button \"Skip\" \[clickable\]\s+\(([\d.]+), ([\d.]+), ([\d.]+), ([\d.]+)\)", text)
+if m:
+    x, y, w, h = map(float, m.groups())
+    print(str(round(x + w / 2, 3)) + "|" + str(round(y + h / 2, 3)))
+')
+    [ -z "$hit" ] && return 0
+    IFS='|' read -r x y <<< "$hit"
+    echo "tour skipped at $x,$y" >> "$OUT/setup.txt"
+    argent run gesture-tap --udid "$SERIAL" --x "$x" --y "$y" >> "$OUT/setup.txt" 2>&1
+    sleep 2
+    n=$((n + 1))
+  done
+}
+
 flow() {
+  skip_tour
   argent flow run ".argent/flows/explore/$1.yaml" --device "$SERIAL" > "$OUT/$1.flow.txt" 2>&1
   local rc=$?
   if [ $rc -ne 0 ]; then
+    skip_tour
     argent flow run ".argent/flows/explore/$1.yaml" --device "$SERIAL" > "$OUT/$1.flow.txt" 2>&1
     rc=$?
   fi
