@@ -1,8 +1,8 @@
 # Google Play screenshots on a GitHub-hosted Linux runner.
 #
-# Builds a release APK (prebuild + Gradle, x86_64 only, no EAS), boots a
-# Pixel 9 Pro emulator (the 1280x2856 screen goldie's pixel-10-pro frame
-# expects) and plays the explore flows behind the goldie scenes. The raw
+# Builds a release APK (prebuild + Gradle, x86_64 only, no EAS), boots an
+# emulator with a Pixel 9 Pro screen (the 1280x2856 goldie's pixel-10-pro
+# frame expects) and plays the explore flows behind the goldie scenes. The raw
 # captures are the run's artifact; they are framed with `goldie frame` like
 # the iOS ones.
 #
@@ -58,7 +58,7 @@ jobs:
 
       - name: Restore the APK
         id: apk-cache
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: build-apk
           key: apk-x86_64-${{ hashFiles('package-lock.json', 'app.json', 'app.config.js', 'eas.json', 'plugins/**', 'modules/**', 'assets/**', 'src/**', 'index.ts', 'App.tsx') }}
@@ -87,6 +87,15 @@ jobs:
           cp android/app/build/outputs/apk/release/app-release.apk build-apk/
           ls -l build-apk
 
+      # Saved now rather than at the end of the job, which only happens when
+      # every step passes: a failed capture should not cost a rebuild.
+      - name: Save the APK
+        if: steps.apk-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: build-apk
+          key: ${{ steps.apk-cache.outputs.cache-primary-key }}
+
       - name: Install tools
         run: |
           npm i -g @swmansion/argent@latest
@@ -98,11 +107,19 @@ jobs:
           api-level: 35
           target: google_apis
           arch: x86_64
-          profile: pixel_9_pro
+          # The runner's avdmanager predates the pixel_9_pro profile, so the
+          # AVD is made from an older Pixel and given the 9 Pro's screen
+          # before it boots: 1280x2856, the size goldie's frame expects.
+          profile: pixel_6
           ram-size: 4096M
           disk-size: 6G
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
           disable-animations: true
+          # Each line runs in its own shell, hence the repeated path.
+          pre-emulator-launch-script: |
+            sed -i -E '/^(hw\.lcd\.(width|height|density)|skin\.(name|path))=/d' "${ANDROID_AVD_HOME:-$HOME/.android/avd}/test.avd/config.ini"
+            printf 'hw.lcd.width=1280\nhw.lcd.height=2856\nhw.lcd.density=480\nskin.name=1280x2856\nskin.path=_no_skin\n' >> "${ANDROID_AVD_HOME:-$HOME/.android/avd}/test.avd/config.ini"
+            grep -E '^(hw\.lcd|skin)' "${ANDROID_AVD_HOME:-$HOME/.android/avd}/test.avd/config.ini"
           script: FLOWS="${{ inputs.flows }}" bash scripts/store-screenshots/android-explore.sh emulator-5554 out/android "$PWD/build-apk/app-release.apk"
 
       - name: Upload results
