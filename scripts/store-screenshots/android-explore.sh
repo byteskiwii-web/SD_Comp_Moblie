@@ -20,7 +20,7 @@ demo_mode() {
   $d enter >/dev/null
   $d clock -e hhmm 0941 >/dev/null
   $d battery -e level 100 -e plugged false >/dev/null
-  $d network -e wifi show -e level 4 >/dev/null
+  $d network -e wifi show -e level 4 -e fully true >/dev/null
   $d network -e mobile hide >/dev/null
   $d notifications -e visible false >/dev/null
   sleep 1
