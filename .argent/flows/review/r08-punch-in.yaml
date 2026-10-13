@@ -1,0 +1,7 @@
+steps:
+  - run: ../explore/_home
+  - tap: { text: Attendance }
+  - run: ../explore/_skip-tour
+  - tap: { text: Punch In }
+  - echo: The location prompt or the camera prompt may follow; answered outside the flow
+  - wait: 4000

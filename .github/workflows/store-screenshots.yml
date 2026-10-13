@@ -25,7 +25,7 @@ on:
     inputs:
       mode:
         type: choice
-        options: [explore, capture]
+        options: [explore, capture, review]
         default: capture
       only:
         description: "explore: run only the flows whose names start with this glob, e.g. 0[1348]"
@@ -126,6 +126,17 @@ jobs:
           APP=$(ls -d "$PWD"/build-sim/*.app | head -1)
           ONLY="${{ inputs.only }}" bash scripts/store-screenshots/explore.sh "${{ steps.sim.outputs.udid }}" out/explore "$APP"
 
+      # Plays App Review (scripts/store-screenshots/review.sh), then sends the
+      # clock-in the simulator cannot take a selfie for (review-api.sh).
+      - name: Review the app as App Review would
+        if: env.MODE == 'review'
+        env:
+          REVIEW_PASSWORD: ${{ secrets.REVIEW_PASSWORD }}
+        run: |
+          APP=$(ls -d "$PWD"/build-sim/*.app | head -1)
+          bash scripts/store-screenshots/review.sh "${{ steps.sim.outputs.udid }}" out/review "$APP"
+          bash scripts/store-screenshots/review-api.sh out/review out/review/00-first-launch.png
+
       - name: Capture with goldie
         if: env.MODE == 'capture'
         env:
@@ -145,6 +156,7 @@ jobs:
           name: store-screenshots-${{ env.MODE }}
           path: |
             out/explore
+            out/review
             out/xcodebuild.log
             goldie/out/screenshots
             goldie/out/raw

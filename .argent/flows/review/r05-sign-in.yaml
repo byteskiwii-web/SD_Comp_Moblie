@@ -1,0 +1,8 @@
+steps:
+  - launch: com.sdcomputronix.ziphrmsmobile
+  - await: { visible: { id: login-employee-id }, timeout: 30000 }
+  - type: { into: { id: login-employee-id }, text: EMP-90001, submit: false }
+  - type: { into: { id: login-password }, text: "{{secret:REVIEW_PASSWORD}}", submit: true }
+  - tap: { text: Sign in, after: { id: login-password } }
+  - echo: No await here; the notification prompt can come up and is answered outside the flow
+  - wait: 6000

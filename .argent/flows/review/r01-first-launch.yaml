@@ -1,0 +1,4 @@
+steps:
+  - launch: com.sdcomputronix.ziphrmsmobile
+  - await: { visible: { id: login-employee-id }, timeout: 60000 }
+  - await: { idle: true }

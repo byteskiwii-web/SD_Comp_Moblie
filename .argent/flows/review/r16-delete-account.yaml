@@ -1,0 +1,16 @@
+steps:
+  - run: ../explore/_home
+  - tap: { text: Profile }
+  - run: ../explore/_skip-tour
+  - scroll-to: { target: { text: Privacy & account } }
+  - tap: { text: Privacy & account }
+  - wait: 1500
+  - scroll-to: { target: { text: Request deletion of my data } }
+  - tap: { text: Request deletion of my data }
+  - wait: 1500
+  - scroll-to: { target: { text: Confirmation word } }
+  - type: { into: { text: Confirmation word }, text: DELETE, submit: true }
+  - scroll-to: { target: { text: Confirm deletion } }
+  - tap: { text: Confirm deletion }
+  - echo: The request signs the employee out
+  - await: { visible: { id: login-employee-id }, timeout: 20000 }

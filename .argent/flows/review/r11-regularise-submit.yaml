@@ -1,0 +1,11 @@
+steps:
+  - run: ../explore/_home
+  - tap: { text: Attendance }
+  - run: ../explore/_skip-tour
+  - tap: { text: Regularise }
+  - run: ../explore/_skip-tour
+  - scroll-to: { target: { text: Missed clock-out } }
+  - type: { into: { text: Missed clock-out }, text: Forgot to clock out at the end of the day, submit: true }
+  - scroll-to: { target: { text: Request, after: { text: Missed clock-out } } }
+  - tap: { text: Request, after: { text: Missed clock-out } }
+  - wait: 4000

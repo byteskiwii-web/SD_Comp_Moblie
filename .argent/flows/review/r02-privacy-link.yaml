@@ -1,0 +1,6 @@
+steps:
+  - launch: com.sdcomputronix.ziphrmsmobile
+  - await: { visible: { id: login-employee-id }, timeout: 30000 }
+  - scroll-to: { target: { text: Privacy Policy } }
+  - tap: { text: Privacy Policy }
+  - wait: 5000

@@ -1,0 +1,6 @@
+steps:
+  - launch: com.sdcomputronix.ziphrmsmobile
+  - await: { visible: { id: login-employee-id }, timeout: 30000 }
+  - scroll-to: { target: { text: Terms of Use } }
+  - tap: { text: Terms of Use }
+  - wait: 5000

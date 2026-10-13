@@ -1,0 +1,10 @@
+steps:
+  - run: ../explore/_home
+  - tap: { text: Leave }
+  - run: ../explore/_skip-tour
+  - tap: { text: Apply }
+  - wait: 1500
+  - tap: { text: Unpaid }
+  - type: { into: { text: Why you need the time off }, text: Family function out of town, submit: true }
+  - tap: { text: Send request }
+  - wait: 4000

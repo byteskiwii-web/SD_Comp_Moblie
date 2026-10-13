@@ -1,0 +1,5 @@
+steps:
+  - run: ../explore/_home
+  - tap: { text: Profile }
+  - run: ../explore/_skip-tour
+  - await: { idle: true }

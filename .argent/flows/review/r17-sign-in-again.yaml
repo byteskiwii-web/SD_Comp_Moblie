@@ -1,0 +1,10 @@
+steps:
+  - run: r05-sign-in
+  - await: { visible: { text: Home }, timeout: 30000 }
+  - run: ../explore/_skip-tour
+  - tap: { text: Profile }
+  - run: ../explore/_skip-tour
+  - scroll-to: { target: { text: Privacy & account } }
+  - tap: { text: Privacy & account }
+  - wait: 1500
+  - scroll-to: { target: { text: Deletion requested } }

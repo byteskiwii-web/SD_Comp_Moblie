@@ -1,0 +1,7 @@
+steps:
+  - run: ../explore/_home
+  - tap: { text: Attendance }
+  - run: ../explore/_skip-tour
+  - tap: { text: History }
+  - wait: 2000
+  - await: { idle: true }

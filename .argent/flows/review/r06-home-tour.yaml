@@ -1,0 +1,3 @@
+steps:
+  - await: { visible: { text: Home }, timeout: 30000 }
+  - wait: 2500
