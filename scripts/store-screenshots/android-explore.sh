@@ -10,11 +10,13 @@ SERIAL="$1"; OUT="$2"; APK="$3"
 mkdir -p "$OUT"
 
 # A clean status bar: Android's demo mode, the same 9:41 Apple uses. Set
-# before every capture, not once: SystemUI drops out of demo mode along the
-# way (the first run's later shots had the real clock and the app's
-# notification icon), and a repeat "enter" is harmless.
+# before every capture, not once: `argent flow run` pins its own status bar
+# for the flow and on the way out sends "exit" and sets sysui_demo_allowed
+# back to 0, so every shot after the first had the real clock and the app's
+# notification icon. Hence the allow first, then a fresh "enter".
 demo_mode() {
   local d="adb -s $SERIAL shell am broadcast -a com.android.systemui.demo -e command"
+  adb -s "$SERIAL" shell settings put global sysui_demo_allowed 1
   $d enter >/dev/null
   $d clock -e hhmm 0941 >/dev/null
   $d battery -e level 100 -e plugged false >/dev/null
