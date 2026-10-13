@@ -9,7 +9,22 @@ set -u
 SERIAL="$1"; OUT="$2"; APK="$3"
 mkdir -p "$OUT"
 
+# A clean status bar: Android's demo mode, the same 9:41 Apple uses. Set
+# before every capture, not once: SystemUI drops out of demo mode along the
+# way (the first run's later shots had the real clock and the app's
+# notification icon), and a repeat "enter" is harmless.
+demo_mode() {
+  local d="adb -s $SERIAL shell am broadcast -a com.android.systemui.demo -e command"
+  $d enter >/dev/null
+  $d clock -e hhmm 0941 >/dev/null
+  $d battery -e level 100 -e plugged false >/dev/null
+  $d network -e wifi show -e level 4 >/dev/null
+  $d network -e mobile hide >/dev/null
+  $d notifications -e visible false >/dev/null
+  sleep 1
+}
 snap() {
+  demo_mode
   adb -s "$SERIAL" exec-out screencap -p > "$OUT/$1.png" 2>/dev/null
   argent run describe --udid "$SERIAL" > "$OUT/$1.describe.txt" 2>&1
 }
@@ -61,14 +76,7 @@ adb -s "$SERIAL" install -r -g "$APK" >> "$OUT/setup.txt" 2>&1
 # manifest list on every API level, so grant that one by name.
 adb -s "$SERIAL" shell pm grant "$BUNDLE_ID" android.permission.POST_NOTIFICATIONS >> "$OUT/setup.txt" 2>&1 || true
 
-# A clean status bar: Android's demo mode, the same 9:41 Apple uses.
 adb -s "$SERIAL" shell settings put global sysui_demo_allowed 1
-adb -s "$SERIAL" shell am broadcast -a com.android.systemui.demo -e command enter >/dev/null
-adb -s "$SERIAL" shell am broadcast -a com.android.systemui.demo -e command clock -e hhmm 0941 >/dev/null
-adb -s "$SERIAL" shell am broadcast -a com.android.systemui.demo -e command battery -e level 100 -e plugged false >/dev/null
-adb -s "$SERIAL" shell am broadcast -a com.android.systemui.demo -e command network -e wifi show -e level 4 >/dev/null
-adb -s "$SERIAL" shell am broadcast -a com.android.systemui.demo -e command network -e mobile show -e datatype none -e level 4 >/dev/null
-adb -s "$SERIAL" shell am broadcast -a com.android.systemui.demo -e command notifications -e visible false >/dev/null
 # Standing at the lead's store (Navi Mumbai-Belapur), so the attendance
 # scene shows the dot inside the fence rather than "outside geo-fence".
 adb -s "$SERIAL" emu geo fix 73.02808 19.02598 >> "$OUT/setup.txt" 2>&1 || true
