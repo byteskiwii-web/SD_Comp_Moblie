@@ -101,26 +101,44 @@ jobs:
           npm i -g @swmansion/argent@latest
           argent telemetry disable || true
 
-      - name: Capture on a Pixel 9 Pro emulator
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 35
-          target: google_apis
-          arch: x86_64
-          # The runner's avdmanager predates the pixel_9_pro profile, so the
-          # AVD is made from an older Pixel and given the 9 Pro's screen
-          # before it boots: 1280x2856, the size goldie's frame expects.
-          profile: pixel_6
-          ram-size: 4096M
-          disk-size: 6G
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
-          disable-animations: true
-          # Each line runs in its own shell, hence the repeated path.
-          pre-emulator-launch-script: |
-            sed -i -E '/^(hw\.lcd\.(width|height|density)|skin\.(name|path))=/d' "${ANDROID_AVD_HOME:-$HOME/.android/avd}/test.avd/config.ini"
-            printf 'hw.lcd.width=1280\nhw.lcd.height=2856\nhw.lcd.density=480\nskin.name=1280x2856\nskin.path=_no_skin\n' >> "${ANDROID_AVD_HOME:-$HOME/.android/avd}/test.avd/config.ini"
-            grep -E '^(hw\.lcd|skin)' "${ANDROID_AVD_HOME:-$HOME/.android/avd}/test.avd/config.ini"
-          script: FLOWS="${{ inputs.flows }}" bash scripts/store-screenshots/android-explore.sh emulator-5554 out/android "$PWD/build-apk/app-release.apk"
+      # The AVD is made here and booted by argent itself. Under
+      # reactivecircus/android-emulator-runner, argent's input server could
+      # not find the emulator it had not launched ("Failed to find any
+      # running emulator"), so every tap failed.
+      #
+      # The runner's avdmanager predates the pixel_9_pro profile, so the AVD
+      # is made from an older Pixel and given the 9 Pro's screen before it
+      # boots: 1280x2856, the size goldie's frame expects.
+      - name: Create a Pixel 9 Pro-sized AVD
+        run: |
+          SDKM="$ANDROID_HOME/cmdline-tools/latest/bin"
+          yes | "$SDKM/sdkmanager" --licenses > /dev/null || true
+          "$SDKM/sdkmanager" --install emulator platform-tools "system-images;android-35;google_apis;x86_64" > /dev/null
+          echo no | "$SDKM/avdmanager" create avd --force -n test --package "system-images;android-35;google_apis;x86_64" --device pixel_6
+          CFG="${ANDROID_AVD_HOME:-$HOME/.android/avd}/test.avd/config.ini"
+          sed -i -E '/^(hw\.lcd\.(width|height|density)|skin\.(name|path)|hw\.ramSize|disk\.dataPartition\.size|hw\.keyboard)=/d' "$CFG"
+          printf 'hw.lcd.width=1280\nhw.lcd.height=2856\nhw.lcd.density=480\nskin.name=1280x2856\nskin.path=_no_skin\nhw.ramSize=4096\ndisk.dataPartition.size=6G\nhw.keyboard=no\n' >> "$CFG"
+          grep -E '^(hw\.lcd|skin|hw\.ramSize|disk)' "$CFG"
+          echo "$ANDROID_HOME/emulator" >> "$GITHUB_PATH"
+          echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
+
+      - name: Capture on the emulator
+        env:
+          ARGENT_EMULATOR_GPU_MODE: swiftshader_indirect
+        run: |
+          mkdir -p out/android
+          argent server start --detach >> out/android/setup.txt 2>&1 || true
+          argent run boot-device --avdName test --bootTimeoutMs 600000 >> out/android/setup.txt 2>&1
+          SERIAL=$(adb devices | awk '/^emulator-/{print $1; exit}')
+          echo "serial: $SERIAL" | tee -a out/android/setup.txt
+          [ -n "$SERIAL" ] || { tail -40 out/android/setup.txt; exit 1; }
+          # Which emulators argent's input server can see, for the next failure.
+          ls -la "${XDG_RUNTIME_DIR:-/nonexistent}/avd/running" "$HOME/.android/avd/running" 2>&1 | tee -a out/android/setup.txt || true
+          for k in window_animation_scale transition_animation_scale animator_duration_scale; do
+            adb -s "$SERIAL" shell settings put global $k 0
+          done
+          adb -s "$SERIAL" shell wm size | tee -a out/android/setup.txt
+          FLOWS="${{ inputs.flows }}" bash scripts/store-screenshots/android-explore.sh "$SERIAL" out/android "$PWD/build-apk/app-release.apk"
 
       - name: Upload results
         if: always()
