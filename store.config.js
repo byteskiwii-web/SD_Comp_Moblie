@@ -36,14 +36,14 @@ const otpLine = env('REVIEW_OTP') ? `\nIf a one-time code is requested, use: ${e
 
 const reviewNotes = `Zob Connect is an internal app for employees of S.D. Computronix. Accounts are issued by HR; there is no public sign-up. We intend to request Unlisted App Distribution for this app.
 ${otpLine}
-This review account is fully set up and works from any location, at any time:
+This review account is fully set up and works from any location, at any time. It has no fixed shift, so it can clock in at any hour (the app shows "No shift assigned" for that reason):
 - Attendance tab → Clock In (takes a selfie; location is recorded) → Break → Clock Out
 - History, leave and regularisation requests
 - Profile → Privacy & account → Request deletion of my data (it sends a request to HR and signs you out; you can sign in again)
 
 Identity documents (PAN, Aadhaar, bank) are collected only during employee onboarding for payroll and are already completed for this account.
 
-Team-lead view: TL-90001 (same password as the review account)`;
+Team-lead view: TL-90001 (same password as the review account). The Team tab lists who has clocked in today, so clock in as EMP-90001 first, then sign in as TL-90001.`;
 
 // goldie's output (goldie/out/screenshots/iphone-6.9/en-US), in scene order,
 // once it exists. 1320x2868 is accepted in the 6.7"/6.9" display slot.
