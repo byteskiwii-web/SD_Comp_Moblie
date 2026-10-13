@@ -63,14 +63,21 @@ jobs:
           path: build-apk
           key: apk-x86_64-${{ hashFiles('package-lock.json', 'app.json', 'app.config.js', 'eas.json', 'plugins/**', 'modules/**', 'assets/**', 'src/**', 'index.ts', 'App.tsx') }}
 
+      # Release lint (lintVitalAnalyzeRelease, once per native module) ran the
+      # JVM out of Metaspace, and the dying JVM then held the step until the
+      # job timed out. It guards store uploads, not screenshots, so it is
+      # skipped; the larger heap is for the rest of the build. The timeout
+      # turns any further hang into a failure with a log.
       - name: Build the release APK
         if: steps.apk-cache.outputs.cache-hit != 'true'
+        timeout-minutes: 45
         run: |
           npm ci
           CI=1 npx expo prebuild --platform android --clean
           mkdir -p out
           cd android
-          if ! ./gradlew assembleRelease -PreactNativeArchitectures=x86_64 --no-daemon > ../out/gradle.log 2>&1; then
+          if ! ./gradlew assembleRelease -PreactNativeArchitectures=x86_64 -x lintVitalAnalyzeRelease -x lintVitalReportRelease -x lintVitalRelease \
+              -Dorg.gradle.jvmargs="-Xmx6g -XX:MaxMetaspaceSize=2g" --no-daemon > ../out/gradle.log 2>&1; then
             grep -n -E "error:|FAILURE|What went wrong" -A6 ../out/gradle.log | head -150
             tail -n 40 ../out/gradle.log
             exit 1
