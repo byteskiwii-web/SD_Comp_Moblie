@@ -13,6 +13,16 @@ function parseHHMMSS(t: string): { h: number; m: number; s: number } {
   return { h, m: m || 0, s: s || 0 };
 }
 
+/** Length of the rostered shift, wrapping past midnight for an overnight one. */
+export function shiftDurationMs(shiftStart: string, shiftEnd: string): number {
+  const toMs = (t: string) => {
+    const { h, m, s } = parseHHMMSS(t);
+    return ((h * 60 + m) * 60 + s) * 1000;
+  };
+  const diff = toMs(shiftEnd) - toMs(shiftStart);
+  return diff > 0 ? diff : diff + 24 * 60 * 60 * 1000;
+}
+
 /**
  * Cancel a reminder BY WHAT IT IS, not only by the id we filed it under.
  *
@@ -57,7 +67,10 @@ async function cancelByKind(kind: string, identifier: string): Promise<void> {
  * cancel-then-schedule leaves nothing to accumulate across repeated clock-ins.
  */
 export async function scheduleClockOutReminder(
-  shiftEnd: string,
+  /** When this employee actually punched in, not the rostered start time. */
+  clockInAt: string,
+  /** The rostered shift's length (shiftEnd - shiftStart), applied from the real punch-in. */
+  durationMs: number,
   /**
    * Checked again at the last moment, because everything between here and the
    * scheduling call is awaited -- permission reads can show a system dialog
@@ -67,13 +80,8 @@ export async function scheduleClockOutReminder(
    */
   isStillOnShift?: () => boolean
 ): Promise<void> {
-  const { h, m, s } = parseHHMMSS(shiftEnd);
-  const now = new Date();
-  let target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, s);
-  if (target.getTime() <= now.getTime()) {
-    target = new Date(target.getTime() + 24 * 60 * 60 * 1000);
-  }
-  if (target.getTime() <= now.getTime()) return; // still in the past -- give up quietly
+  const target = new Date(new Date(clockInAt).getTime() + durationMs);
+  if (target.getTime() <= Date.now()) return; // still in the past -- give up quietly
 
   const Notifications = getNotifications();
   if (!Notifications) return;

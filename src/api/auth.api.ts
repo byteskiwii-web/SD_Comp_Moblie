@@ -291,7 +291,11 @@ export type OnboardingStatus = {
 };
 
 export async function getMyOnboarding() {
-  const res = await apiClient.get<{ success: true; data: OnboardingStatus }>('/auth/me/onboarding');
+  // Shorter than the client's 15s default: this is a background gate check
+  // retried twice (useOnboardingGate), not a user-triggered upload -- the
+  // 15s default times three attempts into a visibly long wait on a
+  // genuinely unreachable server.
+  const res = await apiClient.get<{ success: true; data: OnboardingStatus }>('/auth/me/onboarding', { timeout: 6000 });
   return res.data.data;
 }
 
