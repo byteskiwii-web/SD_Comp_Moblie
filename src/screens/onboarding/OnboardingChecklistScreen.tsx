@@ -113,6 +113,32 @@ export function OnboardingChecklistScreen() {
   /* The next thing to do, so the big button at the bottom always goes somewhere. */
   const next = displayRows.find((s) => !isDisplayDone(s) && displayRoute(s));
 
+  // A connectivity failure is a different situation from "still setting up",
+  // not a smaller version of it -- showing a dedicated screen instead of an
+  // error card wedged above the half-built checklist (which still says
+  // "Finish these steps..." about steps it couldn't even check).
+  if (isError) {
+    return (
+      <SafeAreaView style={styles.flex} edges={['top', 'bottom']}>
+        <ScrollView contentContainerStyle={styles.offlineContent}>
+          <View style={styles.langRow}><LanguageChips /></View>
+          <View style={styles.offlineBody}>
+            <View style={styles.offlineIconWrap}>
+              <Ionicons name="cloud-offline-outline" size={48} color={colors.brand[700]} />
+            </View>
+            <Text style={styles.offlineTitle}>{t('checklist.offlineTitle')}</Text>
+            <Text style={styles.offlineText}>{t('checklist.offlineBody')}</Text>
+            <View style={styles.offlineActions}>
+              <Button title={t('common.retry')} onPress={() => refetch()} loading={isFetching} />
+              <Button title={t('common.signOut')} variant="outline" onPress={() => signOut()} />
+            </View>
+          </View>
+          <LegalLinks compact />
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
   return (
     // 'bottom' too: onboarding has no tab bar under it.
     <SafeAreaView style={styles.flex} edges={['top', 'bottom']}>
@@ -138,13 +164,7 @@ export function OnboardingChecklistScreen() {
           </View>
         ) : null}
 
-        {isError ? (
-          <Card style={styles.errorCard}>
-            <Text style={styles.errorText}>{t('checklist.loadFailed')}</Text>
-            <Button title={t('common.retry')} onPress={() => refetch()} loading={isFetching} />
-          </Card>
-        ) : (
-          <Card>
+        <Card>
             <View style={styles.progressRow}>
               <Text style={styles.progressText}>{t('checklist.progress', { done, total: displayRows.length })}</Text>
               <View style={styles.bar}><View style={[styles.barFill, { width: `${(done / Math.max(1, displayRows.length)) * 100}%` }]} /></View>
@@ -194,8 +214,7 @@ export function OnboardingChecklistScreen() {
                 </Pressable>
               );
             })}
-          </Card>
-        )}
+        </Card>
 
         {next ? (
           <View style={styles.cta}>
@@ -247,11 +266,18 @@ function makeStyles(colors: ColorScheme) {
     cta: { marginTop: 4 },
     waitCard: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: colors.successBg, borderRadius: radii.md, padding: 14 },
     waitText: { flex: 1, fontSize: 12.5, fontWeight: '600', color: colors.slate700, lineHeight: 18 },
-    errorCard: { gap: 12 },
     holdCard: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, backgroundColor: colors.warningBg, borderRadius: radii.md, padding: 14, marginBottom: 14 },
     holdBody: { flex: 1 },
     holdTitle: { fontSize: 13.5, fontWeight: '800', color: colors.warningText, marginBottom: 3 },
     holdText: { fontSize: 12.5, color: colors.slate700, lineHeight: 18 },
-    errorText: { fontSize: 12.5, color: colors.dangerText, fontWeight: '600' },
+    offlineContent: { flexGrow: 1, padding: 20, gap: 14 },
+    offlineBody: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14, paddingVertical: 32 },
+    offlineIconWrap: {
+      width: 88, height: 88, borderRadius: 44, backgroundColor: colors.brand[50],
+      alignItems: 'center', justifyContent: 'center',
+    },
+    offlineTitle: { fontSize: 20, fontWeight: '800', color: colors.textLight, letterSpacing: -0.3 },
+    offlineText: { fontSize: 13.5, color: colors.slate600, lineHeight: 20, textAlign: 'center', maxWidth: 280 },
+    offlineActions: { width: '100%', gap: 10, marginTop: 10 },
   });
 }

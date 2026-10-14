@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '../stores/authStore';
 import { useShiftStore } from '../stores/shiftStore';
 import { getMe } from '../api/auth.api';
-import { cancelClockOutReminder, scheduleClockOutReminder } from '../utils/notifications';
+import { cancelClockOutReminder, scheduleClockOutReminder, shiftDurationMs } from '../utils/notifications';
 
 // Reacts to shiftStore.isClockedIn transitions to schedule/cancel the local
 // "still on shift?" reminder -- the same reactive pattern
@@ -36,16 +36,23 @@ export function useClockOutReminderEffect() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const shiftStart = meQuery.data?.shiftStart ?? null;
   const shiftEnd = meQuery.data?.shiftEnd ?? null;
+  const clockInAt = useShiftStore((s) => s.clockInAt);
 
   useEffect(() => {
-    if (isClockedIn && shiftEnd) {
+    if (isClockedIn && shiftStart && shiftEnd && clockInAt) {
+      // 9 hours (or whatever the rostered shift's length is) from the actual
+      // punch-in, not from the rostered start time -- an employee who clocks
+      // in late or early gets the reminder relative to when they actually
+      // started, not a fixed clock time they may not have been on shift for yet.
+      const durationMs = shiftDurationMs(shiftStart, shiftEnd);
       // The guard reads the store live rather than closing over `isClockedIn`:
       // the punch that ends the shift can land while this call is still
       // awaiting a permission answer.
-      enqueue(() => scheduleClockOutReminder(shiftEnd, () => useShiftStore.getState().isClockedIn));
+      enqueue(() => scheduleClockOutReminder(clockInAt, durationMs, () => useShiftStore.getState().isClockedIn));
     } else if (!isClockedIn) {
       enqueue(() => cancelClockOutReminder());
     }
-  }, [isClockedIn, shiftEnd]);
+  }, [isClockedIn, shiftStart, shiftEnd, clockInAt]);
 }

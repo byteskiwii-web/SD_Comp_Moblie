@@ -24,9 +24,11 @@ import {
   type BankVerifyMode,
   type BankVerifyResult,
 } from '../../api/verification.api';
-import { getApiErrorMessage, getProviderMessage } from '../../api/client';
+import { getApiErrorCode, getApiErrorMessage, getProviderMessage } from '../../api/client';
 import { onboardingGateQueryKey as kycGateQueryKey } from '../../hooks/useOnboardingGate';
+import { useInputLock } from '../../hooks/useInputLock';
 import { bankVerifySchema } from '../../schemas/kyc.schema';
+import { isInputErrorCode, isInputOutcome } from '../../utils/kycRules';
 import { useT } from '../../i18n';
 
 /**
@@ -81,16 +83,23 @@ export function BankVerifyScreen() {
   const [error, setError] = useState('');
   const [result, setResult] = useState<BankVerifyResult | null>(null);
 
+  // Every field that can fix a rejection. After the server rejects what was
+  // typed, Verify stays off until one of these changes (see useInputLock).
+  const fieldsKey = [ifsc, accountNumber, confirmAccount, mode].join('|');
+  const { locked, lock } = useInputLock(fieldsKey);
+
   const verify = useMutation({
-    mutationFn: () =>
+    // The variable is the field snapshot the request was sent with.
+    mutationFn: (_sentKey: string) =>
       verifyBankAccount({
         account_number: accountNumber.trim(),
         ifsc: ifsc.trim().toUpperCase(),
         mode,
       }),
-    onSuccess: (data) => {
+    onSuccess: (data, sentKey) => {
       setResult(data);
       setError('');
+      if (!data.verified && isInputOutcome(data.outcome)) lock(sentKey);
       // The Profile badge and the gate both read this. The badge's actual key
       // is ['profile-kyc-status', employee?.id] (ProfileScreen.tsx) -- this
       // used to invalidate a plain ['kyc-status'] that nothing subscribes to,
@@ -98,8 +107,11 @@ export function BankVerifyScreen() {
       queryClient.invalidateQueries({ queryKey: kycGateQueryKey(employee?.id) });
       queryClient.invalidateQueries({ queryKey: ['profile-kyc-status', employee?.id] });
     },
-    onError: (err) => {
+    onError: (err, sentKey) => {
       setResult(null);
+      // 401, 5xx, wallet/subscription exhausted, rate limits and network
+      // failures are not the person's doing and never lock the form.
+      if (isInputErrorCode(getApiErrorCode(err))) lock(sentKey);
       const reason = getProviderMessage(err);
       setError(reason ? `${getApiErrorMessage(err)}\n${t('kyc.reason', { reason })}` : getApiErrorMessage(err));
     },
@@ -134,14 +146,14 @@ export function BankVerifyScreen() {
           {
             text: t('bank.pennySend', { amount: PENNY_DROP_AMOUNT }),
             style: 'default',
-            onPress: () => verify.mutate(),
+            onPress: () => verify.mutate(fieldsKey),
           },
         ]
       );
       return;
     }
 
-    verify.mutate();
+    verify.mutate(fieldsKey);
   };
 
   const busy = verify.isPending;
@@ -219,6 +231,7 @@ export function BankVerifyScreen() {
           )}
 
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
+          {locked ? <Text style={styles.hintText}>{t('kyc.editToRetry')}</Text> : null}
 
           {result && (
             <View style={[styles.result, result.verified ? styles.resultOk : styles.resultBad]}>
@@ -263,7 +276,7 @@ export function BankVerifyScreen() {
               }
               onPress={run}
               loading={busy}
-              disabled={busy || result?.verified === true}
+              disabled={busy || result?.verified === true || locked}
             />
           </View>
           <Button
@@ -345,6 +358,7 @@ function makeStyles(colors: ColorScheme) {
     modeDetail: { fontSize: 11, color: colors.slate500, marginTop: 3, lineHeight: 16 },
 
     errorText: { color: colors.dangerText, fontSize: 11, fontWeight: '600', marginBottom: 12, textAlign: 'center' },
+    hintText: { color: colors.slate500, fontSize: 11, marginBottom: 12, textAlign: 'center' },
 
     result: { borderRadius: radii.md, padding: 14, marginBottom: 16, gap: 4 },
     resultOk: { backgroundColor: colors.successBg },

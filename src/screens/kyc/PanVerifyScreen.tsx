@@ -10,9 +10,11 @@ import { ColorScheme } from '../../theme/tokens';
 import { useThemeStore } from '../../stores/themeStore';
 import { useAuthStore } from '../../stores/authStore';
 import { getKycStatus, verifyPan } from '../../api/verification.api';
-import { getApiErrorMessage, getProviderMessage } from '../../api/client';
+import { getApiErrorCode, getApiErrorMessage, getProviderMessage } from '../../api/client';
 import { onboardingGateQueryKey as kycGateQueryKey } from '../../hooks/useOnboardingGate';
+import { useInputLock } from '../../hooks/useInputLock';
 import { panVerifySchema } from '../../schemas/kyc.schema';
+import { PAN_REGEX, aadhaarProblem, isInputErrorCode, isInputOutcome } from '../../utils/kycRules';
 import { KycStackParamList } from '../../navigation/types';
 import { useT } from '../../i18n';
 
@@ -45,18 +47,28 @@ export function PanVerifyScreen() {
   const [consentAccepted, setConsentAccepted] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [blurred, setBlurred] = useState({ pan: false, aadhaar: false });
+
+  // Every field that can fix a rejection. After the server rejects what was
+  // typed, Submit stays off until one of these changes (see useInputLock).
+  const fieldsKey = [pan, nameAsPerPan, dateOfBirth, combinedPanAadhaar ? aadhaarNumber : ''].join('|');
+  const { locked, lock } = useInputLock(fieldsKey);
 
   const mutation = useMutation({
-    mutationFn: () =>
+    // The variable is the field snapshot the request was sent with.
+    mutationFn: (_sentKey: string) =>
       verifyPan({
         pan,
         name_as_per_pan: nameAsPerPan,
         date_of_birth: dateOfBirth,
         ...(combinedPanAadhaar ? { aadhaar_number: aadhaarNumber } : {}),
       }),
-    onSuccess: (result) => {
+    onSuccess: (result, sentKey) => {
       queryClient.invalidateQueries({ queryKey: kycGateQueryKey(employee?.id) });
       queryClient.invalidateQueries({ queryKey: ['profile-kyc-status', employee?.id] });
+      // Only outcomes about the typed details lock. "Not linked yet" does not:
+      // the fix happens on the income-tax site and the same details then work.
+      if (isInputOutcome(result.outcome) || isInputOutcome(result.aadhaar?.outcome)) lock(sentKey);
       if (result.verified && (!result.aadhaar || result.aadhaar.verified)) {
         // Cleared only here, on genuine success: the raw number has done its
         // one job and this screen never holds onto it longer than that.
@@ -87,7 +99,10 @@ export function PanVerifyScreen() {
         setError(result.providerMessage ? `${result.message}\n${t('kyc.reason', { reason: result.providerMessage })}` : result.message);
       }
     },
-    onError: (err) => {
+    onError: (err, sentKey) => {
+      // 401, 5xx, wallet/subscription exhausted, rate limits and network
+      // failures are not the person's doing and never lock the form.
+      if (isInputErrorCode(getApiErrorCode(err))) lock(sentKey);
       const reason = getProviderMessage(err);
       setError(reason ? `${getApiErrorMessage(err)}\n${t('kyc.reason', { reason })}` : getApiErrorMessage(err));
     },
@@ -119,8 +134,14 @@ export function PanVerifyScreen() {
       setError(t('pan.aadhaarRequired'));
       return;
     }
-    mutation.mutate();
+    mutation.mutate(fieldsKey);
   };
+
+  // Shown once the field is full or has been left, never mid-typing.
+  const aadhaarIssue = aadhaarNumber && (aadhaarNumber.length === 12 || blurred.aadhaar) ? aadhaarProblem(aadhaarNumber) : null;
+  const panError = pan && (pan.length === 10 || blurred.pan) && !PAN_REGEX.test(pan) ? t('pan.invalid') : undefined;
+  const aadhaarError =
+    aadhaarIssue === 'checksum' ? t('aadhaar.checkDigit') : aadhaarIssue === 'format' ? t('aadhaar.invalid') : undefined;
 
   return (
     <SafeAreaView style={styles.flex}>
@@ -136,9 +157,11 @@ export function PanVerifyScreen() {
               setPan(t.toUpperCase());
               setError('');
             }}
+            onBlur={() => setBlurred((b) => ({ ...b, pan: true }))}
+            error={panError}
             autoCapitalize="characters"
             maxLength={10}
-            placeholder="ABCDE1234F"
+            placeholder="ABCPE1234F"
           />
 
           <TextField
@@ -172,6 +195,8 @@ export function PanVerifyScreen() {
                 setAadhaarNumber(t.replace(/\D/g, '').slice(0, 12));
                 setError('');
               }}
+              onBlur={() => setBlurred((b) => ({ ...b, aadhaar: true }))}
+              error={aadhaarError}
               keyboardType="number-pad"
               maxLength={12}
               placeholder={t('pan.aadhaarHint')}
@@ -189,13 +214,14 @@ export function PanVerifyScreen() {
 
           {success ? <Text style={styles.successText}>{success}</Text> : null}
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
+          {locked ? <Text style={styles.hintText}>{t('kyc.editToRetry')}</Text> : null}
 
           <View style={styles.buttonGap}>
             <Button
               title={t('pan.verify')}
               onPress={submit}
               loading={mutation.isPending}
-              disabled={!consentAccepted}
+              disabled={!consentAccepted || locked}
             />
           </View>
           <Button title={t('common.back')} variant="outline" onPress={() => navigation.goBack()} />
@@ -234,6 +260,7 @@ function makeStyles(colors: ColorScheme) {
     consentText: { flex: 1, fontSize: 11, color: colors.slate600, lineHeight: 17 },
     successText: { color: colors.successText, fontSize: 11, fontWeight: '600', marginBottom: 12, textAlign: 'center' },
     errorText: { color: colors.dangerText, fontSize: 11, fontWeight: '600', marginBottom: 12, textAlign: 'center' },
+    hintText: { color: colors.slate500, fontSize: 11, marginBottom: 12, textAlign: 'center' },
     buttonGap: { marginBottom: 12 },
   });
 }
