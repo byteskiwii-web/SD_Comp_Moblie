@@ -31,7 +31,11 @@ export function useOnboardingGate() {
     queryKey: onboardingGateQueryKey(employee?.id),
     queryFn: getMyOnboarding,
     enabled: !!employee,
-    retry: false,
+    // 2, not 0: fails closed for real, but survives the one-off blip that's
+    // common at cold start (wifi/cellular still reconnecting) instead of
+    // showing "could not load" for something that would've worked a second
+    // later.
+    retry: 2,
   });
 
   useEffect(() => {
