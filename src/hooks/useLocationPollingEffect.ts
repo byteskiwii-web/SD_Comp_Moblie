@@ -1,10 +1,11 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import * as Location from 'expo-location';
 import { useShiftStore } from '../stores/shiftStore';
 import { hasShiftTimer } from '../native/runtime';
 import { LOCATION_POLL_INTERVAL_MS } from '../constants/config';
 import { t } from '../i18n';
 import { getNotifications } from '../native/notificationsModule';
+import { runLocationCheckNow } from '../tasks/shiftTimerTask';
 
 // Loaded through require(), never a static import. modules/shift-timer is
 // Android-only native code, so on iOS or in Expo Go the import itself throws
@@ -62,9 +63,21 @@ export function useLocationPollingEffect() {
   const isClockedIn = useShiftStore((s) => s.isClockedIn);
   const isOnBreak = useShiftStore((s) => s.isOnBreak);
   const shouldTrack = isClockedIn && !isOnBreak;
+  /*
+   * Was the employee on a break the last time tracking changed? Breaks pause
+   * the checks, and the break-end punch deliberately carries no location (see
+   * the server's clockOut comment: the disclosure says location is read at
+   * clock-in and during the shift, never at a break). Without a check the
+   * moment the shift resumes, the first one came ~12 minutes later, and for
+   * those minutes HR's live map could only show where the person was BEFORE
+   * the break. One check on resuming is a shift-time check like any other.
+   */
+  const wasOnBreak = useRef(isOnBreak);
 
   useEffect(() => {
     let cancelled = false;
+    const resumedFromBreak = shouldTrack && wasOnBreak.current;
+    wasOnBreak.current = isOnBreak;
 
     async function run() {
       try {
@@ -117,6 +130,9 @@ export function useLocationPollingEffect() {
             timer.setNotificationText(t('shiftNotif.title'), t('shiftNotif.text'), t('shiftNotif.channel'));
           }
           timer?.start(LOCATION_POLL_INTERVAL_MS);
+          // Back from a break: check now rather than at the next tick, so the
+          // live map shows inside/outside straight away. Never rejects.
+          if (resumedFromBreak) void runLocationCheckNow();
         } else {
           getShiftTimer()?.stop();
         }
@@ -129,5 +145,7 @@ export function useLocationPollingEffect() {
     return () => {
       cancelled = true;
     };
+    // isOnBreak is read for the resume check only; tracking itself follows shouldTrack.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shouldTrack]);
 }
