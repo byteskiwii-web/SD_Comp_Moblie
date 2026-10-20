@@ -106,13 +106,9 @@ async function checkOnce(): Promise<void> {
     }
   }
 
-  // 'ok' and 'timeout' both mean the switch is on -- a slow fix indoors is
-  // a bad signal, not location off -- so they report "on".
-  //
-  // 'disabled' is reported as UNKNOWN here, not "off": this tick runs in the
-  // background, and Android battery savers (Samsung, Xiaomi, Oppo, Vivo...)
-  // switch location off while the screen is locked even though the user has
-  // it on. A real outage is still caught -- by the app's own check the
-  // moment it is opened, and by the server's gap inference after 40 min.
-  await checkShiftIntegrity(probe.status === 'disabled' ? null : false);
+  // 'disabled' means the switch is off: report it now. 'ok' and 'timeout'
+  // both mean the switch is on -- a slow fix indoors is a bad signal, not
+  // location off -- so they report "on", and the server does not read the
+  // ping this tick could not send as an outage.
+  await checkShiftIntegrity(probe.status === 'disabled');
 }

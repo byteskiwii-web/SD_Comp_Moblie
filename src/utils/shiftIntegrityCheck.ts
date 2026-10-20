@@ -18,7 +18,7 @@ const WARNING_KEYS: Record<AttendanceAlertType, { title: TKey; body: TKey }> = {
  *
  * Called from two places on different cadences -- the foreground hook
  * (useShiftIntegrityWatcher, ~60s while the app is open) and the native
- * shift-timer's tick (shiftTimerTask.ts, roughly every 12 min including
+ * shift-timer's tick (shiftTimerTask.ts, roughly every 15 min including
  * while the app is closed, Android only), which passes what its own probe
  * found. Without a caller's answer this reads the location services switch
  * itself, so EVERY report says "on" or "off".
@@ -39,21 +39,11 @@ const WARNING_KEYS: Record<AttendanceAlertType, { title: TKey; body: TKey }> = {
  * No-ops entirely when not on shift -- the same isClockedIn && !isOnBreak
  * gate useLocationPollingEffect uses for the geofence poll.
  */
-/**
- * `knownLocationOff`: true/false is the caller's answer; `null` means the
- * caller knows it cannot tell (location_off is left out for the server to
- * infer); `undefined` means read the switch here.
- */
-export async function checkShiftIntegrity(knownLocationOff?: boolean | null): Promise<void> {
+export async function checkShiftIntegrity(knownLocationOff?: boolean): Promise<void> {
   const shift = useShiftStore.getState();
   if (!shift.isClockedIn || shift.isOnBreak || !shift.storeCode) return;
 
-  const locationOff =
-    knownLocationOff === null
-      ? undefined
-      : typeof knownLocationOff === 'boolean'
-        ? knownLocationOff
-        : await isLocationServicesOff();
+  const locationOff = typeof knownLocationOff === 'boolean' ? knownLocationOff : await isLocationServicesOff();
 
   let developerMode = false;
   try {

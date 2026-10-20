@@ -33,7 +33,7 @@ function getShiftTimer(): ShiftTimerModule | null {
  * The effect below never sees a sign-out: signing out unmounts the tree that
  * holds it, and its cleanup deliberately does not stop anything (an unmount
  * is also what Android does when the Activity goes away mid-shift). Without
- * this the "Clocked in" notification and the 12-minute wake-ups outlived the
+ * this the "Clocked in" notification and the 15-minute wake-ups outlived the
  * session, every tick skipping for want of a token.
  */
 export function stopShiftTimer(): void {
@@ -68,7 +68,7 @@ export function useLocationPollingEffect() {
    * the checks, and the break-end punch deliberately carries no location (see
    * the server's clockOut comment: the disclosure says location is read at
    * clock-in and during the shift, never at a break). Without a check the
-   * moment the shift resumes, the first one came ~12 minutes later, and for
+   * moment the shift resumes, the first one came ~15 minutes later, and for
    * those minutes HR's live map could only show where the person was BEFORE
    * the break. One check on resuming is a shift-time check like any other.
    */
