@@ -553,6 +553,7 @@ export const te: Catalogue = {
   'live.blinkProgress': '{count}లో {done}',
   'live.turnLeft': 'తలను ఎడమవైపు తిప్పండి',
   'live.turnRight': 'తలను కుడివైపు తిప్పండి',
+  'live.smile': 'నవ్వండి',
   'live.faceForward': 'మళ్లీ ముందుకు చూడండి',
   'live.lookStraight': 'నేరుగా కెమెరా వైపు చూడండి',
   'live.verified': 'ముఖ తనిఖీ పూర్తయింది',

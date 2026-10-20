@@ -560,6 +560,7 @@ export const mr: Catalogue = {
   'live.blinkProgress': '{count} पैकी {done}',
   'live.turnLeft': 'तुमचे डोके डावीकडे वळवा',
   'live.turnRight': 'तुमचे डोके उजवीकडे वळवा',
+  'live.smile': 'हसा',
   'live.faceForward': 'पुन्हा समोर पहा',
   'live.lookStraight': 'थेट कॅमेऱ्याकडे पाहा',
   'live.verified': 'चेहरा तपासणी झाली',

@@ -553,6 +553,7 @@ export const ml: Catalogue = {
   'live.blinkProgress': '{count}-ൽ {done}',
   'live.turnLeft': 'തല ഇടത്തേക്ക് തിരിക്കുക',
   'live.turnRight': 'തല വലത്തേക്ക് തിരിക്കുക',
+  'live.smile': 'ചിരിക്കൂ',
   'live.faceForward': 'വീണ്ടും നേരെ നോക്കുക',
   'live.lookStraight': 'നേരെ ക്യാമറയിലേക്ക് നോക്കുക',
   'live.verified': 'മുഖ പരിശോധന പൂർത്തിയായി',

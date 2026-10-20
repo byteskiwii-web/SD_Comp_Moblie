@@ -560,6 +560,7 @@ export const gu: Catalogue = {
   'live.blinkProgress': '{count} માંથી {done}',
   'live.turnLeft': 'તમારું માથું ડાબી બાજુ ફેરવો',
   'live.turnRight': 'તમારું માથું જમણી બાજુ ફેરવો',
+  'live.smile': 'સ્મિત કરો',
   'live.faceForward': 'ફરીથી સામે જુઓ',
   'live.lookStraight': 'સીધા કેમેરા તરફ જુઓ',
   'live.verified': 'ચહેરાની તપાસ થઈ ગઈ',

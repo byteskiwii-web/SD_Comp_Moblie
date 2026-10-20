@@ -560,6 +560,7 @@ export const bn: Catalogue = {
   'live.blinkProgress': '{count}-এর মধ্যে {done}',
   'live.turnLeft': 'আপনার মাথা বামদিকে ঘোরান',
   'live.turnRight': 'আপনার মাথা ডানদিকে ঘোরান',
+  'live.smile': 'হাসুন',
   'live.faceForward': 'আবার সামনের দিকে তাকান',
   'live.lookStraight': 'সোজা ক্যামেরার দিকে তাকান',
   'live.verified': 'মুখ যাচাই হয়েছে',

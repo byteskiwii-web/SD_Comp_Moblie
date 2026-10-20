@@ -560,6 +560,7 @@ export const hi: Catalogue = {
   'live.blinkProgress': '{count} में से {done}',
   'live.turnLeft': 'सिर बाईं ओर घुमाएँ',
   'live.turnRight': 'सिर दाईं ओर घुमाएँ',
+  'live.smile': 'मुस्कुराइए',
   'live.faceForward': 'फिर से सामने देखें',
   'live.lookStraight': 'सीधे कैमरे की ओर देखें',
   'live.verified': 'चेहरे की जाँच हो गई',

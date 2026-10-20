@@ -571,6 +571,7 @@ export const en = {
   'live.blinkProgress': '{done} of {count}',
   'live.turnLeft': 'Turn your head to the left',
   'live.turnRight': 'Turn your head to the right',
+  'live.smile': 'Smile',
   'live.faceForward': 'Face forward again',
   'live.lookStraight': 'Look straight at the camera',
   'live.verified': 'Face check done',

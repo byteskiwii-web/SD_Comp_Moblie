@@ -560,6 +560,7 @@ export const pa: Catalogue = {
   'live.blinkProgress': '{count} ਵਿੱਚੋਂ {done}',
   'live.turnLeft': 'ਆਪਣਾ ਸਿਰ ਖੱਬੇ ਪਾਸੇ ਮੋੜੋ',
   'live.turnRight': 'ਆਪਣਾ ਸਿਰ ਸੱਜੇ ਪਾਸੇ ਮੋੜੋ',
+  'live.smile': 'ਮੁਸਕਰਾਓ',
   'live.faceForward': 'ਦੁਬਾਰਾ ਸਿੱਧਾ ਵੇਖੋ',
   'live.lookStraight': 'ਸਿੱਧਾ ਕੈਮਰੇ ਵੱਲ ਦੇਖੋ',
   'live.verified': 'ਚਿਹਰੇ ਦੀ ਜਾਂਚ ਹੋ ਗਈ',

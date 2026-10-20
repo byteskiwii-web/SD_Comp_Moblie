@@ -553,6 +553,7 @@ export const kn: Catalogue = {
   'live.blinkProgress': '{count} ರಲ್ಲಿ {done}',
   'live.turnLeft': 'ತಲೆಯನ್ನು ಎಡಕ್ಕೆ ತಿರುಗಿಸಿ',
   'live.turnRight': 'ತಲೆಯನ್ನು ಬಲಕ್ಕೆ ತಿರುಗಿಸಿ',
+  'live.smile': 'ನಗಿರಿ',
   'live.faceForward': 'ಮತ್ತೆ ಮುಂದೆ ನೋಡಿ',
   'live.lookStraight': 'ನೇರವಾಗಿ ಕ್ಯಾಮೆರಾದತ್ತ ನೋಡಿ',
   'live.verified': 'ಮುಖ ಪರಿಶೀಲನೆ ಮುಗಿದಿದೆ',

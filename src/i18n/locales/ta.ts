@@ -553,6 +553,7 @@ export const ta: Catalogue = {
   'live.blinkProgress': '{count}-இல் {done}',
   'live.turnLeft': 'தலையை இடதுபுறம் திருப்புங்கள்',
   'live.turnRight': 'தலையை வலதுபுறம் திருப்புங்கள்',
+  'live.smile': 'புன்னகைக்கவும்',
   'live.faceForward': 'மீண்டும் நேராகப் பாருங்கள்',
   'live.lookStraight': 'கேமராவை நேராகப் பாருங்கள்',
   'live.verified': 'முகச் சரிபார்ப்பு முடிந்தது',
