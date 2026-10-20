@@ -11,7 +11,7 @@ import { cancelBreakReminder, scheduleBreakReminder } from '../utils/notificatio
 /**
  * Schedules "come back to your shift" for the moment the break runs out.
  *
- * Reacts to shiftStore.isOnBreak the same way useClockOutReminderEffect reacts
+ * Reacts to shiftStore.isOnBreak the same way the shift-timer hooks react
  * to isClockedIn, so ClockPanel needs no changes: its break mutations already
  * call setOnBreak/setOffBreak, which is exactly what this watches.
  *

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { NavigationContainer, DefaultTheme, DarkTheme, Theme } from '@react-navigation/native';
 import { AuthStack } from './AuthStack';
@@ -7,7 +7,6 @@ import { OnboardingStack } from './OnboardingStack';
 import { useAuthStore } from '../stores/authStore';
 import { useShiftSync } from '../hooks/useShiftSync';
 import { useLocationPollingEffect } from '../hooks/useLocationPollingEffect';
-import { useClockOutReminderEffect } from '../hooks/useClockOutReminderEffect';
 import { useBreakReminderEffect } from '../hooks/useBreakReminderEffect';
 import { useShiftIntegrityWatcher } from '../hooks/useShiftIntegrityWatcher';
 import { useOnboardingGate } from '../hooks/useOnboardingGate';
@@ -18,6 +17,7 @@ import { useThemeStore } from '../stores/themeStore';
 import { useI18nReady } from '../i18n';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import { navigationRef } from './navigationRef';
+import { cancelClockOutReminder } from '../utils/notifications';
 
 function FullScreenSpinner() {
   const colors = useThemeStore((s) => s.colors);
@@ -50,7 +50,15 @@ function GatedApp() {
   usePushNotifications();
   useShiftSync();
   useLocationPollingEffect();
-  useClockOutReminderEffect();
+  /*
+   * Shift start and end reminders now come from the server as push, so they work
+   * with the app closed and respect leave, holidays and week-offs. An older
+   * version of this app may have left one scheduled on the phone, which would
+   * double up with the server's -- clear it once on launch.
+   */
+  useEffect(() => {
+    void cancelClockOutReminder().catch(() => {});
+  }, []);
   useBreakReminderEffect();
   useShiftIntegrityWatcher();
   const onboarding = useOnboardingGate();
