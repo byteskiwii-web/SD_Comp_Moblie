@@ -485,7 +485,7 @@ export const hi: Catalogue = {
   'loc.discloseRule': 'Zob Connect यह पुष्टि करने के लिए लोकेशन डेटा एकत्र करता है कि आप अपने निर्धारित स्टोर पर हैं, तब भी जब ऐप बंद हो या उपयोग में न हो।',
   'loc.discloseDoLabel': 'हम क्या जाँचते हैं',
   'loc.discloseDoWhen': 'क्लॉक-इन के समय आपकी लोकेशन',
-  'loc.discloseDoStore': 'शिफ़्ट के दौरान लगभग हर 12 मिनट पर आपकी लोकेशन',
+  'loc.discloseDoStore': 'शिफ़्ट के दौरान लगभग हर 15 मिनट पर आपकी लोकेशन',
   'loc.discloseDoStop': 'शिफ़्ट ख़त्म होते ही जाँच बंद हो जाती है',
   'loc.discloseNotLabel': 'हम क्या कभी नहीं करते',
   'loc.discloseNotOff': 'शिफ़्ट के बाहर हम आपकी लोकेशन नहीं जाँचते',

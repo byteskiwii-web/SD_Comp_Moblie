@@ -49,7 +49,7 @@ class ShiftTimerService : Service() {
     private const val PREFS_NAME = "zip_hrms_shift_timer"
     private const val PREF_INTERVAL_MS = "intervalMs"
     private const val PREF_LAST_TICK_ELAPSED = "lastTickElapsedMs"
-    private const val DEFAULT_INTERVAL_MS = 12L * 60_000L
+    private const val DEFAULT_INTERVAL_MS = 15L * 60_000L
 
     // The notification's words, set from JS in the employee's language
     // (STORE-012). Persisted because the system can restart this service
@@ -80,7 +80,7 @@ class ShiftTimerService : Service() {
      * need SCHEDULE_EXACT_ALARM (user-revocable) or USE_EXACT_ALARM
      * (Play-policy-restricted to alarm/calendar apps). Exactness isn't needed
      * here -- in Doze this is throttled to roughly once per 9 minutes, well
-     * under our 12-minute interval, and the server's 20-minute gap threshold
+     * under our 15-minute interval, and the server's 40-minute gap threshold
      * absorbs further drift.
      */
     fun scheduleNextAlarm(context: Context, intervalMs: Long) {
