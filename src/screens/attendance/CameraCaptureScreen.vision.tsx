@@ -6,19 +6,11 @@ import { useFaceDetectorOutput } from 'react-native-vision-camera-face-detector'
 import { Button } from '../../components/ui';
 import { radii } from '../../theme/tokens';
 import { useLiveness } from '../../hooks/useLiveness';
+import type { ChallengeKind } from '../../hooks/livenessChallenges';
 import type { CameraCaptureProps } from './cameraCaptureTypes';
-import { useT, type TKey } from '../../i18n';
+import { useT } from '../../i18n';
 
 type Props = CameraCaptureProps;
-
-const CHALLENGE_KEY: Record<string, TKey> = {
-  'looking-for-face': 'camera.centreFace',
-  'challenge-blink': 'camera.blinkToContinue',
-  // Reactive, not a step: shown only for as long as a glance away from the
-  // camera would stop a blink from counting -- see useLiveness.ts's header.
-  'not-forward': 'live.faceForward',
-  timeout: 'camera.timedOut',
-};
 
 export function VisionCameraCaptureScreen({ onCaptured, onCancel }: Props) {
   const insets = useSafeAreaInsets();
@@ -48,7 +40,24 @@ export function VisionCameraCaptureScreen({ onCaptured, onCancel }: Props) {
     }
   }, [photoOutput, onCaptured]);
 
-  const { state, onFacesDetected, reset } = useLiveness(takePhoto);
+  const { state, challenge, step, total, onFacesDetected, reset } = useLiveness(takePhoto);
+
+  const instruction = (kind: ChallengeKind) =>
+    kind === 'blink'
+      ? t('live.blink', { count: 2 })
+      : kind === 'smile'
+        ? t('live.smile')
+        : kind === 'turn-left'
+          ? t('live.turnLeft')
+          : t('live.turnRight');
+  const challengeText =
+    state === 'challenge' && challenge
+      ? `${instruction(challenge)}  (${t('live.step', { done: step + 1, count: total })})`
+      : state === 'settling'
+        ? t('live.lookStraight')
+        : state === 'timeout'
+          ? t('camera.timedOut')
+          : t('camera.centreFace');
 
   const faceDetectorOutput = useFaceDetectorOutput({
     performanceMode: 'fast',
@@ -111,7 +120,7 @@ export function VisionCameraCaptureScreen({ onCaptured, onCancel }: Props) {
         {captured ? (
           <ActivityIndicator color="#FFFFFF" size="large" />
         ) : (
-          <Text style={styles.challengeText}>{t(CHALLENGE_KEY[state])}</Text>
+          <Text style={styles.challengeText}>{challengeText}</Text>
         )}
 
         {state === 'timeout' && !captured && (

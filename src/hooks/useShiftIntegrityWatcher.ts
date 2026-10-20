@@ -12,7 +12,7 @@ import { INTEGRITY_FOREGROUND_CHECK_INTERVAL_MS } from '../constants/config';
  * which is what keeps an open app, on iOS and Android alike, from being
  * flagged "location off" just because a background ping was missed. The
  * native shift-timer (src/tasks/shiftTimerTask.ts) covers the same checks
- * roughly every 12 min while this app is closed (Android).
+ * roughly every 15 min while this app is closed (Android).
  */
 export function useShiftIntegrityWatcher() {
   const isClockedIn = useShiftStore((s) => s.isClockedIn);
@@ -24,13 +24,7 @@ export function useShiftIntegrityWatcher() {
 
     checkShiftIntegrity();
 
-    // Foreground only: on Android this timer can keep firing with the app in
-    // the background and the screen locked, when a battery saver may have
-    // switched location off for the locked phone -- read as "location off"
-    // although the user has it on. The background tick covers that time.
-    const interval = setInterval(() => {
-      if (AppState.currentState === 'active') checkShiftIntegrity();
-    }, INTEGRITY_FOREGROUND_CHECK_INTERVAL_MS);
+    const interval = setInterval(checkShiftIntegrity, INTEGRITY_FOREGROUND_CHECK_INTERVAL_MS);
     const subscription = AppState.addEventListener('change', (state) => {
       if (state === 'active') checkShiftIntegrity();
     });

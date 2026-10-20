@@ -8,20 +8,6 @@ import { t } from '../i18n';
 // index.ts). Deliberately NOT repeated here -- two competing
 // setNotificationHandler calls would be a bug, not extra safety.
 
-function parseHHMMSS(t: string): { h: number; m: number; s: number } {
-  const [h, m, s] = t.split(':').map(Number);
-  return { h, m: m || 0, s: s || 0 };
-}
-
-/** Length of the rostered shift, wrapping past midnight for an overnight one. */
-export function shiftDurationMs(shiftStart: string, shiftEnd: string): number {
-  const toMs = (t: string) => {
-    const { h, m, s } = parseHHMMSS(t);
-    return ((h * 60 + m) * 60 + s) * 1000;
-  };
-  const diff = toMs(shiftEnd) - toMs(shiftStart);
-  return diff > 0 ? diff : diff + 24 * 60 * 60 * 1000;
-}
 
 /**
  * Cancel a reminder BY WHAT IT IS, not only by the id we filed it under.
@@ -52,65 +38,6 @@ async function cancelByKind(kind: string, identifier: string): Promise<void> {
   } catch {
     // Listing is best-effort; the identifier cancel above already ran.
   }
-}
-
-/**
- * Schedules (or reschedules) a single local reminder for shiftEnd, today.
- *
- * If shiftEnd has already passed today, rolls forward one day once -- this
- * handles an overnight shift (e.g. shiftStart 22:00 / shiftEnd 06:00), where
- * "today's" shiftEnd instant is earlier than the clock-in instant that
- * triggered this call. If even that rolled-forward instant is already in the
- * past, this gives up quietly rather than firing a stale, confusing reminder.
- *
- * The fixed CLOCK_OUT_REMINDER_ID means only one of these is ever pending:
- * cancel-then-schedule leaves nothing to accumulate across repeated clock-ins.
- */
-export async function scheduleClockOutReminder(
-  /** When this employee actually punched in, not the rostered start time. */
-  clockInAt: string,
-  /** The rostered shift's length (shiftEnd - shiftStart), applied from the real punch-in. */
-  durationMs: number,
-  /**
-   * Checked again at the last moment, because everything between here and the
-   * scheduling call is awaited -- permission reads can show a system dialog
-   * and take as long as somebody takes to answer it. A shift that ended during
-   * that wait would otherwise get a reminder filed for it afterwards, which no
-   * later cancel is coming to remove.
-   */
-  isStillOnShift?: () => boolean
-): Promise<void> {
-  const target = new Date(new Date(clockInAt).getTime() + durationMs);
-  if (target.getTime() <= Date.now()) return; // still in the past -- give up quietly
-
-  const Notifications = getNotifications();
-  if (!Notifications) return;
-
-  const perms = await Notifications.getPermissionsAsync();
-  if (perms.status !== 'granted') {
-    const req = await Notifications.requestPermissionsAsync();
-    if (req.status !== 'granted') return; // best-effort -- never blocks a shift
-  }
-
-  await cancelClockOutReminder();
-  if (isStillOnShift && !isStillOnShift()) return;
-  await Notifications.scheduleNotificationAsync({
-    identifier: CLOCK_OUT_REMINDER_ID,
-    content: {
-      title: t('remind.clockOutTitle'),
-      body: t('remind.clockOutBody'),
-      data: { kind: 'clock-out-reminder' },
-    },
-    trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: target },
-  });
-  /*
-   * And once more AFTER filing it. The clock-out's cancel is asynchronous too:
-   * if it ran while this call was between the check above and the schedule
-   * (an app reopened on a stale "clocked in" that the server sync then
-   * corrects is exactly that), it cancelled nothing and this reminder would
-   * fire hours after the punch-out. Reported from the field.
-   */
-  if (isStillOnShift && !isStillOnShift()) await cancelClockOutReminder();
 }
 
 /**
