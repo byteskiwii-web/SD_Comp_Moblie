@@ -18,6 +18,7 @@ import { BuildStamp } from '../../components/BuildStamp';
 import { useProfileSummary, type SetupTask, type Summary } from './useProfileSummary';
 import type { ProfileStackParamList } from '../../navigation/types';
 import { useQueryClient } from '@tanstack/react-query';
+import { phoneCheckApplies, usePhoneStatus } from '../../hooks/usePhoneStatus';
 
 const ROLE_LABEL: Record<string, string> = {
   'field-employee': 'role.field-employee',
@@ -93,11 +94,25 @@ export function ProfileScreen() {
       queryClient.invalidateQueries({ queryKey: ['health-deps'] }),
       queryClient.invalidateQueries({ queryKey: ['my-documents'] }),
       queryClient.invalidateQueries({ queryKey: ['policies-library'] }),
+      queryClient.invalidateQueries({ queryKey: ['phone-status'] }),
     ]);
     setRefreshing(false);
   }, [refreshProfile, queryClient]);
 
   const go = (route: Route) => navigation.navigate(route);
+
+  /* "This phone" -- only while the phone check applies to this employee. */
+  const phone = usePhoneStatus();
+  const phoneRow = phoneCheckApplies(phone.data) ? phone.data : undefined;
+  const phoneChip: { status: Summary; text: string } | null = !phoneRow
+    ? null
+    : phoneRow.request?.status === 'pending'
+      ? { status: { tone: 'slate', state: 'pending' }, text: t('phone.chipPending') }
+      : phoneRow.state === 'registered'
+        ? { status: { tone: 'success', state: 'registered' }, text: t('phone.chipRegistered') }
+        : phoneRow.state === 'unregistered'
+          ? null
+          : { status: { tone: 'warning', state: 'not-registered' }, text: t('phone.chipNotRegistered') };
 
   /** What each open set-up task says on the strip. */
   const taskLine = (task: SetupTask): string => {
@@ -243,6 +258,15 @@ export function ProfileScreen() {
         </Group>
 
         <Group title={t('profile.group.account')}>
+          {phoneRow ? (
+            <MenuRow
+              icon="phone-portrait-outline"
+              label={t('phone.menu')}
+              status={phoneChip?.status ?? null}
+              statusText={phoneChip?.text ?? null}
+              onPress={() => go('Phone')}
+            />
+          ) : null}
           <MenuRow icon="lock-closed-outline" label={t('profile.menu.account')} hint={t('profile.menu.accountHint')} onPress={() => go('Account')} />
           <MenuRow icon="log-out-outline" label={t('common.signOut')} danger onPress={() => setSignOutOpen(true)} last />
         </Group>

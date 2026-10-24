@@ -31,6 +31,9 @@ import { useConsentStore } from '../../stores/consentStore';
 import { useTicker } from '../../hooks/useTicker';
 import { BackgroundLocationDisclosure } from '../../components/BackgroundLocationDisclosure';
 import { useLocationReadiness, type Coords, type LocationStatus } from '../../hooks/useLocationReadiness';
+import { useNavigation } from '@react-navigation/native';
+import { isPhoneBlocked, phoneStatusQueryKey, usePhoneStatus } from '../../hooks/usePhoneStatus';
+import { PhoneBlockedCard } from './PhoneBlockedCard';
 
 const today = () => toLocalDateKey();
 
@@ -84,6 +87,24 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
   const setOffBreak = useShiftStore((s) => s.setOffBreak);
   const setClockedOut = useShiftStore((s) => s.setClockedOut);
   const queryClient = useQueryClient();
+  const navigation = useNavigation<any>();
+
+  /*
+   * The phone check (backend: modules/devices/phone.*). Only an ENFORCED
+   * refusal stops a punch here -- before the camera opens, so nobody does the
+   * face check just to be refused. Record mode, an unknown status or no
+   * signal leave every punch exactly as it was; the server decides.
+   */
+  const phoneStatus = usePhoneStatus();
+  const phoneBlocked = isPhoneBlocked(phoneStatus.data);
+  const refreshPhone = useCallback(
+    () => queryClient.invalidateQueries({ queryKey: phoneStatusQueryKey(employee?.id) }),
+    [queryClient, employee?.id]
+  );
+  const openPhone = useCallback(() => navigation.navigate('Profile', { screen: 'Phone' }), [navigation]);
+  const phoneRefusalText = phoneStatus.data?.state === 'other-employee'
+    ? tr('err.PHONE_REGISTERED_TO_OTHER')
+    : tr('err.PHONE_NOT_REGISTERED');
 
   /*
    * Location lives in its own hook now, and keeps itself current: it re-reads
@@ -396,7 +417,7 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
   // fire before React commits the state update that is meant to prevent that.
   const autoPunchFired = useRef(false);
   useEffect(() => {
-    if (!autoPunch || autoPunchFired.current || pendingAction) return;
+    if (!autoPunch || autoPunchFired.current || pendingAction || phoneBlocked) return;
     if (!coords || historyQuery.isLoading) return;
     const wouldBeDisabled =
       autoPunch === 'clock-in' ? isCurrentlyClockedIn : !isCurrentlyClockedIn || isCurrentlyOnBreak;
@@ -405,7 +426,7 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
     onAutoPunchStarted?.();
     punchCoords.current = coords;
     setPendingAction(autoPunch);
-  }, [autoPunch, coords, historyQuery.isLoading, isCurrentlyClockedIn, isCurrentlyOnBreak, onAutoPunchStarted, pendingAction]);
+  }, [autoPunch, coords, historyQuery.isLoading, isCurrentlyClockedIn, isCurrentlyOnBreak, onAutoPunchStarted, pendingAction, phoneBlocked]);
 
   const punchMutation = useMutation({
     mutationFn: async (filePath: string) => {
@@ -454,12 +475,17 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
       const over = pendingAction === 'clock-out' && (result.pastEndMinutes ?? 0) > 0
         ? ' ' + tr('clock.pastEnd', { duration: formatDuration(result.pastEndMinutes ?? 0) })
         : '';
+      // This clock-in registered the phone (it had none): said once, here.
+      const phoneJustRegistered =
+        pendingAction === 'clock-in' && phoneStatus.data?.state === 'unregistered' && phoneStatus.data.mode !== 'off';
+      const registered = phoneJustRegistered ? ' ' + tr('phone.nowRegistered') : '';
+      if (phoneJustRegistered) setTimeout(() => void refreshPhone(), 1500);
       const text =
         (isPending
           ? tr('clock.outsidePending')
           : pendingAction === 'clock-in'
             ? tr('clock.shiftStarted')
-            : tr('clock.shiftEnded')) + late + over + unverified;
+            : tr('clock.shiftEnded')) + late + over + unverified + registered;
       setBanner({ tone: late ? 'warning' : tone, text });
       setToast({ tone: late ? 'warning' : tone, text });
       setPendingAction(null);
@@ -504,6 +530,8 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
       if (code === 'ONBOARDING_INCOMPLETE') {
         queryClient.invalidateQueries({ queryKey: onboardingGateQueryKey(employee?.id) });
       }
+      // The phone check refused it: re-ask, so the panel shows why and what to do.
+      if (code?.startsWith('PHONE_')) void refreshPhone();
     },
   });
 
@@ -543,6 +571,7 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
     },
     onError: (err) => {
       setBanner({ tone: 'warning', text: getApiErrorMessage(err) });
+      if (getApiErrorCode(err)?.startsWith('PHONE_')) void refreshPhone();
     },
   });
 
@@ -563,6 +592,10 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
   const openPunch = useCallback(
     async (action: 'clock-in' | 'clock-out') => {
       if (preparing || pendingAction || punchMutation.isPending) return;
+      if (phoneBlocked) {
+        setToast({ tone: 'warning', text: phoneRefusalText });
+        return;
+      }
       setPreparing(action);
       try {
         if (action === 'clock-in') {
@@ -625,7 +658,7 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
     },
     // locationCopy and t are plain render-scoped helpers, so they are always
     // current; the state and values the handler itself reads are listed.
-    [preparing, pendingAction, punchMutation.isPending, location, fixLocation, store?.name]
+    [preparing, pendingAction, punchMutation.isPending, location, fixLocation, store?.name, phoneBlocked, phoneRefusalText]
   );
 
   // "Allow all the time" location access powers the periodic mid-shift
@@ -927,6 +960,10 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
 
       {/* BOTH ENDS OF THE SHIFT, side by side. The finished one keeps its
           answer on screen instead of disappearing -- see PunchTiles. */}
+      {phoneBlocked && phoneStatus.data ? (
+        <PhoneBlockedCard status={phoneStatus.data} onOpen={openPhone} />
+      ) : null}
+
       {clockInBlockedText ? (
         <View style={[styles.banner, styles.bannerMuted]}>
           <Text style={styles.bannerText}>{clockInBlockedText}</Text>
@@ -1009,7 +1046,11 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
           <Button
             title={isCurrentlyOnBreak ? t('clock.endBreak') : t('clock.startBreak')}
             variant="outline"
-            onPress={() => breakMutation.mutate(isCurrentlyOnBreak ? 'break-end' : 'break-start')}
+            onPress={() =>
+              phoneBlocked
+                ? setToast({ tone: 'warning', text: phoneRefusalText })
+                : breakMutation.mutate(isCurrentlyOnBreak ? 'break-end' : 'break-start')
+            }
             disabled={breakMutation.isPending}
           />
         </View>
