@@ -19,6 +19,7 @@ import { usePushNotifications } from '../hooks/usePushNotifications';
 import { navigationRef } from './navigationRef';
 import { cancelClockOutReminder } from '../utils/notifications';
 import { usePhoneStatus } from '../hooks/usePhoneStatus';
+import { AppUpdateGate } from '../components/AppUpdateGate';
 
 function FullScreenSpinner() {
   const colors = useThemeStore((s) => s.colors);
@@ -116,8 +117,10 @@ export function RootNavigator() {
   }
 
   return (
-    <NavigationContainer ref={navigationRef} theme={navTheme}>
-      {token ? <AuthenticatedApp /> : <AuthStack />}
-    </NavigationContainer>
+    <AppUpdateGate>
+      <NavigationContainer ref={navigationRef} theme={navTheme}>
+        {token ? <AuthenticatedApp /> : <AuthStack />}
+      </NavigationContainer>
+    </AppUpdateGate>
   );
 }

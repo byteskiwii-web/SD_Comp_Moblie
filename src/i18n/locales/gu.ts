@@ -1046,4 +1046,15 @@ export const gu: Catalogue = {
   'err.PHONE_CHANGE_PENDING': 'તમે ફોન બદલવાની વિનંતી પહેલેથી મોકલી છે. કૃપા કરીને HR ની રાહ જુઓ.',
   'err.PHONE_ALREADY_REGISTERED': 'આ ફોન પહેલેથી તમારો નોંધાયેલ ફોન છે.',
   'err.PHONE_CHANGE_NOT_NEEDED': 'વિનંતીની જરૂર નથી. આગલી વખતે પંચ ઇન કરશો ત્યારે આ ફોન નોંધાઈ જશે.',
+
+  /* ---------------------------------------------------------- app updates */
+  'update.readyTitle': 'નવું વર્ઝન તૈયાર છે',
+  'update.readyBody': 'નવી સુવિધાઓ અને સુધારા મેળવવા એપ ફરી શરૂ કરો. તેમાં થોડી સેકન્ડ લાગે છે.',
+  'update.restartNow': 'હમણાં ફરી શરૂ કરો',
+  'update.restartFailed': 'ફરી શરૂ થઈ શક્યું નહીં. એપ બંધ કરીને ફરી ખોલો.',
+  'update.requiredTitle': 'અપડેટ જરૂરી છે',
+  'update.requiredBody': 'એપનું આ વર્ઝન હવે ચાલતું નથી. ચાલુ રાખવા નવીનતમ વર્ઝન પર અપડેટ કરો.',
+  'update.requiredNoLink': 'એપનું આ વર્ઝન હવે ચાલતું નથી. ચાલુ રાખવા Play Store અથવા App Store માંથી અપડેટ કરો.',
+  'update.openStore': 'હમણાં અપડેટ કરો',
+  'err.APP_UPDATE_REQUIRED': 'ચાલુ રાખવા કૃપા કરીને એપને નવીનતમ વર્ઝન પર અપડેટ કરો.',
 } as const;
