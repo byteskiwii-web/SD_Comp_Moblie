@@ -4,7 +4,7 @@ import { useAuthStore } from '../stores/authStore';
 import { currentLanguage } from '../stores/preferencesStore';
 import { useConnectivityStore } from '../stores/connectivityStore';
 import { t, hasTranslation } from '../i18n';
-import { phoneHeaders } from '../utils/phoneKey';
+import { adoptPhoneKey, getPhoneKey, phoneHeaders } from '../utils/phoneKey';
 
 export const apiClient = axios.create({
   baseURL: API_V1,
@@ -43,9 +43,44 @@ apiClient.interceptors.request.use((config) => {
  * that cannot be read is simply not sent, and the server answers that.
  */
 const PHONE_CHECKED = /^\/(attendance\/(clock-in|clock-out|break-start|break-end|location-check|sync)|devices\/phone)(\/|$)/;
+const PUNCH = /^\/attendance\/(clock-in|clock-out|break-start|break-end|sync)(\/|$)/;
+
+/**
+ * A punch about to leave with no key -- the status call at app start had not
+ * answered yet, or the phone was offline then -- asks for one first, so the
+ * first clock-in always registers the phone. Its own plain request, not this
+ * client, so it can never loop through this interceptor. When the server
+ * hands out no key (phone check off, or an exempt account) it is not asked
+ * again for ten minutes, so a punch never waits on it twice.
+ */
+let ensuringKey: Promise<void> | null = null;
+let noKeyUntil = 0;
+async function ensurePhoneKey(): Promise<void> {
+  if (Date.now() < noKeyUntil || (await getPhoneKey())) return;
+  ensuringKey ??= (async () => {
+    try {
+      const token = useAuthStore.getState().token;
+      if (!token) return;
+      const res = await axios.post(`${API_V1}/devices/phone`, {}, {
+        timeout: 8000,
+        headers: { Authorization: `Bearer ${token}`, ...(await phoneHeaders()) },
+      });
+      const key = res.data?.data?.key;
+      if (typeof key === 'string') await adoptPhoneKey(key);
+      else noKeyUntil = Date.now() + 10 * 60 * 1000;
+    } catch {
+      // No key this time; the punch goes as it would have.
+    } finally {
+      ensuringKey = null;
+    }
+  })();
+  await ensuringKey;
+}
+
 apiClient.interceptors.request.use(async (config) => {
   if (!PHONE_CHECKED.test(config.url ?? '')) return config;
   try {
+    if (PUNCH.test(config.url ?? '')) await ensurePhoneKey();
     const headers = await phoneHeaders();
     for (const [name, value] of Object.entries(headers)) config.headers[name] = value;
   } catch {
