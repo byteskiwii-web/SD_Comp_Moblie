@@ -1046,4 +1046,15 @@ export const pa: Catalogue = {
   'err.PHONE_CHANGE_PENDING': 'ਤੁਸੀਂ ਫ਼ੋਨ ਬਦਲਣ ਦੀ ਬੇਨਤੀ ਪਹਿਲਾਂ ਹੀ ਭੇਜ ਚੁੱਕੇ ਹੋ। ਕਿਰਪਾ ਕਰਕੇ HR ਦੀ ਉਡੀਕ ਕਰੋ।',
   'err.PHONE_ALREADY_REGISTERED': 'ਇਹ ਫ਼ੋਨ ਪਹਿਲਾਂ ਹੀ ਤੁਹਾਡਾ ਰਜਿਸਟਰਡ ਫ਼ੋਨ ਹੈ।',
   'err.PHONE_CHANGE_NOT_NEEDED': 'ਬੇਨਤੀ ਦੀ ਲੋੜ ਨਹੀਂ। ਅਗਲੀ ਵਾਰ ਪੰਚ ਇਨ ਕਰਨ ਤੇ ਇਹ ਫ਼ੋਨ ਰਜਿਸਟਰ ਹੋ ਜਾਵੇਗਾ।',
+
+  /* ---------------------------------------------------------- app updates */
+  'update.readyTitle': 'ਨਵਾਂ ਵਰਜ਼ਨ ਤਿਆਰ ਹੈ',
+  'update.readyBody': 'ਨਵੀਆਂ ਸਹੂਲਤਾਂ ਅਤੇ ਸੁਧਾਰ ਲੈਣ ਲਈ ਐਪ ਰੀਸਟਾਰਟ ਕਰੋ। ਇਸ ਵਿੱਚ ਕੁਝ ਸਕਿੰਟ ਲੱਗਦੇ ਹਨ।',
+  'update.restartNow': 'ਹੁਣੇ ਰੀਸਟਾਰਟ ਕਰੋ',
+  'update.restartFailed': 'ਰੀਸਟਾਰਟ ਨਹੀਂ ਹੋ ਸਕਿਆ। ਐਪ ਬੰਦ ਕਰਕੇ ਦੁਬਾਰਾ ਖੋਲ੍ਹੋ।',
+  'update.requiredTitle': 'ਅੱਪਡੇਟ ਜ਼ਰੂਰੀ ਹੈ',
+  'update.requiredBody': 'ਐਪ ਦਾ ਇਹ ਵਰਜ਼ਨ ਹੁਣ ਨਹੀਂ ਚੱਲਦਾ। ਜਾਰੀ ਰੱਖਣ ਲਈ ਨਵੀਨਤਮ ਵਰਜ਼ਨ ਤੇ ਅੱਪਡੇਟ ਕਰੋ।',
+  'update.requiredNoLink': 'ਐਪ ਦਾ ਇਹ ਵਰਜ਼ਨ ਹੁਣ ਨਹੀਂ ਚੱਲਦਾ। ਜਾਰੀ ਰੱਖਣ ਲਈ Play Store ਜਾਂ App Store ਤੋਂ ਅੱਪਡੇਟ ਕਰੋ।',
+  'update.openStore': 'ਹੁਣੇ ਅੱਪਡੇਟ ਕਰੋ',
+  'err.APP_UPDATE_REQUIRED': 'ਜਾਰੀ ਰੱਖਣ ਲਈ ਕਿਰਪਾ ਕਰਕੇ ਐਪ ਨੂੰ ਨਵੀਨਤਮ ਵਰਜ਼ਨ ਤੇ ਅੱਪਡੇਟ ਕਰੋ।',
 } as const;

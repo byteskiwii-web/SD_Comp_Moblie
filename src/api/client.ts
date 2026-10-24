@@ -1,4 +1,6 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import { Platform } from 'react-native';
+import * as Updates from 'expo-updates';
 import { API_V1 } from '../constants/config';
 import { useAuthStore } from '../stores/authStore';
 import { currentLanguage } from '../stores/preferencesStore';
@@ -32,8 +34,28 @@ apiClient.interceptors.request.use((config) => {
    */
   config.headers["Accept-Language"] = currentLanguage();
 
+  /* Which build this is, so the server can refuse a punch from one older than
+     app.json's minAppVersion (backend middleware/appVersion.js). */
+  const version = installedAppVersion();
+  if (version) {
+    config.headers['X-App-Version'] = version;
+    config.headers['X-App-Platform'] = Platform.OS;
+  }
+
   return config;
 });
+
+/**
+ * The installed BUILD's version. runtimeVersion is the build's app version
+ * (app.config.js: policy 'appVersion' for every native build), and unlike the
+ * JS config it does not move with an over-the-air update. null where updates
+ * are off (Expo Go, development, web) -- the version gate does not apply there.
+ */
+export function installedAppVersion(): string | null {
+  if (!Updates.isEnabled || (Platform.OS !== 'android' && Platform.OS !== 'ios')) return null;
+  const v = Updates.runtimeVersion ?? '';
+  return /^\d+(\.\d+){0,2}$/.test(v) ? v : null;
+}
 
 /**
  * This phone's key, platform and model, on the routes the phone check reads
