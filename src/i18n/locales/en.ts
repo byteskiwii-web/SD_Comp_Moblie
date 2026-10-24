@@ -1075,4 +1075,15 @@ export const en = {
   'err.PHONE_CHANGE_PENDING': 'You already sent a phone change request. Please wait for HR.',
   'err.PHONE_ALREADY_REGISTERED': 'This phone is already your registered phone.',
   'err.PHONE_CHANGE_NOT_NEEDED': 'No request needed. Your next punch in registers this phone.',
+
+  /* ---------------------------------------------------------- app updates */
+  'update.readyTitle': 'A new version is ready',
+  'update.readyBody': 'Restart the app to get the latest features and fixes. It takes a few seconds.',
+  'update.restartNow': 'Restart now',
+  'update.restartFailed': 'Couldn\'t restart. Close the app and open it again.',
+  'update.requiredTitle': 'Update required',
+  'update.requiredBody': 'This version of the app is no longer supported. Update to the latest version to continue.',
+  'update.requiredNoLink': 'This version of the app is no longer supported. Update it from the Play Store or App Store to continue.',
+  'update.openStore': 'Update now',
+  'err.APP_UPDATE_REQUIRED': 'Please update the app to the latest version to continue.',
 } as const;

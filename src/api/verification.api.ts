@@ -83,6 +83,12 @@ export type HealthDepsResponse = {
     // when this is enabled, so the UI checks it before offering one.
     documents?: 'enabled' | 'disabled';
   };
+  // Release settings (backend src/config/app.json): the oldest build allowed
+  // and where the newer one is. Read by AppUpdateGate.
+  app?: {
+    minVersion?: { android?: string | null; ios?: string | null };
+    storeUrl?: { android?: string | null; ios?: string | null };
+  };
 };
 
 // Unauthenticated, bare-host route -- NOT under /api/v1, so this passes an

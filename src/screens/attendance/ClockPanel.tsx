@@ -532,6 +532,8 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
       }
       // The phone check refused it: re-ask, so the panel shows why and what to do.
       if (code?.startsWith('PHONE_')) void refreshPhone();
+      // This build is too old: re-read the minimum, so the update screen takes over.
+      if (code === 'APP_UPDATE_REQUIRED') void queryClient.invalidateQueries({ queryKey: ['health-deps'] });
     },
   });
 
