@@ -15,6 +15,7 @@ import { AadhaarOtpRequestScreen } from '../screens/kyc/AadhaarOtpRequestScreen'
 import { AadhaarOtpVerifyScreen } from '../screens/kyc/AadhaarOtpVerifyScreen';
 import { FaceRegisterScreen } from '../screens/face/FaceRegisterScreen';
 import { FaceChangeRequestScreen } from '../screens/face/FaceChangeRequestScreen';
+import { PhoneScreen } from '../screens/profile/sections/PhoneScreen';
 import type { ProfileStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<ProfileStackParamList>();
@@ -48,6 +49,7 @@ export function ProfileStack() {
       <Stack.Screen name="AadhaarOtpVerify" component={AadhaarOtpVerifyScreen} />
       <Stack.Screen name="FaceRegister" component={FaceRegisterScreen} />
       <Stack.Screen name="FaceChangeRequest" component={FaceChangeRequestScreen} />
+      <Stack.Screen name="Phone" component={PhoneScreen} />
     </Stack.Navigator>
   );
 }

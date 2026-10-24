@@ -4,6 +4,7 @@ import { useAuthStore } from '../stores/authStore';
 import { currentLanguage } from '../stores/preferencesStore';
 import { useConnectivityStore } from '../stores/connectivityStore';
 import { t, hasTranslation } from '../i18n';
+import { phoneHeaders } from '../utils/phoneKey';
 
 export const apiClient = axios.create({
   baseURL: API_V1,
@@ -31,6 +32,25 @@ apiClient.interceptors.request.use((config) => {
    */
   config.headers["Accept-Language"] = currentLanguage();
 
+  return config;
+});
+
+/**
+ * This phone's key, platform and model, on the routes the phone check reads
+ * (backend: modules/devices/phone.check.js) and on nothing else. One place for
+ * every punch, the status call and the background location check alike -- the
+ * headless shift-timer task goes through this client too. Best effort: a key
+ * that cannot be read is simply not sent, and the server answers that.
+ */
+const PHONE_CHECKED = /^\/(attendance\/(clock-in|clock-out|break-start|break-end|location-check|sync)|devices\/phone)(\/|$)/;
+apiClient.interceptors.request.use(async (config) => {
+  if (!PHONE_CHECKED.test(config.url ?? '')) return config;
+  try {
+    const headers = await phoneHeaders();
+    for (const [name, value] of Object.entries(headers)) config.headers[name] = value;
+  } catch {
+    // Never let the phone headers stop a punch from being sent.
+  }
   return config;
 });
 

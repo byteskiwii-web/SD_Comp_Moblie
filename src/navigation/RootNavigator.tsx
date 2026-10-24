@@ -18,6 +18,7 @@ import { useI18nReady } from '../i18n';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import { navigationRef } from './navigationRef';
 import { cancelClockOutReminder } from '../utils/notifications';
+import { usePhoneStatus } from '../hooks/usePhoneStatus';
 
 function FullScreenSpinner() {
   const colors = useThemeStore((s) => s.colors);
@@ -61,6 +62,9 @@ function GatedApp() {
   }, []);
   useBreakReminderEffect();
   useShiftIntegrityWatcher();
+  // Where this phone stands for the phone check -- and, for a phone that has
+  // no key yet, the moment it is given one, before the first punch needs it.
+  usePhoneStatus();
   const onboarding = useOnboardingGate();
   const policyGate = usePolicyAcceptanceGate();
 

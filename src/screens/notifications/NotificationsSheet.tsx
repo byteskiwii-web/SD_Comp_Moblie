@@ -82,6 +82,7 @@ function kindTone(colors: ColorScheme): Record<string, { icon: keyof typeof Ioni
     policy: { icon: 'document-text-outline', tint: colors.slate600, bg: colors.slate100 },
     onboarding: { icon: 'person-add-outline', tint: colors.successText, bg: colors.successBg },
     system: { icon: 'information-circle-outline', tint: colors.slate600, bg: colors.slate100 },
+    device: { icon: 'phone-portrait-outline', tint: colors.brand[700], bg: colors.brand[50] },
     // Device-raised
     'clock-out-reminder': { icon: 'alarm-outline', tint: colors.warningText, bg: colors.warningBg },
     'geofence-alert': { icon: 'navigate-circle-outline', tint: colors.dangerText, bg: colors.dangerBg },
