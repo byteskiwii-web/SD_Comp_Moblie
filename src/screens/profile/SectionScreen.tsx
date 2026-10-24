@@ -56,6 +56,7 @@ export function SectionScreen({
       queryClient.invalidateQueries({ queryKey: ['kyc-health'] }),
       queryClient.invalidateQueries({ queryKey: ['face-change-mine'] }),
       queryClient.invalidateQueries({ queryKey: ['face-status'] }),
+      queryClient.invalidateQueries({ queryKey: ['phone-status'] }),
     ]);
     setRefreshing(false);
   }, [refreshProfile, queryClient]);

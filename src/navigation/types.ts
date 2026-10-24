@@ -85,4 +85,7 @@ export type ProfileStackParamList = {
   // FaceRegister above (first enrolment / HR-reset re-enrolment). See
   // KycCard.tsx and FaceChangeRequestScreen.tsx.
   FaceChangeRequest: undefined;
+  // "This phone": the phone check's status and the phone change request. Also
+  // opened from the punch panel when this phone may not punch.
+  Phone: undefined;
 };
