@@ -81,8 +81,6 @@ export const en = {
 
   'role.field-employee': 'Field Employee',
   'role.team-lead': 'Team Lead',
-  'role.site-manager': 'Site Manager',
-  'role.cluster-manager': 'Cluster Manager',
   'role.hr-manager': 'HR Manager',
   'role.super-admin': 'Super Admin',
 
@@ -453,7 +451,7 @@ export const en = {
   'team.nobody': 'Nobody is assigned to this site yet.',
   'team.noAttendance': 'No attendance recorded in this period.',
   'team.noRequests': 'No correction requests from your team.',
-  'team.readOnlyNote': 'Requests are approved by the site manager or HR. You can see them here but not decide them.',
+  'team.readOnlyNote': 'Requests are approved by HR. You can see them here but not decide them.',
   'team.noPunchToday': 'No punch today',
   'team.timeCorrection': 'Time correction',
   'team.onDuty': 'On duty / WFH',

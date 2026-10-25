@@ -64,8 +64,6 @@ export const te: Catalogue = {
 
   'role.field-employee': 'ఫీల్డ్ ఉద్యోగి',
   'role.team-lead': 'టీమ్ లీడ్',
-  'role.site-manager': 'సైట్ మేనేజర్',
-  'role.cluster-manager': 'క్లస్టర్ మేనేజర్',
   'role.hr-manager': 'హెచ్‌ఆర్ మేనేజర్',
   'role.super-admin': 'సూపర్ అడ్మిన్',
 
@@ -428,7 +426,7 @@ export const te: Catalogue = {
   'team.nobody': 'ఈ సైట్‌కు ఇంకా ఎవరూ కేటాయించబడలేదు.',
   'team.noAttendance': 'ఈ కాలంలో హాజరు నమోదు కాలేదు.',
   'team.noRequests': 'మీ బృందం నుండి సవరణ అభ్యర్థనలు లేవు.',
-  'team.readOnlyNote': 'అభ్యర్థనలను సైట్ మేనేజర్ లేదా హెచ్‌ఆర్ ఆమోదిస్తారు. మీరు వీటిని చూడగలరు కానీ నిర్ణయించలేరు.',
+  'team.readOnlyNote': 'అభ్యర్థనలను హెచ్‌ఆర్ ఆమోదిస్తారు. మీరు వీటిని చూడగలరు కానీ నిర్ణయించలేరు.',
   'team.noPunchToday': 'ఈరోజు పంచ్ లేదు',
   'team.timeCorrection': 'సమయ సవరణ',
   'team.onDuty': 'ఆన్ డ్యూటీ / ఇంటి నుండి',

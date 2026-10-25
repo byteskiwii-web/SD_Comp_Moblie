@@ -71,8 +71,6 @@ export const mr: Catalogue = {
 
   'role.field-employee': 'फील्ड एम्प्लॉई',
   'role.team-lead': 'टीम लीड',
-  'role.site-manager': 'साइट मॅनेजर',
-  'role.cluster-manager': 'क्लस्टर मॅनेजर',
   'role.hr-manager': 'एचआर मॅनेजर',
   'role.super-admin': 'सुपर अॅडमिन',
 
@@ -435,7 +433,7 @@ export const mr: Catalogue = {
   'team.nobody': 'या साइटवर अजून कोणाचीही नियुक्ती झालेली नाही.',
   'team.noAttendance': 'या कालावधीत कोणतीही हजेरी नोंदवलेली नाही.',
   'team.noRequests': 'तुमच्या टीमकडून कोणतीही दुरुस्ती विनंती नाही.',
-  'team.readOnlyNote': 'विनंत्या साइट मॅनेजर किंवा HR द्वारे मंजूर केल्या जातात. तुम्ही त्या इथे पाहू शकता पण निर्णय घेऊ शकत नाही.',
+  'team.readOnlyNote': 'विनंत्या HR द्वारे मंजूर केल्या जातात. तुम्ही त्या इथे पाहू शकता पण निर्णय घेऊ शकत नाही.',
   'team.noPunchToday': 'आज कोणताही पंच नाही',
   'team.timeCorrection': 'वेळ दुरुस्ती',
   'team.onDuty': 'ऑन-ड्युटी / WFH',

@@ -23,8 +23,6 @@ import { phoneCheckApplies, usePhoneStatus } from '../../hooks/usePhoneStatus';
 const ROLE_LABEL: Record<string, string> = {
   'field-employee': 'role.field-employee',
   'team-lead': 'role.team-lead',
-  'site-manager': 'role.site-manager',
-  'cluster-manager': 'role.cluster-manager',
   'hr-manager': 'role.hr-manager',
   'super-admin': 'role.super-admin',
 };

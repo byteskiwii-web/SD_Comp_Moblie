@@ -118,7 +118,7 @@ function Person({
 }
 
 /**
- * `site-manager` is a database value, not something to show a person.
+ * `team-lead` is a database value, not something to show a person.
  *
  * Translated where the catalogue knows the role, and title-cased otherwise --
  * a role added on the server later still reads as words rather than as a
@@ -126,7 +126,7 @@ function Person({
  */
 function roleLabel(role: string | null): string | null {
   if (!role) return null;
-  const key = ('role.' + role) as 'role.site-manager';
+  const key = ('role.' + role) as 'role.team-lead';
   const translated = tr(key);
   if (translated !== key) return translated;
   return role

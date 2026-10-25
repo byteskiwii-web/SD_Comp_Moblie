@@ -45,9 +45,8 @@ export function AppTabs() {
   // Home and Profile set the store flag; this renders it.
   // The tab is navigation, not authority -- the server decides what a
   // principal may read, and refuses every write from this role by name. It is
-  // shown for team leads only so the panel`s "View only" label stays true: a
-  // site manager reading the same screens CAN approve, and telling them
-  // otherwise would be worse than not showing it.
+  // shown for team leads only, the one mobile role that sees other people's
+  // requests, so the panel`s "View only" label stays true.
   const role = useAuthStore((s) => s.employee?.role);
   const isTeamLead = role === 'team-lead';
   const colors = useThemeStore((s) => s.colors);

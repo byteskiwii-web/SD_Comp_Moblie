@@ -36,7 +36,7 @@ import { formatDate } from '../../utils/datetime';
  * has both exactly as a field employee does.
  *
  * store_code is the signal because it is the one that stays true: office
- * roles -- admin, HR, cluster manager -- carry no store, and a role list has
+ * roles -- admin, HR -- carry no store, and a role list has
  * to be remembered every time somebody adds a role. The backend
  * scopes the subject to the caller regardless.
  */
