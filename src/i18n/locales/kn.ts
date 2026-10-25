@@ -64,8 +64,6 @@ export const kn: Catalogue = {
 
   'role.field-employee': 'ಕ್ಷೇತ್ರ ಉದ್ಯೋಗಿ',
   'role.team-lead': 'ತಂಡದ ಮುಖ್ಯಸ್ಥ',
-  'role.site-manager': 'ಸೈಟ್ ಮ್ಯಾನೇಜರ್',
-  'role.cluster-manager': 'ಕ್ಲಸ್ಟರ್ ಮ್ಯಾನೇಜರ್',
   'role.hr-manager': 'ಎಚ್‌ಆರ್ ಮ್ಯಾನೇಜರ್',
   'role.super-admin': 'ಸೂಪರ್ ಅಡ್ಮಿನ್',
 
@@ -428,7 +426,7 @@ export const kn: Catalogue = {
   'team.nobody': 'ಈ ಸೈಟ್‌ಗೆ ಇನ್ನೂ ಯಾರನ್ನೂ ನಿಯೋಜಿಸಿಲ್ಲ.',
   'team.noAttendance': 'ಈ ಅವಧಿಯಲ್ಲಿ ಹಾಜರಾತಿ ದಾಖಲಾಗಿಲ್ಲ.',
   'team.noRequests': 'ನಿಮ್ಮ ತಂಡದಿಂದ ತಿದ್ದುಪಡಿ ವಿನಂತಿಗಳು ಇಲ್ಲ.',
-  'team.readOnlyNote': 'ವಿನಂತಿಗಳನ್ನು ಸೈಟ್ ಮ್ಯಾನೇಜರ್ ಅಥವಾ ಎಚ್‌ಆರ್ ಅನುಮೋದಿಸುತ್ತಾರೆ. ನೀವು ಇವನ್ನು ನೋಡಬಹುದು ಆದರೆ ನಿರ್ಧರಿಸಲಾಗದು.',
+  'team.readOnlyNote': 'ವಿನಂತಿಗಳನ್ನು ಎಚ್‌ಆರ್ ಅನುಮೋದಿಸುತ್ತಾರೆ. ನೀವು ಇವನ್ನು ನೋಡಬಹುದು ಆದರೆ ನಿರ್ಧರಿಸಲಾಗದು.',
   'team.noPunchToday': 'ಇಂದು ಪಂಚ್ ಇಲ್ಲ',
   'team.timeCorrection': 'ಸಮಯ ತಿದ್ದುಪಡಿ',
   'team.onDuty': 'ಕರ್ತವ್ಯದಲ್ಲಿ / ಮನೆಯಿಂದ',

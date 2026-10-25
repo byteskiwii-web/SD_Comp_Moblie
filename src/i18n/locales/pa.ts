@@ -71,8 +71,6 @@ export const pa: Catalogue = {
 
   'role.field-employee': 'ਫੀਲਡ ਇੰਪਲਾਈ',
   'role.team-lead': 'ਟੀਮ ਲੀਡ',
-  'role.site-manager': 'ਸਾਈਟ ਮੈਨੇਜਰ',
-  'role.cluster-manager': 'ਕਲੱਸਟਰ ਮੈਨੇਜਰ',
   'role.hr-manager': 'ਐਚਆਰ ਮੈਨੇਜਰ',
   'role.super-admin': 'ਸੁਪਰ ਐਡਮਿਨ',
 
@@ -435,7 +433,7 @@ export const pa: Catalogue = {
   'team.nobody': 'ਇਸ ਸਾਈਟ ਤੇ ਹਾਲੇ ਤੱਕ ਕਿਸੇ ਦੀ ਨਿਯੁਕਤੀ ਨਹੀਂ ਹੋਈ।',
   'team.noAttendance': 'ਇਸ ਸਮੇਂ ਦੌਰਾਨ ਕੋਈ ਹਾਜ਼ਰੀ ਦਰਜ ਨਹੀਂ ਹੋਈ।',
   'team.noRequests': 'ਤੁਹਾਡੀ ਟੀਮ ਵੱਲੋਂ ਕੋਈ ਸੁਧਾਰ ਬੇਨਤੀ ਨਹੀਂ।',
-  'team.readOnlyNote': 'ਬੇਨਤੀਆਂ ਸਾਈਟ ਮੈਨੇਜਰ ਜਾਂ HR ਵੱਲੋਂ ਮਨਜ਼ੂਰ ਕੀਤੀਆਂ ਜਾਂਦੀਆਂ ਹਨ। ਤੁਸੀਂ ਇਹਨਾਂ ਨੂੰ ਇੱਥੇ ਵੇਖ ਸਕਦੇ ਹੋ ਪਰ ਫੈਸਲਾ ਨਹੀਂ ਲੈ ਸਕਦੇ।',
+  'team.readOnlyNote': 'ਬੇਨਤੀਆਂ HR ਵੱਲੋਂ ਮਨਜ਼ੂਰ ਕੀਤੀਆਂ ਜਾਂਦੀਆਂ ਹਨ। ਤੁਸੀਂ ਇਹਨਾਂ ਨੂੰ ਇੱਥੇ ਵੇਖ ਸਕਦੇ ਹੋ ਪਰ ਫੈਸਲਾ ਨਹੀਂ ਲੈ ਸਕਦੇ।',
   'team.noPunchToday': 'ਅੱਜ ਕੋਈ ਪੰਚ ਨਹੀਂ',
   'team.timeCorrection': 'ਸਮਾਂ ਸੁਧਾਰ',
   'team.onDuty': 'ਆਨ-ਡਿਊਟੀ / WFH',

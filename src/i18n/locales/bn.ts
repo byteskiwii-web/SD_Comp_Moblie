@@ -71,8 +71,6 @@ export const bn: Catalogue = {
 
   'role.field-employee': 'ফিল্ড এমপ্লয়ি',
   'role.team-lead': 'টিম লিড',
-  'role.site-manager': 'সাইট ম্যানেজার',
-  'role.cluster-manager': 'ক্লাস্টার ম্যানেজার',
   'role.hr-manager': 'এইচআর ম্যানেজার',
   'role.super-admin': 'সুপার অ্যাডমিন',
 
@@ -435,7 +433,7 @@ export const bn: Catalogue = {
   'team.nobody': 'এই সাইটে এখনও কাউকে নিয়োগ করা হয়নি।',
   'team.noAttendance': 'এই সময়কালে কোনো উপস্থিতি রেকর্ড করা হয়নি।',
   'team.noRequests': 'আপনার টিম থেকে কোনো সংশোধন অনুরোধ নেই।',
-  'team.readOnlyNote': 'অনুরোধগুলো সাইট ম্যানেজার বা HR অনুমোদন করে। আপনি সেগুলো এখানে দেখতে পারেন কিন্তু সিদ্ধান্ত নিতে পারেন না।',
+  'team.readOnlyNote': 'অনুরোধগুলো HR অনুমোদন করে। আপনি সেগুলো এখানে দেখতে পারেন কিন্তু সিদ্ধান্ত নিতে পারেন না।',
   'team.noPunchToday': 'আজ কোনো পাঞ্চ নেই',
   'team.timeCorrection': 'সময় সংশোধন',
   'team.onDuty': 'অন-ডিউটি / WFH',

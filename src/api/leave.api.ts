@@ -144,7 +144,7 @@ export async function getTeamLeave(from: string, to: string, limit = 100) {
  *
  * GET /leave and GET /regularisation scope by LEVEL, not by caller. A field
  * employee resolves to SELF and gets only their own rows, so this read looked
- * correct -- but a team lead or a site manager resolves to SITE, and the same
+ * correct -- but a team lead resolves to SITE, and the same
  * request returns the WHOLE STORE. Their own "My requests" list was therefore
  * everybody's, with a Withdraw button on each one.
  *
