@@ -6,6 +6,7 @@ import { t } from '../i18n';
 import { locationCheck } from '../api/attendance.api';
 import { checkShiftIntegrity } from '../utils/shiftIntegrityCheck';
 import { probeLocation } from '../utils/locationProbe';
+import { formatDistance } from '../utils/haversine';
 
 /**
  * The tick body run by ShiftTimerTickService (native) via
@@ -85,7 +86,7 @@ async function checkOnce(): Promise<void> {
         // The server decides WHETHER to alert; the words are built here
         // from its numbers so they come out in the employee's language.
         const d = result.data;
-        const vars = { distance: d.distanceMetres, store: d.storeName, count: d.alertCount ?? '' };
+        const vars = { distance: formatDistance(d.distanceMetres), store: d.storeName, count: d.alertCount ?? '' };
         const pending = d.alertStatus === 'pending';
         const body = pending
           ? t('alert.outsideReviewBody', vars)
