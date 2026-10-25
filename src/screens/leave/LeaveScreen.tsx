@@ -17,7 +17,6 @@ import {
   getLeaveSummary,
   getMyLeave,
   LEAVE_TYPE_LABEL_KEY,
-  LEAVE_TYPES,
   type LeaveRequest,
   type LeaveStatus,
   type LeaveType,
@@ -41,6 +40,8 @@ import { ConfirmDialog } from '../../components/ConfirmDialog';
  * the worst thing a number on this screen could be — somebody reads it to
  * decide whether they can afford to be off.
  */
+
+const SHOWN_TYPES: LeaveType[] = ['unpaid', 'comp-off'];
 
 const monthShort = (m: number) => tr(('monthShort.' + (m + 1)) as TKey);
 
@@ -248,8 +249,9 @@ export function LeaveScreen() {
               </View>
 
               <View style={styles.byType}>
-                {/* Paid is retired: shown only for a month that still has some. */}
-                {LEAVE_TYPES.filter((kind) => kind !== 'paid' || (summaryQuery.data?.taken.paid ?? 0) > 0).map((kind) => (
+                {/* Leave taken is unpaid and comp off. The weekly off has its own
+                    line below; retired paid leave is history in the list only. */}
+                {SHOWN_TYPES.map((kind) => (
                   <View key={kind} style={styles.typeChip}>
                     <Text style={styles.typeChipLabel}>{t(LEAVE_TYPE_LABEL_KEY[kind])}</Text>
                     <Text style={styles.typeChipValue}>{summaryQuery.data?.taken[kind] ?? 0}</Text>

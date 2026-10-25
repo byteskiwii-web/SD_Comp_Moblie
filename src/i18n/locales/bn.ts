@@ -628,7 +628,7 @@ export const bn: Catalogue = {
   'reg.sentAsOne': 'দিনের জন্য একটি সংশোধন হিসেবে পাঠানো হয়েছে: {from} থেকে {to}',
   'reg.reset': 'রিসেট করুন',
 
-  'leaveType.paid': 'বেতনসহ',
+  'leaveType.paid': 'পুরোনো ছুটি',
   'leaveType.unpaid': 'বেতনহীন',
   'leaveType.paidHint': 'একটি সাধারণ বেতনসহ ছুটির দিন।',
   'leaveType.unpaidHint': 'বেতন নেই। যেকোনো দিন, শনিবার ও রবিবারও।',
