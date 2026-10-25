@@ -34,6 +34,7 @@ import { useLocationReadiness, type Coords, type LocationStatus } from '../../ho
 import { useNavigation } from '@react-navigation/native';
 import { isPhoneBlocked, phoneStatusQueryKey, usePhoneStatus } from '../../hooks/usePhoneStatus';
 import { PhoneBlockedCard } from './PhoneBlockedCard';
+import { formatDistance } from '../../utils/haversine';
 
 const today = () => toLocalDateKey();
 
@@ -62,13 +63,6 @@ type Props = {
    */
   variant?: 'full' | 'compact';
 };
-
-/** Metres are unreadable past a few hundred; 438636m is 439 km. */
-function formatDistance(metres: number): string {
-  if (metres < 1000) return `${Math.round(metres)} m`;
-  const km = metres / 1000;
-  return `${km < 10 ? km.toFixed(1) : Math.round(km)} km`;
-}
 
 export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: Props = {}) {
   const compact = variant === 'compact';
