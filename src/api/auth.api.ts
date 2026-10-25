@@ -73,6 +73,8 @@ export type Me = {
   photoUpdatedAt?: string | null;
   shiftStart: string | null;
   shiftEnd: string | null;
+  /** The fixed weekly off, ISO weekday (1 = Monday); null for office roles or an older server. */
+  weekOffDay?: number | null;
   /**
    * The rostered shift, when the employee is on a template.
    *

@@ -491,10 +491,15 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
             ? tr('clock.shiftStarted')
             : tr('clock.shiftEnded')) + late + over + unverified + registered;
       setBanner({ tone: late ? 'warning' : tone, text });
+      // Clocking in on the weekly off or a national holiday earns comp off.
+      const earns = pendingAction === 'clock-in' && result.offDay
+        ? tr(result.offDay === 'holiday' ? 'clock.earnsHoliday' : 'clock.earnsWeekOff')
+        : '';
       const note = [
         late.trim(),
         over.trim(),
         isPending ? tr('result.sentForApproval') : '',
+        earns,
       ].filter(Boolean).join(' ');
       setOutcome({
         ok: true,
