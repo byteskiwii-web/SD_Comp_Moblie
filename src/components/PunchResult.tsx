@@ -78,7 +78,8 @@ export function PunchResult({ outcome, onClose }: { outcome: PunchOutcome; onClo
   const tone = outcome.ok ? colors.success : colors.danger;
 
   const body = (
-    <View style={styles.card} accessibilityLiveRegion="assertive" accessible={outcome.ok}>
+    // Announced once by the effect above; a live region too would read it twice on Android.
+    <View style={styles.card} accessible={outcome.ok}>
       <Animated.View style={[styles.circleWrap, { transform: [{ translateX: shake }] }]}>
         {outcome.ok ? (
           <Animated.View
