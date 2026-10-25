@@ -41,6 +41,8 @@ export type PunchResult = {
   lateByMinutes?: number;
   /** Clock-out only: minutes past the rostered end; 0 within the shift. */
   pastEndMinutes?: number;
+  /** Clock-in on an off day: 'week-off' or 'holiday' -- it earns comp off. */
+  offDay?: 'week-off' | 'holiday' | null;
 };
 
 export type LocationCheckResult = {
