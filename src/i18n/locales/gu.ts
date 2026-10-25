@@ -71,8 +71,6 @@ export const gu: Catalogue = {
 
   'role.field-employee': 'ફીલ્ડ એમ્પ્લોયી',
   'role.team-lead': 'ટીમ લીડ',
-  'role.site-manager': 'સાઇટ મેનેજર',
-  'role.cluster-manager': 'ક્લસ્ટર મેનેજર',
   'role.hr-manager': 'એચઆર મેનેજર',
   'role.super-admin': 'સુપર એડમિન',
 
@@ -435,7 +433,7 @@ export const gu: Catalogue = {
   'team.nobody': 'આ સાઇટ પર હજુ સુધી કોઈની નિમણૂક થઈ નથી.',
   'team.noAttendance': 'આ સમયગાળામાં કોઈ હાજરી નોંધાયેલ નથી.',
   'team.noRequests': 'તમારી ટીમ તરફથી કોઈ સુધારા વિનંતી નથી.',
-  'team.readOnlyNote': 'વિનંતીઓ સાઇટ મેનેજર અથવા HR દ્વારા મંજૂર થાય છે. તમે તેમને અહીં જોઈ શકો છો પણ નિર્ણય લઈ શકતા નથી.',
+  'team.readOnlyNote': 'વિનંતીઓ HR દ્વારા મંજૂર થાય છે. તમે તેમને અહીં જોઈ શકો છો પણ નિર્ણય લઈ શકતા નથી.',
   'team.noPunchToday': 'આજે કોઈ પંચ નથી',
   'team.timeCorrection': 'સમય સુધારો',
   'team.onDuty': 'ઓન-ડ્યુટી / WFH',

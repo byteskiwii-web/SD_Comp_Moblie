@@ -71,8 +71,6 @@ export const hi: Catalogue = {
 
   'role.field-employee': 'फ़ील्ड कर्मचारी',
   'role.team-lead': 'टीम लीड',
-  'role.site-manager': 'साइट मैनेजर',
-  'role.cluster-manager': 'क्लस्टर मैनेजर',
   'role.hr-manager': 'एचआर मैनेजर',
   'role.super-admin': 'सुपर एडमिन',
 
@@ -435,7 +433,7 @@ export const hi: Catalogue = {
   'team.nobody': 'इस साइट पर अभी कोई तैनात नहीं है।',
   'team.noAttendance': 'इस अवधि में कोई हाज़िरी दर्ज नहीं है।',
   'team.noRequests': 'आपकी टीम से कोई सुधार अनुरोध नहीं है।',
-  'team.readOnlyNote': 'अनुरोध साइट मैनेजर या एचआर मंज़ूर करते हैं। आप इन्हें देख सकते हैं, फ़ैसला नहीं कर सकते।',
+  'team.readOnlyNote': 'अनुरोध एचआर मंज़ूर करते हैं। आप इन्हें देख सकते हैं, फ़ैसला नहीं कर सकते।',
   'team.noPunchToday': 'आज कोई पंच नहीं',
   'team.timeCorrection': 'समय सुधार',
   'team.onDuty': 'ऑन ड्यूटी / घर से काम',

@@ -64,8 +64,6 @@ export const ml: Catalogue = {
 
   'role.field-employee': 'ഫീൽഡ് ജീവനക്കാരൻ',
   'role.team-lead': 'ടീം ലീഡ്',
-  'role.site-manager': 'സൈറ്റ് മാനേജർ',
-  'role.cluster-manager': 'ക്ലസ്റ്റർ മാനേജർ',
   'role.hr-manager': 'എച്ച്ആർ മാനേജർ',
   'role.super-admin': 'സൂപ്പർ അഡ്മിൻ',
 
@@ -428,7 +426,7 @@ export const ml: Catalogue = {
   'team.nobody': 'ഈ സൈറ്റിലേക്ക് ഇതുവരെ ആരെയും നിയോഗിച്ചിട്ടില്ല.',
   'team.noAttendance': 'ഈ കാലയളവിൽ ഹാജർ രേഖപ്പെടുത്തിയിട്ടില്ല.',
   'team.noRequests': 'നിങ്ങളുടെ ടീമിൽ നിന്ന് തിരുത്തൽ അപേക്ഷകളില്ല.',
-  'team.readOnlyNote': 'അപേക്ഷകൾ സൈറ്റ് മാനേജറോ എച്ച്ആറോ അംഗീകരിക്കും. നിങ്ങൾക്ക് ഇവ കാണാം, തീരുമാനിക്കാനാവില്ല.',
+  'team.readOnlyNote': 'അപേക്ഷകൾ എച്ച്ആർ അംഗീകരിക്കും. നിങ്ങൾക്ക് ഇവ കാണാം, തീരുമാനിക്കാനാവില്ല.',
   'team.noPunchToday': 'ഇന്ന് പഞ്ച് ഇല്ല',
   'team.timeCorrection': 'സമയ തിരുത്തൽ',
   'team.onDuty': 'ഡ്യൂട്ടിയിൽ / വീട്ടിൽ നിന്ന്',
