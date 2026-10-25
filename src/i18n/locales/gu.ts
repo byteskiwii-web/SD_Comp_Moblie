@@ -628,7 +628,7 @@ export const gu: Catalogue = {
   'reg.sentAsOne': 'દિવસ માટે એક સુધારા તરીકે મોકલ્યું: {from} થી {to}',
   'reg.reset': 'રીસેટ કરો',
 
-  'leaveType.paid': 'પગારી',
+  'leaveType.paid': 'જૂની રજા',
   'leaveType.unpaid': 'બિનપગારી',
   'leaveType.paidHint': 'એક સામાન્ય પગારી રજાનો દિવસ.',
   'leaveType.unpaidHint': 'પગાર નહીં. કોઈ પણ દિવસ, શનિવાર અને રવિવાર પણ.',

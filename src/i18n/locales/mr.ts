@@ -628,7 +628,7 @@ export const mr: Catalogue = {
   'reg.sentAsOne': 'दिवसासाठी एक दुरुस्ती म्हणून पाठवले: {from} ते {to}',
   'reg.reset': 'रीसेट करा',
 
-  'leaveType.paid': 'पगारी',
+  'leaveType.paid': 'जुनी रजा',
   'leaveType.unpaid': 'बिनपगारी',
   'leaveType.paidHint': 'एक सामान्य पगारी सुट्टीचा दिवस.',
   'leaveType.unpaidHint': 'पगार नाही. कोणताही दिवस, शनिवार आणि रविवारसुद्धा.',

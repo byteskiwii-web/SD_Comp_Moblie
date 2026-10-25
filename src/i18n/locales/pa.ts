@@ -628,7 +628,7 @@ export const pa: Catalogue = {
   'reg.sentAsOne': 'ਦਿਨ ਲਈ ਇੱਕ ਸੁਧਾਰ ਵਜੋਂ ਭੇਜਿਆ: {from} ਤੋਂ {to}',
   'reg.reset': 'ਰੀਸੈੱਟ ਕਰੋ',
 
-  'leaveType.paid': 'ਤਨਖਾਹ ਸਮੇਤ',
+  'leaveType.paid': 'ਪੁਰਾਣੀ ਛੁੱਟੀ',
   'leaveType.unpaid': 'ਬਿਨਾਂ ਤਨਖਾਹ',
   'leaveType.paidHint': 'ਇੱਕ ਆਮ ਤਨਖਾਹ ਸਮੇਤ ਛੁੱਟੀ ਦਾ ਦਿਨ।',
   'leaveType.unpaidHint': 'ਤਨਖਾਹ ਨਹੀਂ। ਕੋਈ ਵੀ ਦਿਨ, ਸ਼ਨੀਵਾਰ ਅਤੇ ਐਤਵਾਰ ਵੀ।',
