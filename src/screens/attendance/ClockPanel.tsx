@@ -24,6 +24,7 @@ import { t as tr, useT } from '../../i18n';
 import { StatusBanner } from '../../components/StatusBanner';
 import { GeofenceMap } from '../../components/GeofenceMap';
 import { Toast, type ToastState } from '../../components/Toast';
+import { PunchResult, type PunchOutcome } from '../../components/PunchResult';
 import { PunchTiles } from './PunchTiles';
 import { InfoNote } from '../../components/InfoNote';
 import { useConnectivityStore } from '../../stores/connectivityStore';
@@ -187,6 +188,15 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
     []
   );
   const [banner, setBanner] = useState<{ tone: 'success' | 'warning'; text: string } | null>(null);
+  /*
+   * A punch's answer as a big tick or cross, in the same card that said
+   * "Checking your face…" -- the place the person is already looking. It
+   * replaces the bottom toast for punches; the banner keeps the full words.
+   */
+  const [outcome, setOutcome] = useState<PunchOutcome | null>(null);
+  /* "Try again" runs after the render that started the punch, whose
+     openPunch still sees that punch as pending -- so it calls the latest. */
+  const openPunchRef = useRef<(action: 'clock-in' | 'clock-out') => void>(() => {});
 
   /**
    * The background-location disclosure, as a promise the punch flow can await.
@@ -481,7 +491,17 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
             ? tr('clock.shiftStarted')
             : tr('clock.shiftEnded')) + late + over + unverified + registered;
       setBanner({ tone: late ? 'warning' : tone, text });
-      setToast({ tone: late ? 'warning' : tone, text });
+      const note = [
+        late.trim(),
+        over.trim(),
+        isPending ? tr('result.sentForApproval') : '',
+      ].filter(Boolean).join(' ');
+      setOutcome({
+        ok: true,
+        title: tr(pendingAction === 'clock-in' ? 'result.punchedIn' : 'result.punchedOut'),
+        time: formatTime(result.attendance.timestamp),
+        note: note || undefined,
+      });
       setPendingAction(null);
     },
     onError: (err) => {
@@ -497,7 +517,29 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
         code === 'FACE_NOT_RECOGNISED' || code === 'FACE_LOCKED_OUT' ? ' ' + tr('clock.faceChangeHint') : '';
       const text = getApiErrorMessage(err) + faceChangeHint;
       setBanner({ tone: 'warning', text });
-      setToast({ tone: 'warning', text });
+      const action = pendingAction === 'clock-out' ? 'clock-out' : 'clock-in';
+      // Retrying cannot fix these: HR, the phone check, an update or onboarding can.
+      const retryable = !(
+        code === 'FACE_LOCKED_OUT' || code === 'APP_UPDATE_REQUIRED' || code === 'ONBOARDING_INCOMPLETE' || code?.startsWith('PHONE_')
+      );
+      setOutcome({
+        ok: false,
+        title: tr(
+          code === 'FACE_NOT_RECOGNISED' ? 'result.faceNotMatched'
+            : code === 'FACE_NOT_DETECTED' ? 'result.noFace'
+              : code === 'FACE_LOCKED_OUT' ? 'result.lockedOut'
+                : action === 'clock-in' ? 'result.notIn' : 'result.notOut'
+        ),
+        reason: text,
+        onRetry: retryable
+          ? () => {
+              setOutcome(null);
+              // After this card has faded out: a camera Modal presented while
+              // another is still closing is dropped on iOS (see cameraDismissed).
+              setTimeout(() => openPunchRef.current(action), 450);
+            }
+          : undefined,
+      });
 
       /**
        * Always the full close, for every error code including
@@ -656,6 +698,7 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
     // current; the state and values the handler itself reads are listed.
     [preparing, pendingAction, punchMutation.isPending, location, fixLocation, store?.name, phoneBlocked, phoneRefusalText]
   );
+  openPunchRef.current = (action) => void openPunch(action);
 
   // "Allow all the time" location access powers the periodic mid-shift
   // geofence check (useLocationPollingEffect) once the employee is clocked in.
@@ -1143,22 +1186,27 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
           what is happening until the answer arrives. Nothing can be tapped
           underneath it, which is also what stops a second punch. */}
       <Modal
-        visible={punchMutation.isPending}
+        visible={punchMutation.isPending || !!outcome}
         transparent
         animationType="fade"
         statusBarTranslucent
         onRequestClose={() => {
-          /* Not dismissable: the punch is already on its way. */
+          /* Not dismissable while the punch is on its way; the answer is. */
+          if (!punchMutation.isPending) setOutcome(null);
         }}
       >
         <View style={styles.overlay}>
-          <View style={styles.overlayCard} accessibilityLiveRegion="polite" accessible>
-            <ActivityIndicator size="large" color={colors.brand[700]} />
-            <Text style={styles.overlayTitle}>
-              {pendingAction === 'clock-out' ? t('clock.verifyingOut') : t('clock.verifyingIn')}
-            </Text>
-            <Text style={styles.overlayHint}>{t('clock.verifyingHint')}</Text>
-          </View>
+          {outcome && !punchMutation.isPending ? (
+            <PunchResult outcome={outcome} onClose={() => setOutcome(null)} />
+          ) : (
+            <View style={styles.overlayCard} accessibilityLiveRegion="polite" accessible>
+              <ActivityIndicator size="large" color={colors.brand[700]} />
+              <Text style={styles.overlayTitle}>
+                {pendingAction === 'clock-out' ? t('clock.verifyingOut') : t('clock.verifyingIn')}
+              </Text>
+              <Text style={styles.overlayHint}>{t('clock.verifyingHint')}</Text>
+            </View>
+          )}
         </View>
       </Modal>
 
