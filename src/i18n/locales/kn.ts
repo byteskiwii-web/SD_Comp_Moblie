@@ -622,7 +622,7 @@ export const kn: Catalogue = {
   'reg.reset': 'ಮರುಹೊಂದಿಸಿ',
 
 
-  'leaveType.paid': 'ಸಂಬಳ ಸಹಿತ',
+  'leaveType.paid': 'ಹಳೆಯ ರಜೆ',
   'leaveType.unpaid': 'ಸಂಬಳ ರಹಿತ',
   'leaveType.paidHint': 'ಸಾಮಾನ್ಯ ಸಂಬಳ ಸಹಿತ ರಜೆ.',
   'leaveType.unpaidHint': 'ಸಂಬಳ ಇಲ್ಲ. ಯಾವುದೇ ದಿನ, ಶನಿವಾರ ಮತ್ತು ಭಾನುವಾರ ಸೇರಿ.',

@@ -622,7 +622,7 @@ export const ml: Catalogue = {
   'reg.reset': 'റീസെറ്റ്',
 
 
-  'leaveType.paid': 'ശമ്പളത്തോടെ',
+  'leaveType.paid': 'പഴയ അവധി',
   'leaveType.unpaid': 'ശമ്പളമില്ലാതെ',
   'leaveType.paidHint': 'സാധാരണ ശമ്പളത്തോടെയുള്ള അവധി.',
   'leaveType.unpaidHint': 'ശമ്പളമില്ല. ഏത് ദിവസവും, ശനിയും ഞായറും ഉൾപ്പെടെ.',

@@ -629,7 +629,7 @@ export const hi: Catalogue = {
   'reg.reset': 'रीसेट',
 
 
-  'leaveType.paid': 'सवेतन',
+  'leaveType.paid': 'पुरानी छुट्टी',
   'leaveType.unpaid': 'बिना वेतन',
   'leaveType.paidHint': 'सामान्य सवेतन छुट्टी।',
   'leaveType.unpaidHint': 'बिना वेतन। कोई भी दिन, शनिवार और रविवार भी।',

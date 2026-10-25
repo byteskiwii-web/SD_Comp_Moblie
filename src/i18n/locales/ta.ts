@@ -622,7 +622,7 @@ export const ta: Catalogue = {
   'reg.reset': 'மீட்டமை',
 
 
-  'leaveType.paid': 'ஊதியத்துடன்',
+  'leaveType.paid': 'பழைய விடுப்பு',
   'leaveType.unpaid': 'ஊதியமின்றி',
   'leaveType.paidHint': 'வழக்கமான ஊதியத்துடன் கூடிய விடுப்பு.',
   'leaveType.unpaidHint': 'ஊதியம் இல்லை. எந்த நாளும், சனி மற்றும் ஞாயிறு உட்பட.',

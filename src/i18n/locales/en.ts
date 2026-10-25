@@ -641,7 +641,7 @@ export const en = {
   'reg.reset': 'Reset',
 
 
-  'leaveType.paid': 'Paid',
+  'leaveType.paid': 'Old leave',
   'leaveType.unpaid': 'Unpaid',
   'leaveType.paidHint': 'A normal paid day off.',
   'leaveType.unpaidHint': 'Not paid. Any day, Saturday and Sunday included.',

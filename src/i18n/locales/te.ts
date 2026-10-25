@@ -622,7 +622,7 @@ export const te: Catalogue = {
   'reg.reset': 'రీసెట్',
 
 
-  'leaveType.paid': 'జీతంతో',
+  'leaveType.paid': 'పాత సెలవు',
   'leaveType.unpaid': 'జీతం లేకుండా',
   'leaveType.paidHint': 'సాధారణ జీతంతో కూడిన సెలవు.',
   'leaveType.unpaidHint': 'జీతం లేదు. ఏ రోజైనా, శని మరియు ఆదివారాలతో సహా.',
