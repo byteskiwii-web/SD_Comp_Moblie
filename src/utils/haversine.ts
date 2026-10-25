@@ -34,3 +34,11 @@ export function isWithinFence(distanceMetres: number, radiusMetres: number, accu
     accuracyMetres == null ? 0 : Math.min(Math.max(0, accuracyMetres), FENCE_ACCURACY_ALLOWANCE_M);
   return distanceMetres - allowance <= radiusMetres;
 }
+
+/** Metres are unreadable past a few hundred: 800 m, 3.2 km, 439 km. */
+export function formatDistance(metres: number): string {
+  const m = Math.round(metres);
+  if (m < 1000) return `${m} m`;
+  const km = m / 1000;
+  return `${km < 10 ? km.toFixed(1) : Math.round(km)} km`;
+}

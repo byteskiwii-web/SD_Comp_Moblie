@@ -1033,9 +1033,9 @@ export const en = {
   'alert.reviewTitle': 'Attendance sent for review',
   'alert.reviewBody': 'Location was off, or a phone setting was wrong, 4 times today. Your manager and HR will check today\'s attendance.',
   'alert.outsideTitle': 'Outside your store',
-  'alert.outsideBody': 'You are {distance} m away from {store}. Please go back to the store. Warning {count} of 3. On a break? Tap "Start Break" first.',
-  'alert.outsideNoCountBody': 'You are {distance} m away from {store}. Please go back to the store. On a break? Tap "Start Break" first.',
-  'alert.outsideReviewBody': 'You are {distance} m away from {store}. Today\'s attendance has been sent to your manager and HR for review. On a break? Tap "Start Break" first.',
+  'alert.outsideBody': 'You are {distance} away from {store}. Please go back to the store. Warning {count} of 3. On a break? Tap "Start Break" first.',
+  'alert.outsideNoCountBody': 'You are {distance} away from {store}. Please go back to the store. On a break? Tap "Start Break" first.',
+  'alert.outsideReviewBody': 'You are {distance} away from {store}. Today\'s attendance has been sent to your manager and HR for review. On a break? Tap "Start Break" first.',
 
   /* ---------------------------------------------------------- phone check */
   'phone.menu': 'This phone',
