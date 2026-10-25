@@ -23,11 +23,12 @@ import { useT } from '../../i18n';
 import { nationalHolidaysIn, useNationalHolidays } from '../../hooks/useNationalHolidays';
 import {
   applyForLeave,
-  LEAVE_TYPES,
+  APPLY_TYPES,
   LEAVE_TYPE_HINT_KEY,
   LEAVE_TYPE_LABEL_KEY,
   WEEK_OFF_DAYS,
   type LeaveType,
+  type WeekOffScope,
 } from '../../api/leave.api';
 
 /**
@@ -41,15 +42,19 @@ import {
  * Hiding an option that cannot apply beats showing one that produces an error
  * after the fact.
  *
- * Two types carry their own rules, stated on the form rather than learned
- * from a refusal:
+ * Three types, each with its rules stated on the form rather than learned
+ * from a refusal (the server is the authority on all of them):
  *
- *   Comp off   spends what has been earned. The chip shows how much is left
- *              and is off when there is none; asking for more is caught here.
- *   Week off   one full weekday. Saturday and Sunday are working days at the
- *              stores, so a weekend is flagged before sending. One date, no
- *              half day, and no reason needed -- it is the weekly off, not an
- *              absence to explain. The one-per-week rule is the server's.
+ *   Unpaid       any day, Saturday and Sunday included.
+ *   Comp off     spends what has been earned, Monday to Friday only. The chip
+ *                shows how much is left; asking for more is caught here.
+ *   Change week  moves the weekly off, which is otherwise automatic: for one
+ *   off          week, or from a week onwards. One weekday, no half day, no
+ *                reason needed. The once-per-week and "not after that week's
+ *                off has passed" rules are the server's.
+ *
+ * The day count is WORKING days: the weekly off and national holidays inside
+ * the range cost nothing, so they are not counted (paid leave is retired).
  */
 
 /** Mirrors LEAVE_MAX_SPAN_DAYS. */
@@ -62,13 +67,20 @@ const isoWeekday = (dateKey: string) => {
   const d = new Date(`${dateKey}T00:00:00`).getDay();
   return d === 0 ? 7 : d;
 };
+const addDays = (dateKey: string, n: number) => {
+  const d = new Date(`${dateKey}T00:00:00`);
+  d.setDate(d.getDate() + n);
+  return toLocalDateKey(d);
+};
+const weekStart = (dateKey: string) => addDays(dateKey, 1 - isoWeekday(dateKey));
 
 export function ApplyLeaveSheet({
   visible,
   onClose,
   onApplied,
   compOffAvailable = 0,
-  initialType = 'paid',
+  initialType = 'unpaid',
+  weekOffDay = null,
 }: {
   visible: boolean;
   onClose: () => void;
@@ -77,9 +89,12 @@ export function ApplyLeaveSheet({
   compOffAvailable?: number;
   /** The type the form opens on -- Comp off when opened from the comp-off card. */
   initialType?: LeaveType;
+  /** The fixed weekly off in force (ISO weekday), so it is not counted or re-chosen. */
+  weekOffDay?: number | null;
 }) {
   const { upcoming: nationalHolidays } = useNationalHolidays();
-  const [leaveType, setLeaveType] = useState<LeaveType>('paid');
+  const [leaveType, setLeaveType] = useState<LeaveType>('unpaid');
+  const [scope, setScope] = useState<WeekOffScope>('week');
   const [startDate, setStartDate] = useState(toLocalDateKey());
   const [endDate, setEndDate] = useState(toLocalDateKey());
   const [halfDay, setHalfDay] = useState(false);
@@ -100,6 +115,7 @@ export function ApplyLeaveSheet({
   useEffect(() => {
     if (!visible) return;
     setLeaveType(initialType);
+    setScope('week');
     setStartDate(toLocalDateKey());
     setEndDate(toLocalDateKey());
     setHalfDay(false);
@@ -122,14 +138,32 @@ export function ApplyLeaveSheet({
   // A stale server message about the previous type is not about this one.
   useEffect(() => setError(null), [leaveType]);
 
+  const holidayDates = useMemo(
+    () => new Set(nationalHolidays.map((h) => String(h.date).slice(0, 10))),
+    [nationalHolidays]
+  );
+  // Working days: the weekly off and national holidays inside the range are off anyway.
   const days = useMemo(() => {
     if (halfDay) return 0.5;
-    return Math.round((Date.parse(endDate) - Date.parse(startDate)) / DAY_MS) + 1;
-  }, [startDate, endDate, halfDay]);
+    const span = Math.round((Date.parse(endDate) - Date.parse(startDate)) / DAY_MS) + 1;
+    if (span > MAX_SPAN_DAYS + 1) return span;
+    let n = 0;
+    for (let d = startDate; d <= endDate; d = addDays(d, 1)) {
+      if (isoWeekday(d) !== weekOffDay && !holidayDates.has(d)) n += 1;
+    }
+    return n;
+  }, [startDate, endDate, halfDay, weekOffDay, holidayDates]);
+  const hasWeekend = useMemo(() => {
+    for (let d = startDate; d <= (isWeekOff ? startDate : endDate); d = addDays(d, 1)) {
+      if (!WEEK_OFF_DAYS.includes(isoWeekday(d))) return true;
+    }
+    return false;
+  }, [startDate, endDate, isWeekOff]);
+  const weekdayLabel = (n: number) => t(`weekday.${n % 7}` as 'weekday.1');
 
   /* National holidays inside the chosen dates. Nobody needs leave for one --
      and working it is what earns a comp off -- so it is said on the form,
-     before somebody spends a paid day on a day they did not need to. */
+     before somebody spends a day of leave they did not need to. */
   const holidaysInRange = useMemo(
     () => nationalHolidaysIn(nationalHolidays, startDate, isWeekOff ? startDate : endDate),
     [nationalHolidays, startDate, endDate, isWeekOff]
@@ -144,6 +178,7 @@ export function ApplyLeaveSheet({
         end_date: isWeekOff ? startDate : endDate,
         half_day: isWeekOff ? false : halfDay,
         reason: reason.trim(),
+        ...(isWeekOff ? { week_off_scope: scope } : {}),
       }),
     onSuccess: () => {
       setError(null);
@@ -155,18 +190,24 @@ export function ApplyLeaveSheet({
   // Checked here as well as on the server so the button can say why it is off,
   // instead of the form bouncing back with a message after a round trip.
   const problem = isWeekOff
-    ? !WEEK_OFF_DAYS.includes(isoWeekday(startDate))
+    ? hasWeekend
       ? t('apply.weekOffWeekday')
-      : null
-    : isCompOff && compOffAvailable <= 0
-      ? t('apply.compOffNone')
-      : isCompOff && days > compOffAvailable
-        ? t('apply.compOffLeft', { count: compOffAvailable })
-        : reason.trim().length < MIN_REASON
-          ? t('apply.reasonNeeded')
-          : days > MAX_SPAN_DAYS
-            ? t('apply.tooLong', { days, max: MAX_SPAN_DAYS })
-            : null;
+      : weekOffDay != null && isoWeekday(startDate) === weekOffDay
+        ? t('apply.sameAsWeekOff', { day: weekdayLabel(weekOffDay) })
+        : scope === 'permanent' && weekStart(startDate) <= weekStart(toLocalDateKey())
+          ? t('apply.permanentTooSoon')
+          : null
+    : isCompOff && hasWeekend
+      ? t('apply.compOffWeekday')
+      : isCompOff && compOffAvailable <= 0
+        ? t('apply.compOffNone')
+        : isCompOff && days > compOffAvailable
+          ? t('apply.compOffLeft', { count: compOffAvailable })
+          : reason.trim().length < MIN_REASON
+            ? t('apply.reasonNeeded')
+            : days > MAX_SPAN_DAYS
+              ? t('apply.tooLong', { days, max: MAX_SPAN_DAYS })
+              : null;
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -190,7 +231,7 @@ export function ApplyLeaveSheet({
           >
             <Text style={styles.label}>{t('apply.type')}</Text>
             <View style={styles.types}>
-              {LEAVE_TYPES.map((kind) => {
+              {APPLY_TYPES.map((kind) => {
                 const on = leaveType === kind;
                 // Comp off with nothing earned is shown, not hidden: the empty
                 // chip is how somebody learns the option exists and why it is off.
@@ -206,7 +247,7 @@ export function ApplyLeaveSheet({
                     accessibilityState={{ selected: on }}
                   >
                     <Text style={[styles.typeText, on && styles.typeTextOn, empty && !on && styles.typeTextEmpty]}>
-                      {t(LEAVE_TYPE_LABEL_KEY[kind])}
+                      {kind === 'week-off' ? t('leaveType.weekOffChange') : t(LEAVE_TYPE_LABEL_KEY[kind])}
                       {kind === 'comp-off' ? ` · ${compOffAvailable}` : ''}
                     </Text>
                   </Pressable>
@@ -221,8 +262,9 @@ export function ApplyLeaveSheet({
             {isCompOff ? (
               <View style={styles.earnBox}>
                 <Text style={styles.earnTitle}>{t('compOff.howTitle')}</Text>
+                <Text style={styles.earnLine}>• {t('compOff.howWeekOff')}</Text>
                 <Text style={styles.earnLine}>• {t('compOff.howHoliday')}</Text>
-                <Text style={styles.earnLine}>• {t('compOff.howUnpaid')}</Text>
+                <Text style={styles.earnLine}>• {t('compOff.validity')}</Text>
                 {nationalHolidays.length > 0 ? (
                   <>
                     <Text style={[styles.earnTitle, styles.earnTitleGap]}>{t('compOff.nextHolidays')}</Text>
@@ -237,7 +279,31 @@ export function ApplyLeaveSheet({
             ) : null}
 
             {isWeekOff ? (
-              <DatePickerField label={t('apply.date')} value={startDate} onChange={setStartDate} />
+              <>
+                {weekOffDay != null ? (
+                  <Text style={styles.typeHint}>{t('leave.weekOffIs', { day: weekdayLabel(weekOffDay) })}</Text>
+                ) : null}
+                <View style={styles.types}>
+                  {(['week', 'permanent'] as WeekOffScope[]).map((s) => {
+                    const on = scope === s;
+                    return (
+                      <Pressable
+                        key={s}
+                        onPress={() => setScope(s)}
+                        style={({ pressed }) => [styles.type, on && styles.typeOn, pressed && styles.pressed]}
+                        accessibilityRole="button"
+                        accessibilityState={{ selected: on }}
+                      >
+                        <Text style={[styles.typeText, on && styles.typeTextOn]}>
+                          {t(s === 'week' ? 'apply.scopeWeek' : 'apply.scopePermanent')}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+                <DatePickerField label={t('apply.newDayOff')} value={startDate} onChange={setStartDate} />
+                {scope === 'permanent' ? <Text style={styles.typeHint}>{t('apply.permanentHint')}</Text> : null}
+              </>
             ) : (
               <View style={styles.dates}>
                 <View style={styles.dateCol}>

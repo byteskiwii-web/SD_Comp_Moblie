@@ -21,9 +21,9 @@ const UPCOMING_SHOWN = 3;
  *
  * So the card always answers the three questions in order:
  *   1. what I have   -- days left, with earned / used / waiting beside it
- *   2. how I earn it -- the two rules, in words
+ *   2. how I earn it -- the two rules and how long it lasts, in words
  *   3. when I can    -- the next national holidays, with dates
- * plus which holidays earned what is already there.
+ * plus what is left of each credit and the day it lapses (oldest is spent first).
  */
 export function CompOffCard({ summary, onApply }: { summary?: LeaveSummary; onApply: () => void }) {
   const colors = useThemeStore((s) => s.colors);
@@ -36,6 +36,9 @@ export function CompOffCard({ summary, onApply }: { summary?: LeaveSummary; onAp
   const used = summary?.compOffUsed ?? 0;
   const pending = summary?.compOffPending ?? 0;
   const earnedFrom = summary?.compOffHolidays ?? [];
+  const live = (summary?.compOffCredits ?? []).filter((c) => c.remaining > 0 && !c.expired);
+  const soon = new Set((summary?.compOffExpiringSoon ?? []).map((c) => c.date));
+  const day = (date: string) => formatDate(`${String(date).slice(0, 10)}T00:00:00`);
 
   return (
     <Card>
@@ -67,14 +70,25 @@ export function CompOffCard({ summary, onApply }: { summary?: LeaveSummary; onAp
         </Text>
       ) : null}
 
+      {live.map((c) => (
+        <Text key={c.date} style={[styles.credit, soon.has(c.date) && styles.creditSoon]}>
+          {t('compOff.creditLine', { remaining: c.remaining, date: day(c.date), expires: day(c.expiresOn) })}
+          {soon.has(c.date) ? ` · ${t('compOff.expiringSoon')}` : ''}
+        </Text>
+      ))}
+
       <Text style={styles.section}>{t('compOff.howTitle')}</Text>
+      <View style={styles.rule}>
+        <Ionicons name="briefcase-outline" size={14} color={colors.slate500} style={styles.ruleIcon} />
+        <Text style={styles.ruleText}>{t('compOff.howWeekOff')}</Text>
+      </View>
       <View style={styles.rule}>
         <Ionicons name="flag-outline" size={14} color={colors.slate500} style={styles.ruleIcon} />
         <Text style={styles.ruleText}>{t('compOff.howHoliday')}</Text>
       </View>
       <View style={styles.rule}>
-        <Ionicons name="briefcase-outline" size={14} color={colors.slate500} style={styles.ruleIcon} />
-        <Text style={styles.ruleText}>{t('compOff.howUnpaid')}</Text>
+        <Ionicons name="time-outline" size={14} color={colors.slate500} style={styles.ruleIcon} />
+        <Text style={styles.ruleText}>{t('compOff.validity')}</Text>
       </View>
 
       <Text style={styles.section}>{t('compOff.nextHolidays')}</Text>
@@ -111,6 +125,8 @@ const makeStyles = (colors: ColorScheme) =>
     leftLabel: { fontSize: 12.5, fontWeight: '800', color: colors.textLight },
     breakdown: { fontSize: 11.5, fontWeight: '600', color: colors.slate500, marginTop: 2 },
     earnedFrom: { fontSize: 11.5, lineHeight: 16, color: colors.slate500, marginTop: 8 },
+    credit: { fontSize: 11.5, lineHeight: 16, color: colors.slate600, marginTop: 4 },
+    creditSoon: { color: colors.warningText, fontWeight: '700' },
 
     section: {
       fontSize: 10.5, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.3,
