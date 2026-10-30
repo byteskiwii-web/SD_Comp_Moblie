@@ -139,8 +139,17 @@ let refreshInFlight: Promise<string | null> | null = null;
  * performRefresh is an interceptor whose job is to retry, not to explain.
  */
 let lastRefreshFailure: string | null = null;
+/**
+ * Did the server actually REFUSE the session (a 4xx), rather than fail to
+ * answer -- no signal, a 5xx, a timeout or a 429? Only a refusal signs out.
+ * Signing out on a busy server is what turned a rate limit into a
+ * company-wide lock-out (30 Oct 2026): everyone was sent to a login that was
+ * refused for the same reason.
+ */
+let refreshRefused = true;
 
 async function performRefresh(): Promise<string | null> {
+  refreshRefused = true;
   const refreshToken = useAuthStore.getState().refreshToken;
   if (!refreshToken) return null;
   try {
@@ -156,6 +165,8 @@ async function performRefresh(): Promise<string | null> {
     return accessToken;
   } catch (err) {
     lastRefreshFailure = getApiErrorCode(err) ?? null;
+    const status = (err as AxiosError).response?.status;
+    refreshRefused = !!status && status >= 400 && status < 500 && status !== 408 && status !== 429;
     return null;
   }
 }
@@ -224,6 +235,8 @@ apiClient.interceptors.response.use(
     const newToken = await refreshInFlight;
 
     if (!newToken) {
+      // Not refused, only unanswered: stay signed in; the next request retries.
+      if (!refreshRefused) return Promise.reject(error);
       const reason = lastRefreshFailure;
       lastRefreshFailure = null;
       await useAuthStore.getState().signOut(
