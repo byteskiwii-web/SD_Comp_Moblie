@@ -12,14 +12,13 @@ import { apiClient } from './client';
  * rather than as a feature nobody has switched on.
  */
 
+/** The server's list (address proof and "other" retired 31 Oct 2026). */
 export type DocType =
   | 'aadhaar'
   | 'pan'
   | 'bank_passbook'
   | 'cancelled_cheque'
-  | 'photo'
-  | 'address_proof'
-  | 'other';
+  | 'photo';
 
 /** Catalogue keys, not text -- a module constant would freeze the language. */
 export const DOC_TYPE_KEY = {
@@ -28,8 +27,6 @@ export const DOC_TYPE_KEY = {
   bank_passbook: 'docType.bank_passbook',
   cancelled_cheque: 'docType.cancelled_cheque',
   photo: 'docType.photo',
-  address_proof: 'docType.address_proof',
-  other: 'docType.other',
 } as const;
 
 /**
