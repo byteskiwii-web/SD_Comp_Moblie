@@ -42,20 +42,20 @@ import { useAuthedImage } from '../../hooks/useAuthedImage';
  * this asks `/health/deps` first and says plainly when the feature is off.
  */
 
-const OFFERED: DocType[] = [
-  'aadhaar',
-  'pan',
-  'bank_passbook',
-  'cancelled_cheque',
-  'photo',
-  'address_proof',
-  'other',
+/**
+ * One row per thing to send, as on the web page. Passbook and cancelled cheque
+ * are one row: either proves the bank account, and as two rows the card said
+ * a document was outstanding until both had been sent.
+ */
+const ROWS: { key: string; types: DocType[]; title?: TKey; hint?: TKey }[] = [
+  { key: 'aadhaar', types: ['aadhaar'] },
+  { key: 'pan', types: ['pan'] },
+  { key: 'bank', types: ['bank_passbook', 'cancelled_cheque'], title: 'docs.bankTitle', hint: 'docs.bankHint' },
+  { key: 'photo', types: ['photo'] },
 ];
 
-const HINT_KEY: Partial<Record<DocType, TKey>> = {
-  cancelled_cheque: 'docs.cheque',
-  bank_passbook: 'docs.aadhaar',
-};
+/** verified > uploaded > rejected: an accepted cheque settles the bank row whatever the passbook says. */
+const STANDING: Record<DocumentStatus, number> = { verified: 3, uploaded: 2, rejected: 1 };
 
 function statusTone(colors: ColorScheme): Record<DocumentStatus, { bg: string; fg: string; key: TKey }> {
   return {
@@ -140,10 +140,18 @@ export function DocumentsCard() {
     return byType;
   }, [docsQuery.data]);
 
+  const docOf = (types: DocType[]) =>
+    types
+      .map((type) => latest.get(type))
+      .reduce<EmployeeDocument | undefined>(
+        (best, d) => (d && (!best || (STANDING[d.status] ?? 0) > (STANDING[best.status] ?? 0)) ? d : best),
+        undefined
+      );
+
   /* Missing or turned down -- the two states the employee can still do
      something about, and the only reason to point them at the web page. */
-  const outstanding = OFFERED.some((type) => {
-    const doc = latest.get(type);
+  const outstanding = ROWS.some(({ types }) => {
+    const doc = docOf(types);
     return !doc || doc.status === 'rejected';
   });
 
@@ -177,24 +185,26 @@ export function DocumentsCard() {
       {docsQuery.isLoading ? (
         <SkeletonRows count={4} />
       ) : (
-        OFFERED.map((type, i) => {
-          const doc = latest.get(type);
+        ROWS.map(({ key, types, title, hint }, i) => {
+          const doc = docOf(types);
+          const label = t(title ?? DOC_TYPE_KEY[types[0]]);
           // A status this build has no tone for is shown without a chip rather
           // than read off the end of the map: an unknown value added server-side
           // must not be able to blank the screen.
           const tone = doc ? STATUS_TONE[doc.status] ?? null : null;
 
           return (
-            <View key={type} style={[styles.row, i === OFFERED.length - 1 && styles.rowLast]}>
+            <View key={key} style={[styles.row, i === ROWS.length - 1 && styles.rowLast]}>
               <View style={styles.rowText}>
-                <Text style={styles.rowLabel}>{t(DOC_TYPE_KEY[type])}</Text>
+                <Text style={styles.rowLabel}>{label}</Text>
                 {doc ? (
                   <Text style={styles.rowMeta} numberOfLines={1}>
+                    {title ? `${t(DOC_TYPE_KEY[doc.docType])} · ` : ''}
                     {doc.fileName ?? t('docs.attached')} · {formatDate(doc.uploadedAt)}
                   </Text>
-                ) : HINT_KEY[type] ? (
+                ) : hint ? (
                   <Text style={styles.rowHint} numberOfLines={2}>
-                    {t(HINT_KEY[type] as TKey)}
+                    {t(hint)}
                   </Text>
                 ) : null}
                 {doc?.status === 'rejected' && doc.rejectionReason ? (
@@ -218,7 +228,7 @@ export function DocumentsCard() {
                   hitSlop={6}
                   style={({ pressed }) => [styles.action, pressed && styles.actionPressed]}
                   accessibilityRole="button"
-                  accessibilityLabel={t('docs.viewLabel', { name: t(DOC_TYPE_KEY[type]) })}
+                  accessibilityLabel={t('docs.viewLabel', { name: t(DOC_TYPE_KEY[doc.docType]) })}
                 >
                   {opening === doc.id ? (
                     <ActivityIndicator size="small" color={colors.brand[700]} />
