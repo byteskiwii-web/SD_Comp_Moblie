@@ -29,12 +29,10 @@ export type SetupTask = {
 };
 
 /**
- * The documents a person is expected to have. `other` is a catch-all and
- * never counts as missing; the bank proof is one OR the other. Mirrors what
- * HR chases first — the same three plus a bank proof — rather than every
- * type the picker offers.
+ * The documents a person is expected to have, plus a bank proof that is one
+ * OR the other — the four rows of the web upload page.
  */
-const CORE: DocType[] = ['aadhaar', 'pan', 'photo', 'address_proof'];
+const CORE: DocType[] = ['aadhaar', 'pan', 'photo'];
 
 function latestByType(docs: EmployeeDocument[] | undefined) {
   const byType = new Map<DocType, EmployeeDocument>();
