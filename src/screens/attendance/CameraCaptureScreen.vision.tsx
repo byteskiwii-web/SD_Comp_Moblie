@@ -1,8 +1,8 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Camera, useCameraDevice, useCameraPermission, usePhotoOutput } from 'react-native-vision-camera';
-import { useFaceDetectorOutput } from 'react-native-vision-camera-face-detector';
+import { createFaceDetectorOutput } from 'react-native-vision-camera-face-detector';
 import { Button } from '../../components/ui';
 import { radii } from '../../theme/tokens';
 import { useLiveness } from '../../hooks/useLiveness';
@@ -59,15 +59,31 @@ export function VisionCameraCaptureScreen({ onCaptured, onCancel }: Props) {
           ? t('camera.timedOut')
           : t('camera.centreFace');
 
-  const faceDetectorOutput = useFaceDetectorOutput({
-    performanceMode: 'fast',
-    // Required for leftEyeOpenProbability/rightEyeOpenProbability (blink
-    // detection) -- ML Kit doesn't compute these unless classification is
-    // explicitly enabled; they're `undefined` otherwise.
-    runClassifications: true,
-    onFacesDetected,
-    onError: (err) => console.warn('[CameraCaptureScreen] face detector error', err),
-  });
+  // Created ONCE, not through useFaceDetectorOutput. That hook memoises on an
+  // options object it rebuilds every render, so every state change here (a face
+  // appearing, a challenge advancing, a reset) handed VisionCamera a new output
+  // and restarted the whole camera session: the preview went black, auto-exposure
+  // started over, the detector saw no face for a moment, and that "lost face"
+  // reset the challenge -- another state change, another restart. Phones whose
+  // camera is slow to come back never got past step 1 (face photo at onboarding
+  // and clock-in/out both). The handler is read through a ref so it is always the
+  // latest one (it depends on `state`), exactly as the hook does for its callback.
+  const onFacesRef = useRef(onFacesDetected);
+  onFacesRef.current = onFacesDetected;
+  const faceDetectorOutput = useMemo(
+    () =>
+      createFaceDetectorOutput({
+        performanceMode: 'fast',
+        // Required for leftEyeOpenProbability/rightEyeOpenProbability (blink
+        // detection) -- ML Kit doesn't compute these unless classification is
+        // explicitly enabled; they're `undefined` otherwise.
+        runClassifications: true,
+        outputResolution: 'preview',
+        onFacesDetected: (faces) => onFacesRef.current(faces),
+        onError: (err) => console.warn('[CameraCaptureScreen] face detector error', err),
+      }),
+    []
+  );
 
   useEffect(() => {
     if (!hasPermission) requestPermission();
