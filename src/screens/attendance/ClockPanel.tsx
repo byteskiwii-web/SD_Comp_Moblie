@@ -15,7 +15,7 @@ import { cancelBreakReminder, cancelClockOutReminder } from '../../utils/notific
 import { haversineDistance, isWithinFence } from '../../utils/haversine';
 import { clockIn, clockOut, endBreak, getAttendanceHistory, startBreak } from '../../api/attendance.api';
 import { CameraCaptureScreen } from './CameraCaptureScreen';
-import { hasShiftTimer, noMidShiftCheckLabel } from '../../native/runtime';
+import { hasMidShiftChecks, noMidShiftCheckLabel } from '../../native/runtime';
 import { getApiErrorCode, getApiErrorMessage } from '../../api/client';
 import { onboardingGateQueryKey } from '../../hooks/useOnboardingGate';
 import { getLatestMarkOfTypes, SHIFT_TYPES, BREAK_TYPES } from '../../utils/attendanceStatus';
@@ -735,7 +735,7 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
    * Returns whether the checks will run.
    */
   const askBackgroundLocation = async (): Promise<boolean> => {
-    if (!hasShiftTimer) return true;
+    if (!hasMidShiftChecks) return true;
     try {
       const existing = await Location.getBackgroundPermissionsAsync();
       if (existing.status === 'granted') return true;
@@ -763,7 +763,7 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
 
     // Said now rather than discovered later: this shift will have no
     // mid-shift presence checks. The punch itself has been sent regardless.
-    if (action === 'clock-in' && !bgGranted.current && hasShiftTimer) {
+    if (action === 'clock-in' && !bgGranted.current && hasMidShiftChecks) {
       Alert.alert(tr('clock.bgOffTitle'), tr('clock.bgOffBody'), [
         { text: tr('common.close'), style: 'cancel' },
         { text: tr('common.openSettings'), onPress: () => Linking.openSettings() },

@@ -33,3 +33,8 @@ export const INTEGRITY_FOREGROUND_CHECK_INTERVAL_MS = 60 * 1000;
 // (RN logs "No task registered for key ..." and the tick never runs).
 export const SHIFT_TIMER_TASK = 'ZipHrmsShiftTimerTick';
 
+// iOS counterpart: the expo-task-manager task that receives background
+// location updates (src/tasks/iosShiftLocationTask.ts). Any string will do,
+// it only has to be the same in defineTask and startLocationUpdatesAsync.
+export const IOS_SHIFT_LOCATION_TASK = 'ZipHrmsShiftLocationUpdates';
+

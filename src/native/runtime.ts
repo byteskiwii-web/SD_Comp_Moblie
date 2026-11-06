@@ -20,6 +20,15 @@ export const hasVisionCamera = !isWeb && !isExpoGo;
  * evaluation, before anything renders.
  */
 export const hasShiftTimer = !isWeb && !isExpoGo && Platform.OS === 'android';
+/**
+ * iOS has no alarm to wake an app on a timer, so its mid-shift check rides on
+ * background location updates instead (src/tasks/iosShiftLocationTask.ts,
+ * UIBackgroundModes: location). Needs a development or store build: background
+ * location is not available in Expo Go.
+ */
+export const hasIosShiftChecks = !isWeb && !isExpoGo && Platform.OS === 'ios';
+/** This binary re-checks presence during a shift, by whichever mechanism. */
+export const hasMidShiftChecks = hasShiftTimer || hasIosShiftChecks;
 
 /**
  * expo-notifications, which is NOT the harmless import it looks like.
@@ -67,4 +76,4 @@ export const runtimeLabel = isWeb ? 'web' : isExpoGo ? 'Expo Go' : 'development 
  * caveat on each receipt. Expo Go and web keep their label: there it tells
  * a tester that the build they are on is not the one employees use.
  */
-export const noMidShiftCheckLabel: string | null = hasShiftTimer ? null : isWeb || isExpoGo ? runtimeLabel : null;
+export const noMidShiftCheckLabel: string | null = hasMidShiftChecks ? null : isWeb || isExpoGo ? runtimeLabel : null;
