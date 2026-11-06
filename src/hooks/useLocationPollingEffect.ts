@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react';
 import * as Location from 'expo-location';
 import { useShiftStore } from '../stores/shiftStore';
-import { hasShiftTimer } from '../native/runtime';
+import { hasIosShiftChecks, hasMidShiftChecks, hasShiftTimer } from '../native/runtime';
+import { startIosShiftChecks, stopIosShiftChecks } from '../tasks/iosShiftLocationTask';
 import { LOCATION_POLL_INTERVAL_MS } from '../constants/config';
 import { t } from '../i18n';
 import { getNotifications } from '../native/notificationsModule';
@@ -42,6 +43,7 @@ export function stopShiftTimer(): void {
   } catch (err) {
     console.warn('[stopShiftTimer]', err);
   }
+  void stopIosShiftChecks();
 }
 
 // Reacts to shiftStore.isClockedIn/isOnBreak transitions (set by
@@ -81,9 +83,9 @@ export function useLocationPollingEffect() {
 
     async function run() {
       try {
-        // No shift timer (iOS, Expo Go, web): nothing to start or stop, and
-        // iOS no longer declares the Always permission this would read.
-        if (!hasShiftTimer) return;
+        // Expo Go and web have neither the Android shift timer nor iOS
+        // background location: nothing to start or stop.
+        if (!hasMidShiftChecks) return;
         if (shouldTrack) {
           /**
            * Reads the permission; never asks for it.
@@ -122,6 +124,13 @@ export function useLocationPollingEffect() {
             // No notifications in this runtime -- the service still starts.
           }
           if (cancelled) return;
+          if (hasIosShiftChecks) {
+            // iOS shows its own status-bar indicator while this runs, so
+            // there is no notification text to set.
+            await startIosShiftChecks();
+            if (resumedFromBreak) void runLocationCheckNow();
+            return;
+          }
           const timer = getShiftTimer();
           // In the employee's language, and naming location -- see
           // ShiftTimerService.buildNotification. Guarded: a binary built before
@@ -133,6 +142,8 @@ export function useLocationPollingEffect() {
           // Back from a break: check now rather than at the next tick, so the
           // live map shows inside/outside straight away. Never rejects.
           if (resumedFromBreak) void runLocationCheckNow();
+        } else if (hasIosShiftChecks) {
+          await stopIosShiftChecks();
         } else {
           getShiftTimer()?.stop();
         }

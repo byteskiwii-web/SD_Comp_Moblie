@@ -15,7 +15,7 @@ import { cancelBreakReminder, cancelClockOutReminder } from '../../utils/notific
 import { haversineDistance, isWithinFence } from '../../utils/haversine';
 import { clockIn, clockOut, endBreak, getAttendanceHistory, startBreak } from '../../api/attendance.api';
 import { CameraCaptureScreen } from './CameraCaptureScreen';
-import { hasShiftTimer, noMidShiftCheckLabel } from '../../native/runtime';
+import { hasMidShiftChecks, noMidShiftCheckLabel } from '../../native/runtime';
 import { getApiErrorCode, getApiErrorMessage } from '../../api/client';
 import { onboardingGateQueryKey } from '../../hooks/useOnboardingGate';
 import { getLatestMarkOfTypes, SHIFT_TYPES, BREAK_TYPES } from '../../utils/attendanceStatus';
@@ -709,10 +709,8 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
   // geofence check (useLocationPollingEffect) once the employee is clocked in.
   // Android only lets an app prompt for background access once foreground
   // access is granted, which is why this runs after ensureFix has succeeded.
-  //
-  // Requesting "Always" on iOS for a background check the app never makes is
-  // App Review guideline 2.5.4, and app.json no longer declares iOS background
-  // location or the Always usage strings at all.
+  // iOS has the same two-step rule, and runs the same check through
+  // background location updates (src/tasks/iosShiftLocationTask.ts).
   /**
    * Background location, for a clock-in, BEFORE the camera (STORE-008).
    *
@@ -729,13 +727,14 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
    *     The mid-shift checks simply do not run, and the receipt says so.
    *
    * The disclosure still comes before the system prompt, as Play requires,
-   * and only where the check exists (the Android shift timer): iOS, Expo Go
-   * and web have nothing to disclose and nothing to ask for.
+   * and only where the check exists (the Android shift timer, the iOS
+   * background location task): Expo Go and web have nothing to disclose and
+   * nothing to ask for.
    *
    * Returns whether the checks will run.
    */
   const askBackgroundLocation = async (): Promise<boolean> => {
-    if (!hasShiftTimer) return true;
+    if (!hasMidShiftChecks) return true;
     try {
       const existing = await Location.getBackgroundPermissionsAsync();
       if (existing.status === 'granted') return true;
@@ -763,7 +762,7 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
 
     // Said now rather than discovered later: this shift will have no
     // mid-shift presence checks. The punch itself has been sent regardless.
-    if (action === 'clock-in' && !bgGranted.current && hasShiftTimer) {
+    if (action === 'clock-in' && !bgGranted.current && hasMidShiftChecks) {
       Alert.alert(tr('clock.bgOffTitle'), tr('clock.bgOffBody'), [
         { text: tr('common.close'), style: 'cancel' },
         { text: tr('common.openSettings'), onPress: () => Linking.openSettings() },

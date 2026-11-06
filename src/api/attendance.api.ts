@@ -148,10 +148,11 @@ export async function clockIn(input: PunchInput) {
 
 export async function clockOut(input: PunchInput) {
   const form = await buildPunchFormData(input);
-  // An iPhone never pings in the background, so a shift spent with the app
-  // closed would otherwise be inferred as "location off" at clock-out. The
-  // switch alone is sent -- a clock-out still reads no position. Android keeps
-  // the server's inference: its pings run in the background.
+  // The switch alone, never a position -- a clock-out still reads no location.
+  // iOS can be suspended or force-quit mid-shift and then sends no pings, which
+  // the server would read as "location off" at clock-out (its gap inference
+  // runs when this is absent). Android's alarm keeps pinging, so it leaves the
+  // inference to the server.
   if (Platform.OS === 'ios' && (await isLocationServicesOff()) === false) {
     form.append('location_services_on', 'true');
   }

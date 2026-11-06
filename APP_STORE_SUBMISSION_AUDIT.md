@@ -120,6 +120,8 @@ This review account is fully set up and works from any location, at any time:
 
 Identity documents (PAN, Aadhaar, bank) are collected only during employee onboarding for payroll and are already completed for this account.
 
+Location: the app records the employee's location at clock-in and clock-out to confirm they are at their assigned store. While an employee is clocked in (and not on a break) it also checks location about every 15 minutes, using the "Always" location permission and iOS background location (UIBackgroundModes: location; the status-bar location indicator is shown). This is attendance verification for the employer only: the data goes to our own server, is not used for advertising, and is not shared with data brokers, so the app does not track users as defined by App Tracking Transparency. The permission is requested at clock-in, after an in-app disclosure explaining this. Nothing is read outside a shift, and the app works if the employee declines (the punch is still recorded).
+
 Team-lead view: TL-90001 / <review password>
 ```
 
@@ -255,7 +257,7 @@ The audit was checked against the code, the backend and Google's own help page b
 | Sign-in | Employee ID or work email + password. Forgot-password via email OTP. Forced password change for admin-issued passwords. "Remember me" toggle. One active session per account (server). | Guideline 4.8 enterprise exception applies. There is no social login, so Sign in with Apple is not required. |
 | Onboarding gate | Profile → PAN (+Aadhaar) → bank → face enrolment → HR approval, all server-driven (`/auth/me/onboarding`). Then mandatory policy acknowledgement. | Reviewer cannot pass HR approval themselves. |
 | Attendance | Clock in/out with live selfie + on-device liveness (ML Kit via VisionCamera) + server face match + geofence. Breaks. History, day detail, monthly summary, regularisation requests. | Shift window gate (client + server). |
-| Mid-shift monitoring (Android) | Native foreground service (`type=location`) + AlarmManager, ~12 min: GPS fix → `POST /attendance/location-check`; Developer Mode check via `jail-monkey` → `POST /attendance-alerts`. | Monitoring-app policy, background location, FGS declaration. |
+| Mid-shift monitoring (Android) | Native foreground service (`type=location`) + AlarmManager (iOS: background location updates + JS interval), ~15 min: GPS fix → `POST /attendance/location-check`; Developer Mode check via `jail-monkey` → `POST /attendance-alerts`. | Monitoring-app policy, background location, FGS declaration. |
 | Mid-shift monitoring (iOS) | None. iOS does not request "Always" location. | Receipts say so (STORE-039). |
 | KYC | PAN (+ Aadhaar number in combined mode), Aadhaar OTP (dormant), bank account verification (penniless / ₹1 penny-drop) via Sandbox or SurePass. Consent checkboxes. | Government ID + financial data. |
 | Documents | **Read-only** status/view of documents uploaded on the web. The app no longer captures or uploads identity documents. | iOS purpose strings still say it does (STORE-014). |
