@@ -6,6 +6,7 @@ import { registerRootComponent } from 'expo';
 // so these run before App is imported below.
 import './src/utils/notificationSetup';
 import './src/tasks/registerShiftTimerTask';
+import './src/tasks/iosShiftLocationTask';
 
 import App from './App';
 

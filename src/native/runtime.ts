@@ -20,6 +20,15 @@ export const hasVisionCamera = !isWeb && !isExpoGo;
  * evaluation, before anything renders.
  */
 export const hasShiftTimer = !isWeb && !isExpoGo && Platform.OS === 'android';
+/**
+ * iOS has no alarm to wake an app on a timer, so its mid-shift check rides on
+ * background location updates instead (src/tasks/iosShiftLocationTask.ts,
+ * UIBackgroundModes: location). Needs a development or store build: background
+ * location is not available in Expo Go.
+ */
+export const hasIosShiftChecks = !isWeb && !isExpoGo && Platform.OS === 'ios';
+/** This binary re-checks presence during a shift, by whichever mechanism. */
+export const hasMidShiftChecks = hasShiftTimer || hasIosShiftChecks;
 
 /**
  * expo-notifications, which is NOT the harmless import it looks like.
@@ -54,17 +63,9 @@ export const runtimeLabel = isWeb ? 'web' : isExpoGo ? 'Expo Go' : 'development 
  * What a punch receipt names as having no mid-shift location check, or null
  * where one runs.
  *
- * Keyed on hasShiftTimer, not supportsBackgroundLocation: an iOS build can hold
- * the background permission, but only the Android shift timer ever re-checks
- * presence during a shift, so an iOS receipt must not read as verified.
- */
-/*
- * STORE-039: an installed iOS build returns null. It used to return 'iOS', so
- * every successful iPhone punch came back amber, appended "No mid-shift
- * location checks on iOS" -- the reviewer's first successful action read as
- * a warning about the platform they were reviewing on. That iOS makes no
- * mid-shift check is a product fact for the privacy policy and HR, not a
- * caveat on each receipt. Expo Go and web keep their label: there it tells
+ * Keyed on hasMidShiftChecks: an installed Android or iOS build re-checks
+ * presence during a shift (shift timer / background location task), so its
+ * receipt reads as verified. Expo Go and web keep their label: there it tells
  * a tester that the build they are on is not the one employees use.
  */
-export const noMidShiftCheckLabel: string | null = hasShiftTimer ? null : isWeb || isExpoGo ? runtimeLabel : null;
+export const noMidShiftCheckLabel: string | null = hasMidShiftChecks ? null : isWeb || isExpoGo ? runtimeLabel : null;

@@ -19,7 +19,7 @@ const WARNING_KEYS: Record<AttendanceAlertType, { title: TKey; body: TKey }> = {
  * Called from two places on different cadences -- the foreground hook
  * (useShiftIntegrityWatcher, ~60s while the app is open) and the native
  * shift-timer's tick (shiftTimerTask.ts, roughly every 15 min including
- * while the app is closed, Android only), which passes what its own probe
+ * while the app is closed, on both Android and iOS), which passes what its own probe
  * found. Without a caller's answer this reads the location services switch
  * itself, so EVERY report says "on" or "off".
  *
