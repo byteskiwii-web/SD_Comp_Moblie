@@ -24,6 +24,9 @@ export type LivenessState = 'looking-for-face' | 'challenge' | 'settling' | 'tim
 // Each task gets its own fresh allowance; the pause after the last one too.
 const TASK_TIMEOUT_MS = 10000;
 const SETTLE_MS = 1500;
+// A face missing for a single frame (blink, motion blur, a camera hiccup) must
+// not throw the whole challenge plan away; only a sustained loss restarts it.
+const FACE_LOST_GRACE_MS = 1500;
 
 export function useLiveness(onPassed: () => void) {
   const [state, setState] = useState<LivenessState>('looking-for-face');
@@ -34,6 +37,7 @@ export function useLiveness(onPassed: () => void) {
   const tracker = useRef<ChallengeTracker | null>(null);
   // When the current uninterrupted run of "a straight face is in view" began, during the pause.
   const settleSince = useRef<number | null>(null);
+  const lostSince = useRef<number | null>(null);
   // Deliberately NOT reflected via useState -- setting state here would
   // re-render this screen in the same tick as capturePhotoToFile() starts,
   // which recreates the face-detector's CameraOutput (its own memoization
@@ -58,6 +62,7 @@ export function useLiveness(onPassed: () => void) {
     stepRef.current = 0;
     tracker.current = null;
     settleSince.current = null;
+    lostSince.current = null;
     hasPassed.current = false;
     setPlan([]);
     setStep(0);
@@ -88,9 +93,13 @@ export function useLiveness(onPassed: () => void) {
       if (!face || !signals) {
         // During the pause a face leaving the view only restarts the pause.
         if (state === 'settling') settleSince.current = null;
-        else if (state !== 'looking-for-face') reset();
+        else if (state !== 'looking-for-face') {
+          if (lostSince.current === null) lostSince.current = now;
+          else if (now - lostSince.current >= FACE_LOST_GRACE_MS) reset();
+        }
         return;
       }
+      lostSince.current = null;
 
       if (state === 'looking-for-face') {
         const next = pickChallenges();

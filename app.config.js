@@ -104,6 +104,9 @@ module.exports = ({ config }) => {
    */
   if (!wantsDevClient) plugins.push('./plugins/withoutDevLauncher');
 
+  /** The `fetch` background mode expo-task-manager adds is not used; see the plugin. */
+  plugins.push('./plugins/withoutBackgroundFetch');
+
   /**
    * NO GOOGLE MAPS KEY, ON PURPOSE.
    *
