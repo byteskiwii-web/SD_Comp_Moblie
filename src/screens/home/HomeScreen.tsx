@@ -23,6 +23,8 @@ import { ClockPanel } from '../attendance/ClockPanel';
 import { TourScrollView, TourTarget } from '../../components/tour/TourTarget';
 import { Skeleton, SkeletonRows } from '../../components/Skeleton';
 import { TeamLeaveCard } from './TeamLeaveCard';
+import { MissedPunchOutNote } from './MissedPunchOutNote';
+import { useOnNewDay } from '../../hooks/useOnNewDay';
 import { useT } from '../../i18n';
 
 const today = () => toLocalDateKey();
@@ -65,9 +67,16 @@ export function HomeScreen() {
         queryClient.invalidateQueries({ queryKey: ['leave-summary'] }),
         queryClient.invalidateQueries({ queryKey: ['policies-outstanding'] }),
         queryClient.invalidateQueries({ queryKey: ['kudos-mine'] }),
+        // MissedPunchOutNote's two reads.
+        queryClient.invalidateQueries({ queryKey: ['attendance-day'] }),
+        queryClient.invalidateQueries({ queryKey: ['regularisation-mine'] }),
       ]),
     [queryClient]
   );
+
+  // Past midnight this page is about a different day. Also what keeps the
+  // date on the card right when two days have the same (empty) marks.
+  const now = useOnNewDay(refreshHomeQueries);
 
   // Home is the first tab and the one most likely to be left open in the
   // background for a while -- without this, a punch recorded from a push's
@@ -167,7 +176,7 @@ export function HomeScreen() {
               <Skeleton width={8} height={8} radius={4} />
             )}
             <Text style={[styles.heroLabel, !shiftKnown && styles.heroLabelLoading]}>
-              {formatDateLong(new Date())}
+              {formatDateLong(now)}
             </Text>
           </View>
 
@@ -229,6 +238,8 @@ export function HomeScreen() {
             </View>
           </View>
         </TourTarget>
+
+        <MissedPunchOutNote />
 
         {/* THE PUNCH ITSELF, NOT A ROUTE TO IT.
             This used to be a row that navigated to the Attendance tab and

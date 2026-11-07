@@ -19,7 +19,7 @@ import { hasMidShiftChecks, noMidShiftCheckLabel } from '../../native/runtime';
 import { getApiErrorCode, getApiErrorMessage } from '../../api/client';
 import { onboardingGateQueryKey } from '../../hooks/useOnboardingGate';
 import { getLatestMarkOfTypes, SHIFT_TYPES, BREAK_TYPES } from '../../utils/attendanceStatus';
-import { formatTime, formatTimeWithSeconds, toLocalDateKey, formatClockTime, formatShift } from '../../utils/datetime';
+import { formatDate, formatTime, formatTimeWithSeconds, toLocalDateKey, formatClockTime, formatShift } from '../../utils/datetime';
 import { t as tr, useT } from '../../i18n';
 import { StatusBanner } from '../../components/StatusBanner';
 import { GeofenceMap } from '../../components/GeofenceMap';
@@ -30,6 +30,7 @@ import { InfoNote } from '../../components/InfoNote';
 import { useConnectivityStore } from '../../stores/connectivityStore';
 import { useConsentStore } from '../../stores/consentStore';
 import { useTicker } from '../../hooks/useTicker';
+import { useMissedPunchOut } from '../../hooks/useMissedPunchOut';
 import { BackgroundLocationDisclosure } from '../../components/BackgroundLocationDisclosure';
 import { useLocationReadiness, type Coords, type LocationStatus } from '../../hooks/useLocationReadiness';
 import { useNavigation } from '@react-navigation/native';
@@ -276,6 +277,7 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
   }, [marks, profile?.shift?.breakAllowanceMinutes, profile?.shiftEnd]);
   const latestShiftMark = getLatestMarkOfTypes(marks, SHIFT_TYPES);
   const latestBreakMark = getLatestMarkOfTypes(marks, BREAK_TYPES);
+  const missedDay = useMissedPunchOut();
   const isCurrentlyClockedIn = latestShiftMark?.mark_type === 'clock-in';
   const isCurrentlyOnBreak = latestBreakMark?.mark_type === 'break-start';
   const lastClockIn = marks.find((m) => m.mark_type === 'clock-in');
@@ -521,6 +523,41 @@ export function ClockPanel({ autoPunch, onAutoPunchStarted, variant = 'full' }: 
       const faceChangeHint =
         code === 'FACE_NOT_RECOGNISED' || code === 'FACE_LOCKED_OUT' ? ' ' + tr('clock.faceChangeHint') : '';
       const text = getApiErrorMessage(err) + faceChangeHint;
+
+      /*
+       * Refused because the server's day has moved on: this screen, or a selfie
+       * taken before midnight, still believed in yesterday's shift. Trying again
+       * cannot work; a correction can. The open day is the one this panel is
+       * still showing, or yesterday's once it has refreshed.
+       */
+      if (code === 'NO_CLOCK_IN') {
+        const openDay = isCurrentlyClockedIn ? latestShiftMark?.mark_date.slice(0, 10) : missedDay;
+        const title = tr('clock.noPunchInTitle');
+        setBanner({ tone: 'warning', text: title });
+        setOutcome({
+          ok: false,
+          title,
+          ...(openDay
+            ? {
+                reason: tr('clock.missedOutBody', { date: formatDate(`${openDay}T12:00:00`) }),
+                action: {
+                  label: tr('clock.raiseCorrection'),
+                  onPress: () => {
+                    setOutcome(null);
+                    navigation.navigate('Attendance', {
+                      screen: 'AttendanceHome',
+                      params: { tab: 'regularise', date: openDay },
+                    });
+                  },
+                },
+              }
+            : {}),
+        });
+        setPendingAction(null);
+        queryClient.invalidateQueries({ queryKey: ['attendance-today'] });
+        return;
+      }
+
       setBanner({ tone: 'warning', text });
       const action = pendingAction === 'clock-out' ? 'clock-out' : 'clock-in';
       // Retrying cannot fix these: HR, the phone check, an update or onboarding can.

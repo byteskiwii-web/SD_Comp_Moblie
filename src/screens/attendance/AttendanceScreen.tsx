@@ -12,6 +12,7 @@ import { RegularisePanel } from './RegularisePanel';
 import { useT } from '../../i18n';
 import { GreetingHeader } from '../../components/GreetingHeader';
 import { TourScrollView } from '../../components/tour/TourTarget';
+import { useOnNewDay } from '../../hooks/useOnNewDay';
 
 type Tab = 'clock' | 'history' | 'regularise';
 
@@ -60,6 +61,8 @@ export function AttendanceScreen() {
       ]),
     [queryClient]
   );
+
+  useOnNewDay(refreshAttendanceQueries);
 
   // Bottom-tab screens stay mounted, so without this a request approved or a
   // punch recorded elsewhere would only show up here after a cold start.
