@@ -24,7 +24,7 @@ import { useT } from '../i18n';
  */
 export type PunchOutcome =
   | { ok: true; title: string; time?: string; note?: string }
-  | { ok: false; title: string; reason: string; onRetry?: () => void };
+  | { ok: false; title: string; reason?: string; onRetry?: () => void; action?: { label: string; onPress: () => void } };
 
 const AUTO_CLOSE_MS = 2200;
 const CIRCLE = 96;
@@ -43,7 +43,7 @@ export function PunchResult({ outcome, onClose }: { outcome: PunchOutcome; onClo
     let cancelled = false;
     const said = outcome.ok
       ? [outcome.title, outcome.time, outcome.note].filter(Boolean).join('. ')
-      : `${outcome.title}. ${outcome.reason}`;
+      : [outcome.title, outcome.reason].filter(Boolean).join('. ');
     AccessibilityInfo.announceForAccessibility(said);
 
     AccessibilityInfo.isReduceMotionEnabled()
@@ -104,10 +104,11 @@ export function PunchResult({ outcome, onClose }: { outcome: PunchOutcome; onClo
       <Text style={[styles.title, { color: outcome.ok ? colors.successText : colors.dangerText }]}>{outcome.title}</Text>
       {outcome.ok && outcome.time ? <Text style={styles.time}>{outcome.time}</Text> : null}
       {outcome.ok && outcome.note ? <Text style={styles.note}>{outcome.note}</Text> : null}
-      {!outcome.ok ? <Text style={styles.reason}>{outcome.reason}</Text> : null}
+      {!outcome.ok && outcome.reason ? <Text style={styles.reason}>{outcome.reason}</Text> : null}
 
       {!outcome.ok ? (
         <View style={styles.actions}>
+          {outcome.action ? <Button title={outcome.action.label} onPress={outcome.action.onPress} /> : null}
           {outcome.onRetry ? <Button title={t('result.tryAgain')} onPress={outcome.onRetry} /> : null}
           <Button title={t('common.close')} variant="outline" onPress={onClose} />
         </View>
